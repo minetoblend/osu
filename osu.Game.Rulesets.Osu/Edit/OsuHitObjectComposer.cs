@@ -38,6 +38,7 @@ namespace osu.Game.Rulesets.Osu.Edit
         {
             new HitCircleCompositionTool(),
             new SliderCompositionTool(),
+            new StreamCompositionTool(),
             new SpinnerCompositionTool()
         };
 

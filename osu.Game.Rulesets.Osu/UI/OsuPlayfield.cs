@@ -120,6 +120,9 @@ namespace osu.Game.Rulesets.Osu.UI
             RegisterPool<SliderTick, DrawableSliderTick>(10, 100);
             RegisterPool<SliderRepeat, DrawableSliderRepeat>(5, 50);
 
+            RegisterPool<Stream, DrawableStream>(10, 100);
+            RegisterPool<StreamHitCircle, DrawableHitCircle>(10, 100);
+
             RegisterPool<Spinner, DrawableSpinner>(2, 20);
             RegisterPool<SpinnerTick, DrawableSpinnerTick>(10, 100);
             RegisterPool<SpinnerBonusTick, DrawableSpinnerBonusTick>(10, 100);

@@ -419,6 +419,8 @@ namespace osu.Game.Screens.Edit.Compose.Components
             return position;
         }
 
+        #endregion
+
         /// <summary>
         /// Returns a quad surrounding the provided points.
         /// </summary>
@@ -442,7 +444,5 @@ namespace osu.Game.Screens.Edit.Compose.Components
 
             return new Quad(minPosition.X, minPosition.Y, size.X, size.Y);
         }
-
-        #endregion
     }
 }

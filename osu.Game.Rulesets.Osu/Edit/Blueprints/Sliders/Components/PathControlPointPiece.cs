@@ -30,7 +30,7 @@ namespace osu.Game.Rulesets.Osu.Edit.Blueprints.Sliders.Components
     /// <summary>
     /// A visualisation of a single <see cref="PathControlPoint"/> in a <see cref="Slider"/>.
     /// </summary>
-    public class PathControlPointPiece : BlueprintPiece<Slider>, IHasTooltip
+    public class PathControlPointPiece : BlueprintPiece<HitObjectWithPath>, IHasTooltip
     {
         public Action<PathControlPointPiece, MouseButtonEvent> RequestSelection;
         public List<PathControlPoint> PointsInSegment;
@@ -38,7 +38,7 @@ namespace osu.Game.Rulesets.Osu.Edit.Blueprints.Sliders.Components
         public readonly BindableBool IsSelected = new BindableBool();
         public readonly PathControlPoint ControlPoint;
 
-        private readonly Slider slider;
+        private readonly HitObjectWithPath hitObject;
         private readonly Container marker;
         private readonly Drawable markerRing;
 
@@ -51,21 +51,21 @@ namespace osu.Game.Rulesets.Osu.Edit.Blueprints.Sliders.Components
         [Resolved]
         private OsuColour colours { get; set; }
 
-        private IBindable<Vector2> sliderPosition;
-        private IBindable<float> sliderScale;
+        private IBindable<Vector2> hitObjectPosition;
+        private IBindable<float> hitObjectScale;
         private IBindable<Vector2> controlPointPosition;
 
-        public PathControlPointPiece(Slider slider, PathControlPoint controlPoint)
+        public PathControlPointPiece(HitObjectWithPath hitObject, PathControlPoint controlPoint)
         {
-            this.slider = slider;
+            this.hitObject = hitObject;
             ControlPoint = controlPoint;
 
-            // we don't want to run the path type update on construction as it may inadvertently change the slider.
-            cachePoints(slider);
+            // we don't want to run the path type update on construction as it may inadvertently change the path.
+            cachePoints(hitObject);
 
-            slider.Path.Version.BindValueChanged(_ =>
+            hitObject.Path.Version.BindValueChanged(_ =>
             {
-                cachePoints(slider);
+                cachePoints(hitObject);
                 updatePathType();
             });
 
@@ -114,14 +114,14 @@ namespace osu.Game.Rulesets.Osu.Edit.Blueprints.Sliders.Components
         {
             base.LoadComplete();
 
-            sliderPosition = slider.PositionBindable.GetBoundCopy();
-            sliderPosition.BindValueChanged(_ => updateMarkerDisplay());
+            hitObjectPosition = hitObject.PositionBindable.GetBoundCopy();
+            hitObjectPosition.BindValueChanged(_ => updateMarkerDisplay());
 
             controlPointPosition = ControlPoint.Position.GetBoundCopy();
             controlPointPosition.BindValueChanged(_ => updateMarkerDisplay());
 
-            sliderScale = slider.ScaleBindable.GetBoundCopy();
-            sliderScale.BindValueChanged(_ => updateMarkerDisplay());
+            hitObjectScale = hitObject.ScaleBindable.GetBoundCopy();
+            hitObjectScale.BindValueChanged(_ => updateMarkerDisplay());
 
             IsSelected.BindValueChanged(_ => updateMarkerDisplay());
 
@@ -186,34 +186,34 @@ namespace osu.Game.Rulesets.Osu.Edit.Blueprints.Sliders.Components
 
         protected override void OnDrag(DragEvent e)
         {
-            Vector2[] oldControlPoints = slider.Path.ControlPoints.Select(cp => cp.Position.Value).ToArray();
-            var oldPosition = slider.Position;
-            var oldStartTime = slider.StartTime;
+            Vector2[] oldControlPoints = hitObject.Path.ControlPoints.Select(cp => cp.Position.Value).ToArray();
+            var oldPosition = hitObject.Position;
+            var oldStartTime = hitObject.StartTime;
 
-            if (ControlPoint == slider.Path.ControlPoints[0])
+            if (ControlPoint == hitObject.Path.ControlPoints[0])
             {
-                // Special handling for the head control point - the position of the slider changes which means the snapped position and time have to be taken into account
+                // Special handling for the head control point - the position of the hitobject changes which means the snapped position and time have to be taken into account
                 var result = snapProvider?.SnapScreenSpacePositionToValidTime(e.ScreenSpaceMousePosition);
 
-                Vector2 movementDelta = Parent.ToLocalSpace(result?.ScreenSpacePosition ?? e.ScreenSpaceMousePosition) - slider.Position;
+                Vector2 movementDelta = Parent.ToLocalSpace(result?.ScreenSpacePosition ?? e.ScreenSpaceMousePosition) - hitObject.Position;
 
-                slider.Position += movementDelta;
-                slider.StartTime = result?.Time ?? slider.StartTime;
+                hitObject.Position += movementDelta;
+                hitObject.StartTime = result?.Time ?? hitObject.StartTime;
 
                 // Since control points are relative to the position of the slider, they all need to be offset backwards by the delta
-                for (int i = 1; i < slider.Path.ControlPoints.Count; i++)
-                    slider.Path.ControlPoints[i].Position.Value -= movementDelta;
+                for (int i = 1; i < hitObject.Path.ControlPoints.Count; i++)
+                    hitObject.Path.ControlPoints[i].Position.Value -= movementDelta;
             }
             else
                 ControlPoint.Position.Value = dragStartPosition + (e.MousePosition - e.MouseDownPosition);
 
-            if (!slider.Path.HasValidLength)
+            if (!hitObject.Path.HasValidLength)
             {
-                for (var i = 0; i < slider.Path.ControlPoints.Count; i++)
-                    slider.Path.ControlPoints[i].Position.Value = oldControlPoints[i];
+                for (var i = 0; i < hitObject.Path.ControlPoints.Count; i++)
+                    hitObject.Path.ControlPoints[i].Position.Value = oldControlPoints[i];
 
-                slider.Position = oldPosition;
-                slider.StartTime = oldStartTime;
+                hitObject.Position = oldPosition;
+                hitObject.StartTime = oldStartTime;
                 return;
             }
 
@@ -223,7 +223,7 @@ namespace osu.Game.Rulesets.Osu.Edit.Blueprints.Sliders.Components
 
         protected override void OnDragEnd(DragEndEvent e) => changeHandler?.EndChange();
 
-        private void cachePoints(Slider slider) => PointsInSegment = slider.Path.PointsInSegment(ControlPoint);
+        private void cachePoints(HitObjectWithPath hitObject) => PointsInSegment = hitObject.Path.PointsInSegment(ControlPoint);
 
         /// <summary>
         /// Handles correction of invalid path types.
@@ -250,7 +250,7 @@ namespace osu.Game.Rulesets.Osu.Edit.Blueprints.Sliders.Components
         /// </summary>
         private void updateMarkerDisplay()
         {
-            Position = slider.StackedPosition + ControlPoint.Position.Value;
+            Position = hitObject.StackedPosition + ControlPoint.Position.Value;
 
             markerRing.Alpha = IsSelected.Value ? 1 : 0;
 
@@ -260,7 +260,7 @@ namespace osu.Game.Rulesets.Osu.Edit.Blueprints.Sliders.Components
                 colour = colour.Lighten(1);
 
             marker.Colour = colour;
-            marker.Scale = new Vector2(slider.Scale);
+            marker.Scale = new Vector2(hitObject.Scale);
         }
 
         private Color4 getColourFromNodeType()
