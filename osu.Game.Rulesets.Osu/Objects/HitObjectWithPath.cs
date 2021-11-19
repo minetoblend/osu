@@ -51,7 +51,7 @@ namespace osu.Game.Rulesets.Osu.Objects
         }
 
         [JsonIgnore]
-        public double Duration
+        public virtual double Duration
         {
             get => EndTime - StartTime;
             set => throw new System.NotSupportedException();

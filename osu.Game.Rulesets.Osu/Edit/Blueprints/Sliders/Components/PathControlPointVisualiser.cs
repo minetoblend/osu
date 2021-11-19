@@ -33,16 +33,16 @@ namespace osu.Game.Rulesets.Osu.Edit.Blueprints.Sliders.Components
         internal readonly Container<PathControlPointConnectionPiece> Connections;
 
         private readonly IBindableList<PathControlPoint> controlPoints = new BindableList<PathControlPoint>();
-        private readonly Slider slider;
+        private readonly HitObjectWithPath hitObject;
         private readonly bool allowSelection;
 
         private InputManager inputManager;
 
         public Action<List<PathControlPoint>> RemoveControlPointsRequested;
 
-        public PathControlPointVisualiser(Slider slider, bool allowSelection)
+        public PathControlPointVisualiser(HitObjectWithPath hitObject, bool allowSelection)
         {
-            this.slider = slider;
+            this.hitObject = hitObject;
             this.allowSelection = allowSelection;
 
             RelativeSizeAxes = Axes.Both;
@@ -61,7 +61,7 @@ namespace osu.Game.Rulesets.Osu.Edit.Blueprints.Sliders.Components
             inputManager = GetContainingInputManager();
 
             controlPoints.CollectionChanged += onControlPointsChanged;
-            controlPoints.BindTo(slider.Path.ControlPoints);
+            controlPoints.BindTo(hitObject.Path.ControlPoints);
         }
 
         private void onControlPointsChanged(object sender, NotifyCollectionChangedEventArgs e)
@@ -84,13 +84,13 @@ namespace osu.Game.Rulesets.Osu.Edit.Blueprints.Sliders.Components
                     {
                         var point = (PathControlPoint)e.NewItems[i];
 
-                        Pieces.Add(new PathControlPointPiece(slider, point).With(d =>
+                        Pieces.Add(new PathControlPointPiece(hitObject, point).With(d =>
                         {
                             if (allowSelection)
                                 d.RequestSelection = selectPiece;
                         }));
 
-                        Connections.Add(new PathControlPointConnectionPiece(slider, e.NewStartingIndex + i));
+                        Connections.Add(new PathControlPointConnectionPiece(hitObject, e.NewStartingIndex + i));
                     }
 
                     break;

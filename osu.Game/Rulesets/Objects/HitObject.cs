@@ -172,6 +172,8 @@ namespace osu.Game.Rulesets.Objects
 
         protected void AddNested(HitObject hitObject) => nestedHitObjects.Add(hitObject);
 
+        protected void ClearNested() => nestedHitObjects.Clear();
+
         /// <summary>
         /// Creates the <see cref="Judgement"/> that represents the scoring information for this <see cref="HitObject"/>.
         /// </summary>
