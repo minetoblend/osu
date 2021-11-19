@@ -17,9 +17,6 @@ namespace osu.Game.Screens.Edit
         [Resolved]
         private OsuColour colours { get; set; }
 
-        [Cached]
-        protected readonly OverlayColourProvider ColourProvider;
-
         private Container roundedContent;
 
         protected override Container<Drawable> Content => roundedContent;
@@ -27,11 +24,10 @@ namespace osu.Game.Screens.Edit
         public EditorRoundedScreen(EditorScreenMode mode)
             : base(mode)
         {
-            ColourProvider = new OverlayColourProvider(OverlayColourScheme.Blue);
         }
 
         [BackgroundDependencyLoader]
-        private void load()
+        private void load(OverlayColourProvider colourProvider)
         {
             base.Content.Add(new Container
             {
@@ -46,7 +42,7 @@ namespace osu.Game.Screens.Edit
                     {
                         new Box
                         {
-                            Colour = ColourProvider.Dark4,
+                            Colour = colourProvider.Background3,
                             RelativeSizeAxes = Axes.Both,
                         },
                         roundedContent = new Container

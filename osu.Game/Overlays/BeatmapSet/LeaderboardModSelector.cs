@@ -13,14 +13,15 @@ using osu.Game.Graphics.UserInterface;
 using osuTK.Graphics;
 using System;
 using System.Linq;
+using osu.Framework.Allocation;
 using osu.Framework.Extensions.IEnumerableExtensions;
 
 namespace osu.Game.Overlays.BeatmapSet
 {
     public class LeaderboardModSelector : CompositeDrawable
     {
-        public readonly BindableList<Mod> SelectedMods = new BindableList<Mod>();
-        public readonly Bindable<RulesetInfo> Ruleset = new Bindable<RulesetInfo>();
+        public readonly BindableList<IMod> SelectedMods = new BindableList<IMod>();
+        public readonly Bindable<IRulesetInfo> Ruleset = new Bindable<IRulesetInfo>();
 
         private readonly FillFlowContainer<ModButton> modsContainer;
 
@@ -45,7 +46,10 @@ namespace osu.Game.Overlays.BeatmapSet
             Ruleset.BindValueChanged(onRulesetChanged, true);
         }
 
-        private void onRulesetChanged(ValueChangedEvent<RulesetInfo> ruleset)
+        [Resolved]
+        private RulesetStore rulesets { get; set; }
+
+        private void onRulesetChanged(ValueChangedEvent<IRulesetInfo> ruleset)
         {
             SelectedMods.Clear();
             modsContainer.Clear();
@@ -54,7 +58,7 @@ namespace osu.Game.Overlays.BeatmapSet
                 return;
 
             modsContainer.Add(new ModButton(new ModNoMod()));
-            modsContainer.AddRange(ruleset.NewValue.CreateInstance().GetAllMods().Where(m => m.UserPlayable).Select(m => new ModButton(m)));
+            modsContainer.AddRange(rulesets.GetRuleset(ruleset.NewValue.OnlineID).CreateInstance().AllMods.Where(m => m.UserPlayable).Select(m => new ModButton(m)));
 
             modsContainer.ForEach(button =>
             {
@@ -76,7 +80,7 @@ namespace osu.Game.Overlays.BeatmapSet
             updateHighlighted();
         }
 
-        private void selectionChanged(Mod mod, bool selected)
+        private void selectionChanged(IMod mod, bool selected)
         {
             if (selected)
                 SelectedMods.Add(mod);
@@ -101,9 +105,9 @@ namespace osu.Game.Overlays.BeatmapSet
             private const int duration = 200;
 
             public readonly BindableBool Highlighted = new BindableBool();
-            public Action<Mod, bool> OnSelectionChanged;
+            public Action<IMod, bool> OnSelectionChanged;
 
-            public ModButton(Mod mod)
+            public ModButton(IMod mod)
                 : base(mod)
             {
                 Scale = new Vector2(0.4f);

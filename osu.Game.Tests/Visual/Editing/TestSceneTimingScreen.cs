@@ -3,6 +3,8 @@
 
 using NUnit.Framework;
 using osu.Framework.Allocation;
+using osu.Framework.Graphics.Containers;
+using osu.Game.Overlays;
 using osu.Game.Rulesets.Edit;
 using osu.Game.Rulesets.Osu;
 using osu.Game.Screens.Edit;
@@ -17,6 +19,9 @@ namespace osu.Game.Tests.Visual.Editing
         [Cached(typeof(IBeatSnapProvider))]
         private readonly EditorBeatmap editorBeatmap;
 
+        [Cached]
+        private readonly OverlayColourProvider colourProvider = new OverlayColourProvider(OverlayColourScheme.Blue);
+
         protected override bool ScrollUsingMouseWheel => false;
 
         public TestSceneTimingScreen()
@@ -30,7 +35,10 @@ namespace osu.Game.Tests.Visual.Editing
             Beatmap.Value = CreateWorkingBeatmap(editorBeatmap.PlayableBeatmap);
             Beatmap.Disabled = true;
 
-            Child = new TimingScreen();
+            Child = new TimingScreen
+            {
+                State = { Value = Visibility.Visible },
+            };
         }
 
         protected override void Dispose(bool isDisposing)

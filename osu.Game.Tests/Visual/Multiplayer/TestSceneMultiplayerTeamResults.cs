@@ -5,11 +5,11 @@ using System;
 using System.Collections.Generic;
 using NUnit.Framework;
 using osu.Framework.Bindables;
+using osu.Game.Online.API.Requests.Responses;
 using osu.Game.Online.Rooms;
 using osu.Game.Rulesets.Osu;
 using osu.Game.Scoring;
 using osu.Game.Screens.OnlinePlay.Multiplayer;
-using osu.Game.Users;
 
 namespace osu.Game.Tests.Visual.Multiplayer
 {
@@ -34,8 +34,8 @@ namespace osu.Game.Tests.Visual.Multiplayer
                     Accuracy = 0.8,
                     MaxCombo = 500,
                     Combo = 250,
-                    Beatmap = beatmapInfo,
-                    User = new User { Username = "Test user" },
+                    BeatmapInfo = beatmapInfo,
+                    User = new APIUser { Username = "Test user" },
                     Date = DateTimeOffset.Now,
                     OnlineScoreID = 12345,
                     Ruleset = rulesetInfo,

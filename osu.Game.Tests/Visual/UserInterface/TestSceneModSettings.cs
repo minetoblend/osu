@@ -151,7 +151,7 @@ namespace osu.Game.Tests.Visual.UserInterface
             AddUntilStep("wait for ready", () => modSelect.State.Value == Visibility.Visible && modSelect.ButtonsLoaded);
         }
 
-        private class TestModSelectOverlay : LocalPlayerModSelectOverlay
+        private class TestModSelectOverlay : UserModSelectOverlay
         {
             public new VisibilityContainer ModSettingsContainer => base.ModSettingsContainer;
             public new TriangleButton CustomiseButton => base.CustomiseButton;
@@ -199,7 +199,7 @@ namespace osu.Game.Tests.Visual.UserInterface
 
                 public override IBeatmapConverter CreateBeatmapConverter(IBeatmap beatmap) => throw new NotImplementedException();
 
-                public override DifficultyCalculator CreateDifficultyCalculator(WorkingBeatmap beatmap) => throw new NotImplementedException();
+                public override DifficultyCalculator CreateDifficultyCalculator(IWorkingBeatmap beatmap) => throw new NotImplementedException();
 
                 public override string Description { get; } = "test";
                 public override string ShortName { get; } = "tst";

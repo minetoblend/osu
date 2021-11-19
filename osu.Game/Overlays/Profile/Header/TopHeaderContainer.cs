@@ -4,6 +4,7 @@
 using osu.Framework.Allocation;
 using osu.Framework.Bindables;
 using osu.Framework.Extensions.Color4Extensions;
+using osu.Framework.Extensions.LocalisationExtensions;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Shapes;
@@ -12,9 +13,9 @@ using osu.Game.Graphics;
 using osu.Game.Graphics.Sprites;
 using osu.Game.Graphics.UserInterface;
 using osu.Game.Online.API;
+using osu.Game.Online.API.Requests.Responses;
 using osu.Game.Overlays.Profile.Header.Components;
 using osu.Game.Resources.Localisation.Web;
-using osu.Game.Users;
 using osu.Game.Users.Drawables;
 using osuTK;
 
@@ -24,7 +25,7 @@ namespace osu.Game.Overlays.Profile.Header
     {
         private const float avatar_size = 110;
 
-        public readonly Bindable<User> User = new Bindable<User>();
+        public readonly Bindable<APIUser> User = new Bindable<APIUser>();
 
         [Resolved]
         private IAPIProvider api { get; set; }
@@ -60,7 +61,7 @@ namespace osu.Game.Overlays.Profile.Header
                     Origin = Anchor.CentreLeft,
                     Children = new Drawable[]
                     {
-                        avatar = new UpdateableAvatar(openOnClick: false, showGuestOnNull: false)
+                        avatar = new UpdateableAvatar(isInteractive: false, showGuestOnNull: false)
                         {
                             Size = new Vector2(avatar_size),
                             Masking = true,
@@ -166,7 +167,7 @@ namespace osu.Game.Overlays.Profile.Header
             User.BindValueChanged(user => updateUser(user.NewValue));
         }
 
-        private void updateUser(User user)
+        private void updateUser(APIUser user)
         {
             avatar.User = user;
             usernameText.Text = user?.Username ?? string.Empty;

@@ -6,11 +6,13 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using NUnit.Framework;
+using osu.Framework.Input;
 using osu.Framework.Input.Bindings;
 using osu.Framework.Platform;
 using osu.Game.Database;
 using osu.Game.Input;
 using osu.Game.Input.Bindings;
+using osu.Game.Rulesets;
 using Realms;
 
 namespace osu.Game.Tests.Database
@@ -31,8 +33,8 @@ namespace osu.Game.Tests.Database
 
             storage = new NativeStorage(directory.FullName);
 
-            realmContextFactory = new RealmContextFactory(storage);
-            keyBindingStore = new RealmKeyBindingStore(realmContextFactory);
+            realmContextFactory = new RealmContextFactory(storage, "test");
+            keyBindingStore = new RealmKeyBindingStore(realmContextFactory, new ReadableKeyCombinationProvider());
         }
 
         [Test]
@@ -42,7 +44,7 @@ namespace osu.Game.Tests.Database
 
             KeyBindingContainer testContainer = new TestKeyBindingContainer();
 
-            keyBindingStore.Register(testContainer);
+            keyBindingStore.Register(testContainer, Enumerable.Empty<RulesetInfo>());
 
             Assert.That(queryCount(), Is.EqualTo(3));
 
@@ -52,9 +54,9 @@ namespace osu.Game.Tests.Database
 
         private int queryCount(GlobalAction? match = null)
         {
-            using (var usage = realmContextFactory.GetForRead())
+            using (var realm = realmContextFactory.CreateContext())
             {
-                var results = usage.Realm.All<RealmKeyBinding>();
+                var results = realm.All<RealmKeyBinding>();
                 if (match.HasValue)
                     results = results.Where(k => k.ActionInt == (int)match.Value);
                 return results.Count();
@@ -66,28 +68,26 @@ namespace osu.Game.Tests.Database
         {
             KeyBindingContainer testContainer = new TestKeyBindingContainer();
 
-            keyBindingStore.Register(testContainer);
+            keyBindingStore.Register(testContainer, Enumerable.Empty<RulesetInfo>());
 
-            using (var primaryUsage = realmContextFactory.GetForRead())
+            using (var primaryRealm = realmContextFactory.CreateContext())
             {
-                var backBinding = primaryUsage.Realm.All<RealmKeyBinding>().Single(k => k.ActionInt == (int)GlobalAction.Back);
+                var backBinding = primaryRealm.All<RealmKeyBinding>().Single(k => k.ActionInt == (int)GlobalAction.Back);
 
                 Assert.That(backBinding.KeyCombination.Keys, Is.EquivalentTo(new[] { InputKey.Escape }));
 
                 var tsr = ThreadSafeReference.Create(backBinding);
 
-                using (var usage = realmContextFactory.GetForWrite())
+                using (var threadedContext = realmContextFactory.CreateContext())
                 {
-                    var binding = usage.Realm.ResolveReference(tsr);
-                    binding.KeyCombination = new KeyCombination(InputKey.BackSpace);
-
-                    usage.Commit();
+                    var binding = threadedContext.ResolveReference(tsr);
+                    threadedContext.Write(() => binding.KeyCombination = new KeyCombination(InputKey.BackSpace));
                 }
 
                 Assert.That(backBinding.KeyCombination.Keys, Is.EquivalentTo(new[] { InputKey.BackSpace }));
 
                 // check still correct after re-query.
-                backBinding = primaryUsage.Realm.All<RealmKeyBinding>().Single(k => k.ActionInt == (int)GlobalAction.Back);
+                backBinding = primaryRealm.All<RealmKeyBinding>().Single(k => k.ActionInt == (int)GlobalAction.Back);
                 Assert.That(backBinding.KeyCombination.Keys, Is.EquivalentTo(new[] { InputKey.BackSpace }));
             }
         }

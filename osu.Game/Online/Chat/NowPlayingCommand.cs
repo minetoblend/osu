@@ -37,27 +37,27 @@ namespace osu.Game.Online.Chat
             base.LoadComplete();
 
             string verb;
-            BeatmapInfo beatmap;
+            IBeatmapInfo beatmapInfo;
 
             switch (api.Activity.Value)
             {
-                case UserActivity.SoloGame solo:
+                case UserActivity.InGame game:
                     verb = "playing";
-                    beatmap = solo.Beatmap;
+                    beatmapInfo = game.BeatmapInfo;
                     break;
 
                 case UserActivity.Editing edit:
                     verb = "editing";
-                    beatmap = edit.Beatmap;
+                    beatmapInfo = edit.BeatmapInfo;
                     break;
 
                 default:
                     verb = "listening to";
-                    beatmap = currentBeatmap.Value.BeatmapInfo;
+                    beatmapInfo = currentBeatmap.Value.BeatmapInfo;
                     break;
             }
 
-            var beatmapString = beatmap.OnlineBeatmapID.HasValue ? $"[{api.WebsiteRootUrl}/b/{beatmap.OnlineBeatmapID} {beatmap}]" : beatmap.ToString();
+            string beatmapString = beatmapInfo.OnlineID > 0 ? $"[{api.WebsiteRootUrl}/b/{beatmapInfo.OnlineID} {beatmapInfo}]" : beatmapInfo.ToString();
 
             channelManager.PostMessage($"is {verb} {beatmapString}", true, target);
             Expire();

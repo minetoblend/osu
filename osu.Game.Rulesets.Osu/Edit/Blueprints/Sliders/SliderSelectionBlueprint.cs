@@ -11,9 +11,12 @@ using osu.Framework.Graphics;
 using osu.Framework.Graphics.Primitives;
 using osu.Framework.Graphics.UserInterface;
 using osu.Framework.Input.Events;
+using osu.Framework.Utils;
+using osu.Game.Beatmaps.ControlPoints;
 using osu.Game.Graphics.UserInterface;
 using osu.Game.Rulesets.Edit;
 using osu.Game.Rulesets.Objects;
+using osu.Game.Rulesets.Objects.Types;
 using osu.Game.Rulesets.Osu.Edit.Blueprints.Sliders.Components;
 using osu.Game.Rulesets.Osu.Objects;
 using osu.Game.Rulesets.Osu.Objects.Drawables;
@@ -46,6 +49,9 @@ namespace osu.Game.Rulesets.Osu.Edit.Blueprints.Sliders
 
         [Resolved(CanBeNull = true)]
         private IEditorChangeHandler changeHandler { get; set; }
+
+        [Resolved(CanBeNull = true)]
+        private BindableBeatDivisor beatDivisor { get; set; }
 
         public override Quad SelectionQuad => BodyPiece.ScreenSpaceDrawQuad;
 
@@ -161,7 +167,7 @@ namespace osu.Game.Rulesets.Osu.Edit.Blueprints.Sliders
         {
             Debug.Assert(placementControlPointIndex != null);
 
-            HitObject.Path.ControlPoints[placementControlPointIndex.Value].Position.Value = e.MousePosition - HitObject.Position;
+            HitObject.Path.ControlPoints[placementControlPointIndex.Value].Position = e.MousePosition - HitObject.Position;
         }
 
         protected override void OnDragEnd(DragEndEvent e)
@@ -173,6 +179,20 @@ namespace osu.Game.Rulesets.Osu.Edit.Blueprints.Sliders
             }
         }
 
+        protected override bool OnKeyDown(KeyDownEvent e)
+        {
+            if (!IsSelected)
+                return false;
+
+            if (e.Key == Key.F && e.ControlPressed && e.ShiftPressed)
+            {
+                convertToStream();
+                return true;
+            }
+
+            return false;
+        }
+
         private int addControlPoint(Vector2 position)
         {
             position -= HitObject.Position;
@@ -182,7 +202,7 @@ namespace osu.Game.Rulesets.Osu.Edit.Blueprints.Sliders
 
             for (int i = 0; i < controlPoints.Count - 1; i++)
             {
-                float dist = new Line(controlPoints[i].Position.Value, controlPoints[i + 1].Position.Value).DistanceToPoint(position);
+                float dist = new Line(controlPoints[i].Position, controlPoints[i + 1].Position).DistanceToPoint(position);
 
                 if (dist < minDistance)
                 {
@@ -192,7 +212,7 @@ namespace osu.Game.Rulesets.Osu.Edit.Blueprints.Sliders
             }
 
             // Move the control points from the insertion index onwards to make room for the insertion
-            controlPoints.Insert(insertionIndex, new PathControlPoint { Position = { Value = position } });
+            controlPoints.Insert(insertionIndex, new PathControlPoint { Position = position });
 
             return insertionIndex;
         }
@@ -207,8 +227,8 @@ namespace osu.Game.Rulesets.Osu.Edit.Blueprints.Sliders
             {
                 // The first control point in the slider must have a type, so take it from the previous "first" one
                 // Todo: Should be handled within SliderPath itself
-                if (c == controlPoints[0] && controlPoints.Count > 1 && controlPoints[1].Type.Value == null)
-                    controlPoints[1].Type.Value = controlPoints[0].Type.Value;
+                if (c == controlPoints[0] && controlPoints.Count > 1 && controlPoints[1].Type == null)
+                    controlPoints[1].Type = controlPoints[0].Type;
 
                 controlPoints.Remove(c);
             }
@@ -222,21 +242,68 @@ namespace osu.Game.Rulesets.Osu.Edit.Blueprints.Sliders
 
             // The path will have a non-zero offset if the head is removed, but sliders don't support this behaviour since the head is positioned at the slider's position
             // So the slider needs to be offset by this amount instead, and all control points offset backwards such that the path is re-positioned at (0, 0)
-            Vector2 first = controlPoints[0].Position.Value;
+            Vector2 first = controlPoints[0].Position;
             foreach (var c in controlPoints)
-                c.Position.Value -= first;
+                c.Position -= first;
             HitObject.Position += first;
         }
 
         private void updatePath()
         {
-            HitObject.Path.ExpectedDistance.Value = composer?.GetSnappedDistanceFromDistance(HitObject.StartTime, (float)HitObject.Path.CalculatedDistance) ?? (float)HitObject.Path.CalculatedDistance;
+            HitObject.Path.ExpectedDistance.Value = composer?.GetSnappedDistanceFromDistance(HitObject, (float)HitObject.Path.CalculatedDistance) ?? (float)HitObject.Path.CalculatedDistance;
             editorBeatmap?.Update(HitObject);
+        }
+
+        private void convertToStream()
+        {
+            if (editorBeatmap == null || changeHandler == null || beatDivisor == null)
+                return;
+
+            var timingPoint = editorBeatmap.ControlPointInfo.TimingPointAt(HitObject.StartTime);
+            double streamSpacing = timingPoint.BeatLength / beatDivisor.Value;
+
+            changeHandler.BeginChange();
+
+            int i = 0;
+            double time = HitObject.StartTime;
+
+            while (!Precision.DefinitelyBigger(time, HitObject.GetEndTime(), 1))
+            {
+                // positionWithRepeats is a fractional number in the range of [0, HitObject.SpanCount()]
+                // and indicates how many fractional spans of a slider have passed up to time.
+                double positionWithRepeats = (time - HitObject.StartTime) / HitObject.Duration * HitObject.SpanCount();
+                double pathPosition = positionWithRepeats - (int)positionWithRepeats;
+                // every second span is in the reverse direction - need to reverse the path position.
+                if (Precision.AlmostBigger(positionWithRepeats % 2, 1))
+                    pathPosition = 1 - pathPosition;
+
+                Vector2 position = HitObject.Position + HitObject.Path.PositionAt(pathPosition);
+
+                var samplePoint = (SampleControlPoint)HitObject.SampleControlPoint.DeepClone();
+                samplePoint.Time = time;
+
+                editorBeatmap.Add(new HitCircle
+                {
+                    StartTime = time,
+                    Position = position,
+                    NewCombo = i == 0 && HitObject.NewCombo,
+                    SampleControlPoint = samplePoint,
+                    Samples = HitObject.HeadCircle.Samples.Select(s => s.With()).ToList()
+                });
+
+                i += 1;
+                time = HitObject.StartTime + i * streamSpacing;
+            }
+
+            editorBeatmap.Remove(HitObject);
+
+            changeHandler.EndChange();
         }
 
         public override MenuItem[] ContextMenuItems => new MenuItem[]
         {
             new OsuMenuItem("Add control point", MenuItemType.Standard, () => addControlPoint(rightClickPosition)),
+            new OsuMenuItem("Convert to stream", MenuItemType.Destructive, convertToStream),
         };
 
         // Always refer to the drawable object's slider body so subsequent movement deltas are calculated with updated positions.

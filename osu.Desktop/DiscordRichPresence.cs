@@ -11,10 +11,10 @@ using osu.Framework.Graphics;
 using osu.Framework.Logging;
 using osu.Game.Configuration;
 using osu.Game.Online.API;
+using osu.Game.Online.API.Requests.Responses;
 using osu.Game.Rulesets;
 using osu.Game.Users;
 using LogLevel = osu.Framework.Logging.LogLevel;
-using User = osu.Game.Users.User;
 
 namespace osu.Desktop
 {
@@ -27,7 +27,7 @@ namespace osu.Desktop
         [Resolved]
         private IBindable<RulesetInfo> ruleset { get; set; }
 
-        private IBindable<User> user;
+        private IBindable<APIUser> user;
 
         private readonly IBindable<UserStatus> status = new Bindable<UserStatus>();
         private readonly IBindable<UserActivity> activity = new Bindable<UserActivity>();
@@ -139,11 +139,11 @@ namespace osu.Desktop
         {
             switch (activity)
             {
-                case UserActivity.SoloGame solo:
-                    return solo.Beatmap.ToString();
+                case UserActivity.InGame game:
+                    return game.BeatmapInfo.ToString();
 
                 case UserActivity.Editing edit:
-                    return edit.Beatmap.ToString();
+                    return edit.BeatmapInfo.ToString();
 
                 case UserActivity.InLobby lobby:
                     return privacyMode.Value == DiscordRichPresenceMode.Limited ? string.Empty : lobby.Room.Name.Value;

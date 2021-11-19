@@ -3,10 +3,12 @@
 
 using System.Collections.Generic;
 using System.Linq;
+using osu.Framework.Input;
 using osu.Framework.Input.Bindings;
 using osu.Game.Database;
 using osu.Game.Input.Bindings;
 using osu.Game.Rulesets;
+using Realms;
 
 #nullable enable
 
@@ -15,10 +17,12 @@ namespace osu.Game.Input
     public class RealmKeyBindingStore
     {
         private readonly RealmContextFactory realmFactory;
+        private readonly ReadableKeyCombinationProvider keyCombinationProvider;
 
-        public RealmKeyBindingStore(RealmContextFactory realmFactory)
+        public RealmKeyBindingStore(RealmContextFactory realmFactory, ReadableKeyCombinationProvider keyCombinationProvider)
         {
             this.realmFactory = realmFactory;
+            this.keyCombinationProvider = keyCombinationProvider;
         }
 
         /// <summary>
@@ -30,11 +34,11 @@ namespace osu.Game.Input
         {
             List<string> combinations = new List<string>();
 
-            using (var context = realmFactory.GetForRead())
+            using (var context = realmFactory.CreateContext())
             {
-                foreach (var action in context.Realm.All<RealmKeyBinding>().Where(b => b.RulesetID == null && (GlobalAction)b.ActionInt == globalAction))
+                foreach (var action in context.All<RealmKeyBinding>().Where(b => b.RulesetID == null && (GlobalAction)b.ActionInt == globalAction))
                 {
-                    string str = action.KeyCombination.ReadableString();
+                    string str = keyCombinationProvider.GetReadableString(action.KeyCombination);
 
                     // even if found, the readable string may be empty for an unbound action.
                     if (str.Length > 0)
@@ -46,49 +50,51 @@ namespace osu.Game.Input
         }
 
         /// <summary>
-        /// Register a new type of <see cref="KeyBindingContainer{T}"/>, adding default bindings from <see cref="KeyBindingContainer.DefaultKeyBindings"/>.
+        /// Register all defaults for this store.
         /// </summary>
         /// <param name="container">The container to populate defaults from.</param>
-        public void Register(KeyBindingContainer container) => insertDefaults(container.DefaultKeyBindings);
-
-        /// <summary>
-        /// Register a ruleset, adding default bindings for each of its variants.
-        /// </summary>
-        /// <param name="ruleset">The ruleset to populate defaults from.</param>
-        public void Register(RulesetInfo ruleset)
+        /// <param name="rulesets">The rulesets to populate defaults from.</param>
+        public void Register(KeyBindingContainer container, IEnumerable<RulesetInfo> rulesets)
         {
-            var instance = ruleset.CreateInstance();
-
-            foreach (var variant in instance.AvailableVariants)
-                insertDefaults(instance.GetDefaultKeyBindings(variant), ruleset.ID, variant);
-        }
-
-        private void insertDefaults(IEnumerable<IKeyBinding> defaults, int? rulesetId = null, int? variant = null)
-        {
-            using (var usage = realmFactory.GetForWrite())
+            using (var realm = realmFactory.CreateContext())
+            using (var transaction = realm.BeginWrite())
             {
-                // compare counts in database vs defaults
-                foreach (var defaultsForAction in defaults.GroupBy(k => k.Action))
+                // intentionally flattened to a list rather than querying against the IQueryable, as nullable fields being queried against aren't indexed.
+                // this is much faster as a result.
+                var existingBindings = realm.All<RealmKeyBinding>().ToList();
+
+                insertDefaults(realm, existingBindings, container.DefaultKeyBindings);
+
+                foreach (var ruleset in rulesets)
                 {
-                    int existingCount = usage.Realm.All<RealmKeyBinding>().Count(k => k.RulesetID == rulesetId && k.Variant == variant && k.ActionInt == (int)defaultsForAction.Key);
-
-                    if (defaultsForAction.Count() <= existingCount)
-                        continue;
-
-                    foreach (var k in defaultsForAction.Skip(existingCount))
-                    {
-                        // insert any defaults which are missing.
-                        usage.Realm.Add(new RealmKeyBinding
-                        {
-                            KeyCombinationString = k.KeyCombination.ToString(),
-                            ActionInt = (int)k.Action,
-                            RulesetID = rulesetId,
-                            Variant = variant
-                        });
-                    }
+                    var instance = ruleset.CreateInstance();
+                    foreach (int variant in instance.AvailableVariants)
+                        insertDefaults(realm, existingBindings, instance.GetDefaultKeyBindings(variant), ruleset.ID, variant);
                 }
 
-                usage.Commit();
+                transaction.Commit();
+            }
+        }
+
+        private void insertDefaults(Realm realm, List<RealmKeyBinding> existingBindings, IEnumerable<IKeyBinding> defaults, int? rulesetId = null, int? variant = null)
+        {
+            // compare counts in database vs defaults for each action type.
+            foreach (var defaultsForAction in defaults.GroupBy(k => k.Action))
+            {
+                // avoid performing redundant queries when the database is empty and needs to be re-filled.
+                int existingCount = existingBindings.Count(k => k.RulesetID == rulesetId && k.Variant == variant && k.ActionInt == (int)defaultsForAction.Key);
+
+                if (defaultsForAction.Count() <= existingCount)
+                    continue;
+
+                // insert any defaults which are missing.
+                realm.Add(defaultsForAction.Skip(existingCount).Select(k => new RealmKeyBinding
+                {
+                    KeyCombinationString = k.KeyCombination.ToString(),
+                    ActionInt = (int)k.Action,
+                    RulesetID = rulesetId,
+                    Variant = variant
+                }));
             }
         }
 

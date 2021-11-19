@@ -54,8 +54,8 @@ namespace osu.Game.Tests.Visual.Multiplayer
                 beatmaps.Add(new BeatmapInfo
                 {
                     Ruleset = new OsuRuleset().RulesetInfo,
-                    OnlineBeatmapID = beatmapId,
-                    Version = $"{beatmapId} (length {TimeSpan.FromMilliseconds(length):m\\:ss}, bpm {bpm:0.#})",
+                    OnlineID = beatmapId,
+                    DifficultyName = $"{beatmapId} (length {TimeSpan.FromMilliseconds(length):m\\:ss}, bpm {bpm:0.#})",
                     Length = length,
                     BPM = bpm,
                     BaseDifficulty = new BeatmapDifficulty
@@ -67,7 +67,7 @@ namespace osu.Game.Tests.Visual.Multiplayer
 
             manager.Import(new BeatmapSetInfo
             {
-                OnlineBeatmapSetID = 10,
+                OnlineID = 10,
                 Hash = new MemoryStream(Encoding.UTF8.GetBytes(Guid.NewGuid().ToString())).ComputeMD5Hash(),
                 Metadata = new BeatmapMetadata
                 {
@@ -93,7 +93,7 @@ namespace osu.Game.Tests.Visual.Multiplayer
                 SelectedMods.Value = Array.Empty<Mod>();
             });
 
-            AddStep("create song select", () => LoadScreen(songSelect = new TestPlaylistsSongSelect()));
+            AddStep("create song select", () => LoadScreen(songSelect = new TestPlaylistsSongSelect(SelectedRoom.Value)));
             AddUntilStep("wait for present", () => songSelect.IsCurrentScreen());
         }
 
@@ -183,6 +183,11 @@ namespace osu.Game.Tests.Visual.Multiplayer
         private class TestPlaylistsSongSelect : PlaylistsSongSelect
         {
             public new MatchBeatmapDetailArea BeatmapDetails => (MatchBeatmapDetailArea)base.BeatmapDetails;
+
+            public TestPlaylistsSongSelect(Room room)
+                : base(room)
+            {
+            }
         }
     }
 }

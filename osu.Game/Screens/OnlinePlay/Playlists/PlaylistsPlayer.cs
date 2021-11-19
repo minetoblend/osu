@@ -8,11 +8,13 @@ using System.Threading.Tasks;
 using osu.Framework.Allocation;
 using osu.Framework.Bindables;
 using osu.Framework.Screens;
+using osu.Game.Extensions;
 using osu.Game.Online.Rooms;
 using osu.Game.Rulesets;
 using osu.Game.Scoring;
 using osu.Game.Screens.Play;
 using osu.Game.Screens.Ranking;
+using osu.Game.Users;
 
 namespace osu.Game.Screens.OnlinePlay.Playlists
 {
@@ -20,8 +22,10 @@ namespace osu.Game.Screens.OnlinePlay.Playlists
     {
         public Action Exited;
 
-        public PlaylistsPlayer(PlaylistItem playlistItem, PlayerConfiguration configuration = null)
-            : base(playlistItem, configuration)
+        protected override UserActivity InitialActivity => new UserActivity.InPlaylistGame(Beatmap.Value.BeatmapInfo, Ruleset.Value);
+
+        public PlaylistsPlayer(Room room, PlaylistItem playlistItem, PlayerConfiguration configuration = null)
+            : base(room, playlistItem, configuration)
         {
         }
 
@@ -29,10 +33,10 @@ namespace osu.Game.Screens.OnlinePlay.Playlists
         private void load(IBindable<RulesetInfo> ruleset)
         {
             // Sanity checks to ensure that PlaylistsPlayer matches the settings for the current PlaylistItem
-            if (Beatmap.Value.BeatmapInfo.OnlineBeatmapID != PlaylistItem.Beatmap.Value.OnlineBeatmapID)
+            if (!Beatmap.Value.BeatmapInfo.MatchesOnlineID(PlaylistItem.Beatmap.Value))
                 throw new InvalidOperationException("Current Beatmap does not match PlaylistItem's Beatmap");
 
-            if (ruleset.Value.ID != PlaylistItem.Ruleset.Value.ID)
+            if (!ruleset.Value.MatchesOnlineID(PlaylistItem.Ruleset.Value))
                 throw new InvalidOperationException("Current Ruleset does not match PlaylistItem's Ruleset");
 
             if (!PlaylistItem.RequiredMods.All(m => Mods.Value.Any(m.Equals)))
@@ -51,8 +55,8 @@ namespace osu.Game.Screens.OnlinePlay.Playlists
 
         protected override ResultsScreen CreateResults(ScoreInfo score)
         {
-            Debug.Assert(RoomId.Value != null);
-            return new PlaylistsResultsScreen(score, RoomId.Value.Value, PlaylistItem, true);
+            Debug.Assert(Room.RoomID.Value != null);
+            return new PlaylistsResultsScreen(score, Room.RoomID.Value.Value, PlaylistItem, true);
         }
 
         protected override async Task PrepareScoreForResultsAsync(Score score)

@@ -27,11 +27,13 @@ using osu.Game.Rulesets.Mania.Beatmaps;
 using osu.Game.Rulesets.Mania.Configuration;
 using osu.Game.Rulesets.Mania.Difficulty;
 using osu.Game.Rulesets.Mania.Edit;
+using osu.Game.Rulesets.Mania.Edit.Setup;
 using osu.Game.Rulesets.Mania.Scoring;
 using osu.Game.Rulesets.Mania.Skinning.Legacy;
 using osu.Game.Rulesets.Scoring;
 using osu.Game.Skinning;
 using osu.Game.Scoring;
+using osu.Game.Screens.Edit.Setup;
 using osu.Game.Screens.Ranking.Statistics;
 
 namespace osu.Game.Rulesets.Mania
@@ -270,7 +272,7 @@ namespace osu.Game.Rulesets.Mania
 
         public override Drawable CreateIcon() => new SpriteIcon { Icon = OsuIcon.RulesetMania };
 
-        public override DifficultyCalculator CreateDifficultyCalculator(WorkingBeatmap beatmap) => new ManiaDifficultyCalculator(this, beatmap);
+        public override DifficultyCalculator CreateDifficultyCalculator(IWorkingBeatmap beatmap) => new ManiaDifficultyCalculator(RulesetInfo, beatmap);
 
         public int LegacyID => 3;
 
@@ -314,7 +316,7 @@ namespace osu.Game.Rulesets.Mania
 
                 case PlayfieldType.Dual:
                 {
-                    var keys = getDualStageKeyCount(variant);
+                    int keys = getDualStageKeyCount(variant);
                     return $"{keys}K + {keys}K";
                 }
             }
@@ -390,6 +392,8 @@ namespace osu.Game.Rulesets.Mania
         {
             return new ManiaFilterCriteria();
         }
+
+        public override RulesetSetupSection CreateEditorSetupSection() => new ManiaSetupSection();
     }
 
     public enum PlayfieldType

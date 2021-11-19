@@ -1,6 +1,9 @@
 // Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
+using System;
+using System.Diagnostics;
+using Microsoft.AspNetCore.SignalR;
 using osu.Framework.Allocation;
 using osu.Framework.Logging;
 using osu.Framework.Screens;
@@ -24,9 +27,11 @@ namespace osu.Game.Screens.OnlinePlay.Multiplayer
         /// <summary>
         /// Construct a new instance of multiplayer song select.
         /// </summary>
+        /// <param name="room">The room.</param>
         /// <param name="beatmap">An optional initial beatmap selection to perform.</param>
         /// <param name="ruleset">An optional initial ruleset selection to perform.</param>
-        public MultiplayerMatchSongSelect(WorkingBeatmap beatmap = null, RulesetInfo ruleset = null)
+        public MultiplayerMatchSongSelect(Room room, WorkingBeatmap beatmap = null, RulesetInfo ruleset = null)
+            : base(room)
         {
             if (beatmap != null || ruleset != null)
             {
@@ -58,13 +63,28 @@ namespace osu.Game.Screens.OnlinePlay.Multiplayer
                     {
                         loadingLayer.Hide();
 
-                        if (t.IsCompletedSuccessfully)
-                            this.Exit();
-                        else
+                        if (t.IsFaulted)
                         {
-                            Logger.Log($"Could not use current beatmap ({t.Exception?.Message})", level: LogLevel.Important);
+                            Exception exception = t.Exception;
+
+                            if (exception is AggregateException ae)
+                                exception = ae.InnerException;
+
+                            Debug.Assert(exception != null);
+
+                            string message = exception is HubException
+                                // HubExceptions arrive with additional message context added, but we want to display the human readable message:
+                                // "An unexpected error occurred invoking 'AddPlaylistItem' on the server.InvalidStateException: Can't enqueue more than 3 items at once."
+                                // We generally use the message field for a user-parseable error (eventually to be replaced), so drop the first part for now.
+                                ? exception.Message.Substring(exception.Message.IndexOf(':') + 1).Trim()
+                                : exception.Message;
+
+                            Logger.Log(message, level: LogLevel.Important);
                             Carousel.AllowSelection = true;
+                            return;
                         }
+
+                        this.Exit();
                     });
                 });
             }

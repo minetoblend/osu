@@ -40,7 +40,7 @@ namespace osu.Game.Rulesets.Osu.Utils
         /// <returns>The new position of the hit object, relative to the previous one.</returns>
         public static Vector2 RotateAwayFromEdge(Vector2 prevObjectPos, Vector2 posRelativeToPrev, float rotationRatio = 0.5f)
         {
-            var relativeRotationDistance = 0f;
+            float relativeRotationDistance = 0f;
 
             if (prevObjectPos.X < playfield_middle.X)
             {
@@ -88,16 +88,16 @@ namespace osu.Game.Rulesets.Osu.Utils
         /// <returns>The rotated vector.</returns>
         public static Vector2 RotateVectorTowardsVector(Vector2 initial, Vector2 destination, float rotationRatio)
         {
-            var initialAngleRad = MathF.Atan2(initial.Y, initial.X);
-            var destAngleRad = MathF.Atan2(destination.Y, destination.X);
+            float initialAngleRad = MathF.Atan2(initial.Y, initial.X);
+            float destAngleRad = MathF.Atan2(destination.Y, destination.X);
 
-            var diff = destAngleRad - initialAngleRad;
+            float diff = destAngleRad - initialAngleRad;
 
             while (diff < -MathF.PI) diff += 2 * MathF.PI;
 
             while (diff > MathF.PI) diff -= 2 * MathF.PI;
 
-            var finalAngleRad = initialAngleRad + rotationRatio * diff;
+            float finalAngleRad = initialAngleRad + rotationRatio * diff;
 
             return new Vector2(
                 initial.Length * MathF.Cos(finalAngleRad),
@@ -119,9 +119,9 @@ namespace osu.Game.Rulesets.Osu.Utils
             slider.NestedHitObjects.OfType<SliderTick>().ForEach(h => h.Position = new Vector2(OsuPlayfield.BASE_SIZE.X - h.Position.X, h.Position.Y));
             slider.NestedHitObjects.OfType<SliderRepeat>().ForEach(h => h.Position = new Vector2(OsuPlayfield.BASE_SIZE.X - h.Position.X, h.Position.Y));
 
-            var controlPoints = slider.Path.ControlPoints.Select(p => new PathControlPoint(p.Position.Value, p.Type.Value)).ToArray();
+            var controlPoints = slider.Path.ControlPoints.Select(p => new PathControlPoint(p.Position, p.Type)).ToArray();
             foreach (var point in controlPoints)
-                point.Position.Value = new Vector2(-point.Position.Value.X, point.Position.Value.Y);
+                point.Position = new Vector2(-point.Position.X, point.Position.Y);
 
             slider.Path = new SliderPath(controlPoints, slider.Path.ExpectedDistance.Value);
         }
@@ -140,9 +140,9 @@ namespace osu.Game.Rulesets.Osu.Utils
             slider.NestedHitObjects.OfType<SliderTick>().ForEach(h => h.Position = new Vector2(h.Position.X, OsuPlayfield.BASE_SIZE.Y - h.Position.Y));
             slider.NestedHitObjects.OfType<SliderRepeat>().ForEach(h => h.Position = new Vector2(h.Position.X, OsuPlayfield.BASE_SIZE.Y - h.Position.Y));
 
-            var controlPoints = slider.Path.ControlPoints.Select(p => new PathControlPoint(p.Position.Value, p.Type.Value)).ToArray();
+            var controlPoints = slider.Path.ControlPoints.Select(p => new PathControlPoint(p.Position, p.Type)).ToArray();
             foreach (var point in controlPoints)
-                point.Position.Value = new Vector2(point.Position.Value.X, -point.Position.Value.Y);
+                point.Position = new Vector2(point.Position.X, -point.Position.Y);
 
             slider.Path = new SliderPath(controlPoints, slider.Path.ExpectedDistance.Value);
         }

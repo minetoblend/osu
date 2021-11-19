@@ -3,7 +3,6 @@
 
 using osu.Framework.Allocation;
 using osu.Framework.Bindables;
-using osuTK.Graphics;
 using osu.Framework.Extensions.Color4Extensions;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Cursor;
@@ -13,6 +12,7 @@ using osu.Framework.Input.Events;
 using osu.Framework.Localisation;
 using osu.Game.Graphics;
 using osu.Game.Graphics.UserInterface;
+using osuTK;
 
 namespace osu.Game.Overlays
 {
@@ -38,37 +38,27 @@ namespace osu.Game.Overlays
                 current.ValueChanged += _ => UpdateState();
                 current.DefaultChanged += _ => UpdateState();
                 current.DisabledChanged += _ => UpdateState();
-                UpdateState();
+
+                if (IsLoaded)
+                    UpdateState();
             }
         }
 
-        private Color4 buttonColour;
+        [Resolved]
+        private OsuColour colours { get; set; }
 
-        private bool hovering;
-
-        public RestoreDefaultValueButton()
-        {
-            Height = 1;
-
-            RelativeSizeAxes = Axes.Y;
-            Width = SettingsPanel.CONTENT_MARGINS;
-        }
+        private const float size = 4;
 
         [BackgroundDependencyLoader]
         private void load(OsuColour colour)
         {
-            BackgroundColour = colour.Yellow;
-            buttonColour = colour.Yellow;
-            Content.Width = 0.33f;
-            Content.CornerRadius = 3;
-            Content.EdgeEffect = new EdgeEffectParameters
-            {
-                Colour = buttonColour.Opacity(0.1f),
-                Type = EdgeEffectType.Glow,
-                Radius = 2,
-            };
+            BackgroundColour = colour.Lime1;
+            Size = new Vector2(3 * size);
 
-            Padding = new MarginPadding { Vertical = 1.5f };
+            Content.RelativeSizeAxes = Axes.None;
+            Content.Size = new Vector2(size);
+            Content.CornerRadius = size / 2;
+
             Alpha = 0f;
 
             Action += () =>
@@ -81,34 +71,55 @@ namespace osu.Game.Overlays
         protected override void LoadComplete()
         {
             base.LoadComplete();
-            UpdateState();
+            updateState();
+            FinishTransforms(true);
         }
 
         public LocalisableString TooltipText => "revert to default";
 
         protected override bool OnHover(HoverEvent e)
         {
-            hovering = true;
             UpdateState();
             return false;
         }
 
         protected override void OnHoverLost(HoverLostEvent e)
         {
-            hovering = false;
             UpdateState();
         }
 
         public void UpdateState() => Scheduler.AddOnce(updateState);
+
+        private const double fade_duration = 200;
 
         private void updateState()
         {
             if (current == null)
                 return;
 
-            this.FadeTo(current.IsDefault ? 0f :
-                hovering && !current.Disabled ? 1f : 0.65f, 200, Easing.OutQuint);
-            this.FadeColour(current.Disabled ? Color4.Gray : buttonColour, 200, Easing.OutQuint);
+            Enabled.Value = !Current.Disabled;
+
+            if (!Current.Disabled)
+            {
+                this.FadeTo(Current.IsDefault ? 0 : 1, fade_duration, Easing.OutQuint);
+                Background.FadeColour(IsHovered ? colours.Lime0 : colours.Lime1, fade_duration, Easing.OutQuint);
+                Content.TweenEdgeEffectTo(new EdgeEffectParameters
+                {
+                    Colour = (IsHovered ? colours.Lime1 : colours.Lime3).Opacity(0.4f),
+                    Radius = IsHovered ? 8 : 4,
+                    Type = EdgeEffectType.Glow
+                }, fade_duration, Easing.OutQuint);
+            }
+            else
+            {
+                Background.FadeColour(colours.Lime3, fade_duration, Easing.OutQuint);
+                Content.TweenEdgeEffectTo(new EdgeEffectParameters
+                {
+                    Colour = colours.Lime3.Opacity(0.1f),
+                    Radius = 2,
+                    Type = EdgeEffectType.Glow
+                }, fade_duration, Easing.OutQuint);
+            }
         }
     }
 }

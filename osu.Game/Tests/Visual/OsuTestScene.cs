@@ -7,7 +7,6 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
-using osu.Framework;
 using osu.Framework.Allocation;
 using osu.Framework.Audio;
 using osu.Framework.Audio.Track;
@@ -21,6 +20,7 @@ using osu.Framework.Timing;
 using osu.Game.Beatmaps;
 using osu.Game.Database;
 using osu.Game.Online.API;
+using osu.Game.Online.API.Requests.Responses;
 using osu.Game.Overlays;
 using osu.Game.Rulesets;
 using osu.Game.Rulesets.Mods;
@@ -100,7 +100,7 @@ namespace osu.Game.Tests.Visual
                 return factory;
             });
 
-            RecycleLocalStorage();
+            RecycleLocalStorage(false);
 
             var baseDependencies = base.CreateChildDependencies(parent);
 
@@ -140,7 +140,7 @@ namespace osu.Game.Tests.Visual
 
         protected virtual bool UseFreshStoragePerRun => false;
 
-        public virtual void RecycleLocalStorage()
+        public virtual void RecycleLocalStorage(bool isDisposing)
         {
             if (localStorage?.IsValueCreated == true)
             {
@@ -155,7 +155,7 @@ namespace osu.Game.Tests.Visual
             }
 
             localStorage =
-                new Lazy<Storage>(() => isolatedHostStorage ?? new NativeStorage(Path.Combine(RuntimeInfo.StartupDirectory, $"{GetType().Name}-{Guid.NewGuid()}")));
+                new Lazy<Storage>(() => isolatedHostStorage ?? new TemporaryNativeStorage($"{GetType().Name}-{Guid.NewGuid()}"));
         }
 
         [Resolved]
@@ -174,6 +174,66 @@ namespace osu.Game.Tests.Visual
         protected virtual Ruleset CreateRuleset() => null;
 
         protected virtual IBeatmap CreateBeatmap(RulesetInfo ruleset) => new TestBeatmap(ruleset);
+
+        /// <summary>
+        /// Returns a sample API Beatmap with BeatmapSet populated.
+        /// </summary>
+        /// <param name="ruleset">The ruleset to create the sample model using. osu! ruleset will be used if not specified.</param>
+        protected APIBeatmap CreateAPIBeatmap(RulesetInfo ruleset = null)
+        {
+            var beatmapSet = CreateAPIBeatmapSet(ruleset ?? Ruleset.Value);
+
+            // Avoid circular reference.
+            var beatmap = beatmapSet.Beatmaps.First();
+            beatmapSet.Beatmaps = Array.Empty<APIBeatmap>();
+
+            // Populate the set as that's generally what we expect from the API.
+            beatmap.BeatmapSet = beatmapSet;
+
+            return beatmap;
+        }
+
+        /// <summary>
+        /// Returns a sample API BeatmapSet with beatmaps populated.
+        /// </summary>
+        /// <param name="ruleset">The ruleset to create the sample model using. osu! ruleset will be used if not specified.</param>
+        protected APIBeatmapSet CreateAPIBeatmapSet(RulesetInfo ruleset = null)
+        {
+            var beatmap = CreateBeatmap(ruleset ?? Ruleset.Value).BeatmapInfo;
+
+            return new APIBeatmapSet
+            {
+                OnlineID = ((IBeatmapSetInfo)beatmap.BeatmapSet).OnlineID,
+                Status = BeatmapSetOnlineStatus.Ranked,
+                Covers = new BeatmapSetOnlineCovers
+                {
+                    Cover = "https://assets.ppy.sh/beatmaps/163112/covers/cover.jpg",
+                    Card = "https://assets.ppy.sh/beatmaps/163112/covers/card.jpg",
+                    List = "https://assets.ppy.sh/beatmaps/163112/covers/list.jpg"
+                },
+                Title = beatmap.BeatmapSet.Metadata.Title,
+                TitleUnicode = beatmap.BeatmapSet.Metadata.TitleUnicode,
+                Artist = beatmap.BeatmapSet.Metadata.Artist,
+                ArtistUnicode = beatmap.BeatmapSet.Metadata.ArtistUnicode,
+                Author = beatmap.BeatmapSet.Metadata.Author,
+                Source = beatmap.BeatmapSet.Metadata.Source,
+                Tags = beatmap.BeatmapSet.Metadata.Tags,
+                Beatmaps = new[]
+                {
+                    new APIBeatmap
+                    {
+                        OnlineID = ((IBeatmapInfo)beatmap).OnlineID,
+                        OnlineBeatmapSetID = ((IBeatmapSetInfo)beatmap.BeatmapSet).OnlineID,
+                        Status = beatmap.Status,
+                        Checksum = beatmap.MD5Hash,
+                        AuthorID = beatmap.Metadata.Author.OnlineID,
+                        RulesetID = beatmap.RulesetID,
+                        StarRating = beatmap.StarRating,
+                        DifficultyName = beatmap.DifficultyName,
+                    }
+                }
+            };
+        }
 
         protected WorkingBeatmap CreateWorkingBeatmap(RulesetInfo ruleset) =>
             CreateWorkingBeatmap(CreateBeatmap(ruleset));
@@ -199,7 +259,7 @@ namespace osu.Game.Tests.Visual
             if (contextFactory?.IsValueCreated == true)
                 contextFactory.Value.ResetDatabase();
 
-            RecycleLocalStorage();
+            RecycleLocalStorage(true);
         }
 
         protected override ITestSceneTestRunner CreateRunner() => new OsuTestSceneTestRunner();
@@ -366,6 +426,11 @@ namespace osu.Game.Tests.Visual
                 // TestScene.cs is checking the IsLoaded state (on another thread) and expects
                 // the runner to be loaded at that point.
                 Add(runner = new TestSceneTestRunner.TestRunner());
+            }
+
+            protected override void InitialiseFonts()
+            {
+                // skip fonts load as it's not required for testing purposes.
             }
 
             public void RunTestBlocking(TestScene test) => runner.RunTestBlocking(test);

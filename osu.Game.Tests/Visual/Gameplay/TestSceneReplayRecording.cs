@@ -1,6 +1,7 @@
 // Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
+using System;
 using System.Collections.Generic;
 using osu.Framework.Allocation;
 using osu.Framework.Graphics;
@@ -13,6 +14,8 @@ using osu.Game.Beatmaps;
 using osu.Game.Graphics.Sprites;
 using osu.Game.Replays;
 using osu.Game.Rulesets;
+using osu.Game.Rulesets.Mods;
+using osu.Game.Rulesets.Osu;
 using osu.Game.Rulesets.Replays;
 using osu.Game.Rulesets.UI;
 using osu.Game.Scoring;
@@ -30,7 +33,7 @@ namespace osu.Game.Tests.Visual.Gameplay
         private readonly TestRulesetInputManager recordingManager;
 
         [Cached]
-        private GameplayBeatmap gameplayBeatmap = new GameplayBeatmap(new Beatmap());
+        private GameplayState gameplayState = new GameplayState(new Beatmap(), new OsuRuleset(), Array.Empty<Mod>());
 
         public TestSceneReplayRecording()
         {
@@ -45,9 +48,13 @@ namespace osu.Game.Tests.Visual.Gameplay
                     {
                         recordingManager = new TestRulesetInputManager(new TestSceneModSettings.TestRulesetInfo(), 0, SimultaneousBindingMode.Unique)
                         {
-                            Recorder = new TestReplayRecorder(new Score { Replay = replay })
+                            Recorder = new TestReplayRecorder(new Score
                             {
-                                ScreenSpaceToGamefield = pos => recordingManager.ToLocalSpace(pos)
+                                Replay = replay,
+                                ScoreInfo = { BeatmapInfo = gameplayState.Beatmap.BeatmapInfo }
+                            })
+                            {
+                                ScreenSpaceToGamefield = pos => recordingManager?.ToLocalSpace(pos) ?? Vector2.Zero,
                             },
                             Child = new Container
                             {
@@ -77,7 +84,7 @@ namespace osu.Game.Tests.Visual.Gameplay
                         {
                             ReplayInputHandler = new TestFramedReplayInputHandler(replay)
                             {
-                                GamefieldToScreenSpace = pos => playbackManager.ToScreenSpace(pos),
+                                GamefieldToScreenSpace = pos => playbackManager?.ToScreenSpace(pos) ?? Vector2.Zero,
                             },
                             Child = new Container
                             {
@@ -155,13 +162,16 @@ namespace osu.Game.Tests.Visual.Gameplay
             return base.OnMouseMove(e);
         }
 
-        public bool OnPressed(TestAction action)
+        public bool OnPressed(KeyBindingPressEvent<TestAction> e)
         {
+            if (e.Repeat)
+                return false;
+
             box.Colour = Color4.White;
             return true;
         }
 
-        public void OnReleased(TestAction action)
+        public void OnReleased(KeyBindingReleaseEvent<TestAction> e)
         {
             box.Colour = Color4.Black;
         }

@@ -10,8 +10,8 @@ using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Shapes;
 using osu.Framework.Utils;
 using osu.Game.Beatmaps;
+using osu.Game.Beatmaps.Drawables;
 using osu.Game.Graphics;
-using osu.Game.Screens.Ranking.Expanded;
 using osuTK;
 
 namespace osu.Game.Screens.OnlinePlay.Components
@@ -64,8 +64,8 @@ namespace osu.Game.Screens.OnlinePlay.Components
                     AutoSizeAxes = Axes.Both,
                     Children = new Drawable[]
                     {
-                        minDisplay = new StarRatingDisplay(default),
-                        maxDisplay = new StarRatingDisplay(default)
+                        minDisplay = new StarRatingDisplay(default, StarRatingDisplaySize.Range),
+                        maxDisplay = new StarRatingDisplay(default, StarRatingDisplaySize.Range)
                     }
                 }
             };
@@ -80,10 +80,10 @@ namespace osu.Game.Screens.OnlinePlay.Components
 
         private void updateRange(object sender, NotifyCollectionChangedEventArgs e)
         {
-            var orderedDifficulties = Playlist.Select(p => p.Beatmap.Value).OrderBy(b => b.StarDifficulty).ToArray();
+            var orderedDifficulties = Playlist.Select(p => p.Beatmap.Value).OrderBy(b => b.StarRating).ToArray();
 
-            StarDifficulty minDifficulty = new StarDifficulty(orderedDifficulties.Length > 0 ? orderedDifficulties[0].StarDifficulty : 0, 0);
-            StarDifficulty maxDifficulty = new StarDifficulty(orderedDifficulties.Length > 0 ? orderedDifficulties[^1].StarDifficulty : 0, 0);
+            StarDifficulty minDifficulty = new StarDifficulty(orderedDifficulties.Length > 0 ? orderedDifficulties[0].StarRating : 0, 0);
+            StarDifficulty maxDifficulty = new StarDifficulty(orderedDifficulties.Length > 0 ? orderedDifficulties[^1].StarRating : 0, 0);
 
             minDisplay.Current.Value = minDifficulty;
             maxDisplay.Current.Value = maxDifficulty;

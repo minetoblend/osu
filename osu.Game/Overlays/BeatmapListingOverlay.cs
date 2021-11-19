@@ -15,10 +15,10 @@ using osu.Framework.Graphics.Sprites;
 using osu.Framework.Graphics.Textures;
 using osu.Framework.Input.Events;
 using osu.Game.Audio;
-using osu.Game.Beatmaps;
 using osu.Game.Graphics;
 using osu.Game.Graphics.Sprites;
 using osu.Game.Graphics.Containers;
+using osu.Game.Online.API.Requests.Responses;
 using osu.Game.Overlays.BeatmapListing;
 using osu.Game.Overlays.BeatmapListing.Panels;
 using osu.Game.Resources.Localisation.Web;
@@ -75,6 +75,7 @@ namespace osu.Game.Overlays
                             {
                                 AutoSizeAxes = Axes.Y,
                                 RelativeSizeAxes = Axes.X,
+                                Masking = true,
                                 Padding = new MarginPadding { Horizontal = 20 },
                                 Children = new Drawable[]
                                 {
@@ -135,7 +136,7 @@ namespace osu.Game.Overlays
                 return;
             }
 
-            var newPanels = searchResult.Results.Select<BeatmapSetInfo, BeatmapPanel>(b => new GridBeatmapPanel(b)
+            var newPanels = searchResult.Results.Select<APIBeatmapSet, BeatmapPanel>(b => new GridBeatmapPanel(b)
             {
                 Anchor = Anchor.TopCentre,
                 Origin = Anchor.TopCentre,
@@ -186,21 +187,16 @@ namespace osu.Game.Overlays
 
             if (lastContent != null)
             {
-                var transform = lastContent.FadeOut(100, Easing.OutQuint);
+                lastContent.FadeOut(100, Easing.OutQuint);
 
-                if (lastContent == notFoundContent || lastContent == supporterRequiredContent)
-                {
-                    // the placeholders may be used multiple times, so don't expire/dispose them.
-                    transform.Schedule(() => panelTarget.Remove(lastContent));
-                }
-                else
-                {
-                    // Consider the case when the new content is smaller than the last content.
-                    // If the auto-size computation is delayed until fade out completes, the background remain high for too long making the resulting transition to the smaller height look weird.
-                    // At the same time, if the last content's height is bypassed immediately, there is a period where the new content is at Alpha = 0 when the auto-sized height will be 0.
-                    // To resolve both of these issues, the bypass is delayed until a point when the content transitions (fade-in and fade-out) overlap and it looks good to do so.
-                    lastContent.Delay(25).Schedule(() => lastContent.BypassAutoSizeAxes = Axes.Y).Then().Schedule(() => lastContent.Expire());
-                }
+                // Consider the case when the new content is smaller than the last content.
+                // If the auto-size computation is delayed until fade out completes, the background remain high for too long making the resulting transition to the smaller height look weird.
+                // At the same time, if the last content's height is bypassed immediately, there is a period where the new content is at Alpha = 0 when the auto-sized height will be 0.
+                // To resolve both of these issues, the bypass is delayed until a point when the content transitions (fade-in and fade-out) overlap and it looks good to do so.
+                var sequence = lastContent.Delay(25).Schedule(() => lastContent.BypassAutoSizeAxes = Axes.Y);
+
+                if (lastContent != notFoundContent && lastContent != supporterRequiredContent)
+                    sequence.Then().Schedule(() => lastContent.Expire());
             }
 
             if (!content.IsAlive)
@@ -208,6 +204,9 @@ namespace osu.Game.Overlays
 
             content.FadeInFromZero(200, Easing.OutQuint);
             currentContent = content;
+            // currentContent may be one of the placeholders, and still have BypassAutoSizeAxes set to Y from the last fade-out.
+            // restore to the initial state.
+            currentContent.BypassAutoSizeAxes = Axes.None;
         }
 
         protected override void Dispose(bool isDisposing)

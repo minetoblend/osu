@@ -3,6 +3,7 @@
 
 using NUnit.Framework;
 using osu.Framework.Allocation;
+using osu.Framework.Graphics.Containers;
 using osu.Game.Rulesets.Edit;
 using osu.Game.Rulesets.Osu;
 using osu.Game.Rulesets.Osu.Beatmaps;
@@ -25,12 +26,18 @@ namespace osu.Game.Tests.Visual.Editing
                 }
             });
 
+        [Cached]
+        private EditorClipboard clipboard = new EditorClipboard();
+
         [BackgroundDependencyLoader]
         private void load()
         {
             Beatmap.Value = CreateWorkingBeatmap(editorBeatmap.PlayableBeatmap);
 
-            Child = new ComposeScreen();
+            Child = new ComposeScreen
+            {
+                State = { Value = Visibility.Visible },
+            };
         }
     }
 }

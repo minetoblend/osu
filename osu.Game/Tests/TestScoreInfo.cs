@@ -3,12 +3,12 @@
 
 using System;
 using System.Linq;
+using osu.Game.Online.API.Requests.Responses;
 using osu.Game.Rulesets;
 using osu.Game.Rulesets.Mods;
 using osu.Game.Rulesets.Scoring;
 using osu.Game.Scoring;
 using osu.Game.Tests.Beatmaps;
-using osu.Game.Users;
 
 namespace osu.Game.Tests
 {
@@ -16,19 +16,19 @@ namespace osu.Game.Tests
     {
         public TestScoreInfo(RulesetInfo ruleset, bool excessMods = false)
         {
-            User = new User
+            User = new APIUser
             {
                 Id = 2,
                 Username = "peppy",
                 CoverUrl = "https://osu.ppy.sh/images/headers/profile-covers/c3.jpg",
             };
 
-            Beatmap = new TestBeatmap(ruleset).BeatmapInfo;
+            BeatmapInfo = new TestBeatmap(ruleset).BeatmapInfo;
             Ruleset = ruleset;
             RulesetID = ruleset.ID ?? 0;
 
             Mods = excessMods
-                ? ruleset.CreateInstance().GetAllMods().ToArray()
+                ? ruleset.CreateInstance().CreateAllMods().ToArray()
                 : new Mod[] { new TestModHardRock(), new TestModDoubleTime() };
 
             TotalScore = 2845370;

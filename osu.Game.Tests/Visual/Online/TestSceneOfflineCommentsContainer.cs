@@ -11,9 +11,9 @@ using osu.Game.Overlays.Comments;
 using osu.Game.Overlays;
 using osu.Framework.Allocation;
 using osu.Game.Online.API.Requests.Responses;
-using osu.Game.Users;
 using JetBrains.Annotations;
 using osu.Framework.Testing;
+using APIUser = osu.Game.Online.API.Requests.Responses.APIUser;
 
 namespace osu.Game.Tests.Visual.Online
 {
@@ -149,13 +149,14 @@ namespace osu.Game.Tests.Visual.Online
                 }
             },
             IncludedComments = new List<Comment>(),
+            PinnedComments = new List<Comment>(),
             UserVotes = new List<long>
             {
                 5
             },
-            Users = new List<User>
+            Users = new List<APIUser>
             {
-                new User
+                new APIUser
                 {
                     Id = 1,
                     Username = "Good_Admin"
@@ -178,6 +179,7 @@ namespace osu.Game.Tests.Visual.Online
                 },
             },
             IncludedComments = new List<Comment>(),
+            PinnedComments = new List<Comment>(),
         };
 
         private class TestCommentsContainer : CommentsContainer

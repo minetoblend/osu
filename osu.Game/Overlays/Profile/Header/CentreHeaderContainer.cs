@@ -3,14 +3,15 @@
 
 using osu.Framework.Allocation;
 using osu.Framework.Bindables;
+using osu.Framework.Extensions.LocalisationExtensions;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Shapes;
 using osu.Framework.Graphics.Textures;
 using osu.Framework.Localisation;
+using osu.Game.Online.API.Requests.Responses;
 using osu.Game.Overlays.Profile.Header.Components;
 using osu.Game.Resources.Localisation.Web;
-using osu.Game.Users;
 using osuTK;
 
 namespace osu.Game.Overlays.Profile.Header
@@ -18,7 +19,7 @@ namespace osu.Game.Overlays.Profile.Header
     public class CentreHeaderContainer : CompositeDrawable
     {
         public readonly BindableBool DetailsVisible = new BindableBool(true);
-        public readonly Bindable<User> User = new Bindable<User>();
+        public readonly Bindable<APIUser> User = new Bindable<APIUser>();
 
         private OverlinedInfoContainer hiddenDetailGlobal;
         private OverlinedInfoContainer hiddenDetailCountry;
@@ -144,7 +145,7 @@ namespace osu.Game.Overlays.Profile.Header
             User.BindValueChanged(user => updateDisplay(user.NewValue));
         }
 
-        private void updateDisplay(User user)
+        private void updateDisplay(APIUser user)
         {
             hiddenDetailGlobal.Content = user?.Statistics?.GlobalRank?.ToLocalisableString("\\##,##0") ?? (LocalisableString)"-";
             hiddenDetailCountry.Content = user?.Statistics?.CountryRank?.ToLocalisableString("\\##,##0") ?? (LocalisableString)"-";

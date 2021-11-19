@@ -11,6 +11,7 @@ using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Shapes;
 using osu.Framework.Input.Bindings;
+using osu.Framework.Input.Events;
 using osu.Framework.Screens;
 using osu.Game.Graphics;
 using osu.Game.Graphics.Containers;
@@ -52,8 +53,7 @@ namespace osu.Game.Screens.Ranking
         private Drawable bottomPanel;
         private Container<ScorePanel> detachedPanelContainer;
 
-        private bool fetchedInitialScores;
-        private APIRequest nextPageRequest;
+        private bool lastFetchCompleted;
 
         private readonly bool allowRetry;
         private readonly bool allowWatchingReplay;
@@ -191,8 +191,10 @@ namespace osu.Game.Screens.Ranking
         {
             base.Update();
 
-            if (fetchedInitialScores && nextPageRequest == null)
+            if (lastFetchCompleted)
             {
+                APIRequest nextPageRequest = null;
+
                 if (ScorePanelList.IsScrolledToStart)
                     nextPageRequest = FetchNextPage(-1, fetchScoresCallback);
                 else if (ScorePanelList.IsScrolledToEnd)
@@ -200,10 +202,7 @@ namespace osu.Game.Screens.Ranking
 
                 if (nextPageRequest != null)
                 {
-                    // Scheduled after children to give the list a chance to update its scroll position and not potentially trigger a second request too early.
-                    nextPageRequest.Success += () => ScheduleAfterChildren(() => nextPageRequest = null);
-                    nextPageRequest.Failure += _ => ScheduleAfterChildren(() => nextPageRequest = null);
-
+                    lastFetchCompleted = false;
                     api.Queue(nextPageRequest);
                 }
             }
@@ -229,7 +228,7 @@ namespace osu.Game.Screens.Ranking
             foreach (var s in scores)
                 addScore(s);
 
-            fetchedInitialScores = true;
+            lastFetchCompleted = true;
         });
 
         public override void OnEntering(IScreen last)
@@ -288,7 +287,7 @@ namespace osu.Game.Screens.Ranking
                 detachedPanelContainer.Add(expandedPanel);
 
                 // Move into its original location in the local container first, then to the final location.
-                var origLocation = detachedPanelContainer.ToLocalSpace(screenSpacePos).X;
+                float origLocation = detachedPanelContainer.ToLocalSpace(screenSpacePos).X;
                 expandedPanel.MoveToX(origLocation)
                              .Then()
                              .MoveToX(StatisticsPanel.SIDE_PADDING, 150, Easing.OutQuint);
@@ -312,10 +311,10 @@ namespace osu.Game.Screens.Ranking
                 ScorePanelList.Attach(detachedPanel);
 
                 // Move into its original location in the attached container first, then to the final location.
-                var origLocation = detachedPanel.Parent.ToLocalSpace(screenSpacePos);
-                detachedPanel.MoveTo(origLocation)
+                float origLocation = detachedPanel.Parent.ToLocalSpace(screenSpacePos).X;
+                detachedPanel.MoveToX(origLocation)
                              .Then()
-                             .MoveTo(new Vector2(0, origLocation.Y), 150, Easing.OutQuint);
+                             .MoveToX(0, 150, Easing.OutQuint);
 
                 // Show contracted panels.
                 foreach (var contracted in ScorePanelList.GetScorePanels().Where(p => p.State == PanelState.Contracted))
@@ -329,9 +328,12 @@ namespace osu.Game.Screens.Ranking
             }
         }
 
-        public bool OnPressed(GlobalAction action)
+        public bool OnPressed(KeyBindingPressEvent<GlobalAction> e)
         {
-            switch (action)
+            if (e.Repeat)
+                return false;
+
+            switch (e.Action)
             {
                 case GlobalAction.Select:
                     statisticsPanel.ToggleVisibility();
@@ -341,7 +343,7 @@ namespace osu.Game.Screens.Ranking
             return false;
         }
 
-        public void OnReleased(GlobalAction action)
+        public void OnReleased(KeyBindingReleaseEvent<GlobalAction> e)
         {
         }
 

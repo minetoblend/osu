@@ -4,17 +4,18 @@
 using System.Collections.Generic;
 using osu.Framework.Allocation;
 using osu.Framework.Bindables;
+using osu.Framework.Extensions.LocalisationExtensions;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Shapes;
 using osu.Framework.Localisation;
 using osu.Game.Graphics;
 using osu.Game.Graphics.Sprites;
+using osu.Game.Online.API.Requests.Responses;
 using osu.Game.Online.Leaderboards;
 using osu.Game.Overlays.Profile.Header.Components;
 using osu.Game.Resources.Localisation.Web;
 using osu.Game.Scoring;
-using osu.Game.Users;
 using osuTK;
 
 namespace osu.Game.Overlays.Profile.Header
@@ -29,7 +30,7 @@ namespace osu.Game.Overlays.Profile.Header
         private FillFlowContainer fillFlow;
         private RankGraph rankGraph;
 
-        public readonly Bindable<User> User = new Bindable<User>();
+        public readonly Bindable<APIUser> User = new Bindable<APIUser>();
 
         private bool expanded = true;
 
@@ -170,7 +171,7 @@ namespace osu.Game.Overlays.Profile.Header
             };
         }
 
-        private void updateDisplay(User user)
+        private void updateDisplay(APIUser user)
         {
             medalInfo.Content = user?.Achievements?.Length.ToString() ?? "0";
             ppInfo.Content = user?.Statistics?.PP?.ToLocalisableString("#,##0") ?? (LocalisableString)"0";

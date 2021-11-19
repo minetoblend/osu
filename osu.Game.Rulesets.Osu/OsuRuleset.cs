@@ -30,9 +30,11 @@ using osu.Game.Skinning;
 using System;
 using System.Linq;
 using osu.Framework.Extensions.EnumExtensions;
+using osu.Game.Rulesets.Osu.Edit.Setup;
 using osu.Game.Rulesets.Osu.Objects;
 using osu.Game.Rulesets.Osu.Skinning.Legacy;
 using osu.Game.Rulesets.Osu.Statistics;
+using osu.Game.Screens.Edit.Setup;
 using osu.Game.Screens.Ranking.Statistics;
 
 namespace osu.Game.Rulesets.Osu
@@ -190,6 +192,7 @@ namespace osu.Game.Rulesets.Osu
                         new OsuModBarrelRoll(),
                         new OsuModApproachDifferent(),
                         new OsuModMuted(),
+                        new OsuModNoScope(),
                     };
 
                 case ModType.System:
@@ -205,7 +208,7 @@ namespace osu.Game.Rulesets.Osu
 
         public override Drawable CreateIcon() => new SpriteIcon { Icon = OsuIcon.RulesetOsu };
 
-        public override DifficultyCalculator CreateDifficultyCalculator(WorkingBeatmap beatmap) => new OsuDifficultyCalculator(this, beatmap);
+        public override DifficultyCalculator CreateDifficultyCalculator(IWorkingBeatmap beatmap) => new OsuDifficultyCalculator(RulesetInfo, beatmap);
 
         public override PerformanceCalculator CreatePerformanceCalculator(DifficultyAttributes attributes, ScoreInfo score) => new OsuPerformanceCalculator(this, attributes, score);
 
@@ -305,5 +308,7 @@ namespace osu.Game.Rulesets.Osu
                 }
             };
         }
+
+        public override RulesetSetupSection CreateEditorSetupSection() => new OsuSetupSection();
     }
 }

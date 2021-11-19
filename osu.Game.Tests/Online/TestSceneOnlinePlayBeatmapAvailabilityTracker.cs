@@ -58,7 +58,7 @@ namespace osu.Game.Tests.Online
             testBeatmapInfo = getTestBeatmapInfo(testBeatmapFile);
             testBeatmapSet = testBeatmapInfo.BeatmapSet;
 
-            var existing = beatmaps.QueryBeatmapSet(s => s.OnlineBeatmapSetID == testBeatmapSet.OnlineBeatmapSetID);
+            var existing = beatmaps.QueryBeatmapSet(s => s.OnlineID == testBeatmapSet.OnlineID);
             if (existing != null)
                 beatmaps.Delete(existing);
 
@@ -101,10 +101,10 @@ namespace osu.Game.Tests.Online
             AddStep("import beatmap", () => beatmaps.Import(testBeatmapFile).Wait());
             addAvailabilityCheckStep("state locally available", BeatmapAvailability.LocallyAvailable);
 
-            AddStep("delete beatmap", () => beatmaps.Delete(beatmaps.QueryBeatmapSet(b => b.OnlineBeatmapSetID == testBeatmapSet.OnlineBeatmapSetID)));
+            AddStep("delete beatmap", () => beatmaps.Delete(beatmaps.QueryBeatmapSet(b => b.OnlineID == testBeatmapSet.OnlineID)));
             addAvailabilityCheckStep("state not downloaded", BeatmapAvailability.NotDownloaded);
 
-            AddStep("undelete beatmap", () => beatmaps.Undelete(beatmaps.QueryBeatmapSet(b => b.OnlineBeatmapSetID == testBeatmapSet.OnlineBeatmapSetID)));
+            AddStep("undelete beatmap", () => beatmaps.Undelete(beatmaps.QueryBeatmapSet(b => b.OnlineID == testBeatmapSet.OnlineID)));
             addAvailabilityCheckStep("state locally available", BeatmapAvailability.LocallyAvailable);
         }
 
@@ -128,7 +128,7 @@ namespace osu.Game.Tests.Online
 
         private void addAvailabilityCheckStep(string description, Func<BeatmapAvailability> expected)
         {
-            AddAssert(description, () => availabilityTracker.Availability.Value.Equals(expected.Invoke()));
+            AddUntilStep(description, () => availabilityTracker.Availability.Value.Equals(expected.Invoke()));
         }
 
         private static BeatmapInfo getTestBeatmapInfo(string archiveFile)
@@ -156,29 +156,58 @@ namespace osu.Game.Tests.Online
         {
             public TaskCompletionSource<bool> AllowImport = new TaskCompletionSource<bool>();
 
-            public Task<BeatmapSetInfo> CurrentImportTask { get; private set; }
+            public Task<ILive<BeatmapSetInfo>> CurrentImportTask { get; private set; }
 
-            protected override ArchiveDownloadRequest<BeatmapSetInfo> CreateDownloadRequest(BeatmapSetInfo set, bool minimiseDownloadSize)
-                => new TestDownloadRequest(set);
-
-            public TestBeatmapManager(Storage storage, IDatabaseContextFactory contextFactory, RulesetStore rulesets, IAPIProvider api, [NotNull] AudioManager audioManager, IResourceStore<byte[]> resources, GameHost host = null, WorkingBeatmap defaultBeatmap = null, bool performOnlineLookups = false)
-                : base(storage, contextFactory, rulesets, api, audioManager, resources, host, defaultBeatmap, performOnlineLookups)
+            public TestBeatmapManager(Storage storage, IDatabaseContextFactory contextFactory, RulesetStore rulesets, IAPIProvider api, [NotNull] AudioManager audioManager, IResourceStore<byte[]> resources, GameHost host = null, WorkingBeatmap defaultBeatmap = null)
+                : base(storage, contextFactory, rulesets, api, audioManager, resources, host, defaultBeatmap)
             {
             }
 
-            public override async Task<BeatmapSetInfo> Import(BeatmapSetInfo item, ArchiveReader archive = null, bool lowPriority = false, CancellationToken cancellationToken = default)
+            protected override BeatmapModelManager CreateBeatmapModelManager(Storage storage, IDatabaseContextFactory contextFactory, RulesetStore rulesets, IAPIProvider api, GameHost host)
             {
-                await AllowImport.Task.ConfigureAwait(false);
-                return await (CurrentImportTask = base.Import(item, archive, lowPriority, cancellationToken)).ConfigureAwait(false);
+                return new TestBeatmapModelManager(this, storage, contextFactory, rulesets, api, host);
+            }
+
+            protected override BeatmapModelDownloader CreateBeatmapModelDownloader(IModelImporter<BeatmapSetInfo> manager, IAPIProvider api, GameHost host)
+            {
+                return new TestBeatmapModelDownloader(manager, api, host);
+            }
+
+            internal class TestBeatmapModelDownloader : BeatmapModelDownloader
+            {
+                public TestBeatmapModelDownloader(IModelImporter<BeatmapSetInfo> importer, IAPIProvider apiProvider, GameHost gameHost)
+                    : base(importer, apiProvider, gameHost)
+                {
+                }
+
+                protected override ArchiveDownloadRequest<IBeatmapSetInfo> CreateDownloadRequest(IBeatmapSetInfo set, bool minimiseDownloadSize)
+                    => new TestDownloadRequest(set);
+            }
+
+            internal class TestBeatmapModelManager : BeatmapModelManager
+            {
+                private readonly TestBeatmapManager testBeatmapManager;
+
+                public TestBeatmapModelManager(TestBeatmapManager testBeatmapManager, Storage storage, IDatabaseContextFactory databaseContextFactory, RulesetStore rulesetStore, IAPIProvider apiProvider, GameHost gameHost)
+                    : base(storage, databaseContextFactory, rulesetStore, gameHost)
+                {
+                    this.testBeatmapManager = testBeatmapManager;
+                }
+
+                public override async Task<ILive<BeatmapSetInfo>> Import(BeatmapSetInfo item, ArchiveReader archive = null, bool lowPriority = false, CancellationToken cancellationToken = default)
+                {
+                    await testBeatmapManager.AllowImport.Task.ConfigureAwait(false);
+                    return await (testBeatmapManager.CurrentImportTask = base.Import(item, archive, lowPriority, cancellationToken)).ConfigureAwait(false);
+                }
             }
         }
 
-        private class TestDownloadRequest : ArchiveDownloadRequest<BeatmapSetInfo>
+        private class TestDownloadRequest : ArchiveDownloadRequest<IBeatmapSetInfo>
         {
             public new void SetProgress(float progress) => base.SetProgress(progress);
             public new void TriggerSuccess(string filename) => base.TriggerSuccess(filename);
 
-            public TestDownloadRequest(BeatmapSetInfo model)
+            public TestDownloadRequest(IBeatmapSetInfo model)
                 : base(model)
             {
             }

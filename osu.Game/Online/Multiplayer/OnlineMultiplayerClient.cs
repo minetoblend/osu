@@ -9,9 +9,9 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR.Client;
 using osu.Framework.Allocation;
 using osu.Framework.Bindables;
-using osu.Game.Beatmaps;
 using osu.Game.Online.API;
 using osu.Game.Online.API.Requests;
+using osu.Game.Online.API.Requests.Responses;
 using osu.Game.Online.Rooms;
 
 namespace osu.Game.Online.Multiplayer
@@ -39,7 +39,7 @@ namespace osu.Game.Online.Multiplayer
         {
             // Importantly, we are intentionally not using MessagePack here to correctly support derived class serialization.
             // More information on the limitations / reasoning can be found in osu-server-spectator's initialisation code.
-            connector = api.GetHubConnector(nameof(OnlineMultiplayerClient), endpoint, false);
+            connector = api.GetHubConnector(nameof(OnlineMultiplayerClient), endpoint);
 
             if (connector != null)
             {
@@ -148,9 +148,9 @@ namespace osu.Game.Online.Multiplayer
             return connection.InvokeAsync(nameof(IMultiplayerServer.StartMatch));
         }
 
-        protected override Task<BeatmapSetInfo> GetOnlineBeatmapSet(int beatmapId, CancellationToken cancellationToken = default)
+        protected override Task<APIBeatmapSet> GetOnlineBeatmapSet(int beatmapId, CancellationToken cancellationToken = default)
         {
-            var tcs = new TaskCompletionSource<BeatmapSetInfo>();
+            var tcs = new TaskCompletionSource<APIBeatmapSet>();
             var req = new GetBeatmapSetRequest(beatmapId, BeatmapSetLookupType.BeatmapId);
 
             req.Success += res =>
@@ -161,7 +161,7 @@ namespace osu.Game.Online.Multiplayer
                     return;
                 }
 
-                tcs.SetResult(res.ToBeatmapSet(Rulesets));
+                tcs.SetResult(res);
             };
 
             req.Failure += e => tcs.SetException(e);

@@ -7,7 +7,6 @@ using JetBrains.Annotations;
 using osu.Framework.Allocation;
 using osu.Framework.Bindables;
 using osu.Framework.Extensions;
-using osu.Framework.Extensions.Color4Extensions;
 using osu.Framework.Extensions.ExceptionExtensions;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
@@ -26,7 +25,7 @@ using osuTK;
 
 namespace osu.Game.Screens.OnlinePlay.Multiplayer.Match
 {
-    public class MultiplayerMatchSettingsOverlay : MatchSettingsOverlay
+    public class MultiplayerMatchSettingsOverlay : RoomSettingsOverlay
     {
         private MatchSettings settings;
 
@@ -37,15 +36,19 @@ namespace osu.Game.Screens.OnlinePlay.Multiplayer.Match
 
         protected override bool IsLoading => ongoingOperationTracker.InProgress.Value;
 
+        public MultiplayerMatchSettingsOverlay(Room room)
+            : base(room)
+        {
+        }
+
         protected override void SelectBeatmap() => settings.SelectBeatmap();
 
-        protected override OnlinePlayComposite CreateSettings()
-            => settings = new MatchSettings
-            {
-                RelativeSizeAxes = Axes.Both,
-                RelativePositionAxes = Axes.Y,
-                SettingsApplied = Hide
-            };
+        protected override OnlinePlayComposite CreateSettings(Room room) => settings = new MatchSettings(room)
+        {
+            RelativeSizeAxes = Axes.Both,
+            RelativePositionAxes = Axes.Y,
+            SettingsApplied = Hide
+        };
 
         protected class MatchSettings : OnlinePlayComposite
         {
@@ -74,9 +77,6 @@ namespace osu.Game.Screens.OnlinePlay.Multiplayer.Match
             private MultiplayerClient client { get; set; }
 
             [Resolved]
-            private Bindable<Room> currentRoom { get; set; }
-
-            [Resolved]
             private Bindable<WorkingBeatmap> beatmap { get; set; }
 
             [Resolved]
@@ -90,15 +90,22 @@ namespace osu.Game.Screens.OnlinePlay.Multiplayer.Match
             [CanBeNull]
             private IDisposable applyingSettingsOperation;
 
+            private readonly Room room;
+
+            public MatchSettings(Room room)
+            {
+                this.room = room;
+            }
+
             [BackgroundDependencyLoader]
-            private void load(OsuColour colours)
+            private void load(OverlayColourProvider colourProvider, OsuColour colours)
             {
                 InternalChildren = new Drawable[]
                 {
                     new Box
                     {
                         RelativeSizeAxes = Axes.Both,
-                        Colour = Color4Extensions.FromHex(@"28242d"),
+                        Colour = colourProvider.Background4
                     },
                     new GridContainer
                     {
@@ -146,10 +153,11 @@ namespace osu.Game.Screens.OnlinePlay.Multiplayer.Match
                                                             {
                                                                 new Section("Room name")
                                                                 {
-                                                                    Child = NameField = new SettingsTextBox
+                                                                    Child = NameField = new OsuTextBox
                                                                     {
                                                                         RelativeSizeAxes = Axes.X,
                                                                         TabbableContentContainer = this,
+                                                                        LengthLimit = 100,
                                                                     },
                                                                 },
                                                                 new Section("Room visibility")
@@ -194,7 +202,7 @@ namespace osu.Game.Screens.OnlinePlay.Multiplayer.Match
                                                                 new Section("Max participants")
                                                                 {
                                                                     Alpha = disabled_alpha,
-                                                                    Child = MaxParticipantsField = new SettingsNumberTextBox
+                                                                    Child = MaxParticipantsField = new OsuNumberBox
                                                                     {
                                                                         RelativeSizeAxes = Axes.X,
                                                                         TabbableContentContainer = this,
@@ -203,10 +211,11 @@ namespace osu.Game.Screens.OnlinePlay.Multiplayer.Match
                                                                 },
                                                                 new Section("Password (optional)")
                                                                 {
-                                                                    Child = PasswordTextBox = new SettingsPasswordTextBox
+                                                                    Child = PasswordTextBox = new OsuPasswordTextBox
                                                                     {
                                                                         RelativeSizeAxes = Axes.X,
                                                                         TabbableContentContainer = this,
+                                                                        LengthLimit = 255,
                                                                     },
                                                                 },
                                                             }
@@ -239,7 +248,7 @@ namespace osu.Game.Screens.OnlinePlay.Multiplayer.Match
                                         new Box
                                         {
                                             RelativeSizeAxes = Axes.Both,
-                                            Colour = Color4Extensions.FromHex(@"28242d").Darken(0.5f).Opacity(1f),
+                                            Colour = colourProvider.Background5
                                         },
                                         new FillFlowContainer
                                         {
@@ -319,24 +328,24 @@ namespace osu.Game.Screens.OnlinePlay.Multiplayer.Match
                     client.ChangeSettings(name: NameField.Text, password: PasswordTextBox.Text, matchType: TypePicker.Current.Value).ContinueWith(t => Schedule(() =>
                     {
                         if (t.IsCompletedSuccessfully)
-                            onSuccess(currentRoom.Value);
+                            onSuccess(room);
                         else
                             onError(t.Exception?.AsSingular().Message ?? "Error changing settings.");
                     }));
                 }
                 else
                 {
-                    currentRoom.Value.Name.Value = NameField.Text;
-                    currentRoom.Value.Availability.Value = AvailabilityPicker.Current.Value;
-                    currentRoom.Value.Type.Value = TypePicker.Current.Value;
-                    currentRoom.Value.Password.Value = PasswordTextBox.Current.Value;
+                    room.Name.Value = NameField.Text;
+                    room.Availability.Value = AvailabilityPicker.Current.Value;
+                    room.Type.Value = TypePicker.Current.Value;
+                    room.Password.Value = PasswordTextBox.Current.Value;
 
                     if (int.TryParse(MaxParticipantsField.Text, out int max))
-                        currentRoom.Value.MaxParticipants.Value = max;
+                        room.MaxParticipants.Value = max;
                     else
-                        currentRoom.Value.MaxParticipants.Value = null;
+                        room.MaxParticipants.Value = null;
 
-                    manager?.CreateRoom(currentRoom.Value, onSuccess, onError);
+                    manager?.CreateRoom(room, onSuccess, onError);
                 }
             }
 
@@ -356,7 +365,19 @@ namespace osu.Game.Screens.OnlinePlay.Multiplayer.Match
             {
                 Debug.Assert(applyingSettingsOperation != null);
 
-                ErrorText.Text = text;
+                // see https://github.com/ppy/osu-web/blob/2c97aaeb64fb4ed97c747d8383a35b30f57428c7/app/Models/Multiplayer/PlaylistItem.php#L48.
+                const string not_found_prefix = "beatmaps not found:";
+
+                if (text.StartsWith(not_found_prefix, StringComparison.Ordinal))
+                {
+                    ErrorText.Text = "The selected beatmap is not available online.";
+                    SelectedItem.Value.MarkInvalid();
+                }
+                else
+                {
+                    ErrorText.Text = text;
+                }
+
                 ErrorText.FadeIn(50);
 
                 applyingSettingsOperation.Dispose();

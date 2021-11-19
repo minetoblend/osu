@@ -152,12 +152,12 @@ namespace osu.Game.Rulesets.UI
             {
             }
 
-            public bool OnPressed(T action) => Target.Children.OfType<KeyCounterAction<T>>().Any(c => c.OnPressed(action, Clock.Rate >= 0));
+            public bool OnPressed(KeyBindingPressEvent<T> e) => Target.Children.OfType<KeyCounterAction<T>>().Any(c => c.OnPressed(e.Action, Clock.Rate >= 0));
 
-            public void OnReleased(T action)
+            public void OnReleased(KeyBindingReleaseEvent<T> e)
             {
                 foreach (var c in Target.Children.OfType<KeyCounterAction<T>>())
-                    c.OnReleased(action, Clock.Rate >= 0);
+                    c.OnReleased(e.Action, Clock.Rate >= 0);
             }
         }
 
@@ -168,6 +168,8 @@ namespace osu.Game.Rulesets.UI
 
         public class RulesetKeyBindingContainer : DatabasedKeyBindingContainer<T>
         {
+            protected override bool HandleRepeats => false;
+
             public RulesetKeyBindingContainer(RulesetInfo ruleset, int variant, SimultaneousBindingMode unique)
                 : base(ruleset, variant, unique)
             {

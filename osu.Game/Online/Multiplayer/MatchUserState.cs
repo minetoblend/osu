@@ -15,9 +15,8 @@ namespace osu.Game.Online.Multiplayer
     /// </summary>
     [Serializable]
     [MessagePackObject]
-    [Union(0, typeof(TeamVersusUserState))]
-    // TODO: this will need to be abstract or interface when/if we get messagepack working. for now it isn't as it breaks json serialisation.
-    public class MatchUserState
+    [Union(0, typeof(TeamVersusUserState))] // IMPORTANT: Add rules to SignalRUnionWorkaroundResolver for new derived types.
+    public abstract class MatchUserState
     {
     }
 }

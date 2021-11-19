@@ -69,6 +69,8 @@ namespace osu.Game.Screens.Ranking.Statistics
             foreach (var child in content)
                 child.FadeOut(150).Expire();
 
+            spinner.Hide();
+
             var newScore = score.NewValue;
 
             if (newScore == null)
@@ -102,7 +104,7 @@ namespace osu.Game.Screens.Ranking.Statistics
                 // Todo: The placement of this is temporary. Eventually we'll both generate the playable beatmap _and_ run through it in a background task to generate the hit events.
                 Task.Run(() =>
                 {
-                    playableBeatmap = beatmapManager.GetWorkingBeatmap(newScore.Beatmap).GetPlayableBeatmap(newScore.Ruleset, newScore.Mods ?? Array.Empty<Mod>());
+                    playableBeatmap = beatmapManager.GetWorkingBeatmap(newScore.BeatmapInfo).GetPlayableBeatmap(newScore.Ruleset, newScore.Mods ?? Array.Empty<Mod>());
                 }, loadCancellation.Token).ContinueWith(t => Schedule(() =>
                 {
                     var rows = new FillFlowContainer

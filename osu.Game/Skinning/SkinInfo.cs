@@ -4,7 +4,6 @@
 using System;
 using System.Collections.Generic;
 using osu.Framework.Extensions.ObjectExtensions;
-using osu.Game.Configuration;
 using osu.Game.Database;
 using osu.Game.Extensions;
 using osu.Game.IO;
@@ -19,11 +18,11 @@ namespace osu.Game.Skinning
 
         public int ID { get; set; }
 
-        public string Name { get; set; }
+        public string Name { get; set; } = string.Empty;
+
+        public string Creator { get; set; } = string.Empty;
 
         public string Hash { get; set; }
-
-        public string Creator { get; set; }
 
         public string InstantiationInfo { get; set; }
 
@@ -38,8 +37,6 @@ namespace osu.Game.Skinning
         }
 
         public List<SkinFileInfo> Files { get; set; } = new List<SkinFileInfo>();
-
-        public List<DatabasedSetting> Settings { get; set; }
 
         public bool DeletePending { get; set; }
 

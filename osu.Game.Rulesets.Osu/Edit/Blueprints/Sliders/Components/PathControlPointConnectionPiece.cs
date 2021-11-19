@@ -60,7 +60,7 @@ namespace osu.Game.Rulesets.Osu.Edit.Blueprints.Sliders.Components
         /// </summary>
         private void updateConnectingPath()
         {
-            Position = hitObject.StackedPosition + ControlPoint.Position.Value;
+            Position = hitObject.StackedPosition + ControlPoint.Position;
 
             path.ClearVertices();
 
@@ -69,7 +69,7 @@ namespace osu.Game.Rulesets.Osu.Edit.Blueprints.Sliders.Components
                 return;
 
             path.AddVertex(Vector2.Zero);
-            path.AddVertex(hitObject.Path.ControlPoints[nextIndex].Position.Value - ControlPoint.Position.Value);
+            path.AddVertex(hitObject.Path.ControlPoints[nextIndex].Position - ControlPoint.Position);
 
             path.OriginPosition = path.PositionInBoundingBox(Vector2.Zero);
         }

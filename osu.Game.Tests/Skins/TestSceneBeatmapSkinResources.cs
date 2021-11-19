@@ -19,13 +19,13 @@ namespace osu.Game.Tests.Skins
         [Resolved]
         private BeatmapManager beatmaps { get; set; }
 
-        private WorkingBeatmap beatmap;
+        private IWorkingBeatmap beatmap;
 
         [BackgroundDependencyLoader]
         private void load()
         {
             var imported = beatmaps.Import(new ZipArchiveReader(TestResources.OpenResource("Archives/ogg-beatmap.osz"))).Result;
-            beatmap = beatmaps.GetWorkingBeatmap(imported.Beatmaps[0]);
+            beatmap = beatmaps.GetWorkingBeatmap(imported.Value.Beatmaps[0]);
             beatmap.LoadTrack();
         }
 

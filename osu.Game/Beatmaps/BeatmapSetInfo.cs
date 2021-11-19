@@ -12,39 +12,34 @@ using osu.Game.Database;
 namespace osu.Game.Beatmaps
 {
     [ExcludeFromDynamicCompile]
-    public class BeatmapSetInfo : IHasPrimaryKey, IHasFiles<BeatmapSetFileInfo>, ISoftDelete, IEquatable<BeatmapSetInfo>
+    public class BeatmapSetInfo : IHasPrimaryKey, IHasFiles<BeatmapSetFileInfo>, ISoftDelete, IEquatable<BeatmapSetInfo>, IBeatmapSetInfo
     {
         public int ID { get; set; }
 
-        private int? onlineBeatmapSetID;
+        private int? onlineID;
 
-        public int? OnlineBeatmapSetID
+        [Column("OnlineBeatmapSetID")]
+        public int? OnlineID
         {
-            get => onlineBeatmapSetID;
-            set => onlineBeatmapSetID = value > 0 ? value : null;
+            get => onlineID;
+            set => onlineID = value > 0 ? value : null;
         }
 
         public DateTimeOffset DateAdded { get; set; }
-
-        public BeatmapSetOnlineStatus Status { get; set; } = BeatmapSetOnlineStatus.None;
 
         public BeatmapMetadata Metadata { get; set; }
 
         public List<BeatmapInfo> Beatmaps { get; set; }
 
+        public BeatmapSetOnlineStatus Status { get; set; } = BeatmapSetOnlineStatus.None;
+
         [NotNull]
         public List<BeatmapSetFileInfo> Files { get; set; } = new List<BeatmapSetFileInfo>();
-
-        [NotMapped]
-        public BeatmapSetOnlineInfo OnlineInfo { get; set; }
-
-        [NotMapped]
-        public BeatmapSetMetrics Metrics { get; set; }
 
         /// <summary>
         /// The maximum star difficulty of all beatmaps in this set.
         /// </summary>
-        public double MaxStarDifficulty => Beatmaps?.Max(b => b.StarDifficulty) ?? 0;
+        public double MaxStarDifficulty => Beatmaps?.Max(b => b.StarRating) ?? 0;
 
         /// <summary>
         /// The maximum playable length in milliseconds of all beatmaps in this set.
@@ -61,8 +56,6 @@ namespace osu.Game.Beatmaps
 
         public string Hash { get; set; }
 
-        public string StoryboardFile => Files.Find(f => f.Filename.EndsWith(".osb", StringComparison.OrdinalIgnoreCase))?.Filename;
-
         /// <summary>
         /// Returns the storage path for the file in this beatmapset with the given filename, if any exists, otherwise null.
         /// The path returned is relative to the user file storage.
@@ -76,19 +69,29 @@ namespace osu.Game.Beatmaps
 
         public bool Equals(BeatmapSetInfo other)
         {
-            if (other == null)
-                return false;
+            if (ReferenceEquals(this, other)) return true;
+            if (other == null) return false;
 
             if (ID != 0 && other.ID != 0)
                 return ID == other.ID;
 
-            if (OnlineBeatmapSetID.HasValue && other.OnlineBeatmapSetID.HasValue)
-                return OnlineBeatmapSetID == other.OnlineBeatmapSetID;
-
-            if (!string.IsNullOrEmpty(Hash) && !string.IsNullOrEmpty(other.Hash))
-                return Hash == other.Hash;
-
-            return ReferenceEquals(this, other);
+            return false;
         }
+
+        public bool Equals(IBeatmapSetInfo other) => other is BeatmapSetInfo b && Equals(b);
+
+        #region Implementation of IHasOnlineID
+
+        int IHasOnlineID<int>.OnlineID => OnlineID ?? -1;
+
+        #endregion
+
+        #region Implementation of IBeatmapSetInfo
+
+        IBeatmapMetadataInfo IBeatmapSetInfo.Metadata => Metadata;
+        IEnumerable<IBeatmapInfo> IBeatmapSetInfo.Beatmaps => Beatmaps;
+        IEnumerable<INamedFileUsage> IBeatmapSetInfo.Files => Files;
+
+        #endregion
     }
 }

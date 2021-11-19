@@ -10,7 +10,6 @@ using osu.Game.Database;
 using osu.Game.Input.Bindings;
 using osu.Game.Overlays;
 using osu.Game.Tests.Resources;
-using osu.Game.Tests.Visual.Navigation;
 
 namespace osu.Game.Tests.Visual.Menus
 {
@@ -32,7 +31,7 @@ namespace osu.Game.Tests.Visual.Menus
         public void TestMusicNavigationActions()
         {
             int importId = 0;
-            Queue<(WorkingBeatmap working, TrackChangeDirection changeDirection)> trackChangeQueue = null;
+            Queue<(IWorkingBeatmap working, TrackChangeDirection changeDirection)> trackChangeQueue = null;
 
             // ensure we have at least two beatmaps available to identify the direction the music controller navigated to.
             AddRepeatStep("import beatmap", () => Game.BeatmapManager.Import(new BeatmapSetInfo
@@ -54,12 +53,12 @@ namespace osu.Game.Tests.Visual.Menus
             AddStep("import beatmap with track", () =>
             {
                 var setWithTrack = Game.BeatmapManager.Import(new ImportTask(TestResources.GetTestBeatmapForImport())).Result;
-                Beatmap.Value = Game.BeatmapManager.GetWorkingBeatmap(setWithTrack.Beatmaps.First());
+                Beatmap.Value = Game.BeatmapManager.GetWorkingBeatmap(setWithTrack.Value.Beatmaps.First());
             });
 
             AddStep("bind to track change", () =>
             {
-                trackChangeQueue = new Queue<(WorkingBeatmap, TrackChangeDirection)>();
+                trackChangeQueue = new Queue<(IWorkingBeatmap, TrackChangeDirection)>();
                 Game.MusicController.TrackChanged += (working, changeDirection) => trackChangeQueue.Enqueue((working, changeDirection));
             });
 

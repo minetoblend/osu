@@ -3,7 +3,7 @@
 
 using NUnit.Framework;
 using osu.Framework.Graphics;
-using osu.Game.Online.Rooms;
+using osu.Framework.Graphics.Containers;
 using osu.Game.Screens.OnlinePlay.Multiplayer.Match;
 
 namespace osu.Game.Tests.Visual.Multiplayer
@@ -13,13 +13,13 @@ namespace osu.Game.Tests.Visual.Multiplayer
         [SetUp]
         public new void Setup() => Schedule(() =>
         {
-            SelectedRoom.Value = new Room();
-
-            Child = new MultiplayerMatchFooter
+            Child = new Container
             {
                 Anchor = Anchor.Centre,
                 Origin = Anchor.Centre,
-                Height = 50
+                RelativeSizeAxes = Axes.X,
+                Height = 50,
+                Child = new MultiplayerMatchFooter()
             };
         });
     }

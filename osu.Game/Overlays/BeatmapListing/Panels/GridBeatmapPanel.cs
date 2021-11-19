@@ -9,11 +9,11 @@ using osu.Framework.Graphics.Shapes;
 using osu.Framework.Graphics.Sprites;
 using osu.Framework.Input.Events;
 using osu.Framework.Localisation;
-using osu.Game.Beatmaps;
 using osu.Game.Beatmaps.Drawables;
 using osu.Game.Graphics;
 using osu.Game.Graphics.Containers;
 using osu.Game.Graphics.Sprites;
+using osu.Game.Online.API.Requests.Responses;
 using osu.Game.Overlays.BeatmapSet;
 using osuTK;
 using osuTK.Graphics;
@@ -25,14 +25,14 @@ namespace osu.Game.Overlays.BeatmapListing.Panels
         private const float horizontal_padding = 10;
         private const float vertical_padding = 5;
 
-        private FillFlowContainer bottomPanel, statusContainer, titleContainer;
+        private FillFlowContainer bottomPanel, statusContainer, titleContainer, artistContainer;
         private PlayButton playButton;
         private Box progressBar;
 
         protected override PlayButton PlayButton => playButton;
         protected override Box PreviewBar => progressBar;
 
-        public GridBeatmapPanel(BeatmapSetInfo beatmap)
+        public GridBeatmapPanel(APIBeatmapSet beatmap)
             : base(beatmap)
         {
             Width = 380;
@@ -84,16 +84,24 @@ namespace osu.Game.Overlays.BeatmapListing.Panels
                                     {
                                         new OsuSpriteText
                                         {
-                                            Text = new RomanisableString(SetInfo.Metadata.TitleUnicode, SetInfo.Metadata.Title),
+                                            Text = new RomanisableString(SetInfo.TitleUnicode, SetInfo.Title),
                                             Font = OsuFont.GetFont(size: 18, weight: FontWeight.Bold, italics: true)
                                         },
                                     }
                                 },
-                                new OsuSpriteText
+                                artistContainer = new FillFlowContainer
                                 {
-                                    Text = new RomanisableString(SetInfo.Metadata.ArtistUnicode, SetInfo.Metadata.Artist),
-                                    Font = OsuFont.GetFont(weight: FontWeight.Bold, italics: true)
-                                },
+                                    AutoSizeAxes = Axes.Both,
+                                    Direction = FillDirection.Horizontal,
+                                    Children = new Drawable[]
+                                    {
+                                        new OsuSpriteText
+                                        {
+                                            Text = new RomanisableString(SetInfo.ArtistUnicode, SetInfo.Artist),
+                                            Font = OsuFont.GetFont(weight: FontWeight.Bold, italics: true)
+                                        }
+                                    }
+                                }
                             },
                         },
                         new Container
@@ -137,7 +145,7 @@ namespace osu.Game.Overlays.BeatmapListing.Panels
                                         {
                                             d.AutoSizeAxes = Axes.Both;
                                             d.AddText("mapped by ", t => t.Colour = colours.Gray5);
-                                            d.AddUserLink(SetInfo.Metadata.Author);
+                                            d.AddUserLink(SetInfo.Author);
                                         }),
                                         new Container
                                         {
@@ -147,11 +155,11 @@ namespace osu.Game.Overlays.BeatmapListing.Panels
                                             {
                                                 new OsuSpriteText
                                                 {
-                                                    Text = SetInfo.Metadata.Source,
+                                                    Text = SetInfo.Source,
                                                     Font = OsuFont.GetFont(size: 14),
                                                     Shadow = false,
                                                     Colour = colours.Gray5,
-                                                    Alpha = string.IsNullOrEmpty(SetInfo.Metadata.Source) ? 0f : 1f,
+                                                    Alpha = string.IsNullOrEmpty(SetInfo.Source) ? 0f : 1f,
                                                 },
                                             },
                                         },
@@ -185,8 +193,8 @@ namespace osu.Game.Overlays.BeatmapListing.Panels
                     Margin = new MarginPadding { Top = vertical_padding, Right = vertical_padding },
                     Children = new[]
                     {
-                        new Statistic(FontAwesome.Solid.PlayCircle, SetInfo.OnlineInfo?.PlayCount ?? 0),
-                        new Statistic(FontAwesome.Solid.Heart, SetInfo.OnlineInfo?.FavouriteCount ?? 0),
+                        new Statistic(FontAwesome.Solid.PlayCircle, SetInfo.PlayCount),
+                        new Statistic(FontAwesome.Solid.Heart, SetInfo.FavouriteCount),
                     },
                 },
                 statusContainer = new FillFlowContainer
@@ -203,7 +211,7 @@ namespace osu.Game.Overlays.BeatmapListing.Panels
                 },
             });
 
-            if (SetInfo.OnlineInfo?.HasExplicitContent ?? false)
+            if (SetInfo.HasExplicitContent)
             {
                 titleContainer.Add(new ExplicitContentBeatmapPill
                 {
@@ -213,21 +221,32 @@ namespace osu.Game.Overlays.BeatmapListing.Panels
                 });
             }
 
-            if (SetInfo.OnlineInfo?.HasVideo ?? false)
+            if (SetInfo.TrackId != null)
+            {
+                artistContainer.Add(new FeaturedArtistBeatmapPill
+                {
+                    Anchor = Anchor.CentreLeft,
+                    Origin = Anchor.CentreLeft,
+                    Margin = new MarginPadding { Left = 10f, Top = 2f },
+                });
+            }
+
+            if (SetInfo.HasVideo)
             {
                 statusContainer.Add(new IconPill(FontAwesome.Solid.Film));
             }
 
-            if (SetInfo.OnlineInfo?.HasStoryboard ?? false)
+            if (SetInfo.HasStoryboard)
             {
                 statusContainer.Add(new IconPill(FontAwesome.Solid.Image));
             }
 
             statusContainer.Add(new BeatmapSetOnlineStatusPill
             {
+                AutoSizeAxes = Axes.Both,
                 TextSize = 12,
                 TextPadding = new MarginPadding { Horizontal = 10, Vertical = 5 },
-                Status = SetInfo.OnlineInfo?.Status ?? BeatmapSetOnlineStatus.None,
+                Status = SetInfo.Status,
             });
 
             PreviewPlaying.ValueChanged += _ => updateStatusContainer();
