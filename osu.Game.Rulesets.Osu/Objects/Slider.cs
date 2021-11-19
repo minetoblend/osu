@@ -30,24 +30,6 @@ namespace osu.Game.Rulesets.Osu.Objects
 
         private readonly SliderPath path = new SliderPath();
 
-        public SliderPath Path
-        {
-            get => path;
-            set
-            {
-                path.ControlPoints.Clear();
-                path.ExpectedDistance.Value = null;
-
-                if (value != null)
-                {
-                    path.ControlPoints.AddRange(value.ControlPoints.Select(c => new PathControlPoint(c.Position, c.Type)));
-                    path.ExpectedDistance.Value = value.ExpectedDistance.Value;
-                }
-            }
-        }
-
-        public double Distance => Path.Distance;
-
         public override Vector2 Position
         {
             get => base.Position;

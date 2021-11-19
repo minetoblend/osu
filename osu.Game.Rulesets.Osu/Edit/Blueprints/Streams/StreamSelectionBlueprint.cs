@@ -169,7 +169,7 @@ namespace osu.Game.Rulesets.Osu.Edit.Blueprints.Streams
         {
             Debug.Assert(placementControlPointIndex != null);
 
-            HitObject.Path.ControlPoints[placementControlPointIndex.Value].Position.Value = e.MousePosition - HitObject.Position;
+            HitObject.Path.ControlPoints[placementControlPointIndex.Value].Position = e.MousePosition - HitObject.Position;
         }
 
         protected override void OnDragEnd(DragEndEvent e)
@@ -190,7 +190,7 @@ namespace osu.Game.Rulesets.Osu.Edit.Blueprints.Streams
 
             for (int i = 0; i < controlPoints.Count - 1; i++)
             {
-                float dist = new Line(controlPoints[i].Position.Value, controlPoints[i + 1].Position.Value).DistanceToPoint(position);
+                float dist = new Line(controlPoints[i].Position, controlPoints[i + 1].Position).DistanceToPoint(position);
 
                 if (dist < minDistance)
                 {
@@ -200,7 +200,7 @@ namespace osu.Game.Rulesets.Osu.Edit.Blueprints.Streams
             }
 
             // Move the control points from the insertion index onwards to make room for the insertion
-            controlPoints.Insert(insertionIndex, new PathControlPoint { Position = { Value = position } });
+            controlPoints.Insert(insertionIndex, new PathControlPoint { Position = position });
 
             return insertionIndex;
         }
@@ -215,8 +215,8 @@ namespace osu.Game.Rulesets.Osu.Edit.Blueprints.Streams
             {
                 // The first control point in the slider must have a type, so take it from the previous "first" one
                 // Todo: Should be handled within SliderPath itself
-                if (c == controlPoints[0] && controlPoints.Count > 1 && controlPoints[1].Type.Value == null)
-                    controlPoints[1].Type.Value = controlPoints[0].Type.Value;
+                if (c == controlPoints[0] && controlPoints.Count > 1 && controlPoints[1].Type == null)
+                    controlPoints[1].Type = controlPoints[0].Type.Value;
 
                 controlPoints.Remove(c);
             }
@@ -230,16 +230,16 @@ namespace osu.Game.Rulesets.Osu.Edit.Blueprints.Streams
 
             // The path will have a non-zero offset if the head is removed, but sliders don't support this behaviour since the head is positioned at the slider's position
             // So the slider needs to be offset by this amount instead, and all control points offset backwards such that the path is re-positioned at (0, 0)
-            Vector2 first = controlPoints[0].Position.Value;
+            Vector2 first = controlPoints[0].Position;
             foreach (var c in controlPoints)
-                c.Position.Value -= first;
+                c.Position -= first;
             HitObject.Position += first;
         }
 
         private void updatePath()
         {
-            HitObject.Path.ExpectedDistance.Value = composer?.GetSnappedDistanceFromDistance(HitObject.StartTime, (float)HitObject.Path.CalculatedDistance) ?? (float)HitObject.Path.CalculatedDistance;
-            var snapDistance = composer?.GetBeatSnapDistanceAt(HitObject.StartTime);
+            HitObject.Path.ExpectedDistance.Value = composer?.GetSnappedDistanceFromDistance(HitObject, (float)HitObject.Path.CalculatedDistance) ?? (float)HitObject.Path.CalculatedDistance;
+            float? snapDistance = composer?.GetBeatSnapDistanceAt(HitObject);
 
             if (snapDistance != null)
                 HitObject.DurationPerCircle = (float)snapDistance * 2;

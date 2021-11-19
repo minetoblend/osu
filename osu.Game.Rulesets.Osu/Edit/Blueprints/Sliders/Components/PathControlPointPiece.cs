@@ -53,7 +53,6 @@ namespace osu.Game.Rulesets.Osu.Edit.Blueprints.Sliders.Components
 
         private IBindable<Vector2> hitObjectPosition;
         private IBindable<float> hitObjectScale;
-        private IBindable<Vector2> controlPointPosition;
 
         public PathControlPointPiece(HitObjectWithPath hitObject, PathControlPoint controlPoint)
         {
@@ -116,9 +115,6 @@ namespace osu.Game.Rulesets.Osu.Edit.Blueprints.Sliders.Components
 
             hitObjectPosition = hitObject.PositionBindable.GetBoundCopy();
             hitObjectPosition.BindValueChanged(_ => updateMarkerDisplay());
-
-            controlPointPosition = ControlPoint.Position.GetBoundCopy();
-            controlPointPosition.BindValueChanged(_ => updateMarkerDisplay());
 
             hitObjectScale = hitObject.ScaleBindable.GetBoundCopy();
             hitObjectScale.BindValueChanged(_ => updateMarkerDisplay());
@@ -186,9 +182,9 @@ namespace osu.Game.Rulesets.Osu.Edit.Blueprints.Sliders.Components
 
         protected override void OnDrag(DragEvent e)
         {
-            Vector2[] oldControlPoints = hitObject.Path.ControlPoints.Select(cp => cp.Position.Value).ToArray();
+            Vector2[] oldControlPoints = hitObject.Path.ControlPoints.Select(cp => cp.Position).ToArray();
             var oldPosition = hitObject.Position;
-            var oldStartTime = hitObject.StartTime;
+            double oldStartTime = hitObject.StartTime;
 
             if (ControlPoint == hitObject.Path.ControlPoints[0])
             {
@@ -202,15 +198,15 @@ namespace osu.Game.Rulesets.Osu.Edit.Blueprints.Sliders.Components
 
                 // Since control points are relative to the position of the slider, they all need to be offset backwards by the delta
                 for (int i = 1; i < hitObject.Path.ControlPoints.Count; i++)
-                    hitObject.Path.ControlPoints[i].Position.Value -= movementDelta;
+                    hitObject.Path.ControlPoints[i].Position -= movementDelta;
             }
             else
                 ControlPoint.Position = dragStartPosition + (e.MousePosition - e.MouseDownPosition);
 
             if (!hitObject.Path.HasValidLength)
             {
-                for (var i = 0; i < hitObject.Path.ControlPoints.Count; i++)
-                    hitObject.Path.ControlPoints[i].Position.Value = oldControlPoints[i];
+                for (int i = 0; i < hitObject.Path.ControlPoints.Count; i++)
+                    hitObject.Path.ControlPoints[i].Position = oldControlPoints[i];
 
                 hitObject.Position = oldPosition;
                 hitObject.StartTime = oldStartTime;
@@ -250,7 +246,7 @@ namespace osu.Game.Rulesets.Osu.Edit.Blueprints.Sliders.Components
         /// </summary>
         private void updateMarkerDisplay()
         {
-            Position = hitObject.StackedPosition + ControlPoint.Position.Value;
+            Position = hitObject.StackedPosition + ControlPoint.Position;
 
             markerRing.Alpha = IsSelected.Value ? 1 : 0;
 

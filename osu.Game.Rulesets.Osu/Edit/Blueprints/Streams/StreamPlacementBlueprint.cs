@@ -79,7 +79,7 @@ namespace osu.Game.Rulesets.Osu.Edit.Blueprints.Streams
                         Debug.Assert(lastPoint != null);
 
                         segmentStart = lastPoint;
-                        segmentStart.Type.Value = PathType.Linear;
+                        segmentStart.Type = PathType.Linear;
 
                         currentSegmentLength = 1;
                     }
@@ -123,15 +123,15 @@ namespace osu.Game.Rulesets.Osu.Edit.Blueprints.Streams
             {
                 case 1:
                 case 2:
-                    segmentStart.Type.Value = PathType.Linear;
+                    segmentStart.Type = PathType.Linear;
                     break;
 
                 case 3:
-                    segmentStart.Type.Value = PathType.PerfectCurve;
+                    segmentStart.Type = PathType.PerfectCurve;
                     break;
 
                 default:
-                    segmentStart.Type.Value = PathType.Bezier;
+                    segmentStart.Type = PathType.Bezier;
                     break;
             }
         }
@@ -166,7 +166,7 @@ namespace osu.Game.Rulesets.Osu.Edit.Blueprints.Streams
                 // The cursor does not overlap a previous control point, so it can be added if not already existing.
                 if (cursor == null)
                 {
-                    HitObject.Path.ControlPoints.Add(cursor = new PathControlPoint { Position = { Value = Vector2.Zero } });
+                    HitObject.Path.ControlPoints.Add(cursor = new PathControlPoint { Position = Vector2.Zero });
 
                     // The path type should be adjusted in the progression of updatePathType() (Linear -> PC -> Bezier).
                     currentSegmentLength++;
@@ -174,7 +174,7 @@ namespace osu.Game.Rulesets.Osu.Edit.Blueprints.Streams
                 }
 
                 // Update the cursor position.
-                cursor.Position.Value = ToLocalSpace(inputManager.CurrentState.Mouse.Position) - HitObject.Position;
+                cursor.Position = ToLocalSpace(inputManager.CurrentState.Mouse.Position) - HitObject.Position;
             }
             else if (cursor != null)
             {
@@ -200,8 +200,8 @@ namespace osu.Game.Rulesets.Osu.Edit.Blueprints.Streams
 
         private void updateStream()
         {
-            HitObject.Path.ExpectedDistance.Value = composer?.GetSnappedDistanceFromDistance(HitObject.StartTime, (float)HitObject.Path.CalculatedDistance) ?? (float)HitObject.Path.CalculatedDistance;
-            HitObject.DurationPerCircle = composer.GetBeatSnapDistanceAt(HitObject.StartTime);
+            HitObject.Path.ExpectedDistance.Value = composer?.GetSnappedDistanceFromDistance(HitObject, (float)HitObject.Path.CalculatedDistance) ?? (float)HitObject.Path.CalculatedDistance;
+            HitObject.DurationPerCircle = composer.GetBeatSnapDistanceAt(HitObject);
             HitObject.UpdateNestedHitObjects();
         }
 
