@@ -35,7 +35,7 @@ namespace osu.Game.Rulesets.Osu.Edit.Blueprints.Sliders.Components
         internal readonly Container<PathControlPointConnectionPiece> Connections;
 
         private readonly IBindableList<PathControlPoint> controlPoints = new BindableList<PathControlPoint>();
-        private readonly Slider slider;
+        private readonly HitObjectWithPath hitObject;
         private readonly bool allowSelection;
 
         private InputManager inputManager;
@@ -45,9 +45,9 @@ namespace osu.Game.Rulesets.Osu.Edit.Blueprints.Sliders.Components
         [Resolved(CanBeNull = true)]
         private IPositionSnapProvider snapProvider { get; set; }
 
-        public PathControlPointVisualiser(Slider slider, bool allowSelection)
+        public PathControlPointVisualiser(HitObjectWithPath hitObject, bool allowSelection)
         {
-            this.slider = slider;
+            this.hitObject = hitObject;
             this.allowSelection = allowSelection;
 
             RelativeSizeAxes = Axes.Both;
@@ -66,7 +66,7 @@ namespace osu.Game.Rulesets.Osu.Edit.Blueprints.Sliders.Components
             inputManager = GetContainingInputManager();
 
             controlPoints.CollectionChanged += onControlPointsChanged;
-            controlPoints.BindTo(slider.Path.ControlPoints);
+            controlPoints.BindTo(hitObject.Path.ControlPoints);
         }
 
         /// <summary>
@@ -122,7 +122,7 @@ namespace osu.Game.Rulesets.Osu.Edit.Blueprints.Sliders.Components
                     {
                         var point = (PathControlPoint)e.NewItems[i];
 
-                        Pieces.Add(new PathControlPointPiece(slider, point).With(d =>
+                        Pieces.Add(new PathControlPointPiece(hitObject, point).With(d =>
                         {
                             if (allowSelection)
                                 d.RequestSelection = selectionRequested;
@@ -132,7 +132,7 @@ namespace osu.Game.Rulesets.Osu.Edit.Blueprints.Sliders.Components
                             d.DragEnded = dragEnded;
                         }));
 
-                        Connections.Add(new PathControlPointConnectionPiece(slider, e.NewStartingIndex + i));
+                        Connections.Add(new PathControlPointConnectionPiece(hitObject, e.NewStartingIndex + i));
                     }
 
                     break;
@@ -235,9 +235,9 @@ namespace osu.Game.Rulesets.Osu.Edit.Blueprints.Sliders.Components
 
         private void dragStarted(PathControlPoint controlPoint)
         {
-            dragStartPositions = slider.Path.ControlPoints.Select(point => point.Position).ToArray();
-            dragPathTypes = slider.Path.ControlPoints.Select(point => point.Type).ToArray();
-            draggedControlPointIndex = slider.Path.ControlPoints.IndexOf(controlPoint);
+            dragStartPositions = hitObject.Path.ControlPoints.Select(point => point.Position).ToArray();
+            dragPathTypes = hitObject.Path.ControlPoints.Select(point => point.Type).ToArray();
+            draggedControlPointIndex = hitObject.Path.ControlPoints.IndexOf(controlPoint);
             selectedControlPoints = new HashSet<PathControlPoint>(Pieces.Where(piece => piece.IsSelected.Value).Select(piece => piece.ControlPoint));
 
             Debug.Assert(draggedControlPointIndex >= 0);
@@ -247,24 +247,24 @@ namespace osu.Game.Rulesets.Osu.Edit.Blueprints.Sliders.Components
 
         private void dragInProgress(DragEvent e)
         {
-            Vector2[] oldControlPoints = slider.Path.ControlPoints.Select(cp => cp.Position).ToArray();
-            var oldPosition = slider.Position;
-            double oldStartTime = slider.StartTime;
+            Vector2[] oldControlPoints = hitObject.Path.ControlPoints.Select(cp => cp.Position).ToArray();
+            var oldPosition = hitObject.Position;
+            double oldStartTime = hitObject.StartTime;
 
-            if (selectedControlPoints.Contains(slider.Path.ControlPoints[0]))
+            if (selectedControlPoints.Contains(hitObject.Path.ControlPoints[0]))
             {
-                // Special handling for selections containing head control point - the position of the slider changes which means the snapped position and time have to be taken into account
+                // Special handling for selections containing head control point - the position of the hitObject changes which means the snapped position and time have to be taken into account
                 Vector2 newHeadPosition = Parent.ToScreenSpace(e.MousePosition + (dragStartPositions[0] - dragStartPositions[draggedControlPointIndex]));
                 var result = snapProvider?.SnapScreenSpacePositionToValidTime(newHeadPosition);
 
-                Vector2 movementDelta = Parent.ToLocalSpace(result?.ScreenSpacePosition ?? newHeadPosition) - slider.Position;
+                Vector2 movementDelta = Parent.ToLocalSpace(result?.ScreenSpacePosition ?? newHeadPosition) - hitObject.Position;
 
-                slider.Position += movementDelta;
-                slider.StartTime = result?.Time ?? slider.StartTime;
+                hitObject.Position += movementDelta;
+                hitObject.StartTime = result?.Time ?? hitObject.StartTime;
 
-                for (int i = 1; i < slider.Path.ControlPoints.Count; i++)
+                for (int i = 1; i < hitObject.Path.ControlPoints.Count; i++)
                 {
-                    var controlPoint = slider.Path.ControlPoints[i];
+                    var controlPoint = hitObject.Path.ControlPoints[i];
                     // Since control points are relative to the position of the slider, all points that are _not_ selected
                     // need to be offset _back_ by the delta corresponding to the movement of the head point.
                     // All other selected control points (if any) will move together with the head point
@@ -283,19 +283,19 @@ namespace osu.Game.Rulesets.Osu.Edit.Blueprints.Sliders.Components
                 }
             }
 
-            if (!slider.Path.HasValidLength)
+            if (!hitObject.Path.HasValidLength)
             {
-                for (int i = 0; i < slider.Path.ControlPoints.Count; i++)
-                    slider.Path.ControlPoints[i].Position = oldControlPoints[i];
+                for (int i = 0; i < hitObject.Path.ControlPoints.Count; i++)
+                    hitObject.Path.ControlPoints[i].Position = oldControlPoints[i];
 
-                slider.Position = oldPosition;
-                slider.StartTime = oldStartTime;
+                hitObject.Position = oldPosition;
+                hitObject.StartTime = oldStartTime;
                 return;
             }
 
             // Maintain the path types in case they got defaulted to bezier at some point during the drag.
-            for (int i = 0; i < slider.Path.ControlPoints.Count; i++)
-                slider.Path.ControlPoints[i].Type = dragPathTypes[i];
+            for (int i = 0; i < hitObject.Path.ControlPoints.Count; i++)
+                hitObject.Path.ControlPoints[i].Type = dragPathTypes[i];
         }
 
         private void dragEnded() => changeHandler?.EndChange();

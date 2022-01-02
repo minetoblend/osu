@@ -1,4 +1,4 @@
-﻿// Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
+// Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
 using System.Collections.Generic;
@@ -7,13 +7,14 @@ using JetBrains.Annotations;
 using osu.Framework.Allocation;
 using osu.Framework.Bindables;
 using osu.Framework.Graphics;
+using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Primitives;
 using osu.Framework.Graphics.UserInterface;
 using osu.Framework.Input.Events;
-using osu.Game.Beatmaps.ControlPoints;
 using osu.Game.Graphics.UserInterface;
 using osu.Game.Rulesets.Edit;
 using osu.Game.Rulesets.Objects;
+using osu.Game.Rulesets.Osu.Edit.Blueprints.HitCircles.Components;
 using osu.Game.Rulesets.Osu.Edit.Blueprints.Sliders.Components;
 using osu.Game.Rulesets.Osu.Objects;
 using osu.Game.Rulesets.Osu.Objects.Drawables;
@@ -22,15 +23,11 @@ using osu.Game.Screens.Edit.Compose;
 using osuTK;
 using osuTK.Input;
 
-namespace osu.Game.Rulesets.Osu.Edit.Blueprints.Sliders
+namespace osu.Game.Rulesets.Osu.Edit.Blueprints.Streams
 {
-    public class SliderSelectionBlueprint : OsuSelectionBlueprint<Slider>
+    public class StreamSelectionBlueprint : OsuSelectionBlueprint<HitCircleStream>
     {
-        protected new DrawableSlider DrawableObject => (DrawableSlider)base.DrawableObject;
-
-        protected SliderBodyPiece BodyPiece { get; private set; }
-        protected SliderCircleOverlay HeadOverlay { get; private set; }
-        protected SliderCircleOverlay TailOverlay { get; private set; }
+        protected new DrawableHitCircleStream DrawableObject => (DrawableHitCircleStream)base.DrawableObject;
 
         [CanBeNull]
         protected PathControlPointVisualiser ControlPointVisualiser { get; private set; }
@@ -50,13 +47,35 @@ namespace osu.Game.Rulesets.Osu.Edit.Blueprints.Sliders
         [Resolved(CanBeNull = true)]
         private BindableBeatDivisor beatDivisor { get; set; }
 
-        public override Quad SelectionQuad => BodyPiece.ScreenSpaceDrawQuad;
+        public override Quad SelectionQuad
+        {
+            get
+            {
+                if (!circleContainer.Any())
+                    return new Quad();
+
+                Vector2 minPosition = new Vector2(float.MaxValue, float.MaxValue);
+                Vector2 maxPosition = new Vector2(float.MinValue, float.MinValue);
+
+                foreach (var c in circleContainer)
+                {
+                    minPosition = Vector2.ComponentMin(minPosition, c.ScreenSpaceDrawQuad.TopLeft);
+                    maxPosition = Vector2.ComponentMax(maxPosition, c.ScreenSpaceDrawQuad.BottomRight);
+                }
+
+                Vector2 size = maxPosition - minPosition;
+
+                return new Quad(minPosition.X, minPosition.Y, size.X, size.Y);
+            }
+        }
 
         private readonly BindableList<PathControlPoint> controlPoints = new BindableList<PathControlPoint>();
         private readonly IBindable<int> pathVersion = new Bindable<int>();
 
-        public SliderSelectionBlueprint(Slider slider)
-            : base(slider)
+        private Container<HitCirclePiece> circleContainer;
+
+        public StreamSelectionBlueprint(HitCircleStream stream)
+            : base(stream)
         {
         }
 
@@ -65,9 +84,7 @@ namespace osu.Game.Rulesets.Osu.Edit.Blueprints.Sliders
         {
             InternalChildren = new Drawable[]
             {
-                BodyPiece = new SliderBodyPiece(),
-                HeadOverlay = CreateCircleOverlay(HitObject, SliderPosition.Start),
-                TailOverlay = CreateCircleOverlay(HitObject, SliderPosition.End),
+                circleContainer = new Container<HitCirclePiece> { RelativeSizeAxes = Axes.Both },
             };
         }
 
@@ -79,8 +96,20 @@ namespace osu.Game.Rulesets.Osu.Edit.Blueprints.Sliders
 
             pathVersion.BindTo(HitObject.Path.Version);
             pathVersion.BindValueChanged(_ => updatePath());
+        }
 
-            BodyPiece.UpdateFrom(HitObject);
+        private void updatePath()
+        {
+            HitObject.Path.ExpectedDistance.Value = composer?.GetSnappedDistanceFromDistance(HitObject, (float)HitObject.Path.CalculatedDistance) ?? (float)HitObject.Path.CalculatedDistance;
+            editorBeatmap?.Update(HitObject);
+            circleContainer.Clear();
+
+            foreach (var circle in HitObject.NestedHitObjects.OfType<HitCircle>())
+            {
+                var piece = new HitCirclePiece();
+                circleContainer.Add(piece);
+                piece.UpdateFrom(circle);
+            }
         }
 
         public override bool HandleQuickDeletion()
@@ -100,7 +129,7 @@ namespace osu.Game.Rulesets.Osu.Edit.Blueprints.Sliders
             base.Update();
 
             if (IsSelected)
-                BodyPiece.UpdateFrom(HitObject);
+                updatePath();
         }
 
         protected override void OnSelected()
@@ -121,7 +150,7 @@ namespace osu.Game.Rulesets.Osu.Edit.Blueprints.Sliders
             ControlPointVisualiser?.Expire();
             ControlPointVisualiser = null;
 
-            BodyPiece.RecyclePath();
+            circleContainer.Clear();
         }
 
         private Vector2 rightClickPosition;
@@ -173,12 +202,6 @@ namespace osu.Game.Rulesets.Osu.Edit.Blueprints.Sliders
         {
             if (!IsSelected)
                 return false;
-
-            if (e.Key == Key.F && e.ControlPressed && e.ShiftPressed)
-            {
-                convertToStream();
-                return true;
-            }
 
             return false;
         }
@@ -240,51 +263,22 @@ namespace osu.Game.Rulesets.Osu.Edit.Blueprints.Sliders
             HitObject.Position += first;
         }
 
-        private void updatePath()
-        {
-            HitObject.Path.ExpectedDistance.Value = composer?.GetSnappedDistanceFromDistance(HitObject, (float)HitObject.Path.CalculatedDistance) ?? (float)HitObject.Path.CalculatedDistance;
-            editorBeatmap?.Update(HitObject);
-        }
-
-        private void convertToStream()
-        {
-            if (editorBeatmap == null || changeHandler == null || beatDivisor == null)
-                return;
-
-            changeHandler.BeginChange();
-
-            var stream = new HitCircleStream
-            {
-                StartTime = HitObject.StartTime,
-                Position = HitObject.Position,
-                Path = HitObject.Path,
-                BeatDivisor = beatDivisor.Value,
-                NewCombo = HitObject.NewCombo,
-                Velocity = HitObject.Velocity,
-                SampleControlPoint = (SampleControlPoint)HitObject.SampleControlPoint.DeepClone(),
-            };
-            stream.Path.ExpectedDistance.Value = composer?.GetSnappedDistanceFromDistance(HitObject, (float)stream.Path.CalculatedDistance) ?? (float)stream.Path.CalculatedDistance;
-            editorBeatmap.Add(stream);
-            editorBeatmap.Update(stream);
-
-            editorBeatmap.Remove(HitObject);
-
-            changeHandler.EndChange();
-        }
-
         public override MenuItem[] ContextMenuItems => new MenuItem[]
         {
             new OsuMenuItem("Add control point", MenuItemType.Standard, () => addControlPoint(rightClickPosition)),
-            new OsuMenuItem("Convert to stream", MenuItemType.Destructive, convertToStream),
+            new OsuMenuItem("Update beatsnap divisor", MenuItemType.Standard, updateSnapDivisor)
         };
 
+        private void updateSnapDivisor()
+        {
+            HitObject.BeatDivisor = editorBeatmap.BeatDivisor;
+            editorBeatmap.Update(HitObject);
+        }
+
         // Always refer to the drawable object's slider body so subsequent movement deltas are calculated with updated positions.
-        public override Vector2 ScreenSpaceSelectionPoint => DrawableObject.SliderBody?.ToScreenSpace(DrawableObject.SliderBody.PathOffset)
-                                                             ?? BodyPiece.ToScreenSpace(BodyPiece.PathStartLocation);
+        public override Vector2 ScreenSpaceSelectionPoint => DrawableObject.ToScreenSpace(DrawableObject.HitObject.Position);
 
         public override bool ReceivePositionalInputAt(Vector2 screenSpacePos) =>
-            BodyPiece.ReceivePositionalInputAt(screenSpacePos) || ControlPointVisualiser?.Pieces.Any(p => p.ReceivePositionalInputAt(screenSpacePos)) == true;
-
-        protected virtual SliderCircleOverlay CreateCircleOverlay(Slider slider, SliderPosition position) => new SliderCircleOverlay(slider, position);
+            circleContainer.Any(circle => circle.ReceivePositionalInputAt(screenSpacePos)) || ControlPointVisualiser?.Pieces.Any(p => p.ReceivePositionalInputAt(screenSpacePos)) == true;
     }
 }

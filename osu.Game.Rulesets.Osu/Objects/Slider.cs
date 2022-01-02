@@ -18,42 +18,15 @@ using osu.Game.Rulesets.Scoring;
 
 namespace osu.Game.Rulesets.Osu.Objects
 {
-    public class Slider : OsuHitObject, IHasPathWithRepeats
+    public class Slider : HitObjectWithPath, IHasPathWithRepeats
     {
-        public double EndTime => StartTime + this.SpanCount() * Path.Distance / Velocity;
-
-        [JsonIgnore]
-        public double Duration
-        {
-            get => EndTime - StartTime;
-            set => throw new System.NotSupportedException($"Adjust via {nameof(RepeatCount)} instead"); // can be implemented if/when needed.
-        }
+        public override double EndTime => StartTime + this.SpanCount() * Path.Distance / Velocity;
 
         private readonly Cached<Vector2> endPositionCache = new Cached<Vector2>();
 
         public override Vector2 EndPosition => endPositionCache.IsValid ? endPositionCache.Value : endPositionCache.Value = Position + this.CurvePositionAt(1);
 
         public Vector2 StackedPositionAt(double t) => StackedPosition + this.CurvePositionAt(t);
-
-        private readonly SliderPath path = new SliderPath();
-
-        public SliderPath Path
-        {
-            get => path;
-            set
-            {
-                path.ControlPoints.Clear();
-                path.ExpectedDistance.Value = null;
-
-                if (value != null)
-                {
-                    path.ControlPoints.AddRange(value.ControlPoints.Select(c => new PathControlPoint(c.Position, c.Type)));
-                    path.ExpectedDistance.Value = value.ExpectedDistance.Value;
-                }
-            }
-        }
-
-        public double Distance => Path.Distance;
 
         public override Vector2 Position
         {
@@ -106,11 +79,6 @@ namespace osu.Game.Rulesets.Osu.Objects
         /// The length of one span of this <see cref="Slider"/>.
         /// </summary>
         public double SpanDuration => Duration / this.SpanCount();
-
-        /// <summary>
-        /// Velocity of this <see cref="Slider"/>.
-        /// </summary>
-        public double Velocity { get; private set; }
 
         /// <summary>
         /// Spacing between <see cref="SliderTick"/>s of this <see cref="Slider"/>.

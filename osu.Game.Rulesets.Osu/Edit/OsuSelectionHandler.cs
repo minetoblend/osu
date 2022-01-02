@@ -37,7 +37,7 @@ namespace osu.Game.Rulesets.Osu.Edit
             SelectionBox.CanRotate = quad.Width > 0 || quad.Height > 0;
             SelectionBox.CanFlipX = SelectionBox.CanScaleX = quad.Width > 0;
             SelectionBox.CanFlipY = SelectionBox.CanScaleY = quad.Height > 0;
-            SelectionBox.CanReverse = EditorBeatmap.SelectedHitObjects.Count > 1 || EditorBeatmap.SelectedHitObjects.Any(s => s is Slider);
+            SelectionBox.CanReverse = EditorBeatmap.SelectedHitObjects.Count > 1 || EditorBeatmap.SelectedHitObjects.Any(s => s is HitObjectWithPath);
         }
 
         protected override void OnOperationEnded()
@@ -74,10 +74,10 @@ namespace osu.Game.Rulesets.Osu.Edit
                 if (moreThanOneObject)
                     h.StartTime = endTime - (h.GetEndTime() - startTime);
 
-                if (h is Slider slider)
+                if (h is HitObjectWithPath hitObject)
                 {
-                    slider.Path.Reverse(out Vector2 offset);
-                    slider.Position += offset;
+                    hitObject.Path.Reverse(out Vector2 offset);
+                    hitObject.Position += offset;
                 }
             }
 
@@ -94,9 +94,9 @@ namespace osu.Game.Rulesets.Osu.Edit
             {
                 h.Position = GetFlippedPosition(direction, selectedObjectsQuad, h.Position);
 
-                if (h is Slider slider)
+                if (h is HitObjectWithPath hitObject)
                 {
-                    foreach (var point in slider.Path.ControlPoints)
+                    foreach (var point in hitObject.Path.ControlPoints)
                     {
                         point.Position = new Vector2(
                             (direction == Direction.Horizontal ? -1 : 1) * point.Position.X,
@@ -118,8 +118,8 @@ namespace osu.Game.Rulesets.Osu.Edit
             // for the time being, allow resizing of slider paths only if the slider is
             // the only hit object selected. with a group selection, it's likely the user
             // is not looking to change the duration of the slider but expand the whole pattern.
-            if (hitObjects.Length == 1 && hitObjects.First() is Slider slider)
-                scaleSlider(slider, scale);
+            if (hitObjects.Length == 1 && hitObjects.First() is HitObjectWithPath hitObject)
+                scaleHitObjectWithPath(hitObject, scale);
             else
                 scaleHitObjects(hitObjects, reference, scale);
 
@@ -161,11 +161,11 @@ namespace osu.Game.Rulesets.Osu.Edit
             return true;
         }
 
-        private void scaleSlider(Slider slider, Vector2 scale)
+        private void scaleHitObjectWithPath(HitObjectWithPath hitObject, Vector2 scale)
         {
-            referencePathTypes ??= slider.Path.ControlPoints.Select(p => p.Type).ToList();
+            referencePathTypes ??= hitObject.Path.ControlPoints.Select(p => p.Type).ToList();
 
-            Quad sliderQuad = GetSurroundingQuad(slider.Path.ControlPoints.Select(p => p.Position));
+            Quad sliderQuad = GetSurroundingQuad(hitObject.Path.ControlPoints.Select(p => p.Position));
 
             // Limit minimum distance between control points after scaling to almost 0. Less than 0 causes the slider to flip, exactly 0 causes a crash through division by 0.
             scale = Vector2.ComponentMax(new Vector2(Precision.FLOAT_EPSILON), sliderQuad.Size + scale) - sliderQuad.Size;
@@ -176,24 +176,24 @@ namespace osu.Game.Rulesets.Osu.Edit
 
             Queue<Vector2> oldControlPoints = new Queue<Vector2>();
 
-            foreach (var point in slider.Path.ControlPoints)
+            foreach (var point in hitObject.Path.ControlPoints)
             {
                 oldControlPoints.Enqueue(point.Position);
                 point.Position *= pathRelativeDeltaScale;
             }
 
             // Maintain the path types in case they were defaulted to bezier at some point during scaling
-            for (int i = 0; i < slider.Path.ControlPoints.Count; ++i)
-                slider.Path.ControlPoints[i].Type = referencePathTypes[i];
+            for (int i = 0; i < hitObject.Path.ControlPoints.Count; ++i)
+                hitObject.Path.ControlPoints[i].Type = referencePathTypes[i];
 
             //if sliderhead or sliderend end up outside playfield, revert scaling.
-            Quad scaledQuad = getSurroundingQuad(new OsuHitObject[] { slider });
+            Quad scaledQuad = getSurroundingQuad(new OsuHitObject[] { hitObject });
             (bool xInBounds, bool yInBounds) = isQuadInBounds(scaledQuad);
 
-            if (xInBounds && yInBounds && slider.Path.HasValidLength)
+            if (xInBounds && yInBounds && hitObject.Path.HasValidLength)
                 return;
 
-            foreach (var point in slider.Path.ControlPoints)
+            foreach (var point in hitObject.Path.ControlPoints)
                 point.Position = oldControlPoints.Dequeue();
         }
 

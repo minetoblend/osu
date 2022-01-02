@@ -6,6 +6,7 @@ using osu.Game.Rulesets.Objects;
 using osu.Game.Rulesets.Osu.Edit.Blueprints.HitCircles;
 using osu.Game.Rulesets.Osu.Edit.Blueprints.Sliders;
 using osu.Game.Rulesets.Osu.Edit.Blueprints.Spinners;
+using osu.Game.Rulesets.Osu.Edit.Blueprints.Streams;
 using osu.Game.Rulesets.Osu.Objects;
 using osu.Game.Screens.Edit.Compose.Components;
 
@@ -29,6 +30,9 @@ namespace osu.Game.Rulesets.Osu.Edit
 
                 case Slider slider:
                     return new SliderSelectionBlueprint(slider);
+
+                case HitCircleStream stream:
+                    return new StreamSelectionBlueprint(stream);
 
                 case Spinner spinner:
                     return new SpinnerSelectionBlueprint(spinner);

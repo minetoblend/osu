@@ -19,21 +19,21 @@ namespace osu.Game.Rulesets.Osu.Edit.Blueprints.Sliders.Components
         public readonly PathControlPoint ControlPoint;
 
         private readonly Path path;
-        private readonly Slider slider;
+        private readonly HitObjectWithPath hitObject;
         public int ControlPointIndex { get; set; }
 
         private IBindable<Vector2> sliderPosition;
         private IBindable<int> pathVersion;
 
-        public PathControlPointConnectionPiece(Slider slider, int controlPointIndex)
+        public PathControlPointConnectionPiece(HitObjectWithPath hitObject, int controlPointIndex)
         {
-            this.slider = slider;
+            this.hitObject = hitObject;
             ControlPointIndex = controlPointIndex;
 
             Origin = Anchor.Centre;
             AutoSizeAxes = Axes.Both;
 
-            ControlPoint = slider.Path.ControlPoints[controlPointIndex];
+            ControlPoint = this.hitObject.Path.ControlPoints[controlPointIndex];
 
             InternalChild = path = new SmoothPath
             {
@@ -46,10 +46,10 @@ namespace osu.Game.Rulesets.Osu.Edit.Blueprints.Sliders.Components
         {
             base.LoadComplete();
 
-            sliderPosition = slider.PositionBindable.GetBoundCopy();
+            sliderPosition = hitObject.PositionBindable.GetBoundCopy();
             sliderPosition.BindValueChanged(_ => updateConnectingPath());
 
-            pathVersion = slider.Path.Version.GetBoundCopy();
+            pathVersion = hitObject.Path.Version.GetBoundCopy();
             pathVersion.BindValueChanged(_ => updateConnectingPath());
 
             updateConnectingPath();
@@ -60,16 +60,16 @@ namespace osu.Game.Rulesets.Osu.Edit.Blueprints.Sliders.Components
         /// </summary>
         private void updateConnectingPath()
         {
-            Position = slider.StackedPosition + ControlPoint.Position;
+            Position = hitObject.StackedPosition + ControlPoint.Position;
 
             path.ClearVertices();
 
             int nextIndex = ControlPointIndex + 1;
-            if (nextIndex == 0 || nextIndex >= slider.Path.ControlPoints.Count)
+            if (nextIndex == 0 || nextIndex >= hitObject.Path.ControlPoints.Count)
                 return;
 
             path.AddVertex(Vector2.Zero);
-            path.AddVertex(slider.Path.ControlPoints[nextIndex].Position - ControlPoint.Position);
+            path.AddVertex(hitObject.Path.ControlPoints[nextIndex].Position - ControlPoint.Position);
 
             path.OriginPosition = path.PositionInBoundingBox(Vector2.Zero);
         }
