@@ -9,12 +9,20 @@ namespace osu.Game.Online.Editor
     public class EditorCommandEvent
     {
         [Key(0)]
+        public SerializedEditorCommands Commands { get; set; }
+
+        [Key(1)]
         public long StateVersion { get; set; }
 
+        [Key(2)]
+        public long UserId { get; set; }
+
         [SerializationConstructor]
-        public EditorCommandEvent(long stateVersion)
+        public EditorCommandEvent(SerializedEditorCommands commands, long stateVersion, long userId)
         {
+            Commands = commands;
             StateVersion = stateVersion;
+            UserId = userId;
         }
     }
 }
