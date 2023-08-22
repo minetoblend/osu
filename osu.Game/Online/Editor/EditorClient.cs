@@ -27,6 +27,6 @@ namespace osu.Game.Online.Editor
         /// </summary>
         /// <param name="roomId">The room ID.</param>
         /// <returns>The joined <see cref="EditorRoom"/>.</returns>
-        protected abstract Task<EditorRoom> JoinRoom(long roomId);
+        protected abstract Task<EditorRoomJoinedResult> JoinRoom(long roomId);
     }
 }

@@ -6,9 +6,15 @@ using MessagePack;
 namespace osu.Game.Online.Editor
 {
     [MessagePackObject]
-    public class EditorRoom
+    public class EditorCommandEvent
     {
         [Key(0)]
         public long StateVersion { get; set; }
+
+        [SerializationConstructor]
+        public EditorCommandEvent(long stateVersion)
+        {
+            StateVersion = stateVersion;
+        }
     }
 }
