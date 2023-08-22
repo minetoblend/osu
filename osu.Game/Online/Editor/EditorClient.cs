@@ -37,31 +37,31 @@ namespace osu.Game.Online.Editor
         /// <returns></returns>
         protected abstract Task SubmitCommands(SerializedEditorCommands commands);
 
-        public Task UserJoined(EditorRoomUser user)
+        Task IEditorClient.UserJoined(EditorRoomUser user)
         {
             // TODO
             throw new NotImplementedException();
         }
 
-        public Task UserLeft(EditorRoomUser user)
+        Task IEditorClient.UserLeft(EditorRoomUser user)
         {
             // TODO
             throw new NotImplementedException();
         }
 
-        public Task RoomClosed()
+        Task IEditorClient.RoomClosed()
         {
             // TODO
             throw new NotImplementedException();
         }
 
-        public Task UserStateChanged(int userId, EditorUserState state)
+        Task IEditorClient.UserStateChanged(int userId, EditorUserState state)
         {
             // TODO
             throw new NotImplementedException();
         }
 
-        public Task CommandsSubmitted(EditorCommandEvent commands)
+        Task IEditorClient.CommandsSubmitted(EditorCommandEvent commands)
         {
             // TODO
             throw new NotImplementedException();
