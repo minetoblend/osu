@@ -4,7 +4,6 @@
 using System.Threading.Tasks;
 using osu.Framework.Bindables;
 using osu.Framework.Graphics;
-using osu.Game.Beatmaps;
 
 namespace osu.Game.Online.Editor
 {
@@ -19,10 +18,9 @@ namespace osu.Game.Online.Editor
         /// <summary>
         /// Creates an <see cref="EditorRoom"/> for a given beatmap.
         /// </summary>
-        /// <param name="beatmap">The beatmap to create the room for.</param>
-        /// <param name="beatmapSet">The beatmapset the beatmap belongs to.</param>
+        /// <param name="beatmap">The serialized beatmap containing the difficulty and all associated files.</param>
         /// <returns>The joined <see cref="EditorRoom"/>.</returns>
-        protected abstract Task<EditorRoom> CreateAndJoinRoom(IBeatmapInfo beatmap, IBeatmapSetInfo beatmapSet);
+        protected abstract Task<EditorRoom> CreateAndJoinRoom(SerializedEditorBeatmap beatmap);
 
         /// <summary>
         /// Joins the <see cref="EditorRoom"/> with a given ID.

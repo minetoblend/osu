@@ -1,10 +1,10 @@
 // Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
+using System;
 using System.Threading.Tasks;
 using osu.Framework.Allocation;
 using osu.Framework.Bindables;
-using osu.Game.Beatmaps;
 using osu.Game.Online.API;
 
 namespace osu.Game.Online.Editor
@@ -37,16 +37,16 @@ namespace osu.Game.Online.Editor
             }
         }
 
-        protected override Task<EditorRoom> CreateAndJoinRoom(IBeatmapInfo beatmap, IBeatmapSetInfo beatmapSet)
+        protected override Task<EditorRoom> CreateAndJoinRoom(SerializedEditorBeatmap beatmap)
         {
             //TODO
-            throw new System.NotImplementedException();
+            throw new NotImplementedException();
         }
 
         protected override Task<EditorRoom> JoinRoom(long roomId)
         {
             //TODO
-            throw new System.NotImplementedException();
+            throw new NotImplementedException();
         }
     }
 }
