@@ -13,6 +13,7 @@ namespace osu.Game.Online
             SpectatorEndpointUrl = $"{APIEndpointUrl}/spectator";
             MultiplayerEndpointUrl = $"{APIEndpointUrl}/multiplayer";
             MetadataEndpointUrl = $"{APIEndpointUrl}/metadata";
+            EditorEndpointUrl = $"{APIEndpointUrl}/editor";
         }
     }
 }

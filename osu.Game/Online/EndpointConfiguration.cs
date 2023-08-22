@@ -44,5 +44,10 @@ namespace osu.Game.Online
         /// The endpoint for the SignalR metadata server.
         /// </summary>
         public string MetadataEndpointUrl { get; set; }
+
+        /// <summary>
+        /// The endpoint for the SignalR editor server.
+        /// </summary>
+        public string EditorEndpointUrl { get; set; }
     }
 }

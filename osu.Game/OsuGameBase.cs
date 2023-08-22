@@ -48,6 +48,7 @@ using osu.Game.Localisation;
 using osu.Game.Online;
 using osu.Game.Online.API;
 using osu.Game.Online.Chat;
+using osu.Game.Online.Editor;
 using osu.Game.Online.Metadata;
 using osu.Game.Online.Multiplayer;
 using osu.Game.Online.Solo;
@@ -204,6 +205,8 @@ namespace osu.Game
 
         protected MultiplayerClient MultiplayerClient { get; private set; }
 
+        protected EditorClient EditorClient { get; private set; }
+
         private MetadataClient metadataClient;
         private SoloStatisticsWatcher soloStatisticsWatcher;
 
@@ -325,6 +328,7 @@ namespace osu.Game
             dependencies.CacheAs(beatmapUpdater = new BeatmapUpdater(BeatmapManager, difficultyCache, API, Storage));
             dependencies.CacheAs(SpectatorClient = new OnlineSpectatorClient(endpoints));
             dependencies.CacheAs(MultiplayerClient = new OnlineMultiplayerClient(endpoints));
+            dependencies.CacheAs(EditorClient = new OnlineEditorClient(endpoints));
             dependencies.CacheAs(metadataClient = new OnlineMetadataClient(endpoints));
             dependencies.CacheAs(soloStatisticsWatcher = new SoloStatisticsWatcher());
 
