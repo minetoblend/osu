@@ -43,7 +43,13 @@ namespace osu.Game.Online.Editor
             throw new NotImplementedException();
         }
 
-        protected override Task<EditorRoom> JoinRoom(long roomId)
+        protected override Task<EditorRoomJoinedResult> JoinRoom(long roomId)
+        {
+            //TODO
+            throw new NotImplementedException();
+        }
+
+        protected override Task SubmitCommands(SerializedEditorCommands commands)
         {
             //TODO
             throw new NotImplementedException();
