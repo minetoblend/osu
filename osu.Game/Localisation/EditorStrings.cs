@@ -119,6 +119,16 @@ namespace osu.Game.Localisation
         /// </summary>
         public static LocalisableString LimitedDistanceSnap => new TranslatableString(getKey(@"limited_distance_snap_grid"), @"Limit distance snap placement to current time");
 
+        /// <summary>
+        /// "Share"
+        /// </summary>
+        public static LocalisableString Share => new TranslatableString(getKey(@"share"), @"Share");
+
+        /// <summary>
+        /// "Collaborate"
+        /// </summary>
+        public static LocalisableString Collaborate => new TranslatableString(getKey(@"collaborate"), @"Collaborate");
+
         private static string getKey(string key) => $@"{prefix}:{key}";
     }
 }

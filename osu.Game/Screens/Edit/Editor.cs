@@ -354,6 +354,13 @@ namespace osu.Game.Screens.Edit
                                         {
                                             new EditorMenuItem(EditorStrings.SetPreviewPointToCurrent, MenuItemType.Standard, SetPreviewPointToCurrentTime)
                                         }
+                                    },
+                                    new MenuItem(EditorStrings.Share)
+                                    {
+                                        Items = new MenuItem[]
+                                        {
+                                            new EditorMenuItem(EditorStrings.Collaborate, MenuItemType.Standard, BeingCollaboration)
+                                        }
                                     }
                                 }
                             },
@@ -855,6 +862,10 @@ namespace osu.Game.Screens.Edit
         protected void SetPreviewPointToCurrentTime()
         {
             editorBeatmap.PreviewTime.Value = (int)clock.CurrentTime;
+        }
+
+        protected void BeingCollaboration()
+        {
         }
 
         private void resetTrack(bool seekToStart = false)
