@@ -34,6 +34,7 @@ using osu.Game.Graphics.UserInterface;
 using osu.Game.Input.Bindings;
 using osu.Game.Localisation;
 using osu.Game.Online.API;
+using osu.Game.Online.Editor;
 using osu.Game.Overlays;
 using osu.Game.Overlays.Notifications;
 using osu.Game.Overlays.OSD;
@@ -94,11 +95,16 @@ namespace osu.Game.Screens.Edit
         private INotificationOverlay notifications { get; set; }
 
         [Resolved]
+        private EditorClient editorClient { get; set; }
+
+        [Resolved]
         private RealmAccess realm { get; set; }
 
         public readonly Bindable<EditorScreenMode> Mode = new Bindable<EditorScreenMode>();
 
         public IBindable<bool> SamplePlaybackDisabled => samplePlaybackDisabled;
+
+        private LoadingLayer loadingLayer;
 
         /// <summary>
         /// Ensure all asynchronously loading pieces of the editor are in a good state.
@@ -374,6 +380,7 @@ namespace osu.Game.Screens.Edit
                         },
                     },
                     bottomBar = new BottomBar(),
+                    loadingLayer = new LoadingLayer(true)
                 }
             });
             changeHandler?.CanUndo.BindValueChanged(v => undoMenuItem.Action.Disabled = !v.NewValue, true);
@@ -864,8 +871,21 @@ namespace osu.Game.Screens.Edit
             editorBeatmap.PreviewTime.Value = (int)clock.CurrentTime;
         }
 
-        protected void BeingCollaboration()
+        protected async void BeingCollaboration()
         {
+            try
+            {
+                loadingLayer.Show();
+                await (editorClient).CreateAndJoinRoom(editorBeatmap).ConfigureAwait(true);
+            }
+            catch
+            {
+                //todo: display error
+            }
+            finally
+            {
+                loadingLayer.Hide();
+            }
         }
 
         private void resetTrack(bool seekToStart = false)

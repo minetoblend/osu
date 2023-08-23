@@ -5,6 +5,7 @@ using System;
 using System.Threading.Tasks;
 using osu.Framework.Bindables;
 using osu.Framework.Graphics;
+using osu.Game.Screens.Edit;
 
 namespace osu.Game.Online.Editor
 {
@@ -15,6 +16,11 @@ namespace osu.Game.Online.Editor
         /// This is NOT thread safe and usage should be scheduled.
         /// </summary>
         public abstract IBindable<bool> IsConnected { get; }
+
+        public async Task CreateAndJoinRoom(EditorBeatmap beatmap)
+        {
+            await Task.Delay(1000).ConfigureAwait(false);
+        }
 
         Task IEditorClient.UserJoined(EditorRoomUser user)
         {
