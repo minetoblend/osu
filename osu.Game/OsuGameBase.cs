@@ -375,6 +375,7 @@ namespace osu.Game
 
             base.Content.Add(SpectatorClient);
             base.Content.Add(MultiplayerClient);
+            base.Content.Add(EditorClient);
             base.Content.Add(metadataClient);
             base.Content.Add(soloStatisticsWatcher);
 

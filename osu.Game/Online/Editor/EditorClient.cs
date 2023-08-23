@@ -3,24 +3,48 @@
 
 using System;
 using System.Threading.Tasks;
+using osu.Framework.Allocation;
 using osu.Framework.Bindables;
 using osu.Framework.Graphics;
+using osu.Framework.Platform;
 using osu.Game.Screens.Edit;
 
 namespace osu.Game.Online.Editor
 {
     public abstract partial class EditorClient : Component, IEditorClient, IEditorServer
     {
+        [Resolved]
+        private Storage storage { get; set; } = null!;
+
         /// <summary>
         /// Whether the <see cref="EditorClient"/> is currently connected.
         /// This is NOT thread safe and usage should be scheduled.
         /// </summary>
         public abstract IBindable<bool> IsConnected { get; }
 
+        MultiplayerEditorBeatmapSerializer serializer = null!;
+
+        [BackgroundDependencyLoader]
+        private void load()
+        {
+            serializer = new MultiplayerEditorBeatmapSerializer(storage);
+        }
+
         public async Task CreateAndJoinRoom(EditorBeatmap beatmap)
         {
-            await Task.Delay(1000).ConfigureAwait(false);
+            var files = serializer.SerializeBeatmapFiles(
+                beatmap.BeatmapInfo.BeatmapSet ?? throw new InvalidOperationException("Beatmap must be part of a beatmap set.")
+            );
+
+            string encodedBeatmap = serializer.SerializeBeatmap(beatmap.PlayableBeatmap);
+
+            var room = await CreateAndJoinRoom(new SerializedEditorBeatmap(
+                encodedBeatmap,
+                files
+            )).ConfigureAwait(false);
         }
+
+        protected abstract Task<EditorRoom> CreateAndJoinRoom(SerializedEditorBeatmap beatmap);
 
         Task IEditorClient.UserJoined(EditorRoomUser user)
         {

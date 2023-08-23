@@ -876,15 +876,20 @@ namespace osu.Game.Screens.Edit
             try
             {
                 loadingLayer.Show();
-                await (editorClient).CreateAndJoinRoom(editorBeatmap).ConfigureAwait(true);
+                await (editorClient).CreateAndJoinRoom(editorBeatmap).ConfigureAwait(false);
             }
             catch
             {
                 //todo: display error
+                throw;
             }
             finally
             {
-                loadingLayer.Hide();
+                Scheduler.Add(() =>
+                {
+                    loadingLayer.Hide();
+                    notifications.Post(new ProgressCompletionNotification { Text = "Created collaboration session" });
+                });
             }
         }
 
