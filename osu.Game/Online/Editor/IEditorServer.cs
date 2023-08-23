@@ -27,7 +27,7 @@ namespace osu.Game.Online.Editor
         /// Submits a list of serialized commands to the server.
         /// </summary>
         /// <param name="commands">The commands to submit.</param>
-        Task SubmitCommands(SerializedEditorCommands commands);
+        Task SubmitCommands(byte[] commands);
 
         /// <summary>
         /// Change the local user state in the currently joined room.

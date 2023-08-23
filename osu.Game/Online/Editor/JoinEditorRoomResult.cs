@@ -13,16 +13,20 @@ namespace osu.Game.Online.Editor
         public EditorRoom Room { get; set; }
 
         [Key(1)]
-        public SerializedEditorBeatmap Beatmap { get; set; }
+        public BeatmapSnapshot Beatmap { get; set; }
 
         [Key(2)]
+        public Dictionary<string, byte[]> Files { get; set; }
+
+        [Key(3)]
         public List<EditorCommandEvent> StagedCommands { get; set; }
 
         [SerializationConstructor]
-        public EditorRoomJoinedResult(EditorRoom room, SerializedEditorBeatmap beatmap, List<EditorCommandEvent> stagedCommands)
+        public EditorRoomJoinedResult(EditorRoom room, BeatmapSnapshot beatmap, Dictionary<string, byte[]> files, List<EditorCommandEvent> stagedCommands)
         {
             Room = room;
             Beatmap = beatmap;
+            Files = files;
             StagedCommands = stagedCommands;
         }
     }

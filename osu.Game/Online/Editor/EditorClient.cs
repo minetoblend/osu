@@ -46,31 +46,31 @@ namespace osu.Game.Online.Editor
             throw new NotImplementedException();
         }
 
-        public Task LeaveRoom()
+        Task IEditorServer.LeaveRoom()
         {
             // TODO
             throw new NotImplementedException();
         }
 
-        public Task<EditorRoom> CreateAndJoinRoom(SerializedEditorBeatmap beatmap)
+        Task<EditorRoom> IEditorServer.CreateAndJoinRoom(SerializedEditorBeatmap beatmap)
         {
             // TODO
             throw new NotImplementedException();
         }
 
-        public Task<EditorRoomJoinedResult> JoinRoom(long roomId)
+        Task<EditorRoomJoinedResult> IEditorServer.JoinRoom(long roomId)
         {
             // TODO
             throw new NotImplementedException();
         }
 
-        public Task SubmitCommands(SerializedEditorCommands commands)
+        Task IEditorServer.SubmitCommands(byte[] commands)
         {
             // TODO
             throw new NotImplementedException();
         }
 
-        public Task ChangeState(EditorUserState state)
+        Task IEditorServer.ChangeState(EditorUserState state)
         {
             // TODO
             throw new NotImplementedException();

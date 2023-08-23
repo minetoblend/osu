@@ -1,8 +1,6 @@
 // Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
-using System;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR.Client;
 using osu.Framework.Allocation;
 using osu.Framework.Bindables;
@@ -43,24 +41,6 @@ namespace osu.Game.Online.Editor
 
                 IsConnected.BindTo(connector.IsConnected);
             }
-        }
-
-        protected override Task<EditorRoom> CreateAndJoinRoom(SerializedEditorBeatmap beatmap)
-        {
-            //TODO
-            throw new NotImplementedException();
-        }
-
-        protected override Task<EditorRoomJoinedResult> JoinRoom(long roomId)
-        {
-            //TODO
-            throw new NotImplementedException();
-        }
-
-        protected override Task SubmitCommands(SerializedEditorCommands commands)
-        {
-            //TODO
-            throw new NotImplementedException();
         }
     }
 }
