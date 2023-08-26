@@ -159,7 +159,7 @@ namespace osu.Game.Beatmaps
             return addDifficultyToSet(targetBeatmapSet, newBeatmap, referenceWorkingBeatmap.Skin);
         }
 
-        public virtual WorkingBeatmap CreateForCollaboration(IBeatmap beatmap, Dictionary<string, byte[]> files)
+        public virtual async Task<WorkingBeatmap> CreateForCollaboration(IBeatmap beatmap, Dictionary<string, byte[]> files)
         {
             var beatmapInfo = beatmap.BeatmapInfo.Clone();
             var beatmapSet = new BeatmapSetInfo(new[] { beatmapInfo });
@@ -174,12 +174,18 @@ namespace osu.Game.Beatmaps
 
             var workingBeatmap = imported.PerformRead(s => GetWorkingBeatmap(s.Beatmaps.First()));
 
-            foreach (var entry in files)
+            await Task.Factory.StartNew(() =>
             {
-                AddFile(workingBeatmap.BeatmapSetInfo, new MemoryStream(entry.Value), entry.Key);
-            }
+                Realm.Write(realmn =>
+                {
+                    foreach (var entry in files)
+                    {
+                        AddFile(workingBeatmap.BeatmapSetInfo, new MemoryStream(entry.Value), entry.Key, realmn);
+                    }
+                });
 
-            save(workingBeatmap.BeatmapInfo, beatmap, workingBeatmap.Skin, transferCollections: false);
+                save(workingBeatmap.BeatmapInfo, beatmap, workingBeatmap.Skin, transferCollections: false);
+            }).ConfigureAwait(true);
 
             return workingBeatmap;
         }

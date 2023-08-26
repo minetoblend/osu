@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using osu.Framework.Allocation;
 using osu.Framework.Bindables;
@@ -106,9 +107,9 @@ namespace osu.Game.Online.Editor
                 new LineBufferedReader(new MemoryStream(Encoding.UTF8.GetBytes(result.Beatmap.Beatmap)))
             );
 
-            Scheduler.Add(() =>
+            Scheduler.Add(async () =>
             {
-                var workingBeatmap = beatmapManager.CreateForCollaboration(beatmap, result.Files);
+                var workingBeatmap = await beatmapManager.CreateForCollaboration(beatmap, result.Files).ConfigureAwait(true);
                 PostBeatmapLoad?.Invoke(workingBeatmap);
             });
 
@@ -184,6 +185,32 @@ namespace osu.Game.Online.Editor
         {
             // TODO
             throw new NotImplementedException();
+        }
+
+        private Task runOnUpdateThreadAsync(Action action, CancellationToken cancellationToken = default)
+        {
+            var tcs = new TaskCompletionSource<bool>();
+
+            Scheduler.Add(() =>
+            {
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    tcs.SetCanceled(cancellationToken);
+                    return;
+                }
+
+                try
+                {
+                    action();
+                    tcs.SetResult(true);
+                }
+                catch (Exception ex)
+                {
+                    tcs.SetException(ex);
+                }
+            });
+
+            return tcs.Task;
         }
     }
 }
