@@ -16,5 +16,7 @@ namespace osu.Game.Online.Editor
         Task UserStateChanged(int userId, EditorUserState state);
 
         Task CommandsSubmitted(EditorCommandEvent commands);
+
+        Task Invited(int userId, long roomId);
     }
 }

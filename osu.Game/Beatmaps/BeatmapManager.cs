@@ -159,6 +159,31 @@ namespace osu.Game.Beatmaps
             return addDifficultyToSet(targetBeatmapSet, newBeatmap, referenceWorkingBeatmap.Skin);
         }
 
+        public virtual WorkingBeatmap CreateForCollaboration(IBeatmap beatmap, Dictionary<string, byte[]> files)
+        {
+            var beatmapInfo = beatmap.BeatmapInfo.Clone();
+            var beatmapSet = new BeatmapSetInfo(new[] { beatmapInfo });
+
+            foreach (BeatmapInfo b in beatmapSet.Beatmaps)
+                b.BeatmapSet = beatmapSet;
+
+            var imported = beatmapImporter.ImportModel(beatmapSet);
+
+            if (imported == null)
+                throw new InvalidOperationException("Failed to import new beatmap");
+
+            var workingBeatmap = imported.PerformRead(s => GetWorkingBeatmap(s.Beatmaps.First()));
+
+            foreach (var entry in files)
+            {
+                AddFile(workingBeatmap.BeatmapSetInfo, new MemoryStream(entry.Value), entry.Key);
+            }
+
+            save(workingBeatmap.BeatmapInfo, beatmap, workingBeatmap.Skin, transferCollections: false);
+
+            return workingBeatmap;
+        }
+
         /// <summary>
         /// Add a copy of the provided <paramref name="referenceWorkingBeatmap"/> to the provided <paramref name="targetBeatmapSet"/>.
         /// The new difficulty will be backed by a <see cref="BeatmapInfo"/> model

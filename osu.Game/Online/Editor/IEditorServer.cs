@@ -10,6 +10,12 @@ namespace osu.Game.Online.Editor
         Task LeaveRoom();
 
         /// <summary>
+        /// Invites another player to the current room.
+        /// </summary>
+        /// <param name="userId">The player to invite.</param>
+        Task Invite(int userId);
+
+        /// <summary>
         /// Creates an <see cref="EditorRoom"/> for a given beatmap.
         /// </summary>
         /// <param name="beatmap">The serialized beatmap containing the difficulty and all associated files.</param>

@@ -3,6 +3,7 @@
 
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using osu.Framework.Logging;
 using osu.Framework.Platform;
 using osu.Game.Beatmaps;
@@ -16,6 +17,8 @@ namespace osu.Game.Online.Editor
     {
         private readonly Storage userFileStorage;
 
+        private readonly string[] excludedFileTypes = { ".osu" };
+
         public MultiplayerEditorBeatmapSerializer(Storage storage)
         {
             userFileStorage = storage.GetStorageForDirectory(@"files");
@@ -27,6 +30,9 @@ namespace osu.Game.Online.Editor
 
             foreach (var file in model.Files)
             {
+                if (excludedFileTypes.Any(s => file.Filename.EndsWith(s)))
+                    continue;
+
                 using (var stream = GetFileContents(model, file))
                 {
                     if (stream == null)

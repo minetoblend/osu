@@ -57,6 +57,7 @@ using osu.Game.Performance;
 using osu.Game.Rulesets.Mods;
 using osu.Game.Scoring;
 using osu.Game.Screens;
+using osu.Game.Screens.Edit;
 using osu.Game.Screens.Menu;
 using osu.Game.Screens.Play;
 using osu.Game.Screens.Ranking;
@@ -853,6 +854,16 @@ namespace osu.Game
             ScoreManager.PresentImport = items => PresentScore(items.First().Value);
 
             MultiplayerClient.PostNotification = n => Notifications.Post(n);
+            EditorClient.PostNotification = n => Notifications.Post(n);
+
+            EditorClient.PostBeatmapLoad = beatmap =>
+            {
+                Scheduler.Add(() =>
+                {
+                    Beatmap.Value = beatmap;
+                    ScreenStack.Push(new EditorLoader());
+                });
+            };
 
             // make config aware of how to lookup skins for on-screen display purposes.
             // if this becomes a more common thing, tracked settings should be reconsidered to allow local DI.

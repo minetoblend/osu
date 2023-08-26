@@ -40,6 +40,7 @@ namespace osu.Game.Online.Editor
                     connection.On(nameof(IEditorClient.RoomClosed), ((IEditorClient)this).RoomClosed);
                     connection.On<int, EditorUserState>(nameof(IEditorClient.UserStateChanged), ((IEditorClient)this).UserStateChanged);
                     connection.On<EditorCommandEvent>(nameof(IEditorClient.CommandsSubmitted), ((IEditorClient)this).CommandsSubmitted);
+                    connection.On<int, long>(nameof(IEditorClient.Invited), ((IEditorClient)this).Invited);
                 };
 
                 IsConnected.BindTo(connector.IsConnected);
@@ -54,6 +55,26 @@ namespace osu.Game.Online.Editor
             Debug.Assert(connection != null);
 
             return connection.InvokeAsync<EditorRoom>(nameof(IEditorServer.CreateAndJoinRoom), beatmap);
+        }
+
+        public override Task Invite(int userId)
+        {
+            if (!IsConnected.Value)
+                throw new OperationCanceledException();
+
+            Debug.Assert(connection != null);
+
+            return connection.InvokeAsync(nameof(IEditorServer.Invite), userId);
+        }
+
+        protected override Task<EditorRoomJoinedResult> JoinRoomInteral(long roomId)
+        {
+            if (!IsConnected.Value)
+                throw new OperationCanceledException();
+
+            Debug.Assert(connection != null);
+
+            return connection.InvokeAsync<EditorRoomJoinedResult>(nameof(IEditorServer.JoinRoom), roomId);
         }
     }
 }

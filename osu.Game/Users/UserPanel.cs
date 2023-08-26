@@ -18,6 +18,7 @@ using osu.Game.Online.API.Requests.Responses;
 using osu.Game.Online.Chat;
 using osu.Game.Resources.Localisation.Web;
 using osu.Game.Localisation;
+using osu.Game.Online.Editor;
 
 namespace osu.Game.Users
 {
@@ -60,6 +61,9 @@ namespace osu.Game.Users
 
         [Resolved]
         protected OsuColour Colours { get; private set; } = null!;
+
+        [Resolved]
+        protected EditorClient EditorClient { get; private set; } = null!;
 
         [BackgroundDependencyLoader]
         private void load()
@@ -114,6 +118,14 @@ namespace osu.Game.Users
                     {
                         channelManager?.OpenPrivateChannel(User);
                         chatOverlay?.Show();
+                    }));
+                }
+
+                if (EditorClient.Room != null)
+                {
+                    items.Add(new OsuMenuItem("Invite", MenuItemType.Standard, () =>
+                    {
+                        EditorClient?.Invite(User.Id);
                     }));
                 }
 
