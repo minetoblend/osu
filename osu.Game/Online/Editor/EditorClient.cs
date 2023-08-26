@@ -32,11 +32,11 @@ namespace osu.Game.Online.Editor
 
         public async Task CreateAndJoinRoom(EditorBeatmap beatmap)
         {
-            var files = serializer.SerializeBeatmapFiles(
-                beatmap.BeatmapInfo.BeatmapSet ?? throw new InvalidOperationException("Beatmap must be part of a beatmap set.")
-            );
-
             string encodedBeatmap = serializer.SerializeBeatmap(beatmap.PlayableBeatmap);
+
+            var files = await Task.Factory.StartNew<Dictionary<string, byte[]>>(() => serializer.SerializeBeatmapFiles(
+                beatmap.BeatmapInfo.BeatmapSet ?? throw new InvalidOperationException("Beatmap must be part of a beatmap set.")
+            )).ConfigureAwait(false);
 
             var room = await CreateAndJoinRoom(new SerializedEditorBeatmap(
                 encodedBeatmap,
