@@ -378,6 +378,11 @@ namespace osu.Game.Rulesets.Osu.Objects.Drawables
             UpdateState(ArmedState.Idle);
             HeadCircle.SuppressHitAnimations();
             TailCircle.SuppressHitAnimations();
+
+            foreach (var repeat in NestedHitObjects.OfType<DrawableSliderRepeat>())
+            {
+                repeat.SuppressHitAnimations();
+            }
         }
 
         internal void RestoreHitAnimations()
@@ -385,6 +390,11 @@ namespace osu.Game.Rulesets.Osu.Objects.Drawables
             UpdateState(ArmedState.Hit);
             HeadCircle.RestoreHitAnimations();
             TailCircle.RestoreHitAnimations();
+
+            foreach (var repeat in NestedHitObjects.OfType<DrawableSliderRepeat>())
+            {
+                repeat.RestoreHitAnimations();
+            }
         }
 
         #endregion
