@@ -42,6 +42,8 @@ namespace osu.Game.Rulesets.Osu.Edit
 
         private BindableList<HitObject> selectedItems { get; } = new BindableList<HitObject>();
 
+        public event Action<Axes>? PerformFlipFromScaleHandles;
+
         [BackgroundDependencyLoader]
         private void load(EditorBeatmap editorBeatmap)
         {
@@ -88,6 +90,9 @@ namespace osu.Game.Rulesets.Osu.Edit
             originalConvexHull = objectsInScale.Count == 1 && objectsInScale.First().Key is Slider slider2
                 ? GeometryUtils.GetConvexHull(slider2.Path.ControlPoints.Select(p => slider2.Position + p.Position))
                 : GeometryUtils.GetConvexHull(objectsInScale.Keys);
+
+            isFlippedX = false;
+            isFlippedY = false;
         }
 
         public override void Update(Vector2 scale, Vector2? origin = null, Axes adjustAxis = Axes.Both, float axisRotation = 0)
@@ -99,6 +104,28 @@ namespace osu.Game.Rulesets.Osu.Edit
 
             Vector2 actualOrigin = origin ?? defaultOrigin.Value;
             scale = clampScaleToAdjustAxis(scale, adjustAxis);
+
+            bool flippedX = scale.X < 0;
+            bool flippedY = scale.Y < 0;
+            Axes toFlip = Axes.None;
+
+            if (flippedX != isFlippedX)
+            {
+                isFlippedX = flippedX;
+                toFlip |= Axes.X;
+            }
+
+            if (flippedY != isFlippedY)
+            {
+                isFlippedY = flippedY;
+                toFlip |= Axes.Y;
+            }
+
+            if (toFlip != Axes.None)
+            {
+                PerformFlipFromScaleHandles?.Invoke(toFlip);
+                return;
+            }
 
             // for the time being, allow resizing of slider paths only if the slider is
             // the only hit object selected. with a group selection, it's likely the user
@@ -137,6 +164,9 @@ namespace osu.Game.Rulesets.Osu.Edit
         private IEnumerable<OsuHitObject> selectedMovableObjects => selectedItems.Cast<OsuHitObject>()
                                                                                  .Where(h => h is not Spinner);
 
+        private bool isFlippedX;
+        private bool isFlippedY;
+
         private Vector2 clampScaleToAdjustAxis(Vector2 scale, Axes adjustAxis)
         {
             switch (adjustAxis)
@@ -161,7 +191,7 @@ namespace osu.Game.Rulesets.Osu.Edit
         {
             Debug.Assert(originalInfo.PathControlPointPositions != null && originalInfo.PathControlPointTypes != null);
 
-            scale = Vector2.ComponentMax(scale, new Vector2(Precision.FLOAT_EPSILON));
+            scale = ensureNoAxisIsZero(scale);
 
             // Maintain the path types in case they were defaulted to bezier at some point during scaling
             for (int i = 0; i < slider.Path.ControlPoints.Count; i++)
@@ -245,7 +275,7 @@ namespace osu.Game.Rulesets.Osu.Edit
                 scale = clampToBound(scale, point, OsuPlayfield.BASE_SIZE);
             }
 
-            return Vector2.ComponentMax(scale, new Vector2(Precision.FLOAT_EPSILON));
+            return ensureNoAxisIsZero(scale);
 
             float minPositiveComponent(Vector2 v) => MathF.Min(v.X < 0 ? float.PositiveInfinity : v.X, v.Y < 0 ? float.PositiveInfinity : v.Y);
 
@@ -273,6 +303,16 @@ namespace osu.Game.Rulesets.Osu.Edit
 
                 return s;
             }
+        }
+
+        private Vector2 ensureNoAxisIsZero(Vector2 v)
+        {
+            if (Math.Abs(v.X) < Precision.FLOAT_EPSILON)
+                v.X = Precision.FLOAT_EPSILON * Math.Sign(v.X);
+            if (Math.Abs(v.Y) < Precision.FLOAT_EPSILON)
+                v.Y = Precision.FLOAT_EPSILON * Math.Sign(v.Y);
+
+            return v;
         }
 
         private void moveSelectionInBounds()
