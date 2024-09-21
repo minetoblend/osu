@@ -185,7 +185,14 @@ namespace osu.Game.Rulesets.Osu.Edit
 
         public override SelectionRotationHandler CreateRotationHandler() => new OsuSelectionRotationHandler();
 
-        public override SelectionScaleHandler CreateScaleHandler() => new OsuSelectionScaleHandler();
+        public override SelectionScaleHandler CreateScaleHandler()
+        {
+            var scaleHandler = new OsuSelectionScaleHandler();
+
+            scaleHandler.PerformFlipFromScaleHandles += a => SelectionBox.PerformFlipFromScaleHandles(a);
+
+            return scaleHandler;
+        }
 
         private void moveSelectionInBounds()
         {

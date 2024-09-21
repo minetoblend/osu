@@ -42,6 +42,8 @@ namespace osu.Game.Rulesets.Osu.Edit
 
         private BindableList<HitObject> selectedItems { get; } = new BindableList<HitObject>();
 
+        public event Action<Axes>? PerformFlipFromScaleHandles;
+
         [BackgroundDependencyLoader]
         private void load(EditorBeatmap editorBeatmap)
         {
@@ -88,6 +90,9 @@ namespace osu.Game.Rulesets.Osu.Edit
             originalConvexHull = objectsInScale.Count == 1 && objectsInScale.First().Key is Slider slider2
                 ? GeometryUtils.GetConvexHull(slider2.Path.ControlPoints.Select(p => slider2.Position + p.Position))
                 : GeometryUtils.GetConvexHull(objectsInScale.Keys);
+
+            isFlippedX = false;
+            isFlippedY = false;
         }
 
         public override void Update(Vector2 scale, Vector2? origin = null, Axes adjustAxis = Axes.Both, float axisRotation = 0)
@@ -100,14 +105,34 @@ namespace osu.Game.Rulesets.Osu.Edit
             Vector2 actualOrigin = origin ?? defaultOrigin.Value;
             scale = clampScaleToAdjustAxis(scale, adjustAxis);
 
+            bool flippedX = scale.X < 0;
+            bool flippedY = scale.Y < 0;
+            Axes toFlip = Axes.None;
+
+            if (flippedX != isFlippedX)
+            {
+                isFlippedX = flippedX;
+                toFlip |= Axes.X;
+            }
+
+            if (flippedY != isFlippedY)
+            {
+                isFlippedY = flippedY;
+                toFlip |= Axes.Y;
+            }
+
+            if (toFlip != Axes.None)
+            {
+                PerformFlipFromScaleHandles?.Invoke(toFlip);
+                return;
+            }
+
             // for the time being, allow resizing of slider paths only if the slider is
             // the only hit object selected. with a group selection, it's likely the user
             // is not looking to change the duration of the slider but expand the whole pattern.
             if (objectsInScale.Count == 1 && objectsInScale.First().Key is Slider slider)
             {
-                var originalInfo = objectsInScale[slider];
-                Debug.Assert(originalInfo.PathControlPointPositions != null && originalInfo.PathControlPointTypes != null);
-                scaleSlider(slider, scale, originalInfo.PathControlPointPositions, originalInfo.PathControlPointTypes, axisRotation);
+                scaleSlider(slider, scale, actualOrigin, objectsInScale[slider], axisRotation);
             }
             else
             {
@@ -139,6 +164,9 @@ namespace osu.Game.Rulesets.Osu.Edit
         private IEnumerable<OsuHitObject> selectedMovableObjects => selectedItems.Cast<OsuHitObject>()
                                                                                  .Where(h => h is not Spinner);
 
+        private bool isFlippedX;
+        private bool isFlippedY;
+
         private Vector2 clampScaleToAdjustAxis(Vector2 scale, Axes adjustAxis)
         {
             switch (adjustAxis)
@@ -159,20 +187,24 @@ namespace osu.Game.Rulesets.Osu.Edit
             return scale;
         }
 
-        private void scaleSlider(Slider slider, Vector2 scale, Vector2[] originalPathPositions, PathType?[] originalPathTypes, float axisRotation = 0)
+        private void scaleSlider(Slider slider, Vector2 scale, Vector2 origin, OriginalHitObjectState originalInfo, float axisRotation = 0)
         {
-            scale = Vector2.ComponentMax(scale, new Vector2(Precision.FLOAT_EPSILON));
+            Debug.Assert(originalInfo.PathControlPointPositions != null && originalInfo.PathControlPointTypes != null);
+
+            scale = ensureNoAxisIsZero(scale);
 
             // Maintain the path types in case they were defaulted to bezier at some point during scaling
             for (int i = 0; i < slider.Path.ControlPoints.Count; i++)
             {
-                slider.Path.ControlPoints[i].Position = GeometryUtils.GetScaledPosition(scale, Vector2.Zero, originalPathPositions[i], axisRotation);
-                slider.Path.ControlPoints[i].Type = originalPathTypes[i];
+                slider.Path.ControlPoints[i].Position = GeometryUtils.GetScaledPosition(scale, Vector2.Zero, originalInfo.PathControlPointPositions[i], axisRotation);
+                slider.Path.ControlPoints[i].Type = originalInfo.PathControlPointTypes[i];
             }
 
             // Snap the slider's length to the current beat divisor
             // to calculate the final resulting duration / bounding box before the final checks.
             slider.SnapTo(snapProvider);
+
+            slider.Position = GeometryUtils.GetScaledPosition(scale, origin, originalInfo.Position, axisRotation);
 
             //if sliderhead or sliderend end up outside playfield, revert scaling.
             Quad scaledQuad = GeometryUtils.GetSurroundingQuad(new OsuHitObject[] { slider });
@@ -182,7 +214,9 @@ namespace osu.Game.Rulesets.Osu.Edit
                 return;
 
             for (int i = 0; i < slider.Path.ControlPoints.Count; i++)
-                slider.Path.ControlPoints[i].Position = originalPathPositions[i];
+                slider.Path.ControlPoints[i].Position = originalInfo.PathControlPointPositions[i];
+
+            slider.Position = originalInfo.Position;
 
             // Snap the slider's length again to undo the potentially-invalid length applied by the previous snap.
             slider.SnapTo(snapProvider);
@@ -238,7 +272,7 @@ namespace osu.Game.Rulesets.Osu.Edit
             foreach (var point in points)
                 scale = clampToBound(scale, point, Vector2.Zero, OsuPlayfield.BASE_SIZE);
 
-            return scale;
+            return ensureNoAxisIsZero(scale);
 
             Vector2 clampToBound(Vector2 s, Vector2 p, Vector2 lowerBounds, Vector2 upperBounds)
             {
@@ -296,6 +330,16 @@ namespace osu.Game.Rulesets.Osu.Edit
                     (sLowerBounds.Y, sUpperBounds.Y) = (float.NegativeInfinity, float.PositiveInfinity);
                 return (MathF.Max(sLowerBounds.X, sLowerBounds.Y), MathF.Min(sUpperBounds.X, sUpperBounds.Y));
             }
+        }
+
+        private Vector2 ensureNoAxisIsZero(Vector2 v)
+        {
+            if (Math.Abs(v.X) < Precision.FLOAT_EPSILON)
+                v.X = Precision.FLOAT_EPSILON * Math.Sign(v.X);
+            if (Math.Abs(v.Y) < Precision.FLOAT_EPSILON)
+                v.Y = Precision.FLOAT_EPSILON * Math.Sign(v.Y);
+
+            return v;
         }
 
         private void moveSelectionInBounds()
