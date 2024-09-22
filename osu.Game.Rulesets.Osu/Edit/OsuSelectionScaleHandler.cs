@@ -270,38 +270,65 @@ namespace osu.Game.Rulesets.Osu.Edit
                 points = originalConvexHull!;
 
             foreach (var point in points)
-            {
-                scale = clampToBound(scale, point, Vector2.Zero);
-                scale = clampToBound(scale, point, OsuPlayfield.BASE_SIZE);
-            }
+                scale = clampToBound(scale, point, Vector2.Zero, OsuPlayfield.BASE_SIZE);
 
             return ensureNoAxisIsZero(scale);
 
-            float minPositiveComponent(Vector2 v) => MathF.Min(v.X < 0 ? float.PositiveInfinity : v.X, v.Y < 0 ? float.PositiveInfinity : v.Y);
-
-            Vector2 clampToBound(Vector2 s, Vector2 p, Vector2 bound)
+            Vector2 clampToBound(Vector2 s, Vector2 p, Vector2 lowerBounds, Vector2 upperBounds)
             {
                 p -= actualOrigin;
-                bound -= actualOrigin;
+                lowerBounds -= actualOrigin;
+                upperBounds -= actualOrigin;
+                // a.X is the rotated X component of p with respect to the X bounds
+                // a.Y is the rotated X component of p with respect to the Y bounds
+                // b.X is the rotated Y component of p with respect to the X bounds
+                // b.Y is the rotated Y component of p with respect to the Y bounds
                 var a = new Vector2(cos * cos * p.X - sin * cos * p.Y, -sin * cos * p.X + sin * sin * p.Y);
                 var b = new Vector2(sin * sin * p.X + sin * cos * p.Y, sin * cos * p.X + cos * cos * p.Y);
+
+                float sLowerBound, sUpperBound;
 
                 switch (adjustAxis)
                 {
                     case Axes.X:
-                        s.X = MathF.Min(scale.X, minPositiveComponent(Vector2.Divide(bound - b, a)));
+                        (sLowerBound, sUpperBound) = computeBounds(lowerBounds - b, upperBounds - b, a);
+                        s.X = MathHelper.Clamp(s.X, sLowerBound, sUpperBound);
                         break;
 
                     case Axes.Y:
-                        s.Y = MathF.Min(scale.Y, minPositiveComponent(Vector2.Divide(bound - a, b)));
+                        (sLowerBound, sUpperBound) = computeBounds(lowerBounds - a, upperBounds - a, b);
+                        s.Y = MathHelper.Clamp(s.Y, sLowerBound, sUpperBound);
                         break;
 
                     case Axes.Both:
-                        s = Vector2.ComponentMin(s, s * minPositiveComponent(Vector2.Divide(bound, a * s.X + b * s.Y)));
+                        // Here we compute the bounds for the magnitude multiplier of the scale vector
+                        // Therefore the ratio s.X / s.Y will be maintained
+                        (sLowerBound, sUpperBound) = computeBounds(lowerBounds, upperBounds, a * s.X + b * s.Y);
+                        s.X = s.X < 0
+                            ? MathHelper.Clamp(s.X, s.X * sUpperBound, s.X * sLowerBound)
+                            : MathHelper.Clamp(s.X, s.X * sLowerBound, s.X * sUpperBound);
+                        s.Y = s.Y < 0
+                            ? MathHelper.Clamp(s.Y, s.Y * sUpperBound, s.Y * sLowerBound)
+                            : MathHelper.Clamp(s.Y, s.Y * sLowerBound, s.Y * sUpperBound);
                         break;
                 }
 
                 return s;
+            }
+
+            (float, float) computeBounds(Vector2 lowerBounds, Vector2 upperBounds, Vector2 p)
+            {
+                var sLowerBounds = Vector2.Divide(lowerBounds, p);
+                var sUpperBounds = Vector2.Divide(upperBounds, p);
+                if (p.X < 0)
+                    (sLowerBounds.X, sUpperBounds.X) = (sUpperBounds.X, sLowerBounds.X);
+                if (p.Y < 0)
+                    (sLowerBounds.Y, sUpperBounds.Y) = (sUpperBounds.Y, sLowerBounds.Y);
+                if (Precision.AlmostEquals(p.X, 0))
+                    (sLowerBounds.X, sUpperBounds.X) = (float.NegativeInfinity, float.PositiveInfinity);
+                if (Precision.AlmostEquals(p.Y, 0))
+                    (sLowerBounds.Y, sUpperBounds.Y) = (float.NegativeInfinity, float.PositiveInfinity);
+                return (MathF.Max(sLowerBounds.X, sLowerBounds.Y), MathF.Min(sUpperBounds.X, sUpperBounds.Y));
             }
         }
 
