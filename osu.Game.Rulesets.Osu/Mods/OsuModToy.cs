@@ -13,6 +13,7 @@ using osu.Framework.Logging;
 using osu.Game.Beatmaps;
 using osu.Game.Configuration;
 using osu.Game.Rulesets.Mods;
+using osu.Game.Rulesets.Objects;
 using osu.Game.Rulesets.Objects.Drawables;
 using osu.Game.Rulesets.Scoring;
 using osu.Game.Scoring;
@@ -174,6 +175,8 @@ namespace osu.Game.Rulesets.Osu.Mods
                 if (state.NewValue != ArmedState.Hit) return;
 
                 double speed = SpeedCap.Value;
+                double duration = drawableHitObject.HitObject.GetEndTime() - drawableHitObject.HitObject.StartTime;
+                int pulseDuration = (int)Math.Max(50, duration);
 
                 for (uint i = 1; i <= MOTOR_COUNT; i++)
                 {
@@ -184,11 +187,11 @@ namespace osu.Game.Rulesets.Osu.Mods
 
                     if (invert.Value)
                     {
-                        await ButtplugStuff.Instance.VibrateAtSpeedTimeout(1 - speed, i - 1);
+                        await ButtplugStuff.Instance.VibrateAtSpeedTimeout(1 - speed, i - 1, pulseDuration);
                     }
                     else
                     {
-                        await ButtplugStuff.Instance.VibrateAtSpeedTimeout(speed, i - 1);
+                        await ButtplugStuff.Instance.VibrateAtSpeedTimeout(speed, i - 1, pulseDuration);
                     }
                 }
             };
