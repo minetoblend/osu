@@ -49,7 +49,7 @@ namespace osu.Game.Rulesets.Osu.Mods
         public override ModType Type => ModType.Freaky;
         public override bool Ranked => false;
 
-        public override double ScoreMultiplier => 0.0;
+        public override double ScoreMultiplier => 1.0;
 
         private int maxCombo = 1;
 
