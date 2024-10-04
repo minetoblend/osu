@@ -2,6 +2,7 @@
 // See the LICENCE file in the repository root for full licence text.
 
 using osu.Framework.Allocation;
+using osu.Game.Localisation;
 using osu.Game.Skinning;
 using osu.Game.Overlays.Dialog;
 
@@ -14,7 +15,7 @@ namespace osu.Game.Screens.Select
         public SkinDeleteDialog(Skin skin)
         {
             this.skin = skin;
-            BodyText = skin.SkinInfo.Value.Name;
+            BodyText = DeleteConfirmationContentStrings.Skin(skin.SkinInfo.Value.Name);
         }
 
         [BackgroundDependencyLoader]

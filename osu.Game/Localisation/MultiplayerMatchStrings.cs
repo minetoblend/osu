@@ -24,6 +24,11 @@ namespace osu.Game.Localisation
         /// </summary>
         public static LocalisableString StartMatchWithCountdown(string humanReadableTime) => new TranslatableString(getKey(@"start_match_width_countdown"), @"Start match in {0}", humanReadableTime);
 
+        /// <summary>
+        /// "Are you sure you want to abort the match?"
+        /// </summary>
+        public static LocalisableString AbortMatch => new TranslatableString("abort_match", "Are you sure you want to abort the match?");
+
         private static string getKey(string key) => $@"{prefix}:{key}";
     }
 }

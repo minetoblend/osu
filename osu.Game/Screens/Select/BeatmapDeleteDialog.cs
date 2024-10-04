@@ -3,6 +3,7 @@
 
 using osu.Framework.Allocation;
 using osu.Game.Beatmaps;
+using osu.Game.Localisation;
 using osu.Game.Overlays.Dialog;
 
 namespace osu.Game.Screens.Select
@@ -14,7 +15,7 @@ namespace osu.Game.Screens.Select
         public BeatmapDeleteDialog(BeatmapSetInfo beatmapSet)
         {
             this.beatmapSet = beatmapSet;
-            BodyText = $@"{beatmapSet.Metadata.Artist} - {beatmapSet.Metadata.Title}";
+            BodyText = DeleteConfirmationContentStrings.Beatmap(beatmapSet.Metadata.Artist, beatmapSet.Metadata.Title);
         }
 
         [BackgroundDependencyLoader]

@@ -2,6 +2,8 @@
 // See the LICENCE file in the repository root for full licence text.
 
 using System;
+using osu.Framework.Graphics.Sprites;
+using osu.Game.Localisation;
 using osu.Game.Overlays.Dialog;
 using osu.Game.Tournament.Models;
 
@@ -11,9 +13,12 @@ namespace osu.Game.Tournament.Screens.Editors.Components
     {
         public DeleteTeamDialog(TournamentTeam team, Action action)
         {
-            HeaderText = team.FullName.Value.Length > 0 ? $@"Delete team ""{team.FullName.Value}""?" :
-                team.Acronym.Value.Length > 0 ? $@"Delete team ""{team.Acronym.Value}""?" :
-                @"Delete unnamed team?";
+            HeaderText = team.FullName.Value.Length > 0
+                ? DeleteConfirmationContentStrings.Team(team.FullName.Value)
+                : team.Acronym.Value.Length > 0
+                    ? DeleteConfirmationContentStrings.Team(team.Acronym.Value)
+                    : DeleteConfirmationContentStrings.TeamUnnamed;
+            Icon = FontAwesome.Solid.Trash;
             DangerousAction = action;
         }
     }

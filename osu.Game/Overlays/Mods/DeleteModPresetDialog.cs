@@ -2,6 +2,7 @@
 // See the LICENCE file in the repository root for full licence text.
 
 using osu.Game.Database;
+using osu.Game.Localisation;
 using osu.Game.Overlays.Dialog;
 using osu.Game.Rulesets.Mods;
 
@@ -11,7 +12,7 @@ namespace osu.Game.Overlays.Mods
     {
         public DeleteModPresetDialog(Live<ModPreset> modPreset)
         {
-            BodyText = modPreset.PerformRead(preset => preset.Name);
+            BodyText = modPreset.PerformRead(preset => DeleteConfirmationContentStrings.ModPreset(preset.Name));
             DangerousAction = () => modPreset.PerformWrite(preset => preset.DeletePending = true);
         }
     }
