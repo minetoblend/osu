@@ -17,12 +17,11 @@ using osu.Game.Rulesets.Objects;
 using osu.Game.Rulesets.Objects.Drawables;
 using osu.Game.Rulesets.Scoring;
 using osu.Game.Scoring;
-using osu.Game.Screens.Play;
 
 namespace osu.Game.Rulesets.Osu.Mods
 {
     public class OsuModToy : Mod, IApplicableToHealthProcessor, IApplicableToScoreProcessor,
-                             IApplicableToBeatmap, IApplicableToPlayer, IReadFromConfig, IApplicableToDrawableHitObject
+                             IApplicableToBeatmap, IReadFromConfig, IApplicableToDrawableHitObject
     {
         public enum MotorBehavior
         {
@@ -53,7 +52,6 @@ namespace osu.Game.Rulesets.Osu.Mods
         public override double ScoreMultiplier => 0.0;
 
         private int maxCombo = 1;
-        private bool userPlaying = false;
 
         [SettingSource("Motor Speed Max", "Maximum speed at which the motors will vibrate.")]
         public BindableNumber<float> SpeedCap { get; } = new BindableFloat
@@ -105,8 +103,6 @@ namespace osu.Game.Rulesets.Osu.Mods
         {
             healthProcessor.Health.ValueChanged += health =>
             {
-                if (!userPlaying) return;
-
                 double speed = SpeedCap.Value * Math.Pow(health.NewValue, 4);
 
                 for (uint i = 1; i <= MOTOR_COUNT; i++)
@@ -128,8 +124,6 @@ namespace osu.Game.Rulesets.Osu.Mods
         {
             scoreProcessor.Combo.ValueChanged += combo =>
             {
-                if (!userPlaying) return;
-
                 float speed = SpeedCap.Value * Math.Max(1, combo.NewValue / (float)maxCombo * MaxComboFactor.Value);
 
                 for (uint i = 1; i <= MOTOR_COUNT; i++)
@@ -148,8 +142,6 @@ namespace osu.Game.Rulesets.Osu.Mods
 
             scoreProcessor.Accuracy.ValueChanged += accuracy =>
             {
-                if (!userPlaying) return;
-
                 double speed = SpeedCap.Value * accuracy.NewValue;
 
                 for (uint i = 1; i <= MOTOR_COUNT; i++)
@@ -171,12 +163,11 @@ namespace osu.Game.Rulesets.Osu.Mods
         {
             drawableHitObject.State.ValueChanged += async (state) =>
             {
-                if (!userPlaying) return;
                 if (state.NewValue != ArmedState.Hit) return;
 
                 double speed = SpeedCap.Value;
                 double duration = drawableHitObject.HitObject.GetEndTime() - drawableHitObject.HitObject.StartTime;
-                int pulseDuration = (int)Math.Max(50, duration);
+                int pulseDuration = (int)Math.Max(50, duration * 10);
 
                 for (uint i = 1; i <= MOTOR_COUNT; i++)
                 {
@@ -205,16 +196,6 @@ namespace osu.Game.Rulesets.Osu.Mods
         public void ApplyToBeatmap(IBeatmap beatmap)
         {
             maxCombo = beatmap.HitObjects.Count;
-        }
-
-        public void ApplyToPlayer(Player player)
-        {
-            player.LocalUserPlaying.ValueChanged += playing =>
-            {
-                userPlaying = playing.NewValue;
-                if (playing.NewValue == false)
-                    ButtplugStuff.Instance.StopAll();
-            };
         }
 
         public static float BoolToFloat(bool boolean)
