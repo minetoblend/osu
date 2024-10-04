@@ -33,6 +33,7 @@ namespace osu.Game.Overlays
             new GeneralSection(),
             new SkinSection(),
             new InputSection(createSubPanel(new KeyBindingPanel())),
+            new ToySection(),
             new UserInterfaceSection(),
             new GameplaySection(),
             new RulesetSection(),

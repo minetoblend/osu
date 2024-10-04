@@ -207,6 +207,10 @@ namespace osu.Game.Configuration
             SetDefault(OsuSetting.EditorTimelineShowTicks, true);
 
             SetDefault(OsuSetting.AlwaysShowHoldForMenuButton, false);
+
+            // toy stuff
+            SetDefault(OsuSetting.IntifaceAddress, "ws://127.0.0.1:12345");
+            SetDefault(OsuSetting.MultiplayerConsentAcknowledged, false);
         }
 
         protected override bool CheckLookupContainsPrivateInformation(OsuSetting lookup)
@@ -431,6 +435,10 @@ namespace osu.Game.Configuration
         HideCountryFlags,
         EditorTimelineShowTimingChanges,
         EditorTimelineShowTicks,
-        AlwaysShowHoldForMenuButton
+        AlwaysShowHoldForMenuButton,
+
+        // toy stuff
+        IntifaceAddress,
+        MultiplayerConsentAcknowledged
     }
 }

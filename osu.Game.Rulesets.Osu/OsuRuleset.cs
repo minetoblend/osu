@@ -217,6 +217,12 @@ namespace osu.Game.Rulesets.Osu
                         new OsuModDepth()
                     };
 
+                case ModType.Freaky:
+                    return new Mod[]
+                    {
+                        new OsuModToy(),
+                    };
+
                 case ModType.System:
                     return new Mod[]
                     {

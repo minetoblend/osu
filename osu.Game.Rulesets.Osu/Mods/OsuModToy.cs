@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Buttplug;
 using osu.Framework.Bindables;
 using osu.Framework.Graphics.Sprites;
+using osu.Framework.Localisation;
 using osu.Framework.Logging;
 using osu.Game.Beatmaps;
 using osu.Game.Configuration;
@@ -20,23 +21,32 @@ using osu.Game.Screens.Play;
 namespace osu.Game.Rulesets.Osu.Mods
 {
     public class OsuModToy : Mod, IApplicableToHealthProcessor, IApplicableToScoreProcessor,
-        IApplicableToBeatmap, IApplicableToPlayer, IReadFromConfig, IApplicableToDrawableHitObjects
+                             IApplicableToBeatmap, IApplicableToPlayer, IReadFromConfig, IApplicableToDrawableHitObject
     {
         public enum MotorBehavior
         {
-            [Description("Do nothing")] None,
-            [Description("Bind to health")] Health,
-            [Description("Bind to combo")] Combo,
-            [Description("Bind to accuracy")] Accuracy,
-            [Description("Bind to hit")] Hit
+            [Description("Do nothing")]
+            None,
+
+            [Description("Bind to health")]
+            Health,
+
+            [Description("Bind to combo")]
+            Combo,
+
+            [Description("Bind to accuracy")]
+            Accuracy,
+
+            [Description("Bind to hit")]
+            Hit
         }
 
         public override string Name => "Toy";
-        public override string Description => "Play with toys.";
+        public override LocalisableString Description => "Play with toys.";
         public override string Acronym => "TY";
 
         public override IconUsage? Icon => FontAwesome.Solid.PepperHot;
-        public override ModType Type => ModType.Fun;
+        public override ModType Type => ModType.Freaky;
         public override bool Ranked => false;
 
         public override double ScoreMultiplier => 0.0;
@@ -69,22 +79,26 @@ namespace osu.Game.Rulesets.Osu.Mods
         [SettingSource("Motor 1 Behavior", "Defines how the first motor will react.")]
         public Bindable<MotorBehavior> Motor1Behavior { get; } = new Bindable<MotorBehavior>(MotorBehavior.Health);
 
-        [SettingSource("Invert Motor 1")] public BindableBool Motor1Invert { get; } = new BindableBool();
+        [SettingSource("Invert Motor 1")]
+        public BindableBool Motor1Invert { get; } = new BindableBool();
 
         [SettingSource("Motor 2 Behavior")]
         public Bindable<MotorBehavior> Motor2Behavior { get; } = new Bindable<MotorBehavior>();
 
-        [SettingSource("Invert Motor 2")] public BindableBool Motor2Invert { get; } = new BindableBool();
+        [SettingSource("Invert Motor 2")]
+        public BindableBool Motor2Invert { get; } = new BindableBool();
 
         [SettingSource("Motor 3 Behavior")]
         public Bindable<MotorBehavior> Motor3Behavior { get; } = new Bindable<MotorBehavior>();
 
-        [SettingSource("Invert Motor 3")] public BindableBool Motor3Invert { get; } = new BindableBool();
+        [SettingSource("Invert Motor 3")]
+        public BindableBool Motor3Invert { get; } = new BindableBool();
 
         [SettingSource("Motor 4 Behavior")]
         public Bindable<MotorBehavior> Motor4Behavior { get; } = new Bindable<MotorBehavior>();
 
-        [SettingSource("Invert Motor 4")] public BindableBool Motor4Invert { get; } = new BindableBool();
+        [SettingSource("Invert Motor 4")]
+        public BindableBool Motor4Invert { get; } = new BindableBool();
 
         public void ApplyToHealthProcessor(HealthProcessor healthProcessor)
         {
@@ -96,8 +110,8 @@ namespace osu.Game.Rulesets.Osu.Mods
 
                 for (uint i = 1; i <= MOTOR_COUNT; i++)
                 {
-                    var behavior = (Bindable<MotorBehavior>) GetType().GetProperty($"Motor{i}Behavior").GetValue(this);
-                    var invert = (BindableBool) GetType().GetProperty($"Motor{i}Invert").GetValue(this);
+                    var behavior = (Bindable<MotorBehavior>)GetType().GetProperty($"Motor{i}Behavior").GetValue(this);
+                    var invert = (BindableBool)GetType().GetProperty($"Motor{i}Invert").GetValue(this);
 
                     if (behavior.Value != MotorBehavior.Health) continue;
 
@@ -115,12 +129,12 @@ namespace osu.Game.Rulesets.Osu.Mods
             {
                 if (!userPlaying) return;
 
-                float speed = SpeedCap.Value * Math.Max(1, combo.NewValue / (float) maxCombo * MaxComboFactor.Value);
+                float speed = SpeedCap.Value * Math.Max(1, combo.NewValue / (float)maxCombo * MaxComboFactor.Value);
 
                 for (uint i = 1; i <= MOTOR_COUNT; i++)
                 {
-                    var behavior = (Bindable<MotorBehavior>) GetType().GetProperty($"Motor{i}Behavior").GetValue(this);
-                    var invert = (BindableBool) GetType().GetProperty($"Motor{i}Invert").GetValue(this);
+                    var behavior = (Bindable<MotorBehavior>)GetType().GetProperty($"Motor{i}Behavior").GetValue(this);
+                    var invert = (BindableBool)GetType().GetProperty($"Motor{i}Invert").GetValue(this);
 
                     if (behavior.Value != MotorBehavior.Combo) continue;
 
@@ -139,8 +153,8 @@ namespace osu.Game.Rulesets.Osu.Mods
 
                 for (uint i = 1; i <= MOTOR_COUNT; i++)
                 {
-                    var behavior = (Bindable<MotorBehavior>) GetType().GetProperty($"Motor{i}Behavior").GetValue(this);
-                    var invert = (BindableBool) GetType().GetProperty($"Motor{i}Invert").GetValue(this);
+                    var behavior = (Bindable<MotorBehavior>)GetType().GetProperty($"Motor{i}Behavior").GetValue(this);
+                    var invert = (BindableBool)GetType().GetProperty($"Motor{i}Invert").GetValue(this);
 
                     if (behavior.Value != MotorBehavior.Accuracy) continue;
 
@@ -152,37 +166,32 @@ namespace osu.Game.Rulesets.Osu.Mods
             };
         }
 
-        // This probably doesn't work rn lol
-        public void ApplyToDrawableHitObjects(IEnumerable<DrawableHitObject> drawables)
+        public void ApplyToDrawableHitObject(DrawableHitObject drawableHitObject)
         {
-            foreach (DrawableHitObject drawableHitObject in drawables)
+            drawableHitObject.State.ValueChanged += async (state) =>
             {
-                drawableHitObject.State.ValueChanged += async (state) =>
+                if (!userPlaying) return;
+                if (state.NewValue != ArmedState.Hit) return;
+
+                double speed = SpeedCap.Value;
+
+                for (uint i = 1; i <= MOTOR_COUNT; i++)
                 {
-                    if (!userPlaying) return;
-                    if (state.NewValue != ArmedState.Hit) return;
+                    var behavior = (Bindable<MotorBehavior>)GetType().GetProperty($"Motor{i}Behavior").GetValue(this);
+                    var invert = (BindableBool)GetType().GetProperty($"Motor{i}Invert").GetValue(this);
 
-                    double speed = SpeedCap.Value;
+                    if (behavior.Value != MotorBehavior.Hit) continue;
 
-                    for (uint i = 1; i <= MOTOR_COUNT; i++)
+                    if (invert.Value)
                     {
-                        var behavior = (Bindable<MotorBehavior>) GetType().GetProperty($"Motor{i}Behavior").GetValue(this);
-                        var invert = (BindableBool) GetType().GetProperty($"Motor{i}Invert").GetValue(this);
-
-                        if (behavior.Value != MotorBehavior.Hit) continue;
-
-                        if (invert.Value)
-                        {
-                            await ButtplugStuff.Instance.VibrateAtSpeedTimeout(1 - speed, i - 1);
-                        }
-                        else
-                        {
-                            await ButtplugStuff.Instance.VibrateAtSpeedTimeout(speed, i - 1);
-                        }
-
+                        await ButtplugStuff.Instance.VibrateAtSpeedTimeout(1 - speed, i - 1);
                     }
-                };
-            }
+                    else
+                    {
+                        await ButtplugStuff.Instance.VibrateAtSpeedTimeout(speed, i - 1);
+                    }
+                }
+            };
         }
 
         public ScoreRank AdjustRank(ScoreRank rank, double accuracy)
@@ -293,7 +302,7 @@ namespace osu.Game.Rulesets.Osu.Mods
                         device.AllowedMessages[ServerMessage.Types.MessageAttributeType.VibrateCmd].FeatureCount - 1)
                         continue;
 
-                    await device.SendVibrateCmd(new Dictionary<uint, double> {[motor] = speed});
+                    await device.SendVibrateCmd(new Dictionary<uint, double> { [motor] = speed });
                 }
                 catch (Exception e)
                 {
@@ -315,7 +324,7 @@ namespace osu.Game.Rulesets.Osu.Mods
                         device.AllowedMessages[ServerMessage.Types.MessageAttributeType.VibrateCmd].FeatureCount - 1)
                         continue;
 
-                    await device.SendVibrateCmd(new Dictionary<uint, double> {[motor] = speed});
+                    await device.SendVibrateCmd(new Dictionary<uint, double> { [motor] = speed });
                 }
                 catch (Exception e)
                 {
