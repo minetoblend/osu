@@ -18,11 +18,11 @@ using osuTK.Input;
 
 namespace osu.Game.Rulesets.Osu.Tests.Editor
 {
-    public class TestSceneSliderSelectionBlueprint : SelectionBlueprintTestScene
+    public partial class TestSceneSliderSelectionBlueprint : SelectionBlueprintTestScene
     {
-        private Slider slider;
-        private DrawableSlider drawableObject;
-        private TestSliderBlueprint blueprint;
+        private Slider slider = null!;
+        private DrawableSlider drawableObject = null!;
+        private TestSliderBlueprint blueprint = null!;
 
         [SetUp]
         public void Setup() => Schedule(() =>
@@ -32,7 +32,7 @@ namespace osu.Game.Rulesets.Osu.Tests.Editor
             slider = new Slider
             {
                 Position = new Vector2(256, 192),
-                Path = new SliderPath(PathType.Bezier, new[]
+                Path = new SliderPath(PathType.BEZIER, new[]
                 {
                     Vector2.Zero,
                     new Vector2(150, 150),
@@ -43,7 +43,7 @@ namespace osu.Game.Rulesets.Osu.Tests.Editor
             slider.ApplyDefaults(new ControlPointInfo(), new BeatmapDifficulty { CircleSize = 2 });
 
             Add(drawableObject = new DrawableSlider(slider));
-            AddBlueprint(blueprint = new TestSliderBlueprint(drawableObject));
+            AddBlueprint(blueprint = new TestSliderBlueprint(slider), drawableObject);
         });
 
         [Test]
@@ -161,6 +161,44 @@ namespace osu.Game.Rulesets.Osu.Tests.Editor
             checkControlPointSelected(1, false);
         }
 
+        [Test]
+        public void TestAdjustLength()
+        {
+            AddStep("move mouse to drag marker", () =>
+            {
+                Vector2 position = slider.Position + slider.Path.PositionAt(1) + new Vector2(60, 0);
+                InputManager.MoveMouseTo(drawableObject.Parent!.ToScreenSpace(position));
+            });
+            AddStep("start drag", () => InputManager.PressButton(MouseButton.Left));
+            AddStep("move mouse to control point 1", () =>
+            {
+                Vector2 position = slider.Position + slider.Path.ControlPoints[1].Position + new Vector2(60, 0);
+                InputManager.MoveMouseTo(drawableObject.Parent!.ToScreenSpace(position));
+            });
+            AddStep("end adjust length", () => InputManager.ReleaseButton(MouseButton.Left));
+            AddAssert("expected distance halved",
+                () => Precision.AlmostEquals(slider.Path.Distance, 172.2, 0.1));
+
+            AddStep("move mouse to drag marker", () =>
+            {
+                Vector2 position = slider.Position + slider.Path.PositionAt(1) + new Vector2(60, 0);
+                InputManager.MoveMouseTo(drawableObject.Parent!.ToScreenSpace(position));
+            });
+            AddStep("start drag", () => InputManager.PressButton(MouseButton.Left));
+            AddStep("move mouse beyond last control point", () =>
+            {
+                Vector2 position = slider.Position + slider.Path.ControlPoints[2].Position + new Vector2(100, 0);
+                InputManager.MoveMouseTo(drawableObject.Parent!.ToScreenSpace(position));
+            });
+            AddStep("end adjust length", () => InputManager.ReleaseButton(MouseButton.Left));
+            AddAssert("expected distance is calculated distance",
+                () => Precision.AlmostEquals(slider.Path.Distance, slider.Path.CalculatedDistance, 0.1));
+
+            moveMouseToControlPoint(1);
+            AddAssert("expected distance is unchanged",
+                () => Precision.AlmostEquals(slider.Path.Distance, slider.Path.CalculatedDistance, 0.1));
+        }
+
         private void moveHitObject()
         {
             AddStep("move hitobject", () =>
@@ -174,44 +212,47 @@ namespace osu.Game.Rulesets.Osu.Tests.Editor
             AddAssert("body positioned correctly", () => blueprint.BodyPiece.Position == slider.StackedPosition);
 
             AddAssert("head positioned correctly",
-                () => Precision.AlmostEquals(blueprint.HeadBlueprint.CirclePiece.ScreenSpaceDrawQuad.Centre, drawableObject.HeadCircle.ScreenSpaceDrawQuad.Centre));
+                () => Precision.AlmostEquals(blueprint.HeadOverlay.CirclePiece.ScreenSpaceDrawQuad.Centre, drawableObject.HeadCircle.ScreenSpaceDrawQuad.Centre));
 
             AddAssert("tail positioned correctly",
-                () => Precision.AlmostEquals(blueprint.TailBlueprint.CirclePiece.ScreenSpaceDrawQuad.Centre, drawableObject.TailCircle.ScreenSpaceDrawQuad.Centre));
+                () => Precision.AlmostEquals(blueprint.TailOverlay.CirclePiece.ScreenSpaceDrawQuad.Centre, drawableObject.TailCircle.ScreenSpaceDrawQuad.Centre));
+
+            AddAssert("end drag marker positioned correctly",
+                () => Precision.AlmostEquals(blueprint.TailOverlay.EndDragMarker!.ToScreenSpace(blueprint.TailOverlay.EndDragMarker.OriginPosition), drawableObject.TailCircle.ScreenSpaceDrawQuad.Centre, 2));
         }
 
         private void moveMouseToControlPoint(int index)
         {
             AddStep($"move mouse to control point {index}", () =>
             {
-                Vector2 position = slider.Position + slider.Path.ControlPoints[index].Position.Value;
-                InputManager.MoveMouseTo(drawableObject.Parent.ToScreenSpace(position));
+                Vector2 position = slider.Position + slider.Path.ControlPoints[index].Position;
+                InputManager.MoveMouseTo(drawableObject.Parent!.ToScreenSpace(position));
             });
         }
 
         private void checkControlPointSelected(int index, bool selected)
-            => AddAssert($"control point {index} {(selected ? "selected" : "not selected")}", () => blueprint.ControlPointVisualiser.Pieces[index].IsSelected.Value == selected);
+            => AddAssert($"control point {index} {(selected ? "selected" : "not selected")}", () => blueprint.ControlPointVisualiser!.Pieces[index].IsSelected.Value == selected);
 
-        private class TestSliderBlueprint : SliderSelectionBlueprint
+        private partial class TestSliderBlueprint : SliderSelectionBlueprint
         {
             public new SliderBodyPiece BodyPiece => base.BodyPiece;
-            public new TestSliderCircleBlueprint HeadBlueprint => (TestSliderCircleBlueprint)base.HeadBlueprint;
-            public new TestSliderCircleBlueprint TailBlueprint => (TestSliderCircleBlueprint)base.TailBlueprint;
-            public new PathControlPointVisualiser ControlPointVisualiser => base.ControlPointVisualiser;
+            public new TestSliderCircleOverlay HeadOverlay => (TestSliderCircleOverlay)base.HeadOverlay;
+            public new TestSliderCircleOverlay TailOverlay => (TestSliderCircleOverlay)base.TailOverlay;
+            public new PathControlPointVisualiser<Slider>? ControlPointVisualiser => base.ControlPointVisualiser;
 
-            public TestSliderBlueprint(DrawableSlider slider)
+            public TestSliderBlueprint(Slider slider)
                 : base(slider)
             {
             }
 
-            protected override SliderCircleSelectionBlueprint CreateCircleSelectionBlueprint(DrawableSlider slider, SliderPosition position) => new TestSliderCircleBlueprint(slider, position);
+            protected override SliderCircleOverlay CreateCircleOverlay(Slider slider, SliderPosition position) => new TestSliderCircleOverlay(slider, position);
         }
 
-        private class TestSliderCircleBlueprint : SliderCircleSelectionBlueprint
+        private partial class TestSliderCircleOverlay : SliderCircleOverlay
         {
             public new HitCirclePiece CirclePiece => base.CirclePiece;
 
-            public TestSliderCircleBlueprint(DrawableSlider slider, SliderPosition position)
+            public TestSliderCircleOverlay(Slider slider, SliderPosition position)
                 : base(slider, position)
             {
             }

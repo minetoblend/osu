@@ -1,6 +1,8 @@
 ﻿// Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
+#nullable disable
+
 using System.Collections.Generic;
 using System.Linq;
 using osuTK;
@@ -14,7 +16,7 @@ using osu.Game.Graphics.UserInterface;
 
 namespace osu.Game.Screens.Select
 {
-    public class Footer : Container
+    public partial class Footer : Container
     {
         private readonly Box modeLight;
 
@@ -28,19 +30,16 @@ namespace osu.Game.Screens.Select
 
         private readonly List<OverlayContainer> overlays = new List<OverlayContainer>();
 
-        /// <param name="button">THe button to be added.</param>
+        /// <param name="button">The button to be added.</param>
         /// <param name="overlay">The <see cref="OverlayContainer"/> to be toggled by this button.</param>
         public void AddButton(FooterButton button, OverlayContainer overlay)
         {
-            overlays.Add(overlay);
-            button.Action = () => showOverlay(overlay);
+            if (overlay != null)
+            {
+                overlays.Add(overlay);
+                button.Action = () => showOverlay(overlay);
+            }
 
-            AddButton(button);
-        }
-
-        /// <param name="button">Button to be added.</param>
-        public void AddButton(FooterButton button)
-        {
             button.Hovered = updateModeLight;
             button.HoverLost = updateModeLight;
 
@@ -58,7 +57,18 @@ namespace osu.Game.Screens.Select
             }
         }
 
-        private void updateModeLight() => modeLight.FadeColour(buttons.FirstOrDefault(b => b.IsHovered)?.SelectedColour ?? Color4.Transparent, TRANSITION_LENGTH, Easing.OutQuint);
+        private void updateModeLight()
+        {
+            var selectedButton = buttons.FirstOrDefault(b => b.Enabled.Value && b.IsHovered);
+
+            if (selectedButton != null)
+            {
+                modeLight.FadeIn(TRANSITION_LENGTH, Easing.OutQuint);
+                modeLight.FadeColour(selectedButton.SelectedColour, TRANSITION_LENGTH, Easing.OutQuint);
+            }
+            else
+                modeLight.FadeOut(TRANSITION_LENGTH, Easing.OutQuint);
+        }
 
         public Footer()
         {
@@ -79,6 +89,7 @@ namespace osu.Game.Screens.Select
                     RelativeSizeAxes = Axes.X,
                     Height = 3,
                     Position = new Vector2(0, -3),
+                    Colour = Color4.Black,
                 },
                 new FillFlowContainer
                 {

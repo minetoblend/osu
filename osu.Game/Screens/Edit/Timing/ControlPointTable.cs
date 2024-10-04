@@ -1,267 +1,417 @@
 // Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
-using System.Collections.Generic;
+using System;
 using System.Linq;
 using osu.Framework.Allocation;
 using osu.Framework.Bindables;
-using osu.Framework.Extensions;
 using osu.Framework.Graphics;
+using osu.Framework.Graphics.Colour;
 using osu.Framework.Graphics.Containers;
+using osu.Framework.Graphics.Pooling;
 using osu.Framework.Graphics.Shapes;
+using osu.Framework.Graphics.UserInterface;
 using osu.Framework.Input.Events;
+using osu.Framework.Localisation;
 using osu.Game.Beatmaps.ControlPoints;
 using osu.Game.Extensions;
 using osu.Game.Graphics;
 using osu.Game.Graphics.Containers;
 using osu.Game.Graphics.Sprites;
+using osu.Game.Overlays;
+using osu.Game.Screens.Edit.Timing.RowAttributes;
 using osuTK;
-using osuTK.Graphics;
 
 namespace osu.Game.Screens.Edit.Timing
 {
-    public class ControlPointTable : TableContainer
+    public partial class ControlPointTable : CompositeDrawable
     {
-        private const float horizontal_inset = 20;
-        private const float row_height = 25;
-        private const int text_size = 14;
+        public BindableList<ControlPointGroup> Groups { get; } = new BindableList<ControlPointGroup>();
 
-        private readonly FillFlowContainer backgroundFlow;
+        public new MarginPadding Padding
+        {
+            get => base.Padding;
+            set => base.Padding = value;
+        }
+
+        [Cached]
+        private Bindable<TimingControlPoint?> activeTimingPoint { get; } = new Bindable<TimingControlPoint?>();
+
+        [Cached]
+        private Bindable<EffectControlPoint?> activeEffectPoint { get; } = new Bindable<EffectControlPoint?>();
 
         [Resolved]
-        private Bindable<ControlPointGroup> selectedGroup { get; set; }
+        private EditorBeatmap beatmap { get; set; } = null!;
 
-        public ControlPointTable()
+        [Resolved]
+        private Bindable<ControlPointGroup?> selectedGroup { get; set; } = null!;
+
+        [Resolved]
+        private EditorClock editorClock { get; set; } = null!;
+
+        private const float timing_column_width = 300;
+        private const float row_height = 25;
+        private const float row_horizontal_padding = 20;
+
+        private ControlPointRowList list = null!;
+
+        [BackgroundDependencyLoader]
+        private void load(OverlayColourProvider colours)
         {
-            RelativeSizeAxes = Axes.X;
-            AutoSizeAxes = Axes.Y;
+            RelativeSizeAxes = Axes.Both;
 
-            Padding = new MarginPadding { Horizontal = horizontal_inset };
-            RowSize = new Dimension(GridSizeMode.Absolute, row_height);
-
-            AddInternal(backgroundFlow = new FillFlowContainer
+            InternalChildren = new Drawable[]
             {
-                RelativeSizeAxes = Axes.Both,
-                Depth = 1f,
-                Padding = new MarginPadding { Horizontal = -horizontal_inset },
-                Margin = new MarginPadding { Top = row_height }
-            });
-        }
-
-        public IEnumerable<ControlPointGroup> ControlGroups
-        {
-            set
-            {
-                Content = null;
-                backgroundFlow.Clear();
-
-                if (value?.Any() != true)
-                    return;
-
-                foreach (var group in value)
+                new Box
                 {
-                    backgroundFlow.Add(new RowBackground(group));
-                }
-
-                Columns = createHeaders();
-                Content = value.Select((g, i) => createContent(i, g)).ToArray().ToRectangular();
-            }
-        }
-
-        private TableColumn[] createHeaders()
-        {
-            var columns = new List<TableColumn>
-            {
-                new TableColumn(string.Empty, Anchor.Centre, new Dimension(GridSizeMode.AutoSize)),
-                new TableColumn("Time", Anchor.Centre, new Dimension(GridSizeMode.AutoSize)),
-                new TableColumn("Attributes", Anchor.Centre),
-            };
-
-            return columns.ToArray();
-        }
-
-        private Drawable[] createContent(int index, ControlPointGroup group) => new Drawable[]
-        {
-            new OsuSpriteText
-            {
-                Text = $"#{index + 1}",
-                Font = OsuFont.GetFont(size: text_size, weight: FontWeight.Bold),
-                Margin = new MarginPadding(10)
-            },
-            new OsuSpriteText
-            {
-                Text = group.Time.ToEditorFormattedString(),
-                Font = OsuFont.GetFont(size: text_size, weight: FontWeight.Bold)
-            },
-            new ControlGroupAttributes(group),
-        };
-
-        private class ControlGroupAttributes : CompositeDrawable
-        {
-            private readonly IBindableList<ControlPoint> controlPoints = new BindableList<ControlPoint>();
-
-            private readonly FillFlowContainer fill;
-
-            public ControlGroupAttributes(ControlPointGroup group)
-            {
-                InternalChild = fill = new FillFlowContainer
+                    Colour = colours.Background4,
+                    RelativeSizeAxes = Axes.Both,
+                },
+                new Box
+                {
+                    Colour = colours.Background3,
+                    RelativeSizeAxes = Axes.Y,
+                    Width = timing_column_width + 10,
+                },
+                new Container
+                {
+                    RelativeSizeAxes = Axes.X,
+                    Height = row_height,
+                    Padding = new MarginPadding { Horizontal = row_horizontal_padding },
+                    Children = new Drawable[]
+                    {
+                        new TableHeaderText("Time")
+                        {
+                            Anchor = Anchor.CentreLeft,
+                            Origin = Anchor.CentreLeft,
+                        },
+                        new TableHeaderText("Attributes")
+                        {
+                            Anchor = Anchor.CentreLeft,
+                            Origin = Anchor.CentreLeft,
+                            Margin = new MarginPadding { Left = timing_column_width }
+                        },
+                    }
+                },
+                new Container
                 {
                     RelativeSizeAxes = Axes.Both,
-                    Direction = FillDirection.Horizontal,
-                    Padding = new MarginPadding(10),
-                    Spacing = new Vector2(2)
-                };
+                    Padding = new MarginPadding { Top = row_height },
+                    Child = list = new ControlPointRowList
+                    {
+                        RelativeSizeAxes = Axes.Both,
+                        RowData = { BindTarget = Groups, },
+                    },
+                },
+            };
+        }
 
-                controlPoints.BindTo(group.ControlPoints);
+        protected override void LoadComplete()
+        {
+            base.LoadComplete();
+
+            selectedGroup.BindValueChanged(_ => scrollToMostRelevantRow(force: true), true);
+        }
+
+        protected override void Update()
+        {
+            base.Update();
+
+            scrollToMostRelevantRow(force: false);
+        }
+
+        private void scrollToMostRelevantRow(bool force)
+        {
+            double accurateTime = editorClock.CurrentTimeAccurate;
+
+            activeTimingPoint.Value = beatmap.ControlPointInfo.TimingPointAt(accurateTime);
+            activeEffectPoint.Value = beatmap.ControlPointInfo.EffectPointAt(accurateTime);
+
+            double latestActiveTime = Math.Max(activeTimingPoint.Value?.Time ?? double.NegativeInfinity, activeEffectPoint.Value?.Time ?? double.NegativeInfinity);
+            var groupToShow = selectedGroup.Value ?? beatmap.ControlPointInfo.GroupAt(latestActiveTime);
+            list.ScrollTo(groupToShow, force);
+        }
+
+        private partial class ControlPointRowList : VirtualisedListContainer<ControlPointGroup, DrawableControlGroup>
+        {
+            public ControlPointRowList()
+                : base(row_height, 50)
+            {
             }
 
+            protected override ScrollContainer<Drawable> CreateScrollContainer() => new UserTrackingScrollContainer();
+
+            protected new UserTrackingScrollContainer Scroll => (UserTrackingScrollContainer)base.Scroll;
+
+            public void ScrollTo(ControlPointGroup group, bool force)
+            {
+                if (Scroll.UserScrolling && !force)
+                    return;
+
+                // can't use `.ScrollIntoView()` here because of the list virtualisation not giving
+                // child items valid coordinates from the start, so ballpark something similar
+                // using estimated row height.
+                var row = Items.FlowingChildren.SingleOrDefault(item => item.Row.Equals(group));
+
+                if (row == null)
+                    return;
+
+                float minPos = row.Y;
+                float maxPos = minPos + row_height;
+
+                if (minPos < Scroll.Current)
+                    Scroll.ScrollTo(minPos);
+                else if (maxPos > Scroll.Current + Scroll.DisplayableContent)
+                    Scroll.ScrollTo(maxPos - Scroll.DisplayableContent);
+            }
+        }
+
+        public partial class DrawableControlGroup : PoolableDrawable, IHasCurrentValue<ControlPointGroup>
+        {
+            public Bindable<ControlPointGroup> Current
+            {
+                get => current.Current;
+                set => current.Current = value;
+            }
+
+            private readonly BindableWithCurrent<ControlPointGroup> current = new BindableWithCurrent<ControlPointGroup>();
+
+            private Box background = null!;
+            private Box currentIndicator = null!;
+
             [Resolved]
-            private OsuColour colours { get; set; }
+            private OverlayColourProvider colourProvider { get; set; } = null!;
+
+            [Resolved]
+            private OsuColour colours { get; set; } = null!;
+
+            [Resolved]
+            private Bindable<ControlPointGroup?> selectedGroup { get; set; } = null!;
+
+            [Resolved]
+            private Bindable<TimingControlPoint?> activeTimingPoint { get; set; } = null!;
+
+            [Resolved]
+            private Bindable<EffectControlPoint?> activeEffectPoint { get; set; } = null!;
+
+            [Resolved]
+            private EditorClock editorClock { get; set; } = null!;
 
             [BackgroundDependencyLoader]
             private void load()
             {
-                createChildren();
-            }
+                RelativeSizeAxes = Axes.Both;
 
-            protected override void LoadComplete()
-            {
-                base.LoadComplete();
-                controlPoints.CollectionChanged += (_, __) => createChildren();
-            }
-
-            private void createChildren()
-            {
-                fill.ChildrenEnumerable = controlPoints.Select(createAttribute).Where(c => c != null);
-            }
-
-            private Drawable createAttribute(ControlPoint controlPoint)
-            {
-                Color4 colour = controlPoint.GetRepresentingColour(colours);
-
-                switch (controlPoint)
+                InternalChildren = new Drawable[]
                 {
-                    case TimingControlPoint timing:
-                        return new RowAttribute("timing", () => $"{60000 / timing.BeatLength:n1}bpm {timing.TimeSignature}", colour);
-
-                    case DifficultyControlPoint difficulty:
-
-                        return new RowAttribute("difficulty", () => $"{difficulty.SpeedMultiplier:n2}x", colour);
-
-                    case EffectControlPoint effect:
-                        return new RowAttribute("effect", () => $"{(effect.KiaiMode ? "Kiai " : "")}{(effect.OmitFirstBarLine ? "NoBarLine " : "")}", colour);
-
-                    case SampleControlPoint sample:
-                        return new RowAttribute("sample", () => $"{sample.SampleBank} {sample.SampleVolume}%", colour);
-                }
-
-                return null;
-            }
-        }
-
-        protected override Drawable CreateHeader(int index, TableColumn column) => new HeaderText(column?.Header ?? string.Empty);
-
-        private class HeaderText : OsuSpriteText
-        {
-            public HeaderText(string text)
-            {
-                Text = text.ToUpper();
-                Font = OsuFont.GetFont(size: 12, weight: FontWeight.Bold);
-            }
-        }
-
-        public class RowBackground : OsuClickableContainer
-        {
-            private readonly ControlPointGroup controlGroup;
-            private const int fade_duration = 100;
-
-            private readonly Box hoveredBackground;
-
-            [Resolved]
-            private EditorClock clock { get; set; }
-
-            [Resolved]
-            private Bindable<ControlPointGroup> selectedGroup { get; set; }
-
-            public RowBackground(ControlPointGroup controlGroup)
-            {
-                this.controlGroup = controlGroup;
-                RelativeSizeAxes = Axes.X;
-                Height = 25;
-
-                AlwaysPresent = true;
-
-                CornerRadius = 3;
-                Masking = true;
-
-                Children = new Drawable[]
-                {
-                    hoveredBackground = new Box
+                    background = new Box
                     {
                         RelativeSizeAxes = Axes.Both,
+                        Colour = colourProvider.Background1,
                         Alpha = 0,
                     },
+                    currentIndicator = new Box
+                    {
+                        RelativeSizeAxes = Axes.Y,
+                        Width = 5,
+                        Alpha = 0,
+                    },
+                    new Container
+                    {
+                        RelativeSizeAxes = Axes.Both,
+                        Padding = new MarginPadding { Horizontal = row_horizontal_padding, },
+                        Children = new Drawable[]
+                        {
+                            new ControlGroupTiming { Group = { BindTarget = current }, },
+                            new ControlGroupAttributes(point => point is not TimingControlPoint)
+                            {
+                                Group = { BindTarget = current },
+                                Margin = new MarginPadding { Left = timing_column_width }
+                            }
+                        }
+                    }
                 };
-
-                Action = () =>
-                {
-                    selectedGroup.Value = controlGroup;
-                    clock.SeekTo(controlGroup.Time);
-                };
-            }
-
-            private Color4 colourHover;
-            private Color4 colourSelected;
-
-            [BackgroundDependencyLoader]
-            private void load(OsuColour colours)
-            {
-                hoveredBackground.Colour = colourHover = colours.BlueDarker;
-                colourSelected = colours.YellowDarker;
             }
 
             protected override void LoadComplete()
             {
                 base.LoadComplete();
 
-                selectedGroup.BindValueChanged(group => { Selected = controlGroup == group.NewValue; }, true);
+                selectedGroup.BindValueChanged(_ => updateState());
+                activeEffectPoint.BindValueChanged(_ => updateState());
+                activeTimingPoint.BindValueChanged(_ => updateState(), true);
+                FinishTransforms(true);
             }
 
-            private bool selected;
-
-            protected bool Selected
+            protected override void PrepareForUse()
             {
-                get => selected;
-                set
-                {
-                    if (value == selected)
-                        return;
+                base.PrepareForUse();
 
-                    selected = value;
-                    updateState();
-                }
+                updateState();
             }
 
             protected override bool OnHover(HoverEvent e)
             {
                 updateState();
-                return base.OnHover(e);
+                return true;
             }
 
             protected override void OnHoverLost(HoverLostEvent e)
             {
-                updateState();
                 base.OnHoverLost(e);
+                updateState();
+            }
+
+            protected override bool OnClick(ClickEvent e)
+            {
+                // schedule to give time for any modified focused text box to lose focus and commit changes (e.g. BPM / time signature textboxes) before switching to new point.
+                var currentGroup = Current.Value;
+                Schedule(() =>
+                {
+                    selectedGroup.Value = currentGroup;
+                    editorClock.SeekSmoothlyTo(currentGroup.Time);
+                });
+                return true;
             }
 
             private void updateState()
             {
-                hoveredBackground.FadeColour(selected ? colourSelected : colourHover, 450, Easing.OutQuint);
+                bool isSelected = selectedGroup.Value?.Equals(current.Value) == true;
 
-                if (selected || IsHovered)
-                    hoveredBackground.FadeIn(fade_duration, Easing.OutQuint);
+                bool hasCurrentTimingPoint = activeTimingPoint.Value != null && current.Value.ControlPoints.Contains(activeTimingPoint.Value);
+                bool hasCurrentEffectPoint = activeEffectPoint.Value != null && current.Value.ControlPoints.Contains(activeEffectPoint.Value);
+
+                if (IsHovered || isSelected)
+                    background.FadeIn(100, Easing.OutQuint);
+                else if (hasCurrentTimingPoint || hasCurrentEffectPoint)
+                    background.FadeTo(0.2f, 100, Easing.OutQuint);
                 else
-                    hoveredBackground.FadeOut(fade_duration, Easing.OutQuint);
+                    background.FadeOut(100, Easing.OutQuint);
+
+                background.Colour = isSelected ? colourProvider.Colour3 : colourProvider.Background1;
+
+                if (hasCurrentTimingPoint || hasCurrentEffectPoint)
+                {
+                    currentIndicator.FadeIn(100, Easing.OutQuint);
+
+                    if (hasCurrentTimingPoint && hasCurrentEffectPoint)
+                        currentIndicator.Colour = ColourInfo.GradientVertical(activeTimingPoint.Value!.GetRepresentingColour(colours), activeEffectPoint.Value!.GetRepresentingColour(colours));
+                    else if (hasCurrentTimingPoint)
+                        currentIndicator.Colour = activeTimingPoint.Value!.GetRepresentingColour(colours);
+                    else
+                        currentIndicator.Colour = activeEffectPoint.Value!.GetRepresentingColour(colours);
+                }
+                else
+                    currentIndicator.FadeOut(100, Easing.OutQuint);
+            }
+        }
+
+        private partial class ControlGroupTiming : FillFlowContainer
+        {
+            public Bindable<ControlPointGroup> Group { get; } = new Bindable<ControlPointGroup>();
+
+            private OsuSpriteText timeText = null!;
+
+            [BackgroundDependencyLoader]
+            private void load()
+            {
+                Name = @"ControlGroupTiming";
+                RelativeSizeAxes = Axes.Y;
+                Width = timing_column_width;
+                Spacing = new Vector2(5);
+                Children = new Drawable[]
+                {
+                    timeText = new OsuSpriteText
+                    {
+                        Font = OsuFont.GetFont(size: 14, weight: FontWeight.Bold),
+                        Width = 70,
+                        Anchor = Anchor.CentreLeft,
+                        Origin = Anchor.CentreLeft,
+                    },
+                    new ControlGroupAttributes(c => c is TimingControlPoint)
+                    {
+                        Anchor = Anchor.CentreLeft,
+                        Origin = Anchor.CentreLeft,
+                        Group = { BindTarget = Group },
+                    }
+                };
+            }
+
+            protected override void LoadComplete()
+            {
+                base.LoadComplete();
+
+                Group.BindValueChanged(_ => timeText.Text = Group.Value?.Time.ToEditorFormattedString() ?? default(LocalisableString), true);
+            }
+        }
+
+        private partial class ControlGroupAttributes : CompositeDrawable
+        {
+            public Bindable<ControlPointGroup> Group { get; } = new Bindable<ControlPointGroup>();
+            private BindableList<ControlPoint> controlPoints { get; } = new BindableList<ControlPoint>();
+
+            private readonly Func<ControlPoint, bool> matchFunction;
+
+            private FillFlowContainer fill = null!;
+
+            public ControlGroupAttributes(Func<ControlPoint, bool> matchFunction)
+            {
+                this.matchFunction = matchFunction;
+            }
+
+            [BackgroundDependencyLoader]
+            private void load()
+            {
+                AutoSizeAxes = Axes.X;
+                RelativeSizeAxes = Axes.Y;
+                Name = @"ControlGroupAttributes";
+
+                InternalChild = fill = new FillFlowContainer
+                {
+                    AutoSizeAxes = Axes.X,
+                    RelativeSizeAxes = Axes.Y,
+                    Direction = FillDirection.Horizontal,
+                    Spacing = new Vector2(2)
+                };
+            }
+
+            protected override void LoadComplete()
+            {
+                base.LoadComplete();
+
+                Group.BindValueChanged(_ =>
+                {
+                    controlPoints.UnbindBindings();
+                    controlPoints.Clear();
+                    if (Group.Value != null)
+                        ((IBindableList<ControlPoint>)controlPoints).BindTo(Group.Value.ControlPoints);
+                }, true);
+
+                controlPoints.BindCollectionChanged((_, _) => createChildren(), true);
+            }
+
+            private void createChildren()
+            {
+                fill.ChildrenEnumerable = controlPoints
+                                          .Where(matchFunction)
+                                          .Select(createAttribute)
+                                          // arbitrary ordering to make timing points first.
+                                          // probably want to explicitly define order in the future.
+                                          .OrderByDescending(c => c.GetType().Name);
+            }
+
+            private Drawable createAttribute(ControlPoint controlPoint)
+            {
+                switch (controlPoint)
+                {
+                    case TimingControlPoint timing:
+                        return new TimingRowAttribute(timing);
+
+                    case EffectControlPoint effect:
+                        return new EffectRowAttribute(effect);
+                }
+
+                throw new ArgumentOutOfRangeException(nameof(controlPoint), $"Control point type {controlPoint.GetType()} is not supported");
             }
         }
     }

@@ -1,6 +1,9 @@
 ﻿// Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
+#nullable disable
+
+using System;
 using osu.Framework.Allocation;
 using osu.Framework.Bindables;
 using osu.Framework.Graphics;
@@ -15,7 +18,7 @@ namespace osu.Game.Online
     /// A <see cref="Container"/> for displaying online content which require a local user to be logged in.
     /// Shows its children only when the local user is logged in and supports displaying a placeholder if not.
     /// </summary>
-    public abstract class OnlineViewContainer : Container
+    public partial class OnlineViewContainer : Container
     {
         protected LoadingSpinner LoadingSpinner { get; private set; }
 
@@ -23,14 +26,18 @@ namespace osu.Game.Online
 
         private readonly string placeholderMessage;
 
-        private Placeholder placeholder;
+        private Drawable placeholder;
 
         private const double transform_duration = 300;
 
         [Resolved]
         protected IAPIProvider API { get; private set; }
 
-        protected OnlineViewContainer(string placeholderMessage)
+        /// <summary>
+        /// Construct a new instance of an online view container.
+        /// </summary>
+        /// <param name="placeholderMessage">The message to display when not logged in. If empty, no button will display.</param>
+        public OnlineViewContainer(string placeholderMessage)
         {
             this.placeholderMessage = placeholderMessage;
         }
@@ -40,10 +47,10 @@ namespace osu.Game.Online
         [BackgroundDependencyLoader]
         private void load(IAPIProvider api)
         {
-            InternalChildren = new Drawable[]
+            InternalChildren = new[]
             {
                 Content,
-                placeholder = new LoginPlaceholder(placeholderMessage),
+                placeholder = string.IsNullOrEmpty(placeholderMessage) ? Empty() : new LoginPlaceholder(placeholderMessage),
                 LoadingSpinner = new LoadingSpinner
                 {
                     Alpha = 0,
@@ -73,10 +80,14 @@ namespace osu.Game.Online
 
                 case APIState.Failing:
                 case APIState.Connecting:
+                case APIState.RequiresSecondFactorAuth:
                     PopContentOut(Content);
                     LoadingSpinner.Show();
                     placeholder.FadeOut(transform_duration / 2, Easing.OutQuint);
                     break;
+
+                default:
+                    throw new ArgumentOutOfRangeException();
             }
         });
 

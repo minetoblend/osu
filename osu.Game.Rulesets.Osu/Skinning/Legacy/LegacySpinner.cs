@@ -2,8 +2,10 @@
 // See the LICENCE file in the repository root for full licence text.
 
 using System;
+using System.Globalization;
 using osu.Framework.Allocation;
 using osu.Framework.Bindables;
+using osu.Framework.Extensions.ObjectExtensions;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Sprites;
@@ -14,51 +16,131 @@ using osuTK;
 
 namespace osu.Game.Rulesets.Osu.Skinning.Legacy
 {
-    public abstract class LegacySpinner : CompositeDrawable
+    public abstract partial class LegacySpinner : CompositeDrawable, IHasApproachCircle
     {
-        protected const float SPRITE_SCALE = 0.625f;
+        public const float SPRITE_SCALE = 0.625f;
 
-        protected DrawableSpinner DrawableSpinner { get; private set; }
+        /// <remarks>
+        /// All constants are in osu!stable's gamefield space, which is shifted 16px downwards.
+        /// This offset is negated to bring all constants into window-space.
+        /// Note: SPINNER_Y_CENTRE + SPINNER_TOP_OFFSET - Position.Y = 240 (=480/2, or half the window-space in osu!stable)
+        /// </remarks>
+        protected const float SPINNER_TOP_OFFSET = 45f - 16f;
 
-        private Sprite spin;
-        private Sprite clear;
+        protected const float SPINNER_Y_CENTRE = SPINNER_TOP_OFFSET + 219f;
+
+        private const float spm_hide_offset = 50f;
+
+        protected DrawableSpinner DrawableSpinner { get; private set; } = null!;
+
+        public Drawable? ApproachCircle { get; protected set; }
+
+        private Sprite spin = null!;
+        private Sprite clear = null!;
+
+        private LegacySpriteText bonusCounter = null!;
+
+        private Sprite spmBackground = null!;
+        private LegacySpriteText spmCounter = null!;
 
         [BackgroundDependencyLoader]
         private void load(DrawableHitObject drawableHitObject, ISkinSource source)
         {
-            RelativeSizeAxes = Axes.Both;
+            Anchor = Anchor.Centre;
+            Origin = Anchor.Centre;
+
+            // osu!stable positions spinner components in window-space (as opposed to gamefield-space). This is a 640x480 area taking up the entire screen.
+            // In lazer, the gamefield-space positional transformation is applied in OsuPlayfieldAdjustmentContainer, which is inverted here to make this area take up the entire window space.
+            Size = new Vector2(640, 480);
+            Position = new Vector2(0, -8f);
 
             DrawableSpinner = (DrawableSpinner)drawableHitObject;
 
-            AddRangeInternal(new[]
+            AddInternal(new Container
             {
-                spin = new Sprite
+                Depth = float.MinValue,
+                RelativeSizeAxes = Axes.Both,
+                Children = new Drawable[]
                 {
-                    Anchor = Anchor.Centre,
-                    Origin = Anchor.Centre,
-                    Depth = float.MinValue,
-                    Texture = source.GetTexture("spinner-spin"),
-                    Scale = new Vector2(SPRITE_SCALE),
-                    Y = 120 - 45 // offset temporarily to avoid overlapping default spin counter
-                },
-                clear = new Sprite
-                {
-                    Anchor = Anchor.Centre,
-                    Origin = Anchor.Centre,
-                    Depth = float.MinValue,
-                    Alpha = 0,
-                    Texture = source.GetTexture("spinner-clear"),
-                    Scale = new Vector2(SPRITE_SCALE),
-                    Y = -60
-                },
+                    spin = new Sprite
+                    {
+                        Alpha = 0,
+                        Anchor = Anchor.TopCentre,
+                        Origin = Anchor.Centre,
+                        Texture = source.GetTexture("spinner-spin"),
+                        Scale = new Vector2(SPRITE_SCALE),
+                        Y = SPINNER_TOP_OFFSET + 335,
+                    },
+                    clear = new Sprite
+                    {
+                        Alpha = 0,
+                        Anchor = Anchor.TopCentre,
+                        Origin = Anchor.Centre,
+                        Texture = source.GetTexture("spinner-clear"),
+                        Scale = new Vector2(SPRITE_SCALE),
+                        Y = SPINNER_TOP_OFFSET + 115,
+                    },
+                    bonusCounter = new LegacySpriteText(LegacyFont.Score)
+                    {
+                        Alpha = 0,
+                        Anchor = Anchor.TopCentre,
+                        Origin = Anchor.Centre,
+                        Scale = new Vector2(SPRITE_SCALE),
+                        Y = SPINNER_TOP_OFFSET + 299,
+                    },
+                    spmBackground = new Sprite
+                    {
+                        Anchor = Anchor.TopCentre,
+                        Origin = Anchor.TopLeft,
+                        Texture = source.GetTexture("spinner-rpm"),
+                        Scale = new Vector2(SPRITE_SCALE),
+                        Position = new Vector2(-87, 445 + spm_hide_offset),
+                    },
+                    spmCounter = new LegacySpriteText(LegacyFont.Score)
+                    {
+                        Anchor = Anchor.TopCentre,
+                        Origin = Anchor.TopRight,
+                        Scale = new Vector2(SPRITE_SCALE * 0.9f),
+                        Position = new Vector2(80, 448 + spm_hide_offset),
+                    },
+                }
             });
         }
+
+        private IBindable<int> completedSpins = null!;
+        private IBindable<double> spinsPerMinute = null!;
 
         private readonly Bindable<bool> completed = new Bindable<bool>();
 
         protected override void LoadComplete()
         {
             base.LoadComplete();
+
+            completedSpins = DrawableSpinner.CompletedFullSpins.GetBoundCopy();
+            completedSpins.BindValueChanged(bonus =>
+            {
+                if (DrawableSpinner.CurrentBonusScore <= 0)
+                    return;
+
+                bonusCounter.Text = DrawableSpinner.CurrentBonusScore.ToString(NumberFormatInfo.InvariantInfo);
+
+                if (DrawableSpinner.CurrentBonusScore == DrawableSpinner.MaximumBonusScore)
+                {
+                    bonusCounter.ScaleTo(1.4f).Then().ScaleTo(1.8f, 1000, Easing.Out);
+                    bonusCounter.FadeOutFromOne(500, Easing.Out);
+                }
+                else
+                {
+                    bonusCounter.FadeOutFromOne(800, Easing.Out);
+                    bonusCounter.ScaleTo(SPRITE_SCALE * 2f).Then().ScaleTo(SPRITE_SCALE * 1.28f, 800, Easing.Out);
+                }
+            });
+
+            spinsPerMinute = DrawableSpinner.SpinsPerMinute.GetBoundCopy();
+            spinsPerMinute.BindValueChanged(spm =>
+            {
+                spmCounter.Text = Math.Truncate(spm.NewValue).ToString(@"#0");
+            }, true);
 
             completed.BindValueChanged(onCompletedChanged, true);
 
@@ -72,7 +154,7 @@ namespace osu.Game.Rulesets.Osu.Skinning.Legacy
             {
                 double startTime = Math.Min(Time.Current, DrawableSpinner.HitStateUpdateTime - 400);
 
-                using (BeginAbsoluteSequence(startTime, true))
+                using (BeginAbsoluteSequence(startTime))
                 {
                     clear.FadeInFromZero(400, Easing.Out);
 
@@ -82,7 +164,7 @@ namespace osu.Game.Rulesets.Osu.Skinning.Legacy
                 }
 
                 const double fade_out_duration = 50;
-                using (BeginAbsoluteSequence(DrawableSpinner.HitStateUpdateTime - fade_out_duration, true))
+                using (BeginAbsoluteSequence(DrawableSpinner.HitStateUpdateTime - fade_out_duration))
                     clear.FadeOut(fade_out_duration);
             }
             else
@@ -103,16 +185,28 @@ namespace osu.Game.Rulesets.Osu.Skinning.Legacy
             switch (drawableHitObject)
             {
                 case DrawableSpinner d:
-                    double fadeOutLength = Math.Min(400, d.HitObject.Duration);
+                    using (BeginAbsoluteSequence(d.HitObject.StartTime - d.HitObject.TimeFadeIn))
+                    {
+                        spmBackground.MoveToOffset(new Vector2(0, -spm_hide_offset), d.HitObject.TimeFadeIn, Easing.Out);
+                        spmCounter.MoveToOffset(new Vector2(0, -spm_hide_offset), d.HitObject.TimeFadeIn, Easing.Out);
+                    }
 
-                    using (BeginAbsoluteSequence(drawableHitObject.HitStateUpdateTime - fadeOutLength, true))
-                        spin.FadeOutFromOne(fadeOutLength);
+                    using (BeginAbsoluteSequence(d.HitObject.StartTime - d.HitObject.TimeFadeIn / 2))
+                        spin.FadeInFromZero(d.HitObject.TimeFadeIn / 2);
+
+                    using (BeginAbsoluteSequence(d.HitObject.StartTime))
+                        ApproachCircle?.ScaleTo(SPRITE_SCALE * 0.1f, d.HitObject.Duration);
+
+                    double spinFadeOutLength = Math.Min(400, d.HitObject.Duration);
+
+                    using (BeginAbsoluteSequence(drawableHitObject.HitStateUpdateTime - spinFadeOutLength))
+                        spin.FadeOutFromOne(spinFadeOutLength);
                     break;
 
                 case DrawableSpinnerTick d:
                     if (state == ArmedState.Hit)
                     {
-                        using (BeginAbsoluteSequence(d.HitStateUpdateTime, true))
+                        using (BeginAbsoluteSequence(d.HitStateUpdateTime))
                             spin.FadeOut(300);
                     }
 
@@ -124,7 +218,7 @@ namespace osu.Game.Rulesets.Osu.Skinning.Legacy
         {
             base.Dispose(isDisposing);
 
-            if (DrawableSpinner != null)
+            if (DrawableSpinner.IsNotNull())
                 DrawableSpinner.ApplyCustomUpdateState -= UpdateStateTransforms;
         }
     }

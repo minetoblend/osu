@@ -1,54 +1,76 @@
 // Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
-using JetBrains.Annotations;
-using osu.Framework.Bindables;
+using System;
+using osu.Game.Database;
 
 namespace osu.Game.Collections
 {
     /// <summary>
     /// A <see cref="BeatmapCollection"/> filter.
     /// </summary>
-    public class CollectionFilterMenuItem
+    public class CollectionFilterMenuItem : IEquatable<CollectionFilterMenuItem>
     {
         /// <summary>
         /// The collection to filter beatmaps from.
         /// May be null to not filter by collection (include all beatmaps).
         /// </summary>
-        [CanBeNull]
-        public readonly BeatmapCollection Collection;
+        public readonly Live<BeatmapCollection>? Collection;
 
         /// <summary>
         /// The name of the collection.
         /// </summary>
-        [NotNull]
-        public readonly Bindable<string> CollectionName;
+        public string CollectionName { get; }
 
         /// <summary>
         /// Creates a new <see cref="CollectionFilterMenuItem"/>.
         /// </summary>
         /// <param name="collection">The collection to filter beatmaps from.</param>
-        public CollectionFilterMenuItem([CanBeNull] BeatmapCollection collection)
+        public CollectionFilterMenuItem(Live<BeatmapCollection> collection)
+            : this(collection.PerformRead(c => c.Name))
         {
             Collection = collection;
-            CollectionName = Collection?.Name.GetBoundCopy() ?? new Bindable<string>("All beatmaps");
         }
+
+        protected CollectionFilterMenuItem(string name)
+        {
+            CollectionName = name;
+        }
+
+        public virtual bool Equals(CollectionFilterMenuItem? other)
+        {
+            if (ReferenceEquals(null, other)) return false;
+            if (ReferenceEquals(this, other)) return true;
+
+            if (Collection == null) return false;
+
+            return Collection.ID == other.Collection?.ID;
+        }
+
+        public override int GetHashCode() => Collection?.ID.GetHashCode() ?? 0;
     }
 
     public class AllBeatmapsCollectionFilterMenuItem : CollectionFilterMenuItem
     {
         public AllBeatmapsCollectionFilterMenuItem()
-            : base(null)
+            : base("All beatmaps")
         {
         }
+
+        public override bool Equals(CollectionFilterMenuItem? other) => other is AllBeatmapsCollectionFilterMenuItem;
+
+        public override int GetHashCode() => 1;
     }
 
     public class ManageCollectionsFilterMenuItem : CollectionFilterMenuItem
     {
         public ManageCollectionsFilterMenuItem()
-            : base(null)
+            : base("Manage collections...")
         {
-            CollectionName.Value = "Manage collections...";
         }
+
+        public override bool Equals(CollectionFilterMenuItem? other) => other is ManageCollectionsFilterMenuItem;
+
+        public override int GetHashCode() => 2;
     }
 }

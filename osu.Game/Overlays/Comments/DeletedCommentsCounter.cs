@@ -12,7 +12,7 @@ using osu.Game.Graphics.Sprites;
 
 namespace osu.Game.Overlays.Comments
 {
-    public class DeletedCommentsCounter : CompositeDrawable
+    public partial class DeletedCommentsCounter : CompositeDrawable
     {
         public readonly BindableBool ShowDeleted = new BindableBool();
 
@@ -32,7 +32,7 @@ namespace osu.Game.Overlays.Comments
                 {
                     new SpriteIcon
                     {
-                        Icon = FontAwesome.Solid.Trash,
+                        Icon = FontAwesome.Regular.TrashAlt,
                         Size = new Vector2(14),
                     },
                     countText = new OsuSpriteText

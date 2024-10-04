@@ -1,36 +1,34 @@
 // Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
+#nullable disable
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using osu.Framework.Allocation;
-using osu.Framework.Bindables;
 using osu.Framework.Graphics;
 using osu.Framework.Screens;
 using osu.Framework.Threading;
-using osu.Game.Beatmaps;
 using osu.Game.Overlays;
 using osu.Game.Overlays.Dialog;
 using osu.Game.Overlays.Notifications;
+using osu.Game.Screens;
 using osu.Game.Screens.Menu;
 
 namespace osu.Game
 {
-    internal class PerformFromMenuRunner : Component
+    internal partial class PerformFromMenuRunner : Component
     {
         private readonly Action<IScreen> finalAction;
         private readonly Type[] validScreens;
         private readonly Func<IScreen> getCurrentScreen;
 
         [Resolved]
-        private NotificationOverlay notifications { get; set; }
+        private INotificationOverlay notifications { get; set; }
 
         [Resolved]
-        private DialogOverlay dialogOverlay { get; set; }
-
-        [Resolved]
-        private IBindable<WorkingBeatmap> beatmap { get; set; }
+        private IDialogOverlay dialogOverlay { get; set; }
 
         [Resolved(canBeNull: true)]
         private OsuGame game { get; set; }
@@ -73,28 +71,60 @@ namespace osu.Game
             // find closest valid target
             IScreen current = getCurrentScreen();
 
+            if (current == null)
+                return;
+
             // a dialog may be blocking the execution for now.
             if (checkForDialog(current)) return;
 
             game?.CloseAllOverlays(false);
 
-            // we may already be at the target screen type.
-            if (validScreens.Contains(getCurrentScreen().GetType()) && !beatmap.Disabled)
+            findValidTarget(current);
+        }
+
+        private bool findValidTarget(IScreen current)
+        {
+            var type = current.GetType();
+
+            // check if we are already at a valid target screen.
+            if (validScreens.Any(t => t.IsAssignableFrom(type)))
             {
-                complete();
-                return;
+                if (!((Drawable)current).IsLoaded)
+                    // wait until screen is loaded before invoking action.
+                    return true;
+
+                finalAction(current);
+                Cancel();
+                return true;
             }
 
             while (current != null)
             {
-                if (validScreens.Contains(current.GetType()))
+                // if this has a sub stack, recursively check the screens within it.
+                if (current is IHasSubScreenStack currentSubScreen)
+                {
+                    var nestedCurrent = currentSubScreen.SubScreenStack.CurrentScreen;
+
+                    if (nestedCurrent != null)
+                    {
+                        // should be correct in theory, but currently untested/unused in existing implementations.
+                        // note that calling findValidTarget actually performs the final operation.
+                        if (findValidTarget(nestedCurrent))
+                            return true;
+                    }
+                }
+
+                if (validScreens.Any(t => t.IsAssignableFrom(type)))
                 {
                     current.MakeCurrent();
-                    break;
+                    return true;
                 }
 
                 current = current.GetParentScreen();
+                type = current?.GetType();
             }
+
+            return false;
         }
 
         /// <summary>
@@ -104,6 +134,18 @@ namespace osu.Game
         /// <returns>Whether a dialog blocked interaction.</returns>
         private bool checkForDialog(IScreen current)
         {
+            // An exit process may traverse multiple levels.
+            // When checking for dismissing dialogs, let's also consider sub screens.
+            while (current is IHasSubScreenStack currentWithSubScreenStack)
+            {
+                var nestedCurrent = currentWithSubScreenStack.SubScreenStack.CurrentScreen;
+
+                if (nestedCurrent == null)
+                    break;
+
+                current = nestedCurrent;
+            }
+
             var currentDialog = dialogOverlay.CurrentDialog;
 
             if (lastEncounteredDialog != null)
@@ -134,12 +176,6 @@ namespace osu.Game
             lastEncounteredDialog = currentDialog;
             lastEncounteredDialogScreen = current;
             return true;
-        }
-
-        private void complete()
-        {
-            finalAction(getCurrentScreen());
-            Cancel();
         }
     }
 }

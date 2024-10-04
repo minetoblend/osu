@@ -1,70 +1,93 @@
 // Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
+#nullable disable
+
+using System.Diagnostics;
 using osu.Framework.Allocation;
 using osu.Framework.Audio;
 using osu.Framework.Bindables;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Shapes;
+using osu.Framework.Testing;
 using osu.Game.Beatmaps;
+using osu.Game.Graphics.Cursor;
 using osu.Game.Graphics.UserInterface;
 using osu.Game.Rulesets.Edit;
 using osu.Game.Screens.Edit;
 using osu.Game.Screens.Edit.Compose.Components.Timeline;
+using osu.Game.Storyboards;
 using osuTK;
 using osuTK.Graphics;
 
 namespace osu.Game.Tests.Visual.Editing
 {
-    public abstract class TimelineTestScene : EditorClockTestScene
+    public abstract partial class TimelineTestScene : EditorClockTestScene
     {
         protected TimelineArea TimelineArea { get; private set; }
 
         protected HitObjectComposer Composer { get; private set; }
 
-        [BackgroundDependencyLoader]
-        private void load(AudioManager audio)
+        protected EditorBeatmap EditorBeatmap { get; private set; }
+
+        [Resolved]
+        private AudioManager audio { get; set; }
+
+        protected override WorkingBeatmap CreateWorkingBeatmap(IBeatmap beatmap, Storyboard storyboard = null) => new WaveformTestBeatmap(audio);
+
+        protected override void LoadComplete()
         {
-            Beatmap.Value = new WaveformTestBeatmap(audio);
+            base.LoadComplete();
 
             var playable = Beatmap.Value.GetPlayableBeatmap(Beatmap.Value.BeatmapInfo.Ruleset);
-            var editorBeatmap = new EditorBeatmap(playable);
+            EditorBeatmap = new EditorBeatmap(playable);
 
-            Dependencies.Cache(editorBeatmap);
-            Dependencies.CacheAs<IBeatSnapProvider>(editorBeatmap);
+            Dependencies.Cache(EditorBeatmap);
+            Dependencies.CacheAs<IBeatSnapProvider>(EditorBeatmap);
 
-            Composer = playable.BeatmapInfo.Ruleset.CreateInstance().CreateHitObjectComposer().With(d => d.Alpha = 0);
+            Composer = playable.BeatmapInfo.Ruleset.CreateInstance().CreateHitObjectComposer();
+            Debug.Assert(Composer != null);
 
-            AddRange(new Drawable[]
+            Composer.Alpha = 0;
+
+            Add(new OsuContextMenuContainer
             {
-                editorBeatmap,
-                Composer,
-                new FillFlowContainer
+                RelativeSizeAxes = Axes.Both,
+                Children = new Drawable[]
                 {
-                    AutoSizeAxes = Axes.Both,
-                    Direction = FillDirection.Vertical,
-                    Spacing = new Vector2(0, 5),
-                    Children = new Drawable[]
+                    EditorBeatmap,
+                    Composer,
+                    new FillFlowContainer
                     {
-                        new StartStopButton(),
-                        new AudioVisualiser(),
+                        AutoSizeAxes = Axes.Both,
+                        Direction = FillDirection.Vertical,
+                        Spacing = new Vector2(0, 5),
+                        Children = new Drawable[]
+                        {
+                            new StartStopButton(),
+                            new AudioVisualiser(),
+                        }
+                    },
+                    TimelineArea = new TimelineArea(CreateTestComponent())
+                    {
+                        Anchor = Anchor.Centre,
+                        Origin = Anchor.Centre,
                     }
-                },
-                TimelineArea = new TimelineArea
-                {
-                    Child = CreateTestComponent(),
-                    Anchor = Anchor.Centre,
-                    Origin = Anchor.Centre,
-                    RelativeSizeAxes = Axes.X,
-                    Size = new Vector2(0.8f, 100),
                 }
             });
         }
 
+        [SetUpSteps]
+        public void SetUpSteps()
+        {
+            AddUntilStep("wait for track loaded", () => MusicController.TrackLoaded);
+            AddStep("seek forward", () => EditorClock.Seek(2500));
+        }
+
         public abstract Drawable CreateTestComponent();
 
-        private class AudioVisualiser : CompositeDrawable
+        private partial class AudioVisualiser : CompositeDrawable
         {
             private readonly Drawable marker;
 
@@ -103,12 +126,10 @@ namespace osu.Game.Tests.Visual.Editing
             }
         }
 
-        private class StartStopButton : OsuButton
+        private partial class StartStopButton : OsuButton
         {
             [Resolved]
             private EditorClock editorClock { get; set; }
-
-            private bool started;
 
             public StartStopButton()
             {
@@ -121,18 +142,17 @@ namespace osu.Game.Tests.Visual.Editing
 
             private void onClick()
             {
-                if (started)
-                {
+                if (editorClock.IsRunning)
                     editorClock.Stop();
-                    Text = "Start";
-                }
                 else
-                {
                     editorClock.Start();
-                    Text = "Stop";
-                }
+            }
 
-                started = !started;
+            protected override void Update()
+            {
+                base.Update();
+
+                Text = editorClock.IsRunning ? "Stop" : "Start";
             }
         }
     }

@@ -1,8 +1,11 @@
 ﻿// Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
+#nullable disable
+
 using System;
 using System.Linq;
+using JetBrains.Annotations;
 using osu.Framework.Allocation;
 using osu.Framework.Extensions.Color4Extensions;
 using osu.Framework.Graphics;
@@ -11,14 +14,15 @@ using osu.Game.Graphics;
 using osu.Game.Rulesets.Objects.Drawables;
 using osuTK.Graphics;
 using osu.Framework.Graphics.Shapes;
+using osu.Framework.Input.Events;
 using osu.Game.Rulesets.Objects;
-using osu.Game.Rulesets.Scoring;
 using osu.Game.Rulesets.Taiko.Skinning.Default;
+using osu.Game.Screens.Play;
 using osu.Game.Skinning;
 
 namespace osu.Game.Rulesets.Taiko.Objects.Drawables
 {
-    public class DrawableSwell : DrawableTaikoHitObject<Swell>
+    public partial class DrawableSwell : DrawableTaikoHitObject<Swell>
     {
         private const float target_ring_thick_border = 1.4f;
         private const float target_ring_thin_border = 1f;
@@ -35,7 +39,21 @@ namespace osu.Game.Rulesets.Taiko.Objects.Drawables
         private readonly CircularContainer targetRing;
         private readonly CircularContainer expandingRing;
 
-        public DrawableSwell(Swell swell)
+        private double? lastPressHandleTime;
+
+        public override bool DisplayResult => false;
+
+        /// <summary>
+        /// Whether the player must alternate centre and rim hits.
+        /// </summary>
+        public bool MustAlternate { get; internal set; } = true;
+
+        public DrawableSwell()
+            : this(null)
+        {
+        }
+
+        public DrawableSwell([CanBeNull] Swell swell)
             : base(swell)
         {
             FillMode = FillMode.Fit;
@@ -115,7 +133,7 @@ namespace osu.Game.Rulesets.Taiko.Objects.Drawables
             targetRing.BorderColour = colours.YellowDark.Opacity(0.25f);
         }
 
-        protected override SkinnableDrawable CreateMainPiece() => new SkinnableDrawable(new TaikoSkinComponent(TaikoSkinComponents.Swell),
+        protected override SkinnableDrawable CreateMainPiece() => new SkinnableDrawable(new TaikoSkinComponentLookup(TaikoSkinComponents.Swell),
             _ => new SwellCirclePiece
             {
                 // to allow for rotation transform
@@ -123,12 +141,14 @@ namespace osu.Game.Rulesets.Taiko.Objects.Drawables
                 Origin = Anchor.Centre,
             });
 
-        protected override void LoadComplete()
+        protected override void OnFree()
         {
-            base.LoadComplete();
+            base.OnFree();
 
-            // We need to set this here because RelativeSizeAxes won't/can't set our size by default with a different RelativeChildSize
-            Width *= Parent.RelativeChildSize.X;
+            UnproxyContent();
+
+            lastWasCentre = null;
+            lastPressHandleTime = null;
         }
 
         protected override void AddNestedHitObject(DrawableHitObject hitObject)
@@ -146,7 +166,7 @@ namespace osu.Game.Rulesets.Taiko.Objects.Drawables
         protected override void ClearNestedHitObjects()
         {
             base.ClearNestedHitObjects();
-            ticks.Clear();
+            ticks.Clear(false);
         }
 
         protected override DrawableHitObject CreateNestedHitObject(HitObject hitObject)
@@ -177,9 +197,9 @@ namespace osu.Game.Rulesets.Taiko.Objects.Drawables
 
                 nextTick?.TriggerResult(true);
 
-                var numHits = ticks.Count(r => r.IsHit);
+                int numHits = ticks.Count(r => r.IsHit);
 
-                var completion = (float)numHits / HitObject.RequiredHits;
+                float completion = (float)numHits / HitObject.RequiredHits;
 
                 expandingRing
                     .FadeTo(expandingRing.Alpha + Math.Clamp(completion / 16, 0.1f, 0.6f), 50)
@@ -191,7 +211,7 @@ namespace osu.Game.Rulesets.Taiko.Objects.Drawables
                 expandingRing.ScaleTo(1f + Math.Min(target_ring_scale - 1f, (target_ring_scale - 1f) * completion * 1.3f), 260, Easing.OutQuint);
 
                 if (numHits == HitObject.RequiredHits)
-                    ApplyResult(r => r.Type = HitResult.Great);
+                    ApplyMaxResult();
             }
             else
             {
@@ -212,7 +232,10 @@ namespace osu.Game.Rulesets.Taiko.Objects.Drawables
                         tick.TriggerResult(false);
                 }
 
-                ApplyResult(r => r.Type = numHits > HitObject.RequiredHits / 2 ? HitResult.Ok : r.Judgement.MinResult);
+                if (numHits == HitObject.RequiredHits)
+                    ApplyMaxResult();
+                else
+                    ApplyMinResult();
             }
         }
 
@@ -220,7 +243,7 @@ namespace osu.Game.Rulesets.Taiko.Objects.Drawables
         {
             base.UpdateStartTimeStateTransforms();
 
-            using (BeginDelayedSequence(-ring_appear_offset, true))
+            using (BeginDelayedSequence(-ring_appear_offset))
                 targetRing.ScaleTo(target_ring_scale, 400, Easing.OutQuint);
         }
 
@@ -246,7 +269,7 @@ namespace osu.Game.Rulesets.Taiko.Objects.Drawables
         {
             base.Update();
 
-            Size = BaseSize * Parent.RelativeChildSize;
+            Size = BaseSize * Parent!.RelativeChildSize;
 
             // Make the swell stop at the hit target
             X = Math.Max(0, X);
@@ -255,23 +278,36 @@ namespace osu.Game.Rulesets.Taiko.Objects.Drawables
                 ProxyContent();
             else
                 UnproxyContent();
+
+            if ((Clock as IGameplayClock)?.IsRewinding == true)
+                lastPressHandleTime = null;
         }
 
         private bool? lastWasCentre;
 
-        public override bool OnPressed(TaikoAction action)
+        public override bool OnPressed(KeyBindingPressEvent<TaikoAction> e)
         {
             // Don't handle keys before the swell starts
             if (Time.Current < HitObject.StartTime)
                 return false;
 
-            var isCentre = action == TaikoAction.LeftCentre || action == TaikoAction.RightCentre;
-
-            // Ensure alternating centre and rim hits
-            if (lastWasCentre == isCentre)
+            if (AllJudged)
                 return false;
 
+            bool isCentre = e.Action == TaikoAction.LeftCentre || e.Action == TaikoAction.RightCentre;
+
+            // Ensure alternating centre and rim hits
+            if (lastWasCentre == isCentre && MustAlternate)
+                return false;
+
+            // If we've already successfully judged a tick this frame, do not judge more.
+            // Note that the ordering is important here - this is intentionally placed after the alternating check.
+            // That is done to prevent accidental double inputs blocking simultaneous but legitimate hits from registering.
+            if (lastPressHandleTime == Time.Current)
+                return true;
+
             lastWasCentre = isCentre;
+            lastPressHandleTime = Time.Current;
 
             UpdateResult(true);
 

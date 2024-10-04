@@ -3,29 +3,26 @@
 
 using osu.Framework.Graphics;
 using osu.Game.Rulesets.Judgements;
-using osu.Game.Rulesets.Objects.Drawables;
+using osu.Game.Rulesets.Scoring;
+using osuTK;
+using DefaultJudgementPiece = osu.Game.Rulesets.Taiko.Skinning.Default.DefaultJudgementPiece;
 
 namespace osu.Game.Rulesets.Taiko.UI
 {
     /// <summary>
     /// Text that is shown as judgement when a hit object is hit or missed.
     /// </summary>
-    public class DrawableTaikoJudgement : DrawableJudgement
+    public partial class DrawableTaikoJudgement : DrawableJudgement
     {
-        /// <summary>
-        /// Creates a new judgement text.
-        /// </summary>
-        /// <param name="judgedObject">The object which is being judged.</param>
-        /// <param name="result">The judgement to visualise.</param>
-        public DrawableTaikoJudgement(JudgementResult result, DrawableHitObject judgedObject)
-            : base(result, judgedObject)
+        public DrawableTaikoJudgement()
         {
+            Anchor = Anchor.Centre;
+            Origin = Anchor.Centre;
+
+            RelativeSizeAxes = Axes.Both;
+            Size = Vector2.One;
         }
 
-        protected override void ApplyHitAnimations()
-        {
-            this.MoveToY(-100, 500);
-            base.ApplyHitAnimations();
-        }
+        protected override Drawable CreateDefaultJudgement(HitResult result) => new DefaultJudgementPiece(result);
     }
 }

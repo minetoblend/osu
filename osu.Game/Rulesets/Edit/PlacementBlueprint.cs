@@ -1,50 +1,38 @@
 // Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
-using System.Threading;
-using osu.Framework.Allocation;
-using osu.Framework.Bindables;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
+using osu.Framework.Input.Bindings;
 using osu.Framework.Input.Events;
-using osu.Game.Beatmaps;
-using osu.Game.Beatmaps.ControlPoints;
+using osu.Game.Input.Bindings;
 using osu.Game.Rulesets.Objects;
-using osu.Game.Screens.Edit;
-using osu.Game.Screens.Edit.Compose;
 using osuTK;
+using osuTK.Input;
 
 namespace osu.Game.Rulesets.Edit
 {
     /// <summary>
-    /// A blueprint which governs the creation of a new <see cref="HitObject"/> to actualisation.
+    /// A blueprint which governs the placement of something.
     /// </summary>
-    public abstract class PlacementBlueprint : CompositeDrawable
+    public abstract partial class PlacementBlueprint : CompositeDrawable, IKeyBindingHandler<GlobalAction>
     {
         /// <summary>
         /// Whether the <see cref="HitObject"/> is currently mid-placement, but has not necessarily finished being placed.
         /// </summary>
-        public bool PlacementActive { get; private set; }
+        public PlacementState PlacementActive { get; private set; }
 
         /// <summary>
-        /// The <see cref="HitObject"/> that is being placed.
+        /// Whether this blueprint is currently in a state that can be committed.
         /// </summary>
-        public readonly HitObject HitObject;
+        /// <remarks>
+        /// Override this with any preconditions that should be double-checked on committing.
+        /// If <c>false</c> is returned and a commit is attempted, the blueprint will be destroyed instead.
+        /// </remarks>
+        protected virtual bool IsValidForPlacement => true;
 
-        [Resolved(canBeNull: true)]
-        protected EditorClock EditorClock { get; private set; }
-
-        private readonly IBindable<WorkingBeatmap> beatmap = new Bindable<WorkingBeatmap>();
-
-        private Bindable<double> startTimeBindable;
-
-        [Resolved]
-        private IPlacementHandler placementHandler { get; set; }
-
-        protected PlacementBlueprint(HitObject hitObject)
+        protected PlacementBlueprint()
         {
-            HitObject = hitObject;
-
             RelativeSizeAxes = Axes.Both;
 
             // This is required to allow the blueprint's position to be updated via OnMouseMove/Handle
@@ -52,36 +40,35 @@ namespace osu.Game.Rulesets.Edit
             AlwaysPresent = true;
         }
 
-        [BackgroundDependencyLoader]
-        private void load(IBindable<WorkingBeatmap> beatmap)
-        {
-            this.beatmap.BindTo(beatmap);
-
-            startTimeBindable = HitObject.StartTimeBindable.GetBoundCopy();
-            startTimeBindable.BindValueChanged(_ => ApplyDefaultsToHitObject(), true);
-        }
-
         /// <summary>
-        /// Signals that the placement of <see cref="HitObject"/> has started.
+        /// Signals that the placement has started.
         /// </summary>
-        /// <param name="commitStart">Whether this call is committing a value for HitObject.StartTime and continuing with further adjustments.</param>
-        protected void BeginPlacement(bool commitStart = false)
+        /// <param name="commitStart">Whether this call is committing a value and continuing with further adjustments.</param>
+        protected virtual void BeginPlacement(bool commitStart = false)
         {
-            placementHandler.BeginPlacement(HitObject);
-            PlacementActive |= commitStart;
+            if (commitStart)
+                PlacementActive = PlacementState.Active;
         }
 
         /// <summary>
         /// Signals that the placement of <see cref="HitObject"/> has finished.
-        /// This will destroy this <see cref="PlacementBlueprint"/>, and add the HitObject.StartTime to the <see cref="Beatmap"/>.
+        /// This will destroy this <see cref="PlacementBlueprint"/>, and commit the changes.
         /// </summary>
-        /// <param name="commit">Whether the object should be committed.</param>
-        public void EndPlacement(bool commit)
+        /// <param name="commit">Whether the changes should be committed. Note that a commit may fail if <see cref="IsValidForPlacement"/> is <c>false</c>.</param>
+        public virtual void EndPlacement(bool commit)
         {
-            if (!PlacementActive)
-                BeginPlacement();
-            placementHandler.EndPlacement(HitObject, commit);
-            PlacementActive = false;
+            switch (PlacementActive)
+            {
+                case PlacementState.Finished:
+                    return;
+
+                case PlacementState.Waiting:
+                    // ensure placement was started before ending to make state handling simpler.
+                    BeginPlacement();
+                    break;
+            }
+
+            PlacementActive = PlacementState.Finished;
         }
 
         /// <summary>
@@ -90,17 +77,29 @@ namespace osu.Game.Rulesets.Edit
         /// <param name="result">The snap result information.</param>
         public virtual void UpdateTimeAndPosition(SnapResult result)
         {
-            if (!PlacementActive)
-                HitObject.StartTime = result.Time ?? EditorClock?.CurrentTime ?? Time.Current;
         }
 
-        /// <summary>
-        /// Invokes <see cref="Objects.HitObject.ApplyDefaults(ControlPointInfo,BeatmapDifficulty, CancellationToken)"/>,
-        /// refreshing <see cref="Objects.HitObject.NestedHitObjects"/> and parameters for the <see cref="HitObject"/>.
-        /// </summary>
-        protected void ApplyDefaultsToHitObject() => HitObject.ApplyDefaults(beatmap.Value.Beatmap.ControlPointInfo, beatmap.Value.Beatmap.BeatmapInfo.BaseDifficulty);
+        public bool OnPressed(KeyBindingPressEvent<GlobalAction> e)
+        {
+            if (PlacementActive == PlacementState.Waiting)
+                return false;
 
-        public override bool ReceivePositionalInputAt(Vector2 screenSpacePos) => Parent?.ReceivePositionalInputAt(screenSpacePos) ?? false;
+            switch (e.Action)
+            {
+                case GlobalAction.Back:
+                    EndPlacement(false);
+                    return true;
+
+                default:
+                    return false;
+            }
+        }
+
+        public void OnReleased(KeyBindingReleaseEvent<GlobalAction> e)
+        {
+        }
+
+        public override bool ReceivePositionalInputAt(Vector2 screenSpacePos) => true;
 
         protected override bool Handle(UIEvent e)
         {
@@ -108,18 +107,26 @@ namespace osu.Game.Rulesets.Edit
 
             switch (e)
             {
-                case ScrollEvent _:
+                case ScrollEvent:
                     return false;
 
-                case DoubleClickEvent _:
+                case DoubleClickEvent:
                     return false;
 
-                case MouseButtonEvent _:
-                    return true;
+                case MouseButtonEvent mouse:
+                    // placement blueprints should generally block mouse from reaching underlying components (ie. performing clicks on interface buttons).
+                    return mouse.Button == MouseButton.Left || PlacementActive == PlacementState.Active;
 
                 default:
                     return false;
             }
+        }
+
+        public enum PlacementState
+        {
+            Waiting,
+            Active,
+            Finished
         }
     }
 }

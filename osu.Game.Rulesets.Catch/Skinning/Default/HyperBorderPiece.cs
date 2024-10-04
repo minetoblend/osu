@@ -6,7 +6,7 @@ using osu.Game.Rulesets.Catch.UI;
 
 namespace osu.Game.Rulesets.Catch.Skinning.Default
 {
-    public class HyperBorderPiece : BorderPiece
+    public partial class HyperBorderPiece : BorderPiece
     {
         public HyperBorderPiece()
         {
@@ -19,4 +19,3 @@ namespace osu.Game.Rulesets.Catch.Skinning.Default
         }
     }
 }
-

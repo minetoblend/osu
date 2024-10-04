@@ -1,6 +1,8 @@
 // Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
+#nullable disable
+
 using osu.Framework.Allocation;
 using osu.Framework.Graphics;
 using osu.Framework.Testing;
@@ -14,7 +16,7 @@ using osu.Game.Tests.Visual;
 
 namespace osu.Game.Rulesets.Taiko.Tests
 {
-    public abstract class HitObjectApplicationTestScene : OsuTestScene
+    public abstract partial class HitObjectApplicationTestScene : OsuTestScene
     {
         [Cached(typeof(IScrollingInfo))]
         private ScrollingTestContainer.TestScrollingInfo info = new ScrollingTestContainer.TestScrollingInfo
@@ -25,16 +27,22 @@ namespace osu.Game.Rulesets.Taiko.Tests
 
         private ScrollingHitObjectContainer hitObjectContainer;
 
-        [SetUpSteps]
-        public void SetUp()
-            => AddStep("create SHOC", () => Child = hitObjectContainer = new ScrollingHitObjectContainer
+        [BackgroundDependencyLoader]
+        private void load()
+        {
+            Child = hitObjectContainer = new ScrollingHitObjectContainer
             {
                 RelativeSizeAxes = Axes.X,
                 Height = 200,
                 Anchor = Anchor.Centre,
                 Origin = Anchor.Centre,
                 Clock = new FramedClock(new StopwatchClock())
-            });
+            };
+        }
+
+        [SetUpSteps]
+        public void SetUp()
+            => AddStep("clear SHOC", () => hitObjectContainer.Clear());
 
         protected void AddHitObject(DrawableHitObject hitObject)
             => AddStep("add to SHOC", () => hitObjectContainer.Add(hitObject));

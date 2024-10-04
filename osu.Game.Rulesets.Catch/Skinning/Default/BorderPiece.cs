@@ -9,7 +9,7 @@ using osuTK.Graphics;
 
 namespace osu.Game.Rulesets.Catch.Skinning.Default
 {
-    public class BorderPiece : Circle
+    public partial class BorderPiece : Circle
     {
         public BorderPiece()
         {
@@ -29,4 +29,3 @@ namespace osu.Game.Rulesets.Catch.Skinning.Default
         }
     }
 }
-

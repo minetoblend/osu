@@ -12,17 +12,18 @@ using osu.Game.Rulesets.Osu.Objects;
 using osu.Game.Rulesets.Osu.Objects.Drawables;
 using osu.Game.Skinning;
 using osuTK;
+using osuTK.Graphics;
 
 namespace osu.Game.Rulesets.Osu.Skinning.Legacy
 {
     /// <summary>
     /// Legacy skinned spinner with one main spinning layer and a background layer.
     /// </summary>
-    public class LegacyOldStyleSpinner : LegacySpinner
+    public partial class LegacyOldStyleSpinner : LegacySpinner
     {
-        private Sprite disc;
-        private Sprite metreSprite;
-        private Container metre;
+        private Sprite disc = null!;
+        private Sprite metreSprite = null!;
+        private Container metre = null!;
 
         private bool spinnerBlink;
 
@@ -33,48 +34,48 @@ namespace osu.Game.Rulesets.Osu.Skinning.Legacy
         {
             spinnerBlink = source.GetConfig<OsuSkinConfiguration, bool>(OsuSkinConfiguration.SpinnerNoBlink)?.Value != true;
 
-            AddInternal(new Container
+            AddRangeInternal(new[]
             {
-                // the old-style spinner relied heavily on absolute screen-space coordinate values.
-                // wrap everything in a container simulating absolute coords to preserve alignment
-                // as there are skins that depend on it.
-                Width = 640,
-                Height = 480,
-                Anchor = Anchor.Centre,
-                Origin = Anchor.Centre,
-                Children = new Drawable[]
+                new Sprite
                 {
-                    new Sprite
+                    Anchor = Anchor.TopCentre,
+                    Origin = Anchor.Centre,
+                    Texture = source.GetTexture("spinner-background"),
+                    Colour = source.GetConfig<OsuSkinColour, Color4>(OsuSkinColour.SpinnerBackground)?.Value ?? new Color4(100, 100, 100, 255),
+                    Scale = new Vector2(SPRITE_SCALE),
+                    Y = SPINNER_Y_CENTRE,
+                },
+                disc = new Sprite
+                {
+                    Anchor = Anchor.TopCentre,
+                    Origin = Anchor.Centre,
+                    Texture = source.GetTexture("spinner-circle"),
+                    Scale = new Vector2(SPRITE_SCALE),
+                    Y = SPINNER_Y_CENTRE,
+                },
+                metre = new Container
+                {
+                    AutoSizeAxes = Axes.Both,
+                    // this anchor makes no sense, but that's what stable uses.
+                    Anchor = Anchor.TopLeft,
+                    Origin = Anchor.TopLeft,
+                    Margin = new MarginPadding { Top = SPINNER_TOP_OFFSET },
+                    Masking = true,
+                    Child = metreSprite = new Sprite
                     {
-                        Anchor = Anchor.Centre,
-                        Origin = Anchor.Centre,
-                        Texture = source.GetTexture("spinner-background"),
-                        Scale = new Vector2(SPRITE_SCALE)
-                    },
-                    disc = new Sprite
-                    {
-                        Anchor = Anchor.Centre,
-                        Origin = Anchor.Centre,
-                        Texture = source.GetTexture("spinner-circle"),
-                        Scale = new Vector2(SPRITE_SCALE)
-                    },
-                    metre = new Container
-                    {
-                        AutoSizeAxes = Axes.Both,
-                        // this anchor makes no sense, but that's what stable uses.
+                        Texture = source.GetTexture("spinner-metre"),
                         Anchor = Anchor.TopLeft,
                         Origin = Anchor.TopLeft,
-                        // adjustment for stable (metre has additional offset)
-                        Margin = new MarginPadding { Top = 20 },
-                        Masking = true,
-                        Child = metreSprite = new Sprite
-                        {
-                            Texture = source.GetTexture("spinner-metre"),
-                            Anchor = Anchor.TopLeft,
-                            Origin = Anchor.TopLeft,
-                            Scale = new Vector2(SPRITE_SCALE)
-                        }
+                        Scale = new Vector2(SPRITE_SCALE)
                     }
+                },
+                ApproachCircle = new Sprite
+                {
+                    Anchor = Anchor.TopCentre,
+                    Origin = Anchor.Centre,
+                    Texture = source.GetTexture("spinner-approachcircle"),
+                    Scale = new Vector2(SPRITE_SCALE * 1.86f),
+                    Y = SPINNER_Y_CENTRE,
                 }
             });
         }
@@ -88,11 +89,11 @@ namespace osu.Game.Rulesets.Osu.Skinning.Legacy
 
             Spinner spinner = d.HitObject;
 
-            using (BeginAbsoluteSequence(spinner.StartTime - spinner.TimePreempt, true))
+            using (BeginAbsoluteSequence(spinner.StartTime - spinner.TimePreempt))
                 this.FadeOut();
 
-            using (BeginAbsoluteSequence(spinner.StartTime - spinner.TimeFadeIn / 2, true))
-                this.FadeInFromZero(spinner.TimeFadeIn / 2);
+            using (BeginAbsoluteSequence(spinner.StartTime - spinner.TimeFadeIn))
+                this.FadeInFromZero(spinner.TimeFadeIn);
         }
 
         protected override void Update()
@@ -102,7 +103,7 @@ namespace osu.Game.Rulesets.Osu.Skinning.Legacy
 
             // careful: need to call this exactly once for all calculations in a frame
             // as the function has a random factor in it
-            var metreHeight = getMetreHeight(DrawableSpinner.Progress);
+            float metreHeight = getMetreHeight(DrawableSpinner.Progress);
 
             // hack to make the metre blink up from below than down from above.
             // move down the container to be able to apply masking for the metre,

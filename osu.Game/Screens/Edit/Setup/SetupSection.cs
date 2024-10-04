@@ -2,40 +2,60 @@
 // See the LICENCE file in the repository root for full licence text.
 
 using osu.Framework.Allocation;
-using osu.Framework.Bindables;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
-using osu.Game.Beatmaps;
+using osu.Framework.Localisation;
 using osu.Game.Graphics;
+using osu.Game.Graphics.UserInterface;
+using osu.Game.Graphics.UserInterfaceV2;
 using osuTK;
 
 namespace osu.Game.Screens.Edit.Setup
 {
-    internal class SetupSection : Container
+    public abstract partial class SetupSection : Container
     {
-        private readonly FillFlowContainer flow;
+        private FillFlowContainer flow = null!;
+
+        /// <summary>
+        /// Used to align some of the child <see cref="LabelledDrawable{T}"/>s together to achieve a grid-like look.
+        /// </summary>
+        protected const float LABEL_WIDTH = 160;
 
         [Resolved]
-        protected OsuColour Colours { get; private set; }
+        protected OsuColour Colours { get; private set; } = null!;
 
         [Resolved]
-        protected IBindable<WorkingBeatmap> Beatmap { get; private set; }
+        protected EditorBeatmap Beatmap { get; private set; } = null!;
 
         protected override Container<Drawable> Content => flow;
 
-        public SetupSection()
+        public abstract LocalisableString Title { get; }
+
+        [BackgroundDependencyLoader]
+        private void load()
         {
-            RelativeSizeAxes = Axes.X;
             AutoSizeAxes = Axes.Y;
 
-            Padding = new MarginPadding(10);
-
-            InternalChild = flow = new FillFlowContainer
+            InternalChild = new FillFlowContainer
             {
                 RelativeSizeAxes = Axes.X,
                 AutoSizeAxes = Axes.Y,
-                Spacing = new Vector2(20),
+                Spacing = new Vector2(10),
                 Direction = FillDirection.Vertical,
+                Children = new Drawable[]
+                {
+                    new SectionHeader(Title)
+                    {
+                        Margin = new MarginPadding { Left = 9, },
+                    },
+                    flow = new FillFlowContainer
+                    {
+                        RelativeSizeAxes = Axes.X,
+                        AutoSizeAxes = Axes.Y,
+                        Spacing = new Vector2(5),
+                        Direction = FillDirection.Vertical,
+                    }
+                }
             };
         }
     }

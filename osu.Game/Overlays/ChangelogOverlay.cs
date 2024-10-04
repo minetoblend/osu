@@ -1,80 +1,44 @@
 ﻿// Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
+#nullable disable
+
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
 using osu.Framework.Allocation;
-using osu.Framework.Audio;
-using osu.Framework.Audio.Sample;
 using osu.Framework.Bindables;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
-using osu.Framework.Graphics.Shapes;
-using osu.Game.Graphics.Containers;
+using osu.Framework.Input.Events;
 using osu.Game.Input.Bindings;
 using osu.Game.Online.API.Requests;
 using osu.Game.Online.API.Requests.Responses;
 using osu.Game.Overlays.Changelog;
+using osuTK.Graphics;
 
 namespace osu.Game.Overlays
 {
-    public class ChangelogOverlay : FullscreenOverlay<ChangelogHeader>
+    public partial class ChangelogOverlay : OnlineOverlay<ChangelogHeader>
     {
         public readonly Bindable<APIChangelogBuild> Current = new Bindable<APIChangelogBuild>();
-
-        private Container<ChangelogContent> content;
-
-        private SampleChannel sampleBack;
 
         private List<APIChangelogBuild> builds;
 
         protected List<APIUpdateStream> Streams;
 
         public ChangelogOverlay()
-            : base(OverlayColourScheme.Purple, new ChangelogHeader())
+            : base(OverlayColourScheme.Purple, false)
         {
         }
 
         [BackgroundDependencyLoader]
-        private void load(AudioManager audio)
+        private void load()
         {
-            Children = new Drawable[]
-            {
-                new Box
-                {
-                    RelativeSizeAxes = Axes.Both,
-                    Colour = ColourProvider.Background4,
-                },
-                new OverlayScrollContainer
-                {
-                    RelativeSizeAxes = Axes.Both,
-                    ScrollbarVisible = false,
-                    Child = new ReverseChildIDFillFlowContainer<Drawable>
-                    {
-                        RelativeSizeAxes = Axes.X,
-                        AutoSizeAxes = Axes.Y,
-                        Direction = FillDirection.Vertical,
-                        Children = new Drawable[]
-                        {
-                            Header.With(h =>
-                            {
-                                h.ListingSelected = ShowListing;
-                                h.Build.BindTarget = Current;
-                            }),
-                            content = new Container<ChangelogContent>
-                            {
-                                RelativeSizeAxes = Axes.X,
-                                AutoSizeAxes = Axes.Y,
-                            }
-                        },
-                    },
-                },
-            };
-
-            sampleBack = audio.Samples.Get(@"UI/generic-select-soft");
+            Header.Build.BindTarget = Current;
 
             Current.BindValueChanged(e =>
             {
@@ -84,6 +48,13 @@ namespace osu.Game.Overlays
                     loadContent(new ChangelogListing(builds));
             });
         }
+
+        protected override ChangelogHeader CreateHeader() => new ChangelogHeader
+        {
+            ListingSelected = ShowListing,
+        };
+
+        protected override Color4 BackgroundColour => ColourProvider.Background4;
 
         public void ShowListing()
         {
@@ -99,7 +70,7 @@ namespace osu.Game.Overlays
         /// <see cref="APIChangelogBuild.DisplayVersion"/> are specified, the header will instantly display them.</param>
         public void ShowBuild([NotNull] APIChangelogBuild build)
         {
-            if (build == null) throw new ArgumentNullException(nameof(build));
+            ArgumentNullException.ThrowIfNull(build);
 
             Current.Value = build;
             Show();
@@ -107,8 +78,10 @@ namespace osu.Game.Overlays
 
         public void ShowBuild([NotNull] string updateStream, [NotNull] string version)
         {
-            if (updateStream == null) throw new ArgumentNullException(nameof(updateStream));
-            if (version == null) throw new ArgumentNullException(nameof(version));
+            ArgumentNullException.ThrowIfNull(updateStream);
+            ArgumentNullException.ThrowIfNull(version);
+
+            Show();
 
             performAfterFetch(() =>
             {
@@ -118,13 +91,14 @@ namespace osu.Game.Overlays
                 if (build != null)
                     ShowBuild(build);
             });
-
-            Show();
         }
 
-        public override bool OnPressed(GlobalAction action)
+        public override bool OnPressed(KeyBindingPressEvent<GlobalAction> e)
         {
-            switch (action)
+            if (e.Repeat)
+                return false;
+
+            switch (e.Action)
             {
                 case GlobalAction.Back:
                     if (Current.Value == null)
@@ -134,7 +108,6 @@ namespace osu.Game.Overlays
                     else
                     {
                         Current.Value = null;
-                        sampleBack?.Play();
                     }
 
                     return true;
@@ -154,8 +127,16 @@ namespace osu.Game.Overlays
 
         private Task initialFetchTask;
 
-        private void performAfterFetch(Action action) => fetchListing()?.ContinueWith(_ =>
-            Schedule(action), TaskContinuationOptions.OnlyOnRanToCompletion);
+        private void performAfterFetch(Action action)
+        {
+            Debug.Assert(State.Value == Visibility.Visible);
+
+            Schedule(() =>
+            {
+                fetchListing()?.ContinueWith(_ =>
+                    Schedule(action), TaskContinuationOptions.OnlyOnRanToCompletion);
+            });
+        }
 
         private Task fetchListing()
         {
@@ -188,26 +169,26 @@ namespace osu.Game.Overlays
                     tcs.SetException(e);
                 };
 
-                await API.PerformAsync(req);
+                await API.PerformAsync(req).ConfigureAwait(false);
 
-                await tcs.Task;
-            });
+                return tcs.Task;
+            }).Unwrap();
         }
 
         private CancellationTokenSource loadContentCancellation;
 
         private void loadContent(ChangelogContent newContent)
         {
-            content.FadeTo(0.2f, 300, Easing.OutQuint);
+            Content.FadeTo(0.2f, 300, Easing.OutQuint);
 
             loadContentCancellation?.Cancel();
 
             LoadComponentAsync(newContent, c =>
             {
-                content.FadeIn(300, Easing.OutQuint);
+                Content.FadeIn(300, Easing.OutQuint);
 
                 c.BuildSelected = ShowBuild;
-                content.Child = c;
+                Child = c;
             }, (loadContentCancellation = new CancellationTokenSource()).Token);
         }
     }

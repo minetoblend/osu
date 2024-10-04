@@ -3,32 +3,31 @@
 
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Shapes;
-using osuTK;
 
 namespace osu.Game.Screens.Edit.Components.Timelines.Summary.Visualisations
 {
     /// <summary>
     /// Represents a singular point on a timeline part.
     /// </summary>
-    public class PointVisualisation : Box
+    public partial class PointVisualisation : FastCircle
     {
-        public const float WIDTH = 1;
+        public readonly double StartTime;
+
+        public const float MAX_WIDTH = 4;
 
         public PointVisualisation(double startTime)
-            : this()
         {
-            X = (float)startTime;
-        }
-
-        public PointVisualisation()
-        {
-            Origin = Anchor.TopCentre;
-
-            RelativePositionAxes = Axes.X;
+            RelativePositionAxes = Axes.Both;
             RelativeSizeAxes = Axes.Y;
 
-            Width = WIDTH;
-            EdgeSmoothness = new Vector2(WIDTH, 0);
+            Anchor = Anchor.CentreLeft;
+            Origin = Anchor.Centre;
+
+            Width = MAX_WIDTH;
+            Height = 0.4f;
+
+            X = (float)startTime;
+            StartTime = startTime;
         }
     }
 }

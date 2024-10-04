@@ -1,6 +1,8 @@
 // Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
+#nullable disable
+
 using NUnit.Framework;
 using osu.Framework.Timing;
 using osu.Game.Beatmaps;
@@ -12,7 +14,7 @@ using osuTK;
 
 namespace osu.Game.Rulesets.Osu.Tests
 {
-    public class TestSceneSpinnerApplication : OsuTestScene
+    public partial class TestSceneSpinnerApplication : OsuTestScene
     {
         [Test]
         public void TestApplyNewSpinner()
@@ -30,16 +32,16 @@ namespace osu.Game.Rulesets.Osu.Tests
             });
 
             AddStep("rotate some", () => dho.RotationTracker.AddRotation(180));
-            AddAssert("rotation is set", () => dho.Result.RateAdjustedRotation == 180);
+            AddAssert("rotation is set", () => dho.Result.TotalRotation == 180);
 
             AddStep("apply new spinner", () => dho.Apply(prepareObject(new Spinner
             {
                 Position = new Vector2(256, 192),
                 ComboIndex = 1,
                 Duration = 1000,
-            }), null));
+            })));
 
-            AddAssert("rotation is reset", () => dho.Result.RateAdjustedRotation == 0);
+            AddAssert("rotation is reset", () => dho.Result.TotalRotation == 0);
         }
 
         private Spinner prepareObject(Spinner circle)

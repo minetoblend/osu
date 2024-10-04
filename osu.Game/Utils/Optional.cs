@@ -1,8 +1,6 @@
 // Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
-#nullable enable
-
 namespace osu.Game.Utils
 {
     /// <summary>
@@ -24,7 +22,7 @@ namespace osu.Game.Utils
         /// </remarks>
         public readonly bool HasValue;
 
-        private Optional(T value)
+        public Optional(T value)
         {
             Value = value;
             HasValue = true;
@@ -37,7 +35,6 @@ namespace osu.Game.Utils
         /// Shortcase for: <c>optional.HasValue ? optional.Value : fallback</c>.
         /// </remarks>
         /// <param name="fallback">The fallback value to return if <see cref="HasValue"/> is <c>false</c>.</param>
-        /// <returns></returns>
         public T GetOr(T fallback) => HasValue ? Value : fallback;
 
         public static implicit operator Optional<T>(T value) => new Optional<T>(value);

@@ -1,6 +1,8 @@
 // Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
+#nullable disable
+
 using NUnit.Framework;
 using osu.Framework.Allocation;
 using osu.Framework.Audio;
@@ -10,12 +12,14 @@ using osu.Framework.Timing;
 using osu.Game.Beatmaps;
 using osu.Game.Rulesets;
 using osu.Game.Rulesets.Osu.Objects;
+using osu.Game.Scoring;
+using osu.Game.Screens.Ranking;
 using osu.Game.Storyboards;
 using osuTK;
 
 namespace osu.Game.Tests.Visual.Gameplay
 {
-    public class TestSceneCompletionCancellation : OsuPlayerTestScene
+    public partial class TestSceneCompletionCancellation : OsuPlayerTestScene
     {
         [Resolved]
         private AudioManager audio { get; set; }
@@ -24,6 +28,8 @@ namespace osu.Game.Tests.Visual.Gameplay
             (int)((Screens.Play.Player.RESULTS_DISPLAY_DELAY / TimePerAction) * 2);
 
         protected override bool AllowFail => false;
+
+        protected override bool AllowBackwardsSeeks => true;
 
         [SetUpSteps]
         public override void SetUpSteps()
@@ -50,13 +56,23 @@ namespace osu.Game.Tests.Visual.Gameplay
             cancel();
             complete();
 
-            AddUntilStep("attempted to push ranking", () => ((FakeRankingPushPlayer)Player).GotoRankingInvoked);
+            AddUntilStep("attempted to push ranking", () => ((FakeRankingPushPlayer)Player).ResultsCreated);
         }
 
         /// <summary>
         /// Tests whether can still pause after cancelling completion by reverting <see cref="IScreen.ValidForResume"/> back to true.
         /// </summary>
         [Test]
+        [FlakyTest]
+        /*
+         * Fail rate around 0.45%
+         *
+         * TearDown : System.TimeoutException : "completion set by processor" timed out
+         * --TearDown
+         *    at osu.Framework.Testing.Drawables.Steps.UntilStepButton.<>c__DisplayClass11_0.<.ctor>b__0()
+         *    at osu.Framework.Testing.Drawables.Steps.StepButton.PerformStep(Boolean userTriggered)
+         *    at osu.Framework.Testing.TestScene.runNextStep(Action onCompletion, Action`1 onError, Func`2 stopCondition)
+         */
         public void TestCanPauseAfterCancellation()
         {
             complete();
@@ -84,7 +100,7 @@ namespace osu.Game.Tests.Visual.Gameplay
         {
             // wait to ensure there was no attempt of pushing the results screen.
             AddWaitStep("wait", resultsDisplayWaitCount);
-            AddAssert("no attempt to push ranking", () => !((FakeRankingPushPlayer)Player).GotoRankingInvoked);
+            AddAssert("no attempt to push ranking", () => !((FakeRankingPushPlayer)Player).ResultsCreated);
         }
 
         protected override WorkingBeatmap CreateWorkingBeatmap(IBeatmap beatmap, Storyboard storyboard = null)
@@ -108,18 +124,15 @@ namespace osu.Game.Tests.Visual.Gameplay
 
         protected override TestPlayer CreatePlayer(Ruleset ruleset) => new FakeRankingPushPlayer();
 
-        public class FakeRankingPushPlayer : TestPlayer
+        public partial class FakeRankingPushPlayer : TestPlayer
         {
-            public bool GotoRankingInvoked;
+            public bool ResultsCreated { get; private set; }
 
-            public FakeRankingPushPlayer()
-                : base(true, true)
+            protected override ResultsScreen CreateResults(ScoreInfo score)
             {
-            }
-
-            protected override void GotoRanking()
-            {
-                GotoRankingInvoked = true;
+                var results = base.CreateResults(score);
+                ResultsCreated = true;
+                return results;
             }
         }
     }

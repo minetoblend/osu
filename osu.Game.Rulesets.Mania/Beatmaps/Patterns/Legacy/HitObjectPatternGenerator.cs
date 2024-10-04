@@ -1,4 +1,4 @@
-// Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
+﻿// Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
 using System;
@@ -8,11 +8,11 @@ using osuTK;
 using osu.Game.Audio;
 using osu.Game.Beatmaps;
 using osu.Game.Beatmaps.ControlPoints;
-using osu.Game.Rulesets.Mania.MathUtils;
 using osu.Game.Rulesets.Mania.Objects;
 using osu.Game.Rulesets.Objects;
 using osu.Game.Rulesets.Objects.Types;
 using osu.Framework.Extensions.IEnumerableExtensions;
+using osu.Game.Utils;
 
 namespace osu.Game.Rulesets.Mania.Beatmaps.Patterns.Legacy
 {
@@ -22,9 +22,9 @@ namespace osu.Game.Rulesets.Mania.Beatmaps.Patterns.Legacy
 
         private readonly PatternType convertType;
 
-        public HitObjectPatternGenerator(FastRandom random, HitObject hitObject, ManiaBeatmap beatmap, Pattern previousPattern, double previousTime, Vector2 previousPosition, double density,
-                                         PatternType lastStair, IBeatmap originalBeatmap)
-            : base(random, hitObject, beatmap, previousPattern, originalBeatmap)
+        public HitObjectPatternGenerator(LegacyRandom random, HitObject hitObject, IBeatmap beatmap, int totalColumns, Pattern previousPattern, double previousTime, Vector2 previousPosition,
+                                         double density, PatternType lastStair)
+            : base(random, hitObject, beatmap, previousPattern, totalColumns)
         {
             StairType = lastStair;
 
@@ -114,10 +114,10 @@ namespace osu.Game.Rulesets.Mania.Beatmaps.Patterns.Legacy
                 }
 
                 if (convertType.HasFlag(PatternType.Cycle) && PreviousPattern.HitObjects.Count() == 1
-                                                           // If we convert to 7K + 1, let's not overload the special key
-                                                           && (TotalColumns != 8 || lastColumn != 0)
-                                                           // Make sure the last column was not the centre column
-                                                           && (TotalColumns % 2 == 0 || lastColumn != TotalColumns / 2))
+                                                               // If we convert to 7K + 1, let's not overload the special key
+                                                               && (TotalColumns != 8 || lastColumn != 0)
+                                                               // Make sure the last column was not the centre column
+                                                               && (TotalColumns % 2 == 0 || lastColumn != TotalColumns / 2))
                 {
                     // Generate a new pattern by cycling backwards (similar to Reverse but for only one hit object)
                     int column = RandomStart + TotalColumns - lastColumn - 1;
@@ -301,7 +301,7 @@ namespace osu.Game.Rulesets.Mania.Beatmaps.Patterns.Legacy
 
             var pattern = new Pattern();
 
-            int noteCount = getRandomNoteCountMirrored(centreProbability, p2, p3, out var addToCentre);
+            int noteCount = getRandomNoteCountMirrored(centreProbability, p2, p3, out bool addToCentre);
 
             int columnLimit = (TotalColumns % 2 == 0 ? TotalColumns : TotalColumns - 1) / 2;
             int nextColumn = GetRandomColumn(upperBound: columnLimit);

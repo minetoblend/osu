@@ -8,30 +8,30 @@ using osuTK.Graphics;
 
 namespace osu.Game.Rulesets.Osu.Objects.Drawables
 {
-    public class SkinnableLighting : SkinnableSprite
+    internal partial class SkinnableLighting : SkinnableSprite
     {
-        private DrawableHitObject targetObject;
-        private JudgementResult targetResult;
+        private DrawableOsuJudgement? targetJudgement;
+        private JudgementResult? targetResult;
 
         public SkinnableLighting()
             : base("lighting")
         {
         }
 
-        protected override void SkinChanged(ISkinSource skin, bool allowFallback)
+        protected override void SkinChanged(ISkinSource skin)
         {
-            base.SkinChanged(skin, allowFallback);
+            base.SkinChanged(skin);
             updateColour();
         }
 
         /// <summary>
         /// Updates the lighting colour from a given hitobject and result.
         /// </summary>
-        /// <param name="targetObject">The <see cref="DrawableHitObject"/> that's been judged.</param>
-        /// <param name="targetResult">The <see cref="JudgementResult"/> that <paramref name="targetObject"/> was judged with.</param>
-        public void SetColourFrom(DrawableHitObject targetObject, JudgementResult targetResult)
+        /// <param name="targetJudgement">The <see cref="DrawableHitObject"/> that's been judged.</param>
+        /// <param name="targetResult">The <see cref="JudgementResult"/> that <paramref name="targetJudgement"/> was judged with.</param>
+        public void SetColourFrom(DrawableOsuJudgement targetJudgement, JudgementResult? targetResult)
         {
-            this.targetObject = targetObject;
+            this.targetJudgement = targetJudgement;
             this.targetResult = targetResult;
 
             updateColour();
@@ -39,10 +39,10 @@ namespace osu.Game.Rulesets.Osu.Objects.Drawables
 
         private void updateColour()
         {
-            if (targetObject == null || targetResult == null)
+            if (targetJudgement == null || targetResult == null)
                 Colour = Color4.White;
             else
-                Colour = targetResult.IsHit ? targetObject.AccentColour.Value : Color4.Transparent;
+                Colour = targetResult.IsHit ? targetJudgement.AccentColour : Color4.Transparent;
         }
     }
 }

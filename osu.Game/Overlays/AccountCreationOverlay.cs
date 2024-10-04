@@ -1,6 +1,7 @@
 // Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
+using System;
 using osu.Framework.Allocation;
 using osu.Framework.Bindables;
 using osu.Framework.Extensions.Color4Extensions;
@@ -9,7 +10,7 @@ using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Effects;
 using osu.Framework.Graphics.Shapes;
 using osu.Framework.Screens;
-using osu.Game.Graphics;
+using osu.Framework.Threading;
 using osu.Game.Graphics.Containers;
 using osu.Game.Online.API;
 using osu.Game.Overlays.AccountCreation;
@@ -18,11 +19,13 @@ using osuTK.Graphics;
 
 namespace osu.Game.Overlays
 {
-    public class AccountCreationOverlay : OsuFocusedOverlayContainer
+    public partial class AccountCreationOverlay : OsuFocusedOverlayContainer
     {
         private const float transition_time = 400;
 
-        private ScreenWelcome welcomeScreen;
+        private ScreenWelcome welcomeScreen = null!;
+
+        private ScheduledDelegate? scheduledHide;
 
         public AccountCreationOverlay()
         {
@@ -34,7 +37,7 @@ namespace osu.Game.Overlays
         private readonly IBindable<APIState> apiState = new Bindable<APIState>();
 
         [BackgroundDependencyLoader]
-        private void load(OsuColour colours, IAPIProvider api)
+        private void load(IAPIProvider api)
         {
             apiState.BindTo(api.State);
             apiState.BindValueChanged(apiStateChanged, true);
@@ -88,11 +91,15 @@ namespace osu.Game.Overlays
 
         protected override void PopIn()
         {
-            base.PopIn();
             this.FadeIn(transition_time, Easing.OutQuint);
 
             if (welcomeScreen.GetChildScreen() != null)
                 welcomeScreen.MakeCurrent();
+
+            // there might be a stale scheduled hide from a previous API state change.
+            // cancel it here so that the overlay is not hidden again after one frame.
+            scheduledHide?.Cancel();
+            scheduledHide = null;
         }
 
         protected override void PopOut()
@@ -101,7 +108,7 @@ namespace osu.Game.Overlays
             this.FadeOut(100);
         }
 
-        private void apiStateChanged(ValueChangedEvent<APIState> state) => Schedule(() =>
+        private void apiStateChanged(ValueChangedEvent<APIState> state)
         {
             switch (state.NewValue)
             {
@@ -110,12 +117,17 @@ namespace osu.Game.Overlays
                     break;
 
                 case APIState.Connecting:
+                case APIState.RequiresSecondFactorAuth:
                     break;
 
                 case APIState.Online:
-                    Hide();
+                    scheduledHide?.Cancel();
+                    scheduledHide = Schedule(Hide);
                     break;
+
+                default:
+                    throw new ArgumentOutOfRangeException();
             }
-        });
+        }
     }
 }

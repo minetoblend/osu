@@ -6,6 +6,7 @@ using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Shapes;
 using osu.Framework.Input.Events;
+using osu.Framework.Localisation;
 using osu.Game.Graphics;
 using osu.Game.Graphics.Sprites;
 using osu.Game.Graphics.UserInterface;
@@ -14,16 +15,16 @@ using static osu.Game.Graphics.UserInterface.ShowMoreButton;
 
 namespace osu.Game.Overlays.Comments.Buttons
 {
-    public abstract class CommentRepliesButton : CompositeDrawable
+    public abstract partial class CommentRepliesButton : CompositeDrawable
     {
-        protected string Text
+        protected LocalisableString Text
         {
             get => text.Text;
             set => text.Text = value;
         }
 
         [Resolved]
-        private OverlayColourProvider colourProvider { get; set; }
+        private OverlayColourProvider colourProvider { get; set; } = null!;
 
         private readonly ChevronIcon icon;
         private readonly Box background;
@@ -88,7 +89,7 @@ namespace osu.Game.Overlays.Comments.Buttons
             background.Colour = colourProvider.Background2;
         }
 
-        protected void SetIconDirection(bool upwards) => icon.ScaleTo(new Vector2(1, upwards ? -1 : 1));
+        protected void SetIconDirection(bool upwards) => icon.ScaleTo(upwards ? new Vector2(1f, -1f) : Vector2.One, 300, Easing.OutQuint);
 
         public void ToggleTextVisibility(bool visible) => text.FadeTo(visible ? 1 : 0, 200, Easing.OutQuint);
 

@@ -1,214 +1,147 @@
 // Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
-using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
 using osu.Framework.Allocation;
 using osu.Framework.Bindables;
 using osu.Framework.Graphics;
-using osu.Framework.Graphics.Containers;
-using osu.Framework.Graphics.Shapes;
+using osu.Framework.Localisation;
 using osu.Game.Beatmaps;
-using osu.Game.Beatmaps.Drawables;
-using osu.Game.Database;
-using osu.Game.Graphics;
-using osu.Game.Graphics.Containers;
-using osu.Game.Graphics.Sprites;
 using osu.Game.Graphics.UserInterfaceV2;
 using osu.Game.Overlays;
+using osu.Game.Localisation;
 
 namespace osu.Game.Screens.Edit.Setup
 {
-    internal class ResourcesSection : SetupSection, ICanAcceptFiles
+    public partial class ResourcesSection : SetupSection
     {
-        private LabelledTextBox audioTrackTextBox;
-        private Container backgroundSpriteContainer;
+        private FormFileSelector audioTrackChooser = null!;
+        private FormFileSelector backgroundChooser = null!;
 
-        public IEnumerable<string> HandledExtensions => ImageExtensions.Concat(AudioExtensions);
-
-        public static string[] ImageExtensions { get; } = { ".jpg", ".jpeg", ".png" };
-
-        public static string[] AudioExtensions { get; } = { ".mp3", ".ogg" };
+        public override LocalisableString Title => EditorSetupStrings.ResourcesHeader;
 
         [Resolved]
-        private OsuGameBase game { get; set; }
+        private MusicController music { get; set; } = null!;
 
         [Resolved]
-        private MusicController music { get; set; }
+        private BeatmapManager beatmaps { get; set; } = null!;
 
         [Resolved]
-        private BeatmapManager beatmaps { get; set; }
+        private IBindable<WorkingBeatmap> working { get; set; } = null!;
 
-        [Resolved(canBeNull: true)]
-        private Editor editor { get; set; }
+        [Resolved]
+        private EditorBeatmap editorBeatmap { get; set; } = null!;
+
+        [Resolved]
+        private Editor? editor { get; set; }
+
+        private SetupScreenHeaderBackground headerBackground = null!;
 
         [BackgroundDependencyLoader]
         private void load()
         {
-            Container audioTrackFileChooserContainer = new Container
+            headerBackground = new SetupScreenHeaderBackground
             {
                 RelativeSizeAxes = Axes.X,
-                AutoSizeAxes = Axes.Y,
+                Height = 110,
             };
 
             Children = new Drawable[]
             {
-                backgroundSpriteContainer = new Container
+                backgroundChooser = new FormFileSelector(".jpg", ".jpeg", ".png")
                 {
-                    RelativeSizeAxes = Axes.X,
-                    Height = 250,
-                    Masking = true,
-                    CornerRadius = 10,
+                    Caption = GameplaySettingsStrings.BackgroundHeader,
+                    PlaceholderText = EditorSetupStrings.ClickToSelectBackground,
                 },
-                new OsuSpriteText
+                audioTrackChooser = new FormFileSelector(".mp3", ".ogg")
                 {
-                    Text = "Resources"
+                    Caption = EditorSetupStrings.AudioTrack,
+                    PlaceholderText = EditorSetupStrings.ClickToSelectTrack,
                 },
-                audioTrackTextBox = new FileChooserLabelledTextBox
-                {
-                    Label = "Audio Track",
-                    Current = { Value = Beatmap.Value.Metadata.AudioFile ?? "Click to select a track" },
-                    Target = audioTrackFileChooserContainer,
-                    TabbableContentContainer = this
-                },
-                audioTrackFileChooserContainer,
             };
 
-            updateBackgroundSprite();
+            backgroundChooser.PreviewContainer.Add(headerBackground);
 
-            audioTrackTextBox.Current.BindValueChanged(audioTrackChanged);
+            if (!string.IsNullOrEmpty(working.Value.Metadata.BackgroundFile))
+                backgroundChooser.Current.Value = new FileInfo(working.Value.Metadata.BackgroundFile);
+
+            if (!string.IsNullOrEmpty(working.Value.Metadata.AudioFile))
+                audioTrackChooser.Current.Value = new FileInfo(working.Value.Metadata.AudioFile);
+
+            backgroundChooser.Current.BindValueChanged(backgroundChanged);
+            audioTrackChooser.Current.BindValueChanged(audioTrackChanged);
         }
 
-        Task ICanAcceptFiles.Import(params string[] paths)
+        public bool ChangeBackgroundImage(FileInfo source)
         {
-            Schedule(() =>
-            {
-                var firstFile = new FileInfo(paths.First());
-
-                if (ImageExtensions.Contains(firstFile.Extension))
-                {
-                    ChangeBackgroundImage(firstFile.FullName);
-                }
-                else if (AudioExtensions.Contains(firstFile.Extension))
-                {
-                    audioTrackTextBox.Text = firstFile.FullName;
-                }
-            });
-            return Task.CompletedTask;
-        }
-
-        Task ICanAcceptFiles.Import(Stream stream, string filename) => throw new NotImplementedException();
-
-        protected override void LoadComplete()
-        {
-            base.LoadComplete();
-            game.RegisterImportHandler(this);
-        }
-
-        public bool ChangeBackgroundImage(string path)
-        {
-            var info = new FileInfo(path);
-
-            if (!info.Exists)
+            if (!source.Exists)
                 return false;
 
-            var set = Beatmap.Value.BeatmapSetInfo;
+            var set = working.Value.BeatmapSetInfo;
+
+            var destination = new FileInfo($@"bg{source.Extension}");
 
             // remove the previous background for now.
             // in the future we probably want to check if this is being used elsewhere (other difficulties?)
-            var oldFile = set.Files.FirstOrDefault(f => f.Filename == Beatmap.Value.Metadata.BackgroundFile);
+            var oldFile = set.GetFile(working.Value.Metadata.BackgroundFile);
 
-            using (var stream = info.OpenRead())
+            using (var stream = source.OpenRead())
             {
                 if (oldFile != null)
-                    beatmaps.ReplaceFile(set, oldFile, stream, info.Name);
-                else
-                    beatmaps.AddFile(set, stream, info.Name);
+                    beatmaps.DeleteFile(set, oldFile);
+
+                beatmaps.AddFile(set, stream, destination.Name);
             }
 
-            Beatmap.Value.Metadata.BackgroundFile = info.Name;
-            updateBackgroundSprite();
+            editorBeatmap.SaveState();
+
+            working.Value.Metadata.BackgroundFile = destination.Name;
+            headerBackground.UpdateBackground();
+
+            editor?.ApplyToBackground(bg => bg.RefreshBackground());
 
             return true;
         }
 
-        protected override void Dispose(bool isDisposing)
+        public bool ChangeAudioTrack(FileInfo source)
         {
-            base.Dispose(isDisposing);
-            game?.UnregisterImportHandler(this);
-        }
-
-        public bool ChangeAudioTrack(string path)
-        {
-            var info = new FileInfo(path);
-
-            if (!info.Exists)
+            if (!source.Exists)
                 return false;
 
-            var set = Beatmap.Value.BeatmapSetInfo;
+            var set = working.Value.BeatmapSetInfo;
+
+            var destination = new FileInfo($@"audio{source.Extension}");
 
             // remove the previous audio track for now.
             // in the future we probably want to check if this is being used elsewhere (other difficulties?)
-            var oldFile = set.Files.FirstOrDefault(f => f.Filename == Beatmap.Value.Metadata.AudioFile);
+            var oldFile = set.GetFile(working.Value.Metadata.AudioFile);
 
-            using (var stream = info.OpenRead())
+            using (var stream = source.OpenRead())
             {
                 if (oldFile != null)
-                    beatmaps.ReplaceFile(set, oldFile, stream, info.Name);
-                else
-                    beatmaps.AddFile(set, stream, info.Name);
+                    beatmaps.DeleteFile(set, oldFile);
+
+                beatmaps.AddFile(set, stream, destination.Name);
             }
 
-            Beatmap.Value.Metadata.AudioFile = info.Name;
+            working.Value.Metadata.AudioFile = destination.Name;
 
+            editorBeatmap.SaveState();
             music.ReloadCurrentTrack();
 
-            editor?.UpdateClockSource();
             return true;
         }
 
-        private void audioTrackChanged(ValueChangedEvent<string> filePath)
+        private void backgroundChanged(ValueChangedEvent<FileInfo?> file)
         {
-            if (!ChangeAudioTrack(filePath.NewValue))
-                audioTrackTextBox.Current.Value = filePath.OldValue;
+            if (file.NewValue == null || !ChangeBackgroundImage(file.NewValue))
+                backgroundChooser.Current.Value = file.OldValue;
         }
 
-        private void updateBackgroundSprite()
+        private void audioTrackChanged(ValueChangedEvent<FileInfo?> file)
         {
-            LoadComponentAsync(new BeatmapBackgroundSprite(Beatmap.Value)
-            {
-                RelativeSizeAxes = Axes.Both,
-                Anchor = Anchor.Centre,
-                Origin = Anchor.Centre,
-                FillMode = FillMode.Fill,
-            }, background =>
-            {
-                if (background.Texture != null)
-                    backgroundSpriteContainer.Child = background;
-                else
-                {
-                    backgroundSpriteContainer.Children = new Drawable[]
-                    {
-                        new Box
-                        {
-                            Colour = Colours.GreySeafoamDarker,
-                            RelativeSizeAxes = Axes.Both,
-                        },
-                        new OsuTextFlowContainer(t => t.Font = OsuFont.Default.With(size: 24))
-                        {
-                            Text = "Drag image here to set beatmap background!",
-                            Anchor = Anchor.Centre,
-                            Origin = Anchor.Centre,
-                            AutoSizeAxes = Axes.X,
-                        }
-                    };
-                }
-
-                background.FadeInFromZero(500);
-            });
+            if (file.NewValue == null || !ChangeAudioTrack(file.NewValue))
+                audioTrackChooser.Current.Value = file.OldValue;
         }
     }
 }

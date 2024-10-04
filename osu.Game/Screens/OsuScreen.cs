@@ -1,8 +1,11 @@
 ﻿// Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
+#nullable disable
+
 using System;
 using System.Collections.Generic;
+using JetBrains.Annotations;
 using osu.Framework.Allocation;
 using osu.Framework.Audio;
 using osu.Framework.Audio.Sample;
@@ -10,15 +13,16 @@ using osu.Framework.Bindables;
 using osu.Framework.Graphics;
 using osu.Framework.Screens;
 using osu.Game.Beatmaps;
-using osu.Game.Rulesets;
-using osu.Game.Screens.Menu;
 using osu.Game.Overlays;
-using osu.Game.Users;
+using osu.Game.Rulesets;
 using osu.Game.Rulesets.Mods;
+using osu.Game.Screens.Footer;
+using osu.Game.Screens.Menu;
+using osu.Game.Users;
 
 namespace osu.Game.Screens
 {
-    public abstract class OsuScreen : Screen, IOsuScreen, IHasDescription
+    public abstract partial class OsuScreen : Screen, IOsuScreen, IHasDescription
     {
         /// <summary>
         /// The amount of negative padding that should be applied to game background content which touches both the left and right sides of the screen.
@@ -35,19 +39,20 @@ namespace osu.Game.Screens
 
         public virtual bool AllowBackButton => true;
 
+        public virtual bool ShowFooter => false;
+
         public virtual bool AllowExternalScreenChange => false;
 
-        /// <summary>
-        /// Whether all overlays should be hidden when this screen is entered or resumed.
-        /// </summary>
         public virtual bool HideOverlaysOnEnter => false;
+
+        public virtual bool HideMenuCursorOnNonMouseInput => false;
 
         /// <summary>
         /// The initial overlay activation mode to use when this screen is entered for the first time.
         /// </summary>
         protected virtual OverlayActivation InitialOverlayActivationMode => OverlayActivation.All;
 
-        protected readonly Bindable<OverlayActivation> OverlayActivationMode;
+        public readonly Bindable<OverlayActivation> OverlayActivationMode;
 
         IBindable<OverlayActivation> IOsuScreen.OverlayActivationMode => OverlayActivationMode;
 
@@ -74,21 +79,30 @@ namespace osu.Game.Screens
         /// </summary>
         public virtual bool DisallowExternalBeatmapRulesetChanges => false;
 
-        private SampleChannel sampleExit;
+        private Sample sampleExit;
 
-        protected virtual bool PlayResumeSound => true;
+        protected virtual bool PlayExitSound => true;
 
         public virtual float BackgroundParallaxAmount => 1;
 
-        public virtual bool AllowRateAdjustments => true;
+        [Resolved]
+        private MusicController musicController { get; set; }
 
-        public Bindable<WorkingBeatmap> Beatmap { get; private set; }
+        public virtual bool? ApplyModTrackAdjustments => null;
 
-        public Bindable<RulesetInfo> Ruleset { get; private set; }
+        public virtual bool? AllowGlobalTrackControl => null;
+
+        public Bindable<WorkingBeatmap> Beatmap { get; private set; } = null!;
+
+        public Bindable<RulesetInfo> Ruleset { get; private set; } = null!;
 
         public Bindable<IReadOnlyList<Mod>> Mods { get; private set; }
 
         private OsuScreenDependencies screenDependencies;
+
+        private bool? globalMusicControlStateAtSuspend;
+
+        private bool? modTrackAdjustmentStateAtSuspend;
 
         internal void CreateLeasedDependencies(IReadOnlyDependencyContainer dependencies) => createDependencies(dependencies);
 
@@ -114,15 +128,25 @@ namespace osu.Game.Screens
             Mods = screenDependencies.Mods;
         }
 
-        protected BackgroundScreen Background => backgroundStack?.CurrentScreen as BackgroundScreen;
+        /// <summary>
+        /// The background created and owned by this screen. May be null if the background didn't change.
+        /// </summary>
+        [CanBeNull]
+        private BackgroundScreen ownedBackground;
 
-        private BackgroundScreen localBackground;
+        [CanBeNull]
+        private BackgroundScreen background;
 
         [Resolved(canBeNull: true)]
+        [CanBeNull]
         private BackgroundScreenStack backgroundStack { get; set; }
 
         [Resolved(canBeNull: true)]
         private OsuLogo logo { get; set; }
+
+        [Resolved(canBeNull: true)]
+        [CanBeNull]
+        protected ScreenFooter Footer { get; private set; }
 
         protected OsuScreen()
         {
@@ -133,47 +157,94 @@ namespace osu.Game.Screens
         }
 
         [BackgroundDependencyLoader(true)]
-        private void load(OsuGame osu, AudioManager audio)
+        private void load(AudioManager audio)
         {
             sampleExit = audio.Samples.Get(@"UI/screen-back");
+        }
 
+        protected override void LoadComplete()
+        {
+            base.LoadComplete();
             Activity.Value ??= InitialActivity;
         }
 
-        public override void OnResuming(IScreen last)
+        /// <summary>
+        /// Apply arbitrary changes to the current background screen in a thread safe manner.
+        /// </summary>
+        /// <param name="action">The operation to perform.</param>
+        public void ApplyToBackground(Action<BackgroundScreen> action)
         {
-            if (PlayResumeSound)
-                sampleExit?.Play();
-            applyArrivingDefaults(true);
+            if (backgroundStack == null)
+                throw new InvalidOperationException("Attempted to apply to background without a background stack being available.");
 
-            base.OnResuming(last);
+            if (background == null)
+                throw new InvalidOperationException("Attempted to apply to background before screen is pushed.");
+
+            background.ApplyToBackground(action);
         }
 
-        public override void OnSuspending(IScreen next)
+        public override void OnResuming(ScreenTransitionEvent e)
         {
-            base.OnSuspending(next);
+            applyArrivingDefaults(true);
+
+            // it's feasible to resume to a screen if the target screen never loaded successfully.
+            // in such a case there's no need to restore this value.
+            if (modTrackAdjustmentStateAtSuspend != null)
+                musicController.ApplyModTrackAdjustments = modTrackAdjustmentStateAtSuspend.Value;
+            if (globalMusicControlStateAtSuspend != null)
+                musicController.AllowTrackControl.Value = globalMusicControlStateAtSuspend.Value;
+
+            base.OnResuming(e);
+        }
+
+        public override void OnSuspending(ScreenTransitionEvent e)
+        {
+            base.OnSuspending(e);
+
+            modTrackAdjustmentStateAtSuspend = musicController.ApplyModTrackAdjustments;
+            globalMusicControlStateAtSuspend = musicController.AllowTrackControl.Value;
 
             onSuspendingLogo();
         }
 
-        public override void OnEntering(IScreen last)
+        public override void OnEntering(ScreenTransitionEvent e)
         {
             applyArrivingDefaults(false);
 
-            backgroundStack?.Push(localBackground = CreateBackground());
+            if (ApplyModTrackAdjustments != null)
+                musicController.ApplyModTrackAdjustments = ApplyModTrackAdjustments.Value;
 
-            base.OnEntering(last);
+            if (AllowGlobalTrackControl != null)
+                musicController.AllowTrackControl.Value = AllowGlobalTrackControl.Value;
+
+            if (backgroundStack?.Push(ownedBackground = CreateBackground()) != true)
+            {
+                // If the constructed instance was not actually pushed to the background stack, we don't want to track it unnecessarily.
+                ownedBackground?.Dispose();
+                ownedBackground = null;
+            }
+
+            background = backgroundStack?.CurrentScreen as BackgroundScreen;
+            base.OnEntering(e);
         }
 
-        public override bool OnExiting(IScreen next)
+        public override bool OnExiting(ScreenExitEvent e)
         {
+            // Only play the exit sound if we are the last screen in the exit sequence.
+            // This stops many sample playbacks from stacking when a huge screen purge happens (ie. returning to menu via the home button
+            // from a deeply nested screen).
+            bool arrivingAtFinalDestination = e.Next == e.Destination;
+
+            if (ValidForResume && PlayExitSound && arrivingAtFinalDestination)
+                sampleExit?.Play();
+
             if (ValidForResume && logo != null)
                 onExitingLogo();
 
-            if (base.OnExiting(next))
+            if (base.OnExiting(e))
                 return true;
 
-            if (localBackground != null && backgroundStack?.CurrentScreen == localBackground)
+            if (ownedBackground != null && backgroundStack?.CurrentScreen == ownedBackground)
                 backgroundStack?.Exit();
 
             return false;
@@ -184,7 +255,16 @@ namespace osu.Game.Screens
         /// </summary>
         protected virtual void LogoArriving(OsuLogo logo, bool resuming)
         {
-            ApplyLogoArrivingDefaults(logo);
+            logo.Action = null;
+            logo.FadeOut(300, Easing.OutQuint);
+
+            logo.Origin = Anchor.Centre;
+
+            logo.ChangeAnchor(Anchor.TopLeft);
+            logo.RelativePositionAxes = Axes.Both;
+
+            logo.Triangles = true;
+            logo.Ripple = true;
         }
 
         private void applyArrivingDefaults(bool isResuming)
@@ -193,23 +273,6 @@ namespace osu.Game.Screens
             {
                 if (this.IsCurrentScreen()) LogoArriving(logo, isResuming);
             }, true);
-        }
-
-        /// <summary>
-        /// Applies default animations to an arriving logo.
-        /// Todo: This should not exist.
-        /// </summary>
-        /// <param name="logo">The logo to apply animations to.</param>
-        public static void ApplyLogoArrivingDefaults(OsuLogo logo)
-        {
-            logo.Action = null;
-            logo.FadeOut(300, Easing.OutQuint);
-            logo.Anchor = Anchor.TopLeft;
-            logo.Origin = Anchor.Centre;
-            logo.RelativePositionAxes = Axes.Both;
-            logo.BeatMatching = true;
-            logo.Triangles = true;
-            logo.Ripple = true;
         }
 
         private void onExitingLogo()
@@ -241,6 +304,8 @@ namespace osu.Game.Screens
         /// Note that the instance created may not be the used instance if it matches the BackgroundMode equality clause.
         /// </summary>
         protected virtual BackgroundScreen CreateBackground() => null;
+
+        public virtual IReadOnlyList<ScreenFooterButton> CreateFooterButtons() => Array.Empty<ScreenFooterButton>();
 
         public virtual bool OnBackButton() => false;
     }

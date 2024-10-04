@@ -2,27 +2,26 @@
 // See the LICENCE file in the repository root for full licence text.
 
 using System;
-using osuTK;
 using osu.Framework.Allocation;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Shapes;
 using osu.Framework.Input.Events;
 using osu.Framework.Threading;
-using osu.Game.Beatmaps;
-using osu.Game.Graphics;
+using osu.Game.Overlays;
+using osuTK;
 
 namespace osu.Game.Screens.Edit.Components.Timelines.Summary.Parts
 {
     /// <summary>
     /// The part of the timeline that displays the current position of the song.
     /// </summary>
-    public class MarkerPart : TimelinePart
+    public partial class MarkerPart : TimelinePart
     {
-        private Drawable marker;
+        private Drawable marker = null!;
 
         [Resolved]
-        private EditorClock editorClock { get; set; }
+        private EditorClock editorClock { get; set; } = null!;
 
         [BackgroundDependencyLoader]
         private void load()
@@ -43,7 +42,7 @@ namespace osu.Game.Screens.Edit.Components.Timelines.Summary.Parts
             return true;
         }
 
-        private ScheduledDelegate scheduledSeek;
+        private ScheduledDelegate? scheduledSeek;
 
         /// <summary>
         /// Seeks the <see cref="SummaryTimeline"/> to the time closest to a position on the screen relative to the <see cref="SummaryTimeline"/>.
@@ -54,11 +53,8 @@ namespace osu.Game.Screens.Edit.Components.Timelines.Summary.Parts
             scheduledSeek?.Cancel();
             scheduledSeek = Schedule(() =>
             {
-                if (Beatmap.Value == null)
-                    return;
-
                 float markerPos = Math.Clamp(ToLocalSpace(screenPosition).X, 0, DrawWidth);
-                editorClock.SeekTo(markerPos / DrawWidth * editorClock.TrackLength);
+                editorClock.SeekSmoothlyTo(markerPos / DrawWidth * editorClock.TrackLength);
             });
         }
 
@@ -68,12 +64,12 @@ namespace osu.Game.Screens.Edit.Components.Timelines.Summary.Parts
             marker.X = (float)editorClock.CurrentTime;
         }
 
-        protected override void LoadBeatmap(WorkingBeatmap beatmap)
+        protected override void LoadBeatmap(EditorBeatmap beatmap)
         {
             // block base call so we don't clear our marker (can be reused on beatmap change).
         }
 
-        private class MarkerVisualisation : CompositeDrawable
+        private partial class MarkerVisualisation : CompositeDrawable
         {
             public MarkerVisualisation()
             {
@@ -95,21 +91,21 @@ namespace osu.Game.Screens.Edit.Components.Timelines.Summary.Parts
                     {
                         Anchor = Anchor.BottomCentre,
                         Origin = Anchor.BottomCentre,
-                        Size = new Vector2(10, 5)
+                        Size = new Vector2(10, 5),
                     },
                     new Box
                     {
                         Anchor = Anchor.Centre,
                         Origin = Anchor.Centre,
                         RelativeSizeAxes = Axes.Y,
-                        Width = 2,
+                        Width = 1.4f,
                         EdgeSmoothness = new Vector2(1, 0)
                     }
                 };
             }
 
             [BackgroundDependencyLoader]
-            private void load(OsuColour colours) => Colour = colours.Red;
+            private void load(OverlayColourProvider colours) => Colour = colours.Highlight1;
         }
     }
 }

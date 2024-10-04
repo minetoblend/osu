@@ -1,78 +1,92 @@
 ﻿// Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
+using System.Linq;
 using osu.Framework.Allocation;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Shapes;
-using osu.Game.Graphics;
+using osu.Framework.Screens;
 using osu.Game.Graphics.Containers;
 using osu.Game.Overlays;
+using osuTK;
 
 namespace osu.Game.Screens.Edit.Setup
 {
-    public class SetupScreen : EditorScreen
+    public partial class SetupScreen : EditorScreen
     {
-        [Resolved]
-        private OsuColour colours { get; set; }
-
-        [Cached]
-        protected readonly OverlayColourProvider ColourProvider;
+        public const float COLUMN_WIDTH = 450;
+        public const float SPACING = 28;
+        public const float MAX_WIDTH = 2 * COLUMN_WIDTH + SPACING;
 
         public SetupScreen()
             : base(EditorScreenMode.SongSetup)
         {
-            ColourProvider = new OverlayColourProvider(OverlayColourScheme.Green);
         }
 
+        private OsuScrollContainer scroll = null!;
+        private FillFlowContainer flow = null!;
+
         [BackgroundDependencyLoader]
-        private void load()
+        private void load(EditorBeatmap beatmap, OverlayColourProvider colourProvider)
         {
-            Child = new Container
+            var ruleset = beatmap.BeatmapInfo.Ruleset.CreateInstance();
+
+            Children = new Drawable[]
             {
-                RelativeSizeAxes = Axes.Both,
-                Padding = new MarginPadding(50),
-                Child = new Container
+                new Box
                 {
                     RelativeSizeAxes = Axes.Both,
-                    Masking = true,
-                    CornerRadius = 10,
-                    Children = new Drawable[]
+                    Colour = colourProvider.Background3,
+                },
+                scroll = new OsuScrollContainer
+                {
+                    RelativeSizeAxes = Axes.Both,
+                    Padding = new MarginPadding(15),
+                    Child = flow = new FillFlowContainer
                     {
-                        new Box
+                        RelativeSizeAxes = Axes.X,
+                        AutoSizeAxes = Axes.Y,
+                        Direction = FillDirection.Full,
+                        Anchor = Anchor.TopCentre,
+                        Origin = Anchor.TopCentre,
+                        Spacing = new Vector2(25),
+                        ChildrenEnumerable = ruleset.CreateEditorSetupSections().Select(section => section.With(s =>
                         {
-                            Colour = colours.GreySeafoamDark,
-                            RelativeSizeAxes = Axes.Both,
-                        },
-                        new SectionsContainer<SetupSection>
-                        {
-                            FixedHeader = new SetupScreenHeader(),
-                            RelativeSizeAxes = Axes.Both,
-                            Children = new SetupSection[]
-                            {
-                                new ResourcesSection(),
-                                new MetadataSection(),
-                                new DifficultySection(),
-                            }
-                        },
+                            s.Width = 450;
+                            s.Anchor = Anchor.TopCentre;
+                            s.Origin = Anchor.TopCentre;
+                        })),
                     }
                 }
             };
         }
-    }
 
-    internal class SetupScreenHeader : OverlayHeader
-    {
-        protected override OverlayTitle CreateTitle() => new SetupScreenTitle();
-
-        private class SetupScreenTitle : OverlayTitle
+        protected override void UpdateAfterChildren()
         {
-            public SetupScreenTitle()
+            base.UpdateAfterChildren();
+
+            if (scroll.DrawWidth > MAX_WIDTH)
             {
-                Title = "beatmap setup";
-                Description = "change general settings of your beatmap";
-                IconTexture = "Icons/Hexacons/social";
+                flow.RelativeSizeAxes = Axes.None;
+                flow.Width = MAX_WIDTH;
             }
+            else
+            {
+                flow.RelativeSizeAxes = Axes.X;
+                flow.Width = 1;
+            }
+        }
+
+        public override void OnExiting(ScreenExitEvent e)
+        {
+            base.OnExiting(e);
+
+            // Before exiting, trigger a focus loss.
+            //
+            // This is important to ensure that if the user is still editing a textbox, it will commit
+            // (and potentially block the exit procedure for save).
+            GetContainingFocusManager()?.TriggerFocusContention(this);
         }
     }
 }

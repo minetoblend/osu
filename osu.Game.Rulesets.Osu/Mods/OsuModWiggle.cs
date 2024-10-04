@@ -2,8 +2,11 @@
 // See the LICENCE file in the repository root for full licence text.
 
 using System;
+using osu.Framework.Bindables;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Sprites;
+using osu.Framework.Localisation;
+using osu.Game.Configuration;
 using osu.Game.Rulesets.Mods;
 using osu.Game.Rulesets.Objects.Drawables;
 using osu.Game.Rulesets.Objects.Types;
@@ -18,12 +21,19 @@ namespace osu.Game.Rulesets.Osu.Mods
         public override string Acronym => "WG";
         public override IconUsage? Icon => FontAwesome.Solid.Certificate;
         public override ModType Type => ModType.Fun;
-        public override string Description => "They just won't stay still...";
+        public override LocalisableString Description => "They just won't stay still...";
         public override double ScoreMultiplier => 1;
-        public override Type[] IncompatibleMods => new[] { typeof(OsuModTransform) };
+        public override Type[] IncompatibleMods => new[] { typeof(OsuModTransform), typeof(OsuModMagnetised), typeof(OsuModRepel), typeof(OsuModDepth) };
 
-        private const int wiggle_duration = 90; // (ms) Higher = fewer wiggles
-        private const int wiggle_strength = 10; // Higher = stronger wiggles
+        private const int wiggle_duration = 100; // (ms) Higher = fewer wiggles
+
+        [SettingSource("Strength", "Multiplier applied to the wiggling strength.")]
+        public BindableDouble Strength { get; } = new BindableDouble(1)
+        {
+            MinValue = 0.1f,
+            MaxValue = 2f,
+            Precision = 0.1f
+        };
 
         protected override void ApplyIncreasedVisibilityState(DrawableHitObject hitObject, ArmedState state) => drawableOnApplyCustomUpdateState(hitObject, state);
 
@@ -34,9 +44,9 @@ namespace osu.Game.Rulesets.Osu.Mods
             var osuObject = (OsuHitObject)drawable.HitObject;
             Vector2 origin = drawable.Position;
 
-            // Wiggle the repeat points with the slider instead of independently.
+            // Wiggle the repeat points and the tail with the slider instead of independently.
             // Also fixes an issue with repeat points being positioned incorrectly.
-            if (osuObject is SliderRepeat)
+            if (osuObject is SliderRepeat || osuObject is SliderTailCircle)
                 return;
 
             Random objRand = new Random((int)osuObject.StartTime);
@@ -47,13 +57,13 @@ namespace osu.Game.Rulesets.Osu.Mods
             void wiggle()
             {
                 float nextAngle = (float)(objRand.NextDouble() * 2 * Math.PI);
-                float nextDist = (float)(objRand.NextDouble() * wiggle_strength);
+                float nextDist = (float)(objRand.NextDouble() * Strength.Value * 7);
                 drawable.MoveTo(new Vector2((float)(nextDist * Math.Cos(nextAngle) + origin.X), (float)(nextDist * Math.Sin(nextAngle) + origin.Y)), wiggle_duration);
             }
 
             for (int i = 0; i < amountWiggles; i++)
             {
-                using (drawable.BeginAbsoluteSequence(osuObject.StartTime - osuObject.TimePreempt + i * wiggle_duration, true))
+                using (drawable.BeginAbsoluteSequence(osuObject.StartTime - osuObject.TimePreempt + i * wiggle_duration))
                     wiggle();
             }
 
@@ -65,7 +75,7 @@ namespace osu.Game.Rulesets.Osu.Mods
 
             for (int i = 0; i < amountWiggles; i++)
             {
-                using (drawable.BeginAbsoluteSequence(osuObject.StartTime + i * wiggle_duration, true))
+                using (drawable.BeginAbsoluteSequence(osuObject.StartTime + i * wiggle_duration))
                     wiggle();
             }
         }

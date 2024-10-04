@@ -5,95 +5,130 @@ using System.Linq;
 using osu.Framework.Allocation;
 using osu.Framework.Bindables;
 using osu.Framework.Graphics;
+using osu.Framework.Localisation;
 using osu.Game.Beatmaps;
-using osu.Game.Graphics.Sprites;
 using osu.Game.Graphics.UserInterfaceV2;
+using osu.Game.Resources.Localisation.Web;
+using osu.Game.Localisation;
 
 namespace osu.Game.Screens.Edit.Setup
 {
-    internal class DifficultySection : SetupSection
+    public partial class DifficultySection : SetupSection
     {
-        [Resolved]
-        private EditorBeatmap editorBeatmap { get; set; }
+        private FormSliderBar<float> circleSizeSlider { get; set; } = null!;
+        private FormSliderBar<float> healthDrainSlider { get; set; } = null!;
+        private FormSliderBar<float> approachRateSlider { get; set; } = null!;
+        private FormSliderBar<float> overallDifficultySlider { get; set; } = null!;
+        private FormSliderBar<double> baseVelocitySlider { get; set; } = null!;
+        private FormSliderBar<double> tickRateSlider { get; set; } = null!;
 
-        private LabelledSliderBar<float> circleSizeSlider;
-        private LabelledSliderBar<float> healthDrainSlider;
-        private LabelledSliderBar<float> approachRateSlider;
-        private LabelledSliderBar<float> overallDifficultySlider;
+        public override LocalisableString Title => EditorSetupStrings.DifficultyHeader;
 
         [BackgroundDependencyLoader]
         private void load()
         {
             Children = new Drawable[]
             {
-                new OsuSpriteText
+                circleSizeSlider = new FormSliderBar<float>
                 {
-                    Text = "Difficulty settings"
-                },
-                circleSizeSlider = new LabelledSliderBar<float>
-                {
-                    Label = "Object Size",
-                    Description = "The size of all hit objects",
-                    Current = new BindableFloat(Beatmap.Value.BeatmapInfo.BaseDifficulty.CircleSize)
+                    Caption = BeatmapsetsStrings.ShowStatsCs,
+                    HintText = EditorSetupStrings.CircleSizeDescription,
+                    Current = new BindableFloat(Beatmap.Difficulty.CircleSize)
                     {
                         Default = BeatmapDifficulty.DEFAULT_DIFFICULTY,
                         MinValue = 0,
                         MaxValue = 10,
                         Precision = 0.1f,
-                    }
+                    },
+                    TabbableContentContainer = this,
                 },
-                healthDrainSlider = new LabelledSliderBar<float>
+                healthDrainSlider = new FormSliderBar<float>
                 {
-                    Label = "Health Drain",
-                    Description = "The rate of passive health drain throughout playable time",
-                    Current = new BindableFloat(Beatmap.Value.BeatmapInfo.BaseDifficulty.DrainRate)
+                    Caption = BeatmapsetsStrings.ShowStatsDrain,
+                    HintText = EditorSetupStrings.DrainRateDescription,
+                    Current = new BindableFloat(Beatmap.Difficulty.DrainRate)
                     {
                         Default = BeatmapDifficulty.DEFAULT_DIFFICULTY,
                         MinValue = 0,
                         MaxValue = 10,
                         Precision = 0.1f,
-                    }
+                    },
+                    TabbableContentContainer = this,
                 },
-                approachRateSlider = new LabelledSliderBar<float>
+                approachRateSlider = new FormSliderBar<float>
                 {
-                    Label = "Approach Rate",
-                    Description = "The speed at which objects are presented to the player",
-                    Current = new BindableFloat(Beatmap.Value.BeatmapInfo.BaseDifficulty.ApproachRate)
+                    Caption = BeatmapsetsStrings.ShowStatsAr,
+                    HintText = EditorSetupStrings.ApproachRateDescription,
+                    Current = new BindableFloat(Beatmap.Difficulty.ApproachRate)
                     {
                         Default = BeatmapDifficulty.DEFAULT_DIFFICULTY,
                         MinValue = 0,
                         MaxValue = 10,
                         Precision = 0.1f,
-                    }
+                    },
+                    TabbableContentContainer = this,
                 },
-                overallDifficultySlider = new LabelledSliderBar<float>
+                overallDifficultySlider = new FormSliderBar<float>
                 {
-                    Label = "Overall Difficulty",
-                    Description = "The harshness of hit windows and difficulty of special objects (ie. spinners)",
-                    Current = new BindableFloat(Beatmap.Value.BeatmapInfo.BaseDifficulty.OverallDifficulty)
+                    Caption = BeatmapsetsStrings.ShowStatsAccuracy,
+                    HintText = EditorSetupStrings.OverallDifficultyDescription,
+                    Current = new BindableFloat(Beatmap.Difficulty.OverallDifficulty)
                     {
                         Default = BeatmapDifficulty.DEFAULT_DIFFICULTY,
                         MinValue = 0,
                         MaxValue = 10,
                         Precision = 0.1f,
-                    }
+                    },
+                    TabbableContentContainer = this,
+                },
+                baseVelocitySlider = new FormSliderBar<double>
+                {
+                    Caption = EditorSetupStrings.BaseVelocity,
+                    HintText = EditorSetupStrings.BaseVelocityDescription,
+                    Current = new BindableDouble(Beatmap.Difficulty.SliderMultiplier)
+                    {
+                        Default = 1.4,
+                        MinValue = 0.4,
+                        MaxValue = 3.6,
+                        Precision = 0.01f,
+                    },
+                    TabbableContentContainer = this,
+                },
+                tickRateSlider = new FormSliderBar<double>
+                {
+                    Caption = EditorSetupStrings.TickRate,
+                    HintText = EditorSetupStrings.TickRateDescription,
+                    Current = new BindableDouble(Beatmap.Difficulty.SliderTickRate)
+                    {
+                        Default = 1,
+                        MinValue = 1,
+                        MaxValue = 4,
+                        Precision = 1,
+                    },
+                    TabbableContentContainer = this,
                 },
             };
 
-            foreach (var item in Children.OfType<LabelledSliderBar<float>>())
-                item.Current.ValueChanged += onValueChanged;
+            foreach (var item in Children.OfType<FormSliderBar<float>>())
+                item.Current.ValueChanged += _ => updateValues();
+
+            foreach (var item in Children.OfType<FormSliderBar<double>>())
+                item.Current.ValueChanged += _ => updateValues();
         }
 
-        private void onValueChanged(ValueChangedEvent<float> args)
+        private void updateValues()
         {
             // for now, update these on commit rather than making BeatmapMetadata bindables.
             // after switching database engines we can reconsider if switching to bindables is a good direction.
-            Beatmap.Value.BeatmapInfo.BaseDifficulty.CircleSize = circleSizeSlider.Current.Value;
-            Beatmap.Value.BeatmapInfo.BaseDifficulty.DrainRate = healthDrainSlider.Current.Value;
-            Beatmap.Value.BeatmapInfo.BaseDifficulty.ApproachRate = approachRateSlider.Current.Value;
-            Beatmap.Value.BeatmapInfo.BaseDifficulty.OverallDifficulty = overallDifficultySlider.Current.Value;
+            Beatmap.Difficulty.CircleSize = circleSizeSlider.Current.Value;
+            Beatmap.Difficulty.DrainRate = healthDrainSlider.Current.Value;
+            Beatmap.Difficulty.ApproachRate = approachRateSlider.Current.Value;
+            Beatmap.Difficulty.OverallDifficulty = overallDifficultySlider.Current.Value;
+            Beatmap.Difficulty.SliderMultiplier = baseVelocitySlider.Current.Value;
+            Beatmap.Difficulty.SliderTickRate = tickRateSlider.Current.Value;
 
-            editorBeatmap.UpdateAllHitObjects();
+            Beatmap.UpdateAllHitObjects();
+            Beatmap.SaveState();
         }
     }
 }

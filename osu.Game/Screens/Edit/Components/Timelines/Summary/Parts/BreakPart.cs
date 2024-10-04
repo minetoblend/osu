@@ -2,34 +2,79 @@
 // See the LICENCE file in the repository root for full licence text.
 
 using osu.Framework.Allocation;
-using osu.Game.Beatmaps;
+using osu.Framework.Bindables;
+using osu.Framework.Graphics;
+using osu.Framework.Graphics.Cursor;
+using osu.Framework.Graphics.Pooling;
+using osu.Framework.Graphics.Shapes;
+using osu.Framework.Localisation;
 using osu.Game.Beatmaps.Timing;
+using osu.Game.Extensions;
 using osu.Game.Graphics;
-using osu.Game.Screens.Edit.Components.Timelines.Summary.Visualisations;
 
 namespace osu.Game.Screens.Edit.Components.Timelines.Summary.Parts
 {
     /// <summary>
     /// The part of the timeline that displays breaks in the song.
     /// </summary>
-    public class BreakPart : TimelinePart
+    public partial class BreakPart : TimelinePart
     {
-        protected override void LoadBeatmap(WorkingBeatmap beatmap)
+        private readonly BindableList<BreakPeriod> breaks = new BindableList<BreakPeriod>();
+
+        private DrawablePool<BreakVisualisation> pool = null!;
+
+        [BackgroundDependencyLoader]
+        private void load()
         {
-            base.LoadBeatmap(beatmap);
-            foreach (var breakPeriod in beatmap.Beatmap.Breaks)
-                Add(new BreakVisualisation(breakPeriod));
+            AddInternal(pool = new DrawablePool<BreakVisualisation>(10));
         }
 
-        private class BreakVisualisation : DurationVisualisation
+        protected override void LoadBeatmap(EditorBeatmap beatmap)
         {
-            public BreakVisualisation(BreakPeriod breakPeriod)
-                : base(breakPeriod.StartTime, breakPeriod.EndTime)
+            base.LoadBeatmap(beatmap);
+
+            breaks.UnbindAll();
+            breaks.BindTo(beatmap.Breaks);
+        }
+
+        protected override void LoadComplete()
+        {
+            base.LoadComplete();
+
+            breaks.BindCollectionChanged((_, _) =>
             {
+                Clear(disposeChildren: false);
+                foreach (var breakPeriod in breaks)
+                    Add(pool.Get(v => v.BreakPeriod = breakPeriod));
+            }, true);
+        }
+
+        private partial class BreakVisualisation : PoolableDrawable, IHasTooltip
+        {
+            private BreakPeriod breakPeriod = null!;
+
+            public BreakPeriod BreakPeriod
+            {
+                set
+                {
+                    breakPeriod = value;
+                    X = (float)value.StartTime;
+                    Width = (float)value.Duration;
+                }
             }
 
             [BackgroundDependencyLoader]
-            private void load(OsuColour colours) => Colour = colours.Yellow;
+            private void load(OsuColour colours)
+            {
+                RelativePositionAxes = Axes.X;
+                RelativeSizeAxes = Axes.Both;
+
+                InternalChild = new Box { RelativeSizeAxes = Axes.Both };
+                Colour = colours.Gray5;
+                Alpha = 0.4f;
+            }
+
+            public LocalisableString TooltipText => $"{breakPeriod.StartTime.ToEditorFormattedString()} - {breakPeriod.EndTime.ToEditorFormattedString()} break time";
         }
     }
 }

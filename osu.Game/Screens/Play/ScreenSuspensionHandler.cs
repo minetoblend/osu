@@ -1,8 +1,9 @@
 // Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
+#nullable disable
+
 using System;
-using System.Diagnostics;
 using JetBrains.Annotations;
 using osu.Framework.Allocation;
 using osu.Framework.Bindables;
@@ -14,10 +15,12 @@ namespace osu.Game.Screens.Play
     /// <summary>
     /// Ensures screen is not suspended / dimmed while gameplay is active.
     /// </summary>
-    public class ScreenSuspensionHandler : Component
+    public partial class ScreenSuspensionHandler : Component
     {
         private readonly GameplayClockContainer gameplayClockContainer;
-        private Bindable<bool> isPaused;
+        private IBindable<bool> isPaused;
+
+        private readonly Bindable<bool> disableSuspensionBindable = new Bindable<bool>();
 
         [Resolved]
         private GameHost host { get; set; }
@@ -31,12 +34,14 @@ namespace osu.Game.Screens.Play
         {
             base.LoadComplete();
 
-            // This is the only usage game-wide of suspension changes.
-            // Assert to ensure we don't accidentally forget this in the future.
-            Debug.Assert(host.AllowScreenSuspension.Value);
-
             isPaused = gameplayClockContainer.IsPaused.GetBoundCopy();
-            isPaused.BindValueChanged(paused => host.AllowScreenSuspension.Value = paused.NewValue, true);
+            isPaused.BindValueChanged(paused =>
+            {
+                if (paused.NewValue)
+                    host.AllowScreenSuspension.RemoveSource(disableSuspensionBindable);
+                else
+                    host.AllowScreenSuspension.AddSource(disableSuspensionBindable);
+            }, true);
         }
 
         protected override void Dispose(bool isDisposing)
@@ -44,9 +49,7 @@ namespace osu.Game.Screens.Play
             base.Dispose(isDisposing);
 
             isPaused?.UnbindAll();
-
-            if (host != null)
-                host.AllowScreenSuspension.Value = true;
+            host?.AllowScreenSuspension.RemoveSource(disableSuspensionBindable);
         }
     }
 }

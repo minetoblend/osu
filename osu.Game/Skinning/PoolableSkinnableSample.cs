@@ -1,11 +1,13 @@
 // Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
+#nullable disable
+
 using System;
+using System.Linq;
 using JetBrains.Annotations;
-using osu.Framework.Allocation;
 using osu.Framework.Audio;
-using osu.Framework.Audio.Track;
+using osu.Framework.Audio.Sample;
 using osu.Framework.Bindables;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Audio;
@@ -17,7 +19,7 @@ namespace osu.Game.Skinning
     /// <summary>
     /// A sample corresponding to an <see cref="ISampleInfo"/> that supports being pooled and responding to skin changes.
     /// </summary>
-    public class PoolableSkinnableSample : SkinReloadableDrawable, IAggregateAudioAdjustment, IAdjustableAudioComponent
+    public partial class PoolableSkinnableSample : SkinReloadableDrawable, IAdjustableAudioComponent
     {
         /// <summary>
         /// The currently-loaded <see cref="DrawableSample"/>.
@@ -27,9 +29,7 @@ namespace osu.Game.Skinning
 
         private readonly AudioContainer<DrawableSample> sampleContainer;
         private ISampleInfo sampleInfo;
-
-        [Resolved]
-        private ISampleStore sampleStore { get; set; }
+        private SampleChannel activeChannel;
 
         /// <summary>
         /// Creates a new <see cref="PoolableSkinnableSample"/> with no applied <see cref="ISampleInfo"/>.
@@ -69,37 +69,42 @@ namespace osu.Game.Skinning
                 updateSample();
         }
 
-        protected override void SkinChanged(ISkinSource skin, bool allowFallback)
+        protected override void SkinChanged(ISkinSource skin)
         {
-            base.SkinChanged(skin, allowFallback);
+            base.SkinChanged(skin);
             updateSample();
+        }
+
+        /// <summary>
+        /// Whether this sample was playing before a skin source change.
+        /// </summary>
+        private bool wasPlaying;
+
+        private void clearPreviousSamples()
+        {
+            // only run if the samples aren't already cleared.
+            // this ensures the "wasPlaying" state is stored correctly even if multiple clear calls are executed.
+            if (!sampleContainer.Any()) return;
+
+            wasPlaying = Playing;
+
+            sampleContainer.Clear();
+            Sample = null;
         }
 
         private void updateSample()
         {
+            clearPreviousSamples();
+
             if (sampleInfo == null)
                 return;
 
-            bool wasPlaying = Playing;
+            var sample = CurrentSkin.GetSample(sampleInfo);
 
-            sampleContainer.Clear();
-            Sample = null;
-
-            var ch = CurrentSkin.GetSample(sampleInfo);
-
-            if (ch == null && AllowDefaultFallback)
-            {
-                foreach (var lookup in sampleInfo.LookupNames)
-                {
-                    if ((ch = sampleStore.Get(lookup)) != null)
-                        break;
-                }
-            }
-
-            if (ch == null)
+            if (sample == null)
                 return;
 
-            sampleContainer.Add(Sample = new DrawableSample(ch) { Looping = Looping });
+            sampleContainer.Add(Sample = new DrawableSample(sample));
 
             // Start playback internally for the new sample if the previous one was playing beforehand.
             if (wasPlaying && Looping)
@@ -109,18 +114,35 @@ namespace osu.Game.Skinning
         /// <summary>
         /// Plays the sample.
         /// </summary>
-        /// <param name="restart">Whether to play the sample from the beginning.</param>
-        public void Play(bool restart = true) => Sample?.Play(restart);
+        public void Play()
+        {
+            FlushPendingSkinChanges();
+
+            if (Sample == null)
+                return;
+
+            activeChannel = Sample.GetChannel();
+            activeChannel.Looping = Looping;
+            activeChannel.Play();
+
+            Played = true;
+        }
 
         /// <summary>
         /// Stops the sample.
         /// </summary>
-        public void Stop() => Sample?.Stop();
+        public void Stop()
+        {
+            activeChannel?.Stop();
+            activeChannel = null;
+        }
 
         /// <summary>
         /// Whether the sample is currently playing.
         /// </summary>
-        public bool Playing => Sample?.Playing ?? false;
+        public bool Playing => activeChannel?.Playing ?? false;
+
+        public bool Played { get; private set; }
 
         private bool looping;
 
@@ -134,8 +156,8 @@ namespace osu.Game.Skinning
             {
                 looping = value;
 
-                if (Sample != null)
-                    Sample.Looping = value;
+                if (activeChannel != null)
+                    activeChannel.Looping = value;
             }
         }
 
@@ -149,9 +171,13 @@ namespace osu.Game.Skinning
 
         public BindableNumber<double> Tempo => sampleContainer.Tempo;
 
-        public void AddAdjustment(AdjustableProperty type, BindableNumber<double> adjustBindable) => sampleContainer.AddAdjustment(type, adjustBindable);
+        public void BindAdjustments(IAggregateAudioAdjustment component) => sampleContainer.BindAdjustments(component);
 
-        public void RemoveAdjustment(AdjustableProperty type, BindableNumber<double> adjustBindable) => sampleContainer.RemoveAdjustment(type, adjustBindable);
+        public void UnbindAdjustments(IAggregateAudioAdjustment component) => sampleContainer.UnbindAdjustments(component);
+
+        public void AddAdjustment(AdjustableProperty type, IBindable<double> adjustBindable) => sampleContainer.AddAdjustment(type, adjustBindable);
+
+        public void RemoveAdjustment(AdjustableProperty type, IBindable<double> adjustBindable) => sampleContainer.RemoveAdjustment(type, adjustBindable);
 
         public void RemoveAllAdjustments(AdjustableProperty type) => sampleContainer.RemoveAllAdjustments(type);
 

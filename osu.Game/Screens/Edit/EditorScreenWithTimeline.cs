@@ -1,29 +1,23 @@
 // Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
-using JetBrains.Annotations;
 using osu.Framework.Allocation;
-using osu.Framework.Extensions.Color4Extensions;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
-using osu.Framework.Graphics.Shapes;
 using osu.Game.Graphics.UserInterface;
-using osu.Game.Screens.Edit.Compose.Components;
 using osu.Game.Screens.Edit.Compose.Components.Timeline;
-using osuTK.Graphics;
 
 namespace osu.Game.Screens.Edit
 {
-    public abstract class EditorScreenWithTimeline : EditorScreen
+    [Cached]
+    public abstract partial class EditorScreenWithTimeline : EditorScreen
     {
-        private const float vertical_margins = 10;
-        private const float horizontal_margins = 20;
+        public TimelineArea TimelineArea { get; private set; } = null!;
 
-        private const float timeline_height = 110;
+        public Container MainContent { get; private set; } = null!;
 
-        private readonly BindableBeatDivisor beatDivisor = new BindableBeatDivisor();
-
-        private Container timelineContainer;
+        private LoadingSpinner spinner = null!;
+        private Container timelineContent = null!;
 
         protected EditorScreenWithTimeline(EditorScreenMode type)
             : base(type)
@@ -31,98 +25,96 @@ namespace osu.Game.Screens.Edit
         }
 
         [BackgroundDependencyLoader(true)]
-        private void load([CanBeNull] BindableBeatDivisor beatDivisor)
+        private void load()
         {
-            if (beatDivisor != null)
-                this.beatDivisor.BindTo(beatDivisor);
-
-            Container mainContent;
-
-            LoadingSpinner spinner;
-
-            Children = new Drawable[]
+            // Grid with only two rows.
+            // First is the timeline area, which should be allowed to expand as required.
+            // Second is the main editor content, including the playfield and side toolbars (but not the bottom).
+            Child = new GridContainer
             {
-                mainContent = new Container
+                RelativeSizeAxes = Axes.Both,
+                RowDimensions = new[]
                 {
-                    Name = "Main content",
-                    RelativeSizeAxes = Axes.Both,
-                    Padding = new MarginPadding
-                    {
-                        Horizontal = horizontal_margins,
-                        Top = vertical_margins + timeline_height,
-                        Bottom = vertical_margins
-                    },
-                    Child = spinner = new LoadingSpinner(true)
-                    {
-                        State = { Value = Visibility.Visible },
-                    },
+                    new Dimension(GridSizeMode.AutoSize),
+                    new Dimension(),
                 },
-                new Container
+                Content = new[]
                 {
-                    Name = "Timeline",
-                    RelativeSizeAxes = Axes.X,
-                    Height = timeline_height,
-                    Children = new Drawable[]
+                    new Drawable[]
                     {
-                        new Box
-                        {
-                            RelativeSizeAxes = Axes.Both,
-                            Colour = Color4.Black.Opacity(0.5f)
-                        },
                         new Container
                         {
-                            Name = "Timeline content",
-                            RelativeSizeAxes = Axes.Both,
-                            Padding = new MarginPadding { Horizontal = horizontal_margins, Vertical = vertical_margins },
-                            Child = new GridContainer
+                            Name = "Timeline",
+                            RelativeSizeAxes = Axes.X,
+                            AutoSizeAxes = Axes.Y,
+                            Children = new Drawable[]
                             {
-                                RelativeSizeAxes = Axes.Both,
-                                Content = new[]
+                                new GridContainer
                                 {
-                                    new Drawable[]
+                                    Name = "Timeline content",
+                                    RelativeSizeAxes = Axes.X,
+                                    AutoSizeAxes = Axes.Y,
+                                    Content = new[]
                                     {
-                                        timelineContainer = new Container
+                                        new Drawable[]
                                         {
-                                            RelativeSizeAxes = Axes.Both,
-                                            Padding = new MarginPadding { Right = 5 },
+                                            timelineContent = new Container
+                                            {
+                                                RelativeSizeAxes = Axes.X,
+                                                AutoSizeAxes = Axes.Y,
+                                            },
                                         },
-                                        new BeatDivisorControl(beatDivisor) { RelativeSizeAxes = Axes.Both }
                                     },
-                                },
-                                ColumnDimensions = new[]
-                                {
-                                    new Dimension(),
-                                    new Dimension(GridSizeMode.Absolute, 90),
+                                    RowDimensions = new[]
+                                    {
+                                        new Dimension(GridSizeMode.AutoSize),
+                                    },
+                                    ColumnDimensions = new[]
+                                    {
+                                        new Dimension(),
+                                        new Dimension(GridSizeMode.Absolute, 90),
+                                    }
                                 }
+                            }
+                        },
+                    },
+                    new Drawable[]
+                    {
+                        MainContent = new Container
+                        {
+                            Name = "Main content",
+                            RelativeSizeAxes = Axes.Both,
+                            Depth = float.MaxValue,
+                            Child = spinner = new LoadingSpinner(true)
+                            {
+                                State = { Value = Visibility.Visible },
                             },
-                        }
-                    }
-                },
+                        },
+                    },
+                }
             };
+        }
+
+        protected override void LoadComplete()
+        {
+            base.LoadComplete();
 
             LoadComponentAsync(CreateMainContent(), content =>
             {
                 spinner.State.Value = Visibility.Hidden;
 
-                mainContent.Add(content);
+                MainContent.Add(content);
                 content.FadeInFromZero(300, Easing.OutQuint);
 
-                LoadComponentAsync(new TimelineArea
+                LoadComponentAsync(TimelineArea = new TimelineArea(CreateTimelineContent()), timeline =>
                 {
-                    RelativeSizeAxes = Axes.Both,
-                    Children = new[]
-                    {
-                        CreateTimelineContent(),
-                    }
-                }, t =>
-                {
-                    timelineContainer.Add(t);
-                    OnTimelineLoaded(t);
+                    ConfigureTimeline(timeline);
+                    timelineContent.Add(timeline);
                 });
             });
         }
 
-        protected virtual void OnTimelineLoaded(TimelineArea timelineArea)
+        protected virtual void ConfigureTimeline(TimelineArea timelineArea)
         {
         }
 

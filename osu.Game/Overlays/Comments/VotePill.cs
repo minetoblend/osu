@@ -1,6 +1,8 @@
 ﻿// Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
+#nullable disable
+
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics;
 using osu.Game.Graphics;
@@ -22,22 +24,27 @@ using System.Linq;
 
 namespace osu.Game.Overlays.Comments
 {
-    public class VotePill : LoadingButton, IHasAccentColour
+    public partial class VotePill : LoadingButton, IHasAccentColour
     {
         private const int duration = 200;
 
         public Color4 AccentColour { get; set; }
 
-        protected override IEnumerable<Drawable> EffectTargets => null;
+        protected override IEnumerable<Drawable> EffectTargets => Enumerable.Empty<Drawable>();
 
         [Resolved]
         private IAPIProvider api { get; set; }
 
+        [Resolved(canBeNull: true)]
+        private LoginOverlay login { get; set; }
+
         [Resolved]
         private OverlayColourProvider colourProvider { get; set; }
 
+        protected Box Background { get; private set; }
+
         private readonly Comment comment;
-        private Box background;
+
         private Box hoverLayer;
         private CircularContainer borderContainer;
         private SpriteText sideNumber;
@@ -62,8 +69,12 @@ namespace osu.Game.Overlays.Comments
             AccentColour = borderContainer.BorderColour = sideNumber.Colour = colours.GreenLight;
             hoverLayer.Colour = Color4.Black.Opacity(0.5f);
 
-            if (api.IsLoggedIn && api.LocalUser.Value.Id != comment.UserId)
+            bool ownComment = api.LocalUser.Value.Id == comment.UserId;
+
+            if (!ownComment)
                 Action = onAction;
+
+            Background.Alpha = ownComment ? 0 : 1;
         }
 
         protected override void LoadComplete()
@@ -71,12 +82,18 @@ namespace osu.Game.Overlays.Comments
             base.LoadComplete();
             isVoted.Value = comment.IsVoted;
             votesCount.Value = comment.VotesCount;
-            isVoted.BindValueChanged(voted => background.Colour = voted.NewValue ? AccentColour : colourProvider.Background6, true);
+            isVoted.BindValueChanged(voted => Background.Colour = voted.NewValue ? AccentColour : colourProvider.Background6, true);
             votesCount.BindValueChanged(count => votesCounter.Text = $"+{count.NewValue}", true);
         }
 
         private void onAction()
         {
+            if (!api.IsLoggedIn)
+            {
+                login?.Show();
+                return;
+            }
+
             request = new CommentVoteRequest(comment.Id, isVoted.Value ? CommentVoteAction.UnVote : CommentVoteAction.Vote);
             request.Success += onSuccess;
             api.Queue(request);
@@ -102,7 +119,7 @@ namespace osu.Game.Overlays.Comments
                     Masking = true,
                     Children = new Drawable[]
                     {
-                        background = new Box
+                        Background = new Box
                         {
                             RelativeSizeAxes = Axes.Both
                         },
@@ -115,11 +132,10 @@ namespace osu.Game.Overlays.Comments
                 },
                 sideNumber = new OsuSpriteText
                 {
-                    Anchor = Anchor.CentreLeft,
-                    Origin = Anchor.CentreRight,
+                    Anchor = Anchor.TopCentre,
+                    Origin = Anchor.BottomCentre,
                     Text = "+1",
                     Font = OsuFont.GetFont(size: 14),
-                    Margin = new MarginPadding { Right = 3 },
                     Alpha = 0,
                 },
                 votesCounter = new OsuSpriteText
@@ -172,7 +188,7 @@ namespace osu.Game.Overlays.Comments
             else
                 sideNumber.FadeTo(IsHovered ? 1 : 0);
 
-            borderContainer.BorderThickness = IsHovered ? 3 : 0;
+            borderContainer.BorderThickness = IsHovered ? 2 : 0;
         }
 
         private void onHoverAction()

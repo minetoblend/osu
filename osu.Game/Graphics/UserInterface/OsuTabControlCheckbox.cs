@@ -1,9 +1,13 @@
 ﻿// Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
+#nullable disable
+
 using osuTK;
 using osuTK.Graphics;
 using osu.Framework.Allocation;
+using osu.Framework.Audio;
+using osu.Framework.Audio.Sample;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Shapes;
@@ -11,13 +15,14 @@ using osu.Game.Graphics.Sprites;
 using osu.Framework.Graphics.Sprites;
 using osu.Framework.Graphics.UserInterface;
 using osu.Framework.Input.Events;
+using osu.Framework.Localisation;
 
 namespace osu.Game.Graphics.UserInterface
 {
     /// <summary>
     /// A Checkbox styled to be placed in line with an <see cref="OsuTabControl{T}"/>
     /// </summary>
-    public class OsuTabControlCheckbox : Checkbox
+    public partial class OsuTabControlCheckbox : Checkbox
     {
         private readonly Box box;
         private readonly SpriteText text;
@@ -35,18 +40,19 @@ namespace osu.Game.Graphics.UserInterface
             }
         }
 
-        public string Text
+        public LocalisableString Text
         {
             get => text.Text;
             set => text.Text = value;
         }
 
         private const float transition_length = 500;
+        private Sample sampleChecked;
+        private Sample sampleUnchecked;
+        private readonly SpriteIcon icon;
 
         public OsuTabControlCheckbox()
         {
-            SpriteIcon icon;
-
             AutoSizeAxes = Axes.Both;
 
             Children = new Drawable[]
@@ -76,24 +82,31 @@ namespace osu.Game.Graphics.UserInterface
                     Colour = Color4.White,
                     Origin = Anchor.BottomLeft,
                     Anchor = Anchor.BottomLeft,
-                },
-                new HoverClickSounds()
+                }
             };
+        }
 
-            Current.ValueChanged += selected =>
+        [BackgroundDependencyLoader]
+        private void load(OsuColour colours, AudioManager audio)
+        {
+            if (accentColour == null)
+                AccentColour = colours.Blue;
+
+            sampleChecked = audio.Samples.Get(@"UI/check-on");
+            sampleUnchecked = audio.Samples.Get(@"UI/check-off");
+        }
+
+        protected override void LoadComplete()
+        {
+            base.LoadComplete();
+
+            Current.BindValueChanged(selected =>
             {
                 icon.Icon = selected.NewValue ? FontAwesome.Regular.CheckCircle : FontAwesome.Regular.Circle;
                 text.Font = text.Font.With(weight: selected.NewValue ? FontWeight.Bold : FontWeight.Medium);
 
                 updateFade();
-            };
-        }
-
-        [BackgroundDependencyLoader]
-        private void load(OsuColour colours)
-        {
-            if (accentColour == null)
-                AccentColour = colours.Blue;
+            }, true);
         }
 
         protected override bool OnHover(HoverEvent e)
@@ -108,6 +121,16 @@ namespace osu.Game.Graphics.UserInterface
                 updateFade();
 
             base.OnHoverLost(e);
+        }
+
+        protected override void OnUserChange(bool value)
+        {
+            base.OnUserChange(value);
+
+            if (value)
+                sampleChecked?.Play();
+            else
+                sampleUnchecked?.Play();
         }
 
         private void updateFade()

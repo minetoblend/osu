@@ -2,7 +2,7 @@
 // See the LICENCE file in the repository root for full licence text.
 
 using System;
-using System.Linq;
+using Humanizer;
 using osu.Framework.Allocation;
 using osu.Framework.Bindables;
 using osu.Framework.Extensions;
@@ -10,22 +10,28 @@ using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Shapes;
 using osu.Framework.Graphics.Sprites;
+using osu.Framework.Localisation;
 using osu.Game.Graphics;
 using osu.Game.Graphics.Containers;
-using osu.Game.Users;
+using osu.Game.Online.API;
+using osu.Game.Online.API.Requests.Responses;
+using osu.Game.Resources.Localisation.Web;
 using osuTK;
 using osuTK.Graphics;
 
 namespace osu.Game.Overlays.Profile.Header
 {
-    public class BottomHeaderContainer : CompositeDrawable
+    public partial class BottomHeaderContainer : CompositeDrawable
     {
-        public readonly Bindable<User> User = new Bindable<User>();
+        public readonly Bindable<UserProfileData?> User = new Bindable<UserProfileData?>();
 
-        private LinkFlowContainer topLinkContainer;
-        private LinkFlowContainer bottomLinkContainer;
+        private LinkFlowContainer topLinkContainer = null!;
+        private LinkFlowContainer bottomLinkContainer = null!;
 
         private Color4 iconColour;
+
+        [Resolved]
+        private IAPIProvider api { get; set; } = null!;
 
         public BottomHeaderContainer()
         {
@@ -49,7 +55,7 @@ namespace osu.Game.Overlays.Profile.Header
                     RelativeSizeAxes = Axes.X,
                     AutoSizeAxes = Axes.Y,
                     Direction = FillDirection.Vertical,
-                    Padding = new MarginPadding { Horizontal = UserProfileOverlay.CONTENT_X_MARGIN, Vertical = 10 },
+                    Padding = new MarginPadding { Horizontal = WaveOverlayContainer.HORIZONTAL_PADDING, Vertical = 10 },
                     Spacing = new Vector2(0, 10),
                     Children = new Drawable[]
                     {
@@ -67,10 +73,10 @@ namespace osu.Game.Overlays.Profile.Header
                 }
             };
 
-            User.BindValueChanged(user => updateDisplay(user.NewValue));
+            User.BindValueChanged(user => updateDisplay(user.NewValue?.User));
         }
 
-        private void updateDisplay(User user)
+        private void updateDisplay(APIUser? user)
         {
             topLinkContainer.Clear();
             bottomLinkContainer.Clear();
@@ -78,7 +84,7 @@ namespace osu.Game.Overlays.Profile.Header
             if (user == null) return;
 
             if (user.JoinDate.ToUniversalTime().Year < 2008)
-                topLinkContainer.AddText("Here since the beginning");
+                topLinkContainer.AddText(UsersStrings.ShowFirstMembers);
             else
             {
                 topLinkContainer.AddText("Joined ");
@@ -89,7 +95,7 @@ namespace osu.Game.Overlays.Profile.Header
 
             if (user.IsOnline)
             {
-                topLinkContainer.AddText("Currently online");
+                topLinkContainer.AddText(UsersStrings.ShowLastvisitOnline);
                 addSpacer(topLinkContainer);
             }
             else if (user.LastVisit.HasValue)
@@ -103,13 +109,27 @@ namespace osu.Game.Overlays.Profile.Header
             if (user.PlayStyles?.Length > 0)
             {
                 topLinkContainer.AddText("Plays with ");
-                topLinkContainer.AddText(string.Join(", ", user.PlayStyles.Select(style => style.GetDescription())), embolden);
+
+                LocalisableString playStylesString = user.PlayStyles[0].GetLocalisableDescription();
+
+                for (int i = 1; i < user.PlayStyles.Length; i++)
+                {
+                    playStylesString = new TranslatableString(@"_", @"{0}{1}", playStylesString, CommonStrings.ArrayAndWordsConnector);
+                    playStylesString = new TranslatableString(@"_", @"{0}{1}", playStylesString, user.PlayStyles[i].GetLocalisableDescription());
+                }
+
+                topLinkContainer.AddText(playStylesString, embolden);
 
                 addSpacer(topLinkContainer);
             }
 
             topLinkContainer.AddText("Contributed ");
-            topLinkContainer.AddLink($@"{user.PostCount:#,##0} forum posts", $"https://osu.ppy.sh/users/{user.Id}/posts", creationParameters: embolden);
+            topLinkContainer.AddLink("forum post".ToQuantity(user.PostCount, "#,##0"), $"{api.WebsiteRootUrl}/users/{user.Id}/posts", creationParameters: embolden);
+
+            addSpacer(topLinkContainer);
+
+            topLinkContainer.AddText("Posted ");
+            topLinkContainer.AddLink("comment".ToQuantity(user.CommentsCount, "#,##0"), $"{api.WebsiteRootUrl}/comments?user_id={user.Id}", creationParameters: embolden);
 
             string websiteWithoutProtocol = user.Website;
 
@@ -124,8 +144,8 @@ namespace osu.Game.Overlays.Profile.Header
 
             bool anyInfoAdded = false;
 
-            anyInfoAdded |= tryAddInfo(FontAwesome.Solid.MapMarker, user.Location);
-            anyInfoAdded |= tryAddInfo(OsuIcon.Heart, user.Interests);
+            anyInfoAdded |= tryAddInfo(FontAwesome.Solid.MapMarkerAlt, user.Location);
+            anyInfoAdded |= tryAddInfo(FontAwesome.Regular.Heart, user.Interests);
             anyInfoAdded |= tryAddInfo(FontAwesome.Solid.Suitcase, user.Occupation);
 
             if (anyInfoAdded)
@@ -134,7 +154,6 @@ namespace osu.Game.Overlays.Profile.Header
             if (!string.IsNullOrEmpty(user.Twitter))
                 anyInfoAdded |= tryAddInfo(FontAwesome.Brands.Twitter, "@" + user.Twitter, $@"https://twitter.com/{user.Twitter}");
             anyInfoAdded |= tryAddInfo(FontAwesome.Brands.Discord, user.Discord);
-            anyInfoAdded |= tryAddInfo(FontAwesome.Brands.Skype, user.Skype, @"skype:" + user.Skype + @"?chat");
             anyInfoAdded |= tryAddInfo(FontAwesome.Solid.Link, websiteWithoutProtocol, user.Website);
 
             // If no information was added to the bottomLinkContainer, hide it to avoid unwanted padding
@@ -143,7 +162,7 @@ namespace osu.Game.Overlays.Profile.Header
 
         private void addSpacer(OsuTextFlowContainer textFlow) => textFlow.AddArbitraryDrawable(new Container { Width = 15 });
 
-        private bool tryAddInfo(IconUsage icon, string content, string link = null)
+        private bool tryAddInfo(IconUsage icon, string content, string? link = null)
         {
             if (string.IsNullOrEmpty(content)) return false;
 
@@ -152,7 +171,7 @@ namespace osu.Game.Overlays.Profile.Header
 
             bottomLinkContainer.AddIcon(icon, text =>
             {
-                text.Font = text.Font.With(size: 10);
+                text.Font = text.Font.With(icon.Family, 10, icon.Weight);
                 text.Colour = iconColour;
             });
 

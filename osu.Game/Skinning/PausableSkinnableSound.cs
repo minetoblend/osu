@@ -1,6 +1,8 @@
 // Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
+#nullable disable
+
 using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
@@ -8,15 +10,14 @@ using osu.Framework.Allocation;
 using osu.Framework.Bindables;
 using osu.Framework.Threading;
 using osu.Game.Audio;
-using osu.Game.Screens.Play;
 
 namespace osu.Game.Skinning
 {
-    public class PausableSkinnableSound : SkinnableSound
+    public partial class PausableSkinnableSound : SkinnableSound
     {
         public double Length => !DrawableSamples.Any() ? 0 : DrawableSamples.Max(sample => sample.Length);
 
-        protected bool RequestedPlaying { get; private set; }
+        public bool RequestedPlaying { get; private set; }
 
         public PausableSkinnableSound()
         {
@@ -43,26 +44,28 @@ namespace osu.Game.Skinning
             if (samplePlaybackDisabler != null)
             {
                 samplePlaybackDisabled.BindTo(samplePlaybackDisabler.SamplePlaybackDisabled);
-                samplePlaybackDisabled.BindValueChanged(disabled =>
+                samplePlaybackDisabled.BindValueChanged(SamplePlaybackDisabledChanged);
+            }
+        }
+
+        protected virtual void SamplePlaybackDisabledChanged(ValueChangedEvent<bool> disabled)
+        {
+            if (!RequestedPlaying) return;
+
+            // let non-looping samples that have already been started play out to completion (sounds better than abruptly cutting off).
+            if (!Looping) return;
+
+            cancelPendingStart();
+
+            if (disabled.NewValue)
+                base.Stop();
+            else
+            {
+                // schedule so we don't start playing a sample which is no longer alive.
+                scheduledStart = Schedule(() =>
                 {
-                    if (!RequestedPlaying) return;
-
-                    // let non-looping samples that have already been started play out to completion (sounds better than abruptly cutting off).
-                    if (!Looping) return;
-
-                    cancelPendingStart();
-
-                    if (disabled.NewValue)
-                        base.Stop();
-                    else
-                    {
-                        // schedule so we don't start playing a sample which is no longer alive.
-                        scheduledStart = Schedule(() =>
-                        {
-                            if (RequestedPlaying)
-                                base.Play();
-                        });
-                    }
+                    if (RequestedPlaying)
+                        base.Play();
                 });
             }
         }

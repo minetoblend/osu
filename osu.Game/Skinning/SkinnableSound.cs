@@ -4,10 +4,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using JetBrains.Annotations;
 using osu.Framework.Allocation;
 using osu.Framework.Audio;
-using osu.Framework.Audio.Track;
 using osu.Framework.Bindables;
 using osu.Framework.Extensions.IEnumerableExtensions;
 using osu.Framework.Graphics;
@@ -20,8 +18,14 @@ namespace osu.Game.Skinning
     /// <summary>
     /// A sound consisting of one or more samples to be played.
     /// </summary>
-    public class SkinnableSound : SkinReloadableDrawable, IAdjustableAudioComponent
+    public partial class SkinnableSound : SkinReloadableDrawable, IAdjustableAudioComponent
     {
+        /// <summary>
+        /// The minimum allowable volume for <see cref="Samples"/>.
+        /// <see cref="Samples"/> that specify a lower <see cref="ISampleInfo.Volume"/> will be forcibly pulled up to this volume.
+        /// </summary>
+        public int MinimumSampleVolume { get; set; }
+
         public override bool RemoveWhenNotAlive => false;
         public override bool RemoveCompletedTransforms => false;
 
@@ -38,16 +42,12 @@ namespace osu.Game.Skinning
         /// <summary>
         /// All raw <see cref="DrawableSamples"/>s contained in this <see cref="SkinnableSound"/>.
         /// </summary>
-        [NotNull, ItemNotNull]
         protected IEnumerable<DrawableSample> DrawableSamples => samplesContainer.Select(c => c.Sample).Where(s => s != null);
 
         private readonly AudioContainer<PoolableSkinnableSample> samplesContainer;
 
         [Resolved]
-        private ISampleStore sampleStore { get; set; }
-
-        [Resolved(CanBeNull = true)]
-        private IPooledSampleProvider samplePool { get; set; }
+        private IPooledSampleProvider? samplePool { get; set; }
 
         /// <summary>
         /// Creates a new <see cref="SkinnableSound"/>.
@@ -61,7 +61,7 @@ namespace osu.Game.Skinning
         /// Creates a new <see cref="SkinnableSound"/> with some initial samples.
         /// </summary>
         /// <param name="samples">The initial samples.</param>
-        public SkinnableSound([NotNull] IEnumerable<ISampleInfo> samples)
+        public SkinnableSound(IEnumerable<ISampleInfo> samples)
             : this()
         {
             this.samples = samples.ToArray();
@@ -71,7 +71,7 @@ namespace osu.Game.Skinning
         /// Creates a new <see cref="SkinnableSound"/> with an initial sample.
         /// </summary>
         /// <param name="sample">The initial sample.</param>
-        public SkinnableSound([NotNull] ISampleInfo sample)
+        public SkinnableSound(ISampleInfo sample)
             : this(new[] { sample })
         {
         }
@@ -86,8 +86,6 @@ namespace osu.Game.Skinning
             get => samples;
             set
             {
-                value ??= Array.Empty<ISampleInfo>();
-
                 if (samples == value)
                     return;
 
@@ -97,6 +95,8 @@ namespace osu.Game.Skinning
                     updateSamples();
             }
         }
+
+        public void ClearSamples() => Samples = Array.Empty<ISampleInfo>();
 
         private bool looping;
 
@@ -121,11 +121,25 @@ namespace osu.Game.Skinning
         /// </summary>
         public virtual void Play()
         {
+            FlushPendingSkinChanges();
+
             samplesContainer.ForEach(c =>
             {
                 if (PlayWhenZeroVolume || c.AggregateVolume.Value > 0)
+                {
+                    c.Stop();
                     c.Play();
+                }
             });
+        }
+
+        protected override void LoadAsyncComplete()
+        {
+            // ensure samples are constructed before SkinChanged() is called via base.LoadAsyncComplete().
+            if (!samplesContainer.Any())
+                updateSamples();
+
+            base.LoadAsyncComplete();
         }
 
         /// <summary>
@@ -136,25 +150,19 @@ namespace osu.Game.Skinning
             samplesContainer.ForEach(c => c.Stop());
         }
 
-        protected override void SkinChanged(ISkinSource skin, bool allowFallback)
-        {
-            base.SkinChanged(skin, allowFallback);
-            updateSamples();
-        }
-
         private void updateSamples()
         {
             bool wasPlaying = IsPlaying;
 
             // Remove all pooled samples (return them to the pool), and dispose the rest.
-            samplesContainer.RemoveAll(s => s.IsInPool);
+            samplesContainer.RemoveAll(s => s.IsInPool, false);
             samplesContainer.Clear();
 
             foreach (var s in samples)
             {
                 var sample = samplePool?.GetPooledSample(s) ?? new PoolableSkinnableSample(s);
                 sample.Looping = Looping;
-                sample.Volume.Value = s.Volume / 100.0;
+                sample.Volume.Value = Math.Max(s.Volume, MinimumSampleVolume) / 100.0;
 
                 samplesContainer.Add(sample);
             }
@@ -173,19 +181,54 @@ namespace osu.Game.Skinning
 
         public BindableNumber<double> Tempo => samplesContainer.Tempo;
 
-        public void AddAdjustment(AdjustableProperty type, BindableNumber<double> adjustBindable)
-            => samplesContainer.AddAdjustment(type, adjustBindable);
+        public void BindAdjustments(IAggregateAudioAdjustment component) => samplesContainer.BindAdjustments(component);
 
-        public void RemoveAdjustment(AdjustableProperty type, BindableNumber<double> adjustBindable)
-            => samplesContainer.RemoveAdjustment(type, adjustBindable);
+        public void UnbindAdjustments(IAggregateAudioAdjustment component) => samplesContainer.UnbindAdjustments(component);
 
-        public void RemoveAllAdjustments(AdjustableProperty type)
-            => samplesContainer.RemoveAllAdjustments(type);
+        public void AddAdjustment(AdjustableProperty type, IBindable<double> adjustBindable) => samplesContainer.AddAdjustment(type, adjustBindable);
+
+        public void RemoveAdjustment(AdjustableProperty type, IBindable<double> adjustBindable) => samplesContainer.RemoveAdjustment(type, adjustBindable);
+
+        public void RemoveAllAdjustments(AdjustableProperty type) => samplesContainer.RemoveAllAdjustments(type);
 
         /// <summary>
         /// Whether any samples are currently playing.
         /// </summary>
-        public bool IsPlaying => samplesContainer.Any(s => s.Playing);
+        public bool IsPlaying
+        {
+            get
+            {
+                foreach (PoolableSkinnableSample s in samplesContainer)
+                {
+                    if (s.Playing)
+                        return true;
+                }
+
+                return false;
+            }
+        }
+
+        public bool IsPlayed
+        {
+            get
+            {
+                foreach (PoolableSkinnableSample s in samplesContainer)
+                {
+                    if (s.Played)
+                        return true;
+                }
+
+                return false;
+            }
+        }
+
+        public IBindable<double> AggregateVolume => samplesContainer.AggregateVolume;
+
+        public IBindable<double> AggregateBalance => samplesContainer.AggregateBalance;
+
+        public IBindable<double> AggregateFrequency => samplesContainer.AggregateFrequency;
+
+        public IBindable<double> AggregateTempo => samplesContainer.AggregateTempo;
 
         #endregion
     }

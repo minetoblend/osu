@@ -2,27 +2,43 @@
 // See the LICENCE file in the repository root for full licence text.
 
 using System;
+using System.Linq;
 using osu.Framework.Allocation;
+using osu.Framework.Bindables;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Shapes;
 using osu.Framework.Graphics.Sprites;
 using osu.Framework.Input.Events;
 using osu.Game.Graphics;
+using osu.Game.Graphics.Sprites;
 using osuTK;
 using osuTK.Input;
 
 namespace osu.Game.Screens.Edit.Compose.Components
 {
-    public class SelectionBox : CompositeDrawable
+    [Cached]
+    public partial class SelectionBox : CompositeDrawable
     {
-        public Func<float, bool> OnRotation;
-        public Func<Vector2, Anchor, bool> OnScale;
-        public Func<Direction, bool> OnFlip;
-        public Func<bool> OnReverse;
+        public const float BORDER_RADIUS = 3;
 
-        public Action OperationStarted;
-        public Action OperationEnded;
+        private const float button_padding = 5;
+
+        [Resolved]
+        private SelectionRotationHandler? rotationHandler { get; set; }
+
+        [Resolved]
+        private SelectionScaleHandler? scaleHandler { get; set; }
+
+        public Func<Direction, bool, bool>? OnFlip;
+        public Func<bool>? OnReverse;
+
+        public Action? OperationStarted;
+        public Action? OperationEnded;
+
+        private SelectionBoxButton? reverseButton;
+        private SelectionBoxButton? rotateClockwiseButton;
+        private SelectionBoxButton? rotateCounterClockwiseButton;
 
         private bool canReverse;
 
@@ -41,70 +57,89 @@ namespace osu.Game.Screens.Edit.Compose.Components
             }
         }
 
-        private bool canRotate;
+        private readonly IBindable<bool> canRotate = new BindableBool();
+
+        private readonly IBindable<bool> canScaleX = new BindableBool();
+
+        private readonly IBindable<bool> canScaleY = new BindableBool();
+
+        private readonly IBindable<bool> canScaleDiagonally = new BindableBool();
+
+        private bool canFlipX;
 
         /// <summary>
-        /// Whether rotation support should be enabled.
+        /// Whether horizontal flipping support should be enabled.
         /// </summary>
-        public bool CanRotate
+        public bool CanFlipX
         {
-            get => canRotate;
+            get => canFlipX;
             set
             {
-                if (canRotate == value) return;
+                if (canFlipX == value) return;
 
-                canRotate = value;
+                canFlipX = value;
                 recreate();
             }
         }
 
-        private bool canScaleX;
+        private bool canFlipY;
 
         /// <summary>
-        /// Whether vertical scale support should be enabled.
+        /// Whether vertical flipping support should be enabled.
         /// </summary>
-        public bool CanScaleX
+        public bool CanFlipY
         {
-            get => canScaleX;
+            get => canFlipY;
             set
             {
-                if (canScaleX == value) return;
+                if (canFlipY == value) return;
 
-                canScaleX = value;
+                canFlipY = value;
                 recreate();
             }
         }
 
-        private bool canScaleY;
+        private string text = string.Empty;
 
-        /// <summary>
-        /// Whether horizontal scale support should be enabled.
-        /// </summary>
-        public bool CanScaleY
+        public string Text
         {
-            get => canScaleY;
+            get => text;
             set
             {
-                if (canScaleY == value) return;
+                if (value == text)
+                    return;
 
-                canScaleY = value;
-                recreate();
+                text = value;
+                if (selectionDetailsText != null)
+                    selectionDetailsText.Text = value;
             }
         }
 
-        private FillFlowContainer buttons;
+        private SelectionBoxDragHandleContainer dragHandles = null!;
+        private FillFlowContainer buttons = null!;
 
-        public const float BORDER_RADIUS = 3;
+        private OsuSpriteText? selectionDetailsText;
 
         [Resolved]
-        private OsuColour colours { get; set; }
+        private OsuColour colours { get; set; } = null!;
 
         [BackgroundDependencyLoader]
         private void load()
         {
-            RelativeSizeAxes = Axes.Both;
+            if (rotationHandler != null)
+                canRotate.BindTo(rotationHandler.CanRotateAroundSelectionOrigin);
 
-            recreate();
+            if (scaleHandler != null)
+            {
+                canScaleX.BindTo(scaleHandler.CanScaleX);
+                canScaleY.BindTo(scaleHandler.CanScaleY);
+                canScaleDiagonally.BindTo(scaleHandler.CanScaleDiagonally);
+            }
+
+            canRotate.BindValueChanged(_ => recreate());
+            canScaleX.BindValueChanged(_ => recreate());
+            canScaleY.BindValueChanged(_ => recreate());
+            canScaleDiagonally.BindValueChanged(_ => recreate(), true);
         }
 
         protected override bool OnKeyDown(KeyDownEvent e)
@@ -115,16 +150,23 @@ namespace osu.Game.Screens.Edit.Compose.Components
             switch (e.Key)
             {
                 case Key.G:
-                    return CanReverse && OnReverse?.Invoke() == true;
+                    return CanReverse && reverseButton?.TriggerClick() == true;
 
-                case Key.H:
-                    return CanScaleX && OnFlip?.Invoke(Direction.Horizontal) == true;
+                case Key.Comma:
+                    return canRotate.Value && rotateCounterClockwiseButton?.TriggerClick() == true;
 
-                case Key.J:
-                    return CanScaleY && OnFlip?.Invoke(Direction.Vertical) == true;
+                case Key.Period:
+                    return canRotate.Value && rotateClockwiseButton?.TriggerClick() == true;
             }
 
             return base.OnKeyDown(e);
+        }
+
+        protected override void Update()
+        {
+            base.Update();
+
+            ensureButtonsOnScreen();
         }
 
         private void recreate()
@@ -134,6 +176,26 @@ namespace osu.Game.Screens.Edit.Compose.Components
 
             InternalChildren = new Drawable[]
             {
+                new Container
+                {
+                    Name = "info text",
+                    AutoSizeAxes = Axes.Both,
+                    Children = new Drawable[]
+                    {
+                        new Box
+                        {
+                            Colour = colours.YellowDark,
+                            RelativeSizeAxes = Axes.Both,
+                        },
+                        selectionDetailsText = new OsuSpriteText
+                        {
+                            Padding = new MarginPadding(2),
+                            Colour = colours.Gray0,
+                            Font = OsuFont.Default.With(size: 11),
+                            Text = text,
+                        }
+                    }
+                },
                 new Container
                 {
                     Masking = true,
@@ -151,94 +213,131 @@ namespace osu.Game.Screens.Edit.Compose.Components
                         },
                     }
                 },
+                dragHandles = new SelectionBoxDragHandleContainer
+                {
+                    RelativeSizeAxes = Axes.Both,
+                    // ensures that the centres of all drag handles line up with the middle of the selection box border.
+                    Padding = new MarginPadding(BORDER_RADIUS / 2)
+                },
                 buttons = new FillFlowContainer
                 {
-                    Y = 20,
-                    AutoSizeAxes = Axes.Both,
+                    AutoSizeAxes = Axes.X,
+                    Height = 30,
                     Direction = FillDirection.Horizontal,
-                    Anchor = Anchor.BottomCentre,
-                    Origin = Anchor.Centre
+                    Margin = new MarginPadding(button_padding),
                 }
             };
 
-            if (CanScaleX) addXScaleComponents();
-            if (CanScaleX && CanScaleY) addFullScaleComponents();
-            if (CanScaleY) addYScaleComponents();
-            if (CanRotate) addRotationComponents();
-            if (CanReverse) addButton(FontAwesome.Solid.Backward, "Reverse pattern (Ctrl-G)", () => OnReverse?.Invoke());
+            if (canScaleX.Value) addXScaleComponents();
+            if (canScaleDiagonally.Value) addFullScaleComponents();
+            if (canScaleY.Value) addYScaleComponents();
+            if (CanFlipX) addXFlipComponents();
+            if (CanFlipY) addYFlipComponents();
+            if (canRotate.Value) addRotationComponents();
+            if (CanReverse) reverseButton = addButton(FontAwesome.Solid.Backward, "Reverse pattern (Ctrl-G)", () => OnReverse?.Invoke());
         }
 
         private void addRotationComponents()
         {
-            const float separation = 40;
+            rotateCounterClockwiseButton = addButton(FontAwesome.Solid.Undo, "Rotate 90 degrees counter-clockwise (Ctrl-<)", () => rotationHandler?.Rotate(-90));
+            rotateClockwiseButton = addButton(FontAwesome.Solid.Redo, "Rotate 90 degrees clockwise (Ctrl->)", () => rotationHandler?.Rotate(90));
 
-            addButton(FontAwesome.Solid.Undo, "Rotate 90 degrees counter-clockwise", () => OnRotation?.Invoke(-90));
-            addButton(FontAwesome.Solid.Redo, "Rotate 90 degrees clockwise", () => OnRotation?.Invoke(90));
-
-            AddRangeInternal(new Drawable[]
-            {
-                new Box
-                {
-                    Depth = float.MaxValue,
-                    Colour = colours.YellowLight,
-                    Blending = BlendingParameters.Additive,
-                    Alpha = 0.3f,
-                    Size = new Vector2(BORDER_RADIUS, separation),
-                    Anchor = Anchor.TopCentre,
-                    Origin = Anchor.BottomCentre,
-                },
-                new SelectionBoxDragHandleButton(FontAwesome.Solid.Redo, "Free rotate")
-                {
-                    Anchor = Anchor.TopCentre,
-                    Y = -separation,
-                    HandleDrag = e => OnRotation?.Invoke(convertDragEventToAngleOfRotation(e)),
-                    OperationStarted = operationStarted,
-                    OperationEnded = operationEnded
-                }
-            });
+            addRotateHandle(Anchor.TopLeft);
+            addRotateHandle(Anchor.TopRight);
+            addRotateHandle(Anchor.BottomLeft);
+            addRotateHandle(Anchor.BottomRight);
         }
 
         private void addYScaleComponents()
         {
-            addButton(FontAwesome.Solid.ArrowsAltV, "Flip vertically (Ctrl-J)", () => OnFlip?.Invoke(Direction.Vertical));
-
-            addDragHandle(Anchor.TopCentre);
-            addDragHandle(Anchor.BottomCentre);
+            addScaleHandle(Anchor.TopCentre);
+            addScaleHandle(Anchor.BottomCentre);
         }
 
         private void addFullScaleComponents()
         {
-            addDragHandle(Anchor.TopLeft);
-            addDragHandle(Anchor.TopRight);
-            addDragHandle(Anchor.BottomLeft);
-            addDragHandle(Anchor.BottomRight);
+            addScaleHandle(Anchor.TopLeft);
+            addScaleHandle(Anchor.TopRight);
+            addScaleHandle(Anchor.BottomLeft);
+            addScaleHandle(Anchor.BottomRight);
         }
 
         private void addXScaleComponents()
         {
-            addButton(FontAwesome.Solid.ArrowsAltH, "Flip horizontally (Ctrl-H)", () => OnFlip?.Invoke(Direction.Horizontal));
-
-            addDragHandle(Anchor.CentreLeft);
-            addDragHandle(Anchor.CentreRight);
+            addScaleHandle(Anchor.CentreLeft);
+            addScaleHandle(Anchor.CentreRight);
         }
 
-        private void addButton(IconUsage icon, string tooltip, Action action)
+        private void addXFlipComponents()
         {
-            buttons.Add(new SelectionBoxDragHandleButton(icon, tooltip)
+            addButton(FontAwesome.Solid.ArrowsAltH, "Flip horizontally", () => OnFlip?.Invoke(Direction.Horizontal, false));
+        }
+
+        private void addYFlipComponents()
+        {
+            addButton(FontAwesome.Solid.ArrowsAltV, "Flip vertically", () => OnFlip?.Invoke(Direction.Vertical, false));
+        }
+
+        private SelectionBoxButton addButton(IconUsage icon, string tooltip, Action action)
+        {
+            var button = new SelectionBoxButton(icon, tooltip)
             {
-                OperationStarted = operationStarted,
-                OperationEnded = operationEnded,
                 Action = action
-            });
+            };
+
+            button.OperationStarted += freezeButtonPosition;
+            button.HoverLost += unfreezeButtonPosition;
+
+            button.OperationStarted += operationStarted;
+            button.OperationEnded += operationEnded;
+
+            buttons.Add(button);
+
+            return button;
         }
 
-        private void addDragHandle(Anchor anchor) => AddInternal(new SelectionBoxDragHandle
+        /// <remarks>
+        /// This method should be called when a selection needs to be flipped
+        /// because of an ongoing scale handle drag that would otherwise cause width or height to go negative.
+        /// </remarks>
+        public void PerformFlipFromScaleHandles(Axes axes)
         {
-            Anchor = anchor,
-            HandleDrag = e => OnScale?.Invoke(e.Delta, anchor),
-            OperationStarted = operationStarted,
-            OperationEnded = operationEnded
-        });
+            if (axes.HasFlag(Axes.X))
+            {
+                dragHandles.FlipScaleHandles(Direction.Horizontal);
+                OnFlip?.Invoke(Direction.Horizontal, false);
+            }
+
+            if (axes.HasFlag(Axes.Y))
+            {
+                dragHandles.FlipScaleHandles(Direction.Vertical);
+                OnFlip?.Invoke(Direction.Vertical, false);
+            }
+        }
+
+        private void addScaleHandle(Anchor anchor)
+        {
+            var handle = new SelectionBoxScaleHandle
+            {
+                Anchor = anchor,
+            };
+
+            handle.OperationStarted += operationStarted;
+            handle.OperationEnded += operationEnded;
+            dragHandles.AddScaleHandle(handle);
+        }
+
+        private void addRotateHandle(Anchor anchor)
+        {
+            var handle = new SelectionBoxRotationHandle
+            {
+                Anchor = anchor,
+            };
+
+            handle.OperationStarted += operationStarted;
+            handle.OperationEnded += operationEnded;
+            dragHandles.AddRotationHandle(handle);
+        }
 
         private int activeOperations;
 
@@ -261,6 +360,96 @@ namespace osu.Game.Screens.Edit.Compose.Components
         {
             if (activeOperations++ == 0)
                 OperationStarted?.Invoke();
+        }
+
+        private Vector2? frozenButtonsPosition;
+
+        private void freezeButtonPosition()
+        {
+            frozenButtonsPosition = buttons.ScreenSpaceDrawQuad.TopLeft;
+        }
+
+        private void unfreezeButtonPosition()
+        {
+            if (frozenButtonsPosition != null)
+            {
+                frozenButtonsPosition = null;
+                ensureButtonsOnScreen(true);
+            }
+        }
+
+        private void ensureButtonsOnScreen(bool animated = false)
+        {
+            if (frozenButtonsPosition != null)
+            {
+                buttons.Anchor = Anchor.TopLeft;
+                buttons.Origin = Anchor.TopLeft;
+
+                buttons.Position = ToLocalSpace(frozenButtonsPosition.Value) - new Vector2(button_padding);
+                return;
+            }
+
+            if (!animated && buttons.Transforms.Any())
+                return;
+
+            var thisQuad = ScreenSpaceDrawQuad;
+
+            // Shrink the parent quad to give a bit of padding so the buttons don't stick *right* on the border.
+            // AABBFloat assumes no rotation. one would hope the whole editor is not being rotated.
+            var parentQuad = Parent!.ScreenSpaceDrawQuad.AABBFloat.Shrink(ToLocalSpace(thisQuad.TopLeft + new Vector2(button_padding * 2)));
+
+            float topExcess = thisQuad.TopLeft.Y - parentQuad.TopLeft.Y;
+            float bottomExcess = parentQuad.BottomLeft.Y - thisQuad.BottomLeft.Y;
+            float leftExcess = thisQuad.TopLeft.X - parentQuad.TopLeft.X;
+            float rightExcess = parentQuad.TopRight.X - thisQuad.TopRight.X;
+
+            float minHeight = buttons.ScreenSpaceDrawQuad.Height;
+
+            Anchor targetAnchor;
+            Anchor targetOrigin;
+            Vector2 targetPosition = Vector2.Zero;
+
+            if (topExcess < minHeight && bottomExcess < minHeight)
+            {
+                targetAnchor = Anchor.BottomCentre;
+                targetOrigin = Anchor.BottomCentre;
+                targetPosition.Y = Math.Min(0, ToLocalSpace(Parent!.ScreenSpaceDrawQuad.BottomLeft).Y - DrawHeight);
+            }
+            else if (topExcess > bottomExcess)
+            {
+                targetAnchor = Anchor.TopCentre;
+                targetOrigin = Anchor.BottomCentre;
+            }
+            else
+            {
+                targetAnchor = Anchor.BottomCentre;
+                targetOrigin = Anchor.TopCentre;
+            }
+
+            targetPosition.X += ToLocalSpace(thisQuad.TopLeft - new Vector2(Math.Min(0, leftExcess)) + new Vector2(Math.Min(0, rightExcess))).X;
+
+            if (animated)
+            {
+                var originalPosition = ToLocalSpace(buttons.ScreenSpaceDrawQuad.TopLeft);
+
+                buttons.Origin = targetOrigin;
+                buttons.Anchor = targetAnchor;
+                buttons.Position = targetPosition;
+
+                var newPosition = ToLocalSpace(buttons.ScreenSpaceDrawQuad.TopLeft);
+
+                var delta = newPosition - originalPosition;
+
+                buttons.Position -= delta;
+
+                buttons.MoveTo(targetPosition, 300, Easing.OutQuint);
+            }
+            else
+            {
+                buttons.Anchor = targetAnchor;
+                buttons.Origin = targetOrigin;
+                buttons.Position = targetPosition;
+            }
         }
     }
 }

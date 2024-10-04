@@ -6,7 +6,6 @@ using osu.Framework.Allocation;
 using osu.Framework.Bindables;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
-using osu.Game.Beatmaps;
 using osu.Game.Beatmaps.ControlPoints;
 using osu.Game.Graphics.UserInterface;
 using osu.Game.Graphics.UserInterfaceV2;
@@ -14,23 +13,23 @@ using osuTK;
 
 namespace osu.Game.Screens.Edit.Timing
 {
-    internal class GroupSection : CompositeDrawable
+    internal partial class GroupSection : CompositeDrawable
     {
-        private LabelledTextBox textBox;
+        private LabelledTextBox textBox = null!;
 
-        private TriangleButton button;
-
-        [Resolved]
-        protected Bindable<ControlPointGroup> SelectedGroup { get; private set; }
+        private OsuButton button = null!;
 
         [Resolved]
-        protected IBindable<WorkingBeatmap> Beatmap { get; private set; }
+        protected Bindable<ControlPointGroup> SelectedGroup { get; private set; } = null!;
 
         [Resolved]
-        private EditorClock clock { get; set; }
+        protected EditorBeatmap Beatmap { get; private set; } = null!;
 
-        [Resolved(canBeNull: true)]
-        private IEditorChangeHandler changeHandler { get; set; }
+        [Resolved]
+        private EditorClock clock { get; set; } = null!;
+
+        [Resolved]
+        private IEditorChangeHandler? changeHandler { get; set; }
 
         [BackgroundDependencyLoader]
         private void load()
@@ -38,7 +37,7 @@ namespace osu.Game.Screens.Edit.Timing
             RelativeSizeAxes = Axes.X;
             AutoSizeAxes = Axes.Y;
 
-            Padding = new MarginPadding(10);
+            Padding = new MarginPadding(10) { Bottom = 0 };
 
             InternalChildren = new Drawable[]
             {
@@ -52,9 +51,10 @@ namespace osu.Game.Screens.Edit.Timing
                     {
                         textBox = new LabelledTextBox
                         {
-                            Label = "Time"
+                            Label = "Time",
+                            SelectAllOnFocus = true,
                         },
-                        button = new TriangleButton
+                        button = new RoundedButton
                         {
                             Text = "Use current time",
                             RelativeSizeAxes = Axes.X,
@@ -69,7 +69,7 @@ namespace osu.Game.Screens.Edit.Timing
                 if (!isNew)
                     return;
 
-                if (double.TryParse(sender.Text, out var newTime))
+                if (double.TryParse(sender.Text, out double newTime))
                 {
                     changeSelectedGroupTime(newTime);
                 }
@@ -107,13 +107,13 @@ namespace osu.Game.Screens.Edit.Timing
 
             var currentGroupItems = SelectedGroup.Value.ControlPoints.ToArray();
 
-            Beatmap.Value.Beatmap.ControlPointInfo.RemoveGroup(SelectedGroup.Value);
+            Beatmap.ControlPointInfo.RemoveGroup(SelectedGroup.Value);
 
             foreach (var cp in currentGroupItems)
-                Beatmap.Value.Beatmap.ControlPointInfo.Add(time, cp);
+                Beatmap.ControlPointInfo.Add(time, cp);
 
             // the control point might not necessarily exist yet, if currentGroupItems was empty.
-            SelectedGroup.Value = Beatmap.Value.Beatmap.ControlPointInfo.GroupAt(time, true);
+            SelectedGroup.Value = Beatmap.ControlPointInfo.GroupAt(time, true);
 
             changeHandler?.EndChange();
         }

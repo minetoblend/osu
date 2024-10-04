@@ -4,16 +4,22 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using Newtonsoft.Json;
 using osu.Framework.Allocation;
+using osu.Framework.Extensions.ObjectExtensions;
+using osu.Framework.Graphics;
 using osu.Framework.Graphics.Textures;
 using osu.Framework.Input;
-using osu.Framework.Platform;
 using osu.Framework.IO.Stores;
-using osu.Game.Beatmaps;
+using osu.Framework.Logging;
+using osu.Framework.Platform;
+using osu.Game.Database;
+using osu.Game.Graphics;
+using osu.Game.Online;
 using osu.Game.Online.API.Requests;
-using osu.Game.Tournament.IPC;
 using osu.Game.Tournament.IO;
+using osu.Game.Tournament.IPC;
 using osu.Game.Tournament.Models;
 using osu.Game.Users;
 using osuTK.Input;
@@ -21,243 +27,343 @@ using osuTK.Input;
 namespace osu.Game.Tournament
 {
     [Cached(typeof(TournamentGameBase))]
-    public class TournamentGameBase : OsuGameBase
+    public partial class TournamentGameBase : OsuGameBase
     {
-        private const string bracket_filename = "bracket.json";
-        private LadderInfo ladder;
-        private TournamentStorage storage;
-        private DependencyContainer dependencies;
-        private FileBasedIPC ipc;
+        public const string BRACKET_FILENAME = @"bracket.json";
+        private LadderInfo ladder = new LadderInfo();
+        private TournamentStorage storage = null!;
+        private DependencyContainer dependencies = null!;
+        private FileBasedIPC ipc = null!;
+        private BeatmapLookupCache beatmapCache = null!;
+
+        protected Task BracketLoadTask => bracketLoadTaskCompletionSource.Task;
+
+        private readonly TaskCompletionSource<bool> bracketLoadTaskCompletionSource = new TaskCompletionSource<bool>();
 
         protected override IReadOnlyDependencyContainer CreateChildDependencies(IReadOnlyDependencyContainer parent)
         {
             return dependencies = new DependencyContainer(base.CreateChildDependencies(parent));
         }
 
+        public override EndpointConfiguration CreateEndpoints()
+        {
+            if (UseDevelopmentServer)
+                return base.CreateEndpoints();
+
+            return new ProductionEndpointConfiguration();
+        }
+
+        private TournamentSpriteText initialisationText = null!;
+
         [BackgroundDependencyLoader]
         private void load(Storage baseStorage)
         {
+            Add(initialisationText = new TournamentSpriteText
+            {
+                Anchor = Anchor.Centre,
+                Origin = Anchor.Centre,
+                Font = OsuFont.Torus.With(size: 32),
+            });
+
             Resources.AddStore(new DllResourceStore(typeof(TournamentGameBase).Assembly));
 
             dependencies.CacheAs<Storage>(storage = new TournamentStorage(baseStorage));
+            dependencies.CacheAs(storage);
+
             dependencies.Cache(new TournamentVideoResourceStore(storage));
 
-            Textures.AddStore(new TextureLoaderStore(new StorageBackedResourceStore(storage)));
-
-            readBracket();
-
-            ladder.CurrentMatch.Value = ladder.Matches.FirstOrDefault(p => p.Current.Value);
+            Textures.AddTextureSource(new TextureLoaderStore(new StorageBackedResourceStore(storage)));
 
             dependencies.CacheAs(new StableInfo(storage));
 
-            dependencies.CacheAs<MatchIPCInfo>(ipc = new FileBasedIPC());
-            Add(ipc);
+            beatmapCache = dependencies.Get<BeatmapLookupCache>();
         }
 
-        private void readBracket()
+        protected override void LoadComplete()
         {
-            if (storage.Exists(bracket_filename))
+            GlobalCursorDisplay.MenuCursor.AlwaysPresent = true; // required for tooltip display
+
+            // we don't want to show the menu cursor as it would appear on stream output.
+            GlobalCursorDisplay.MenuCursor.Alpha = 0;
+
+            base.LoadComplete();
+
+            Task.Run(readBracket);
+        }
+
+        private async Task readBracket()
+        {
+            try
             {
-                using (Stream stream = storage.GetStream(bracket_filename, FileAccess.Read, FileMode.Open))
-                using (var sr = new StreamReader(stream))
-                    ladder = JsonConvert.DeserializeObject<LadderInfo>(sr.ReadToEnd());
-            }
-
-            ladder ??= new LadderInfo();
-            ladder.Ruleset.Value ??= RulesetStore.AvailableRulesets.First();
-
-            Ruleset.BindTo(ladder.Ruleset);
-
-            dependencies.Cache(ladder);
-
-            bool addedInfo = false;
-
-            // assign teams
-            foreach (var match in ladder.Matches)
-            {
-                match.Team1.Value = ladder.Teams.FirstOrDefault(t => t.Acronym.Value == match.Team1Acronym);
-                match.Team2.Value = ladder.Teams.FirstOrDefault(t => t.Acronym.Value == match.Team2Acronym);
-
-                foreach (var conditional in match.ConditionalMatches)
+                if (storage.Exists(BRACKET_FILENAME))
                 {
-                    conditional.Team1.Value = ladder.Teams.FirstOrDefault(t => t.Acronym.Value == conditional.Team1Acronym);
-                    conditional.Team2.Value = ladder.Teams.FirstOrDefault(t => t.Acronym.Value == conditional.Team2Acronym);
-                    conditional.Round.Value = match.Round.Value;
-                }
-            }
-
-            // assign progressions
-            foreach (var pair in ladder.Progressions)
-            {
-                var src = ladder.Matches.FirstOrDefault(p => p.ID == pair.SourceID);
-                var dest = ladder.Matches.FirstOrDefault(p => p.ID == pair.TargetID);
-
-                if (src == null)
-                    continue;
-
-                if (dest != null)
-                {
-                    if (pair.Losers)
-                        src.LosersProgression.Value = dest;
-                    else
-                        src.Progression.Value = dest;
-                }
-            }
-
-            // link matches to rounds
-            foreach (var round in ladder.Rounds)
-            {
-                foreach (var id in round.Matches)
-                {
-                    var found = ladder.Matches.FirstOrDefault(p => p.ID == id);
-
-                    if (found != null)
+                    using (Stream stream = storage.GetStream(BRACKET_FILENAME, FileAccess.Read, FileMode.Open))
+                    using (var sr = new StreamReader(stream))
                     {
-                        found.Round.Value = round;
-                        if (round.StartDate.Value > found.Date.Value)
-                            found.Date.Value = round.StartDate.Value;
+                        ladder = JsonConvert.DeserializeObject<LadderInfo>(await sr.ReadToEndAsync().ConfigureAwait(false), new JsonPointConverter()) ?? ladder;
                     }
                 }
+
+                var resolvedRuleset = ladder.Ruleset.Value != null
+                    ? RulesetStore.GetRuleset(ladder.Ruleset.Value.ShortName)
+                    : RulesetStore.AvailableRulesets.First();
+
+                // Must set to null initially to avoid the following re-fetch hitting `ShortName` based equality check.
+                ladder.Ruleset.Value = null;
+                ladder.Ruleset.Value = resolvedRuleset;
+
+                bool addedInfo = false;
+
+                // assign teams
+                foreach (var match in ladder.Matches)
+                {
+                    match.Team1.Value = ladder.Teams.FirstOrDefault(t => t.Acronym.Value == match.Team1Acronym);
+                    match.Team2.Value = ladder.Teams.FirstOrDefault(t => t.Acronym.Value == match.Team2Acronym);
+
+                    foreach (var conditional in match.ConditionalMatches)
+                    {
+                        conditional.Team1.Value = ladder.Teams.FirstOrDefault(t => t.Acronym.Value == conditional.Team1Acronym);
+                        conditional.Team2.Value = ladder.Teams.FirstOrDefault(t => t.Acronym.Value == conditional.Team2Acronym);
+                        conditional.Round.Value = match.Round.Value;
+                    }
+                }
+
+                // assign progressions
+                foreach (var pair in ladder.Progressions)
+                {
+                    var src = ladder.Matches.FirstOrDefault(p => p.ID == pair.SourceID);
+                    var dest = ladder.Matches.FirstOrDefault(p => p.ID == pair.TargetID);
+
+                    if (src == null)
+                        continue;
+
+                    if (dest != null)
+                    {
+                        if (pair.Losers)
+                            src.LosersProgression.Value = dest;
+                        else
+                            src.Progression.Value = dest;
+                    }
+                }
+
+                // link matches to rounds
+                foreach (var round in ladder.Rounds)
+                {
+                    foreach (int id in round.Matches)
+                    {
+                        var found = ladder.Matches.FirstOrDefault(p => p.ID == id);
+
+                        if (found != null)
+                        {
+                            found.Round.Value = round;
+                            if (round.StartDate.Value > found.Date.Value)
+                                found.Date.Value = round.StartDate.Value;
+                        }
+                    }
+                }
+
+                addedInfo |= addPlayers();
+                addedInfo |= await addRoundBeatmaps().ConfigureAwait(false);
+                addedInfo |= await addSeedingBeatmaps().ConfigureAwait(false);
+
+                if (addedInfo)
+                    saveChanges();
+
+                ladder.CurrentMatch.Value = ladder.Matches.FirstOrDefault(p => p.Current.Value);
+
+                ladder.Ruleset.BindValueChanged(r =>
+                {
+                    // Refetch player rank data on next startup as the ruleset has changed.
+                    foreach (var team in ladder.Teams)
+                    {
+                        foreach (var player in team.Players)
+                            player.Rank = null;
+                    }
+
+                    SaveChanges();
+                });
+            }
+            catch (Exception e)
+            {
+                bracketLoadTaskCompletionSource.SetException(e);
+                return;
             }
 
-            addedInfo |= addPlayers();
-            addedInfo |= addBeatmaps();
+            Schedule(() =>
+            {
+                Ruleset.BindTo(ladder.Ruleset);
 
-            if (addedInfo)
-                SaveChanges();
+                dependencies.Cache(ladder);
+                dependencies.CacheAs<MatchIPCInfo>(ipc = new FileBasedIPC());
+                Add(ipc);
+
+                bracketLoadTaskCompletionSource.SetResult(true);
+
+                initialisationText.Expire();
+            });
         }
 
         /// <summary>
         /// Add missing player info based on user IDs.
         /// </summary>
-        /// <returns></returns>
         private bool addPlayers()
         {
-            bool addedInfo = false;
+            var playersRequiringPopulation = ladder.Teams
+                                                   .SelectMany(t => t.Players)
+                                                   .Where(p => string.IsNullOrEmpty(p.Username)
+                                                               || p.CountryCode == CountryCode.Unknown
+                                                               || p.Rank == null).ToList();
 
-            foreach (var t in ladder.Teams)
+            if (playersRequiringPopulation.Count == 0)
+                return false;
+
+            for (int i = 0; i < playersRequiringPopulation.Count; i++)
             {
-                foreach (var p in t.Players)
-                {
-                    if (string.IsNullOrEmpty(p.Username) || p.Statistics == null)
-                    {
-                        PopulateUser(p);
-                        addedInfo = true;
-                    }
-                }
+                var p = playersRequiringPopulation[i];
+                PopulatePlayer(p, immediate: true);
+                updateLoadProgressMessage($"Populating user stats ({i} / {playersRequiringPopulation.Count})");
             }
 
-            return addedInfo;
+            return true;
         }
 
         /// <summary>
         /// Add missing beatmap info based on beatmap IDs
         /// </summary>
-        private bool addBeatmaps()
+        private async Task<bool> addRoundBeatmaps()
         {
-            bool addedInfo = false;
+            var beatmapsRequiringPopulation = ladder.Rounds
+                                                    .SelectMany(r => r.Beatmaps)
+                                                    .Where(b => (b.Beatmap == null || b.Beatmap?.OnlineID == 0) && b.ID > 0).ToList();
 
-            foreach (var r in ladder.Rounds)
+            if (beatmapsRequiringPopulation.Count == 0)
+                return false;
+
+            for (int i = 0; i < beatmapsRequiringPopulation.Count; i++)
             {
-                foreach (var b in r.Beatmaps.ToList())
-                {
-                    if (b.BeatmapInfo != null)
-                        continue;
+                var b = beatmapsRequiringPopulation[i];
 
-                    if (b.ID > 0)
-                    {
-                        var req = new GetBeatmapRequest(new BeatmapInfo { OnlineBeatmapID = b.ID });
-                        API.Perform(req);
-                        b.BeatmapInfo = req.Result?.ToBeatmap(RulesetStore);
+                var populated = await beatmapCache.GetBeatmapAsync(b.ID).ConfigureAwait(false);
+                if (populated != null)
+                    b.Beatmap = new TournamentBeatmap(populated);
 
-                        addedInfo = true;
-                    }
-
-                    if (b.BeatmapInfo == null)
-                        // if online population couldn't be performed, ensure we don't leave a null value behind
-                        r.Beatmaps.Remove(b);
-                }
+                updateLoadProgressMessage($"Populating round beatmaps ({i} / {beatmapsRequiringPopulation.Count})");
             }
 
-            foreach (var t in ladder.Teams)
-            {
-                foreach (var s in t.SeedingResults)
-                {
-                    foreach (var b in s.Beatmaps)
-                    {
-                        if (b.BeatmapInfo == null && b.ID > 0)
-                        {
-                            var req = new GetBeatmapRequest(new BeatmapInfo { OnlineBeatmapID = b.ID });
-                            req.Perform(API);
-                            b.BeatmapInfo = req.Result?.ToBeatmap(RulesetStore);
-
-                            addedInfo = true;
-                        }
-                    }
-                }
-            }
-
-            return addedInfo;
+            return true;
         }
 
-        public void PopulateUser(User user, Action success = null, Action failure = null)
+        /// <summary>
+        /// Add missing beatmap info based on beatmap IDs
+        /// </summary>
+        private async Task<bool> addSeedingBeatmaps()
         {
-            var req = new GetUserRequest(user.Id, Ruleset.Value);
+            var beatmapsRequiringPopulation = ladder.Teams
+                                                    .SelectMany(r => r.SeedingResults)
+                                                    .SelectMany(r => r.Beatmaps)
+                                                    .Where(b => (b.Beatmap == null || b.Beatmap.OnlineID == 0) && b.ID > 0).ToList();
 
-            req.Success += res =>
+            if (beatmapsRequiringPopulation.Count == 0)
+                return false;
+
+            for (int i = 0; i < beatmapsRequiringPopulation.Count; i++)
             {
+                var b = beatmapsRequiringPopulation[i];
+
+                var populated = await beatmapCache.GetBeatmapAsync(b.ID).ConfigureAwait(false);
+                if (populated != null)
+                    b.Beatmap = new TournamentBeatmap(populated);
+
+                updateLoadProgressMessage($"Populating seeding beatmaps ({i} / {beatmapsRequiringPopulation.Count})");
+            }
+
+            return true;
+        }
+
+        private void updateLoadProgressMessage(string s) => Schedule(() => initialisationText.Text = s);
+
+        public void PopulatePlayer(TournamentUser user, Action? success = null, Action? failure = null, bool immediate = false)
+        {
+            var req = new GetUserRequest(user.OnlineID, ladder.Ruleset.Value);
+
+            if (immediate)
+            {
+                API.Perform(req);
+                populate();
+            }
+            else
+            {
+                req.Success += _ => { populate(); };
+                req.Failure += _ =>
+                {
+                    user.OnlineID = 1;
+                    failure?.Invoke();
+                };
+
+                API.Queue(req);
+            }
+
+            void populate()
+            {
+                var res = req.Response;
+
+                if (res == null)
+                    return;
+
+                user.OnlineID = res.Id;
+
                 user.Username = res.Username;
-                user.Statistics = res.Statistics;
-                user.Country = res.Country;
-                user.Cover = res.Cover;
+                user.CoverUrl = res.CoverUrl;
+                user.CountryCode = res.CountryCode;
+                user.Rank = res.Statistics?.GlobalRank;
 
                 success?.Invoke();
-            };
-
-            req.Failure += _ =>
-            {
-                user.Id = 1;
-                failure?.Invoke();
-            };
-
-            API.Queue(req);
+            }
         }
 
-        protected override void LoadComplete()
+        public void SaveChanges()
         {
-            MenuCursorContainer.Cursor.AlwaysPresent = true; // required for tooltip display
+            if (!bracketLoadTaskCompletionSource.Task.IsCompletedSuccessfully)
+            {
+                Logger.Log("Inhibiting bracket save as bracket parsing failed");
+                return;
+            }
 
-            // we don't want to show the menu cursor as it would appear on stream output.
-            MenuCursorContainer.Cursor.Alpha = 0;
-
-            base.LoadComplete();
+            saveChanges();
         }
 
-        protected virtual void SaveChanges()
+        private void saveChanges()
+        {
+            // Serialise before opening stream for writing, so if there's a failure it will leave the file in the previous state.
+            string serialisedLadder = GetSerialisedLadder();
+
+            using (var stream = storage.CreateFileSafely(BRACKET_FILENAME))
+            using (var sw = new StreamWriter(stream))
+                sw.Write(serialisedLadder);
+        }
+
+        public string GetSerialisedLadder()
         {
             foreach (var r in ladder.Rounds)
                 r.Matches = ladder.Matches.Where(p => p.Round.Value == r).Select(p => p.ID).ToList();
 
-            ladder.Progressions = ladder.Matches.Where(p => p.Progression.Value != null).Select(p => new TournamentProgression(p.ID, p.Progression.Value.ID)).Concat(
-                                            ladder.Matches.Where(p => p.LosersProgression.Value != null).Select(p => new TournamentProgression(p.ID, p.LosersProgression.Value.ID, true)))
+            ladder.Progressions = ladder.Matches.Where(p => p.Progression.Value != null).Select(p => new TournamentProgression(p.ID, p.Progression.Value.AsNonNull().ID)).Concat(
+                                            ladder.Matches.Where(p => p.LosersProgression.Value != null).Select(p => new TournamentProgression(p.ID, p.LosersProgression.Value.AsNonNull().ID, true)))
                                         .ToList();
 
-            using (var stream = storage.GetStream(bracket_filename, FileAccess.Write, FileMode.Create))
-            using (var sw = new StreamWriter(stream))
-            {
-                sw.Write(JsonConvert.SerializeObject(ladder,
-                    new JsonSerializerSettings
-                    {
-                        Formatting = Formatting.Indented,
-                        NullValueHandling = NullValueHandling.Ignore,
-                        DefaultValueHandling = DefaultValueHandling.Ignore,
-                    }));
-            }
+            return JsonConvert.SerializeObject(ladder,
+                new JsonSerializerSettings
+                {
+                    Formatting = Formatting.Indented,
+                    NullValueHandling = NullValueHandling.Ignore,
+                    DefaultValueHandling = DefaultValueHandling.Ignore,
+                    Converters = new JsonConverter[] { new JsonPointConverter() }
+                });
         }
 
         protected override UserInputManager CreateUserInputManager() => new TournamentInputManager();
 
-        private class TournamentInputManager : UserInputManager
+        private partial class TournamentInputManager : UserInputManager
         {
             protected override MouseButtonEventManager CreateButtonEventManagerFor(MouseButton button)
             {

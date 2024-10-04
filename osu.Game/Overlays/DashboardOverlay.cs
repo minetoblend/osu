@@ -2,155 +2,68 @@
 // See the LICENCE file in the repository root for full licence text.
 
 using System;
-using System.Threading;
 using osu.Framework.Allocation;
 using osu.Framework.Bindables;
-using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
-using osu.Framework.Graphics.Shapes;
-using osu.Game.Graphics.UserInterface;
-using osu.Game.Online.API;
+using osu.Game.Online.Metadata;
+using osu.Game.Online.Multiplayer;
 using osu.Game.Overlays.Dashboard;
 using osu.Game.Overlays.Dashboard.Friends;
 
 namespace osu.Game.Overlays
 {
-    public class DashboardOverlay : FullscreenOverlay<DashboardOverlayHeader>
+    public partial class DashboardOverlay : TabbableOnlineOverlay<DashboardOverlayHeader, DashboardOverlayTabs>
     {
-        private CancellationTokenSource cancellationToken;
+        [Resolved]
+        private MetadataClient metadataClient { get; set; } = null!;
 
-        private Container content;
-        private LoadingLayer loading;
-        private OverlayScrollContainer scrollFlow;
+        private IBindable<bool> metadataConnected = null!;
 
         public DashboardOverlay()
-            : base(OverlayColourScheme.Purple, new DashboardOverlayHeader
-            {
-                Anchor = Anchor.TopCentre,
-                Origin = Anchor.TopCentre,
-                Depth = -float.MaxValue
-            })
+            : base(OverlayColourScheme.Purple)
         {
         }
 
-        private readonly IBindable<APIState> apiState = new Bindable<APIState>();
+        protected override DashboardOverlayHeader CreateHeader() => new DashboardOverlayHeader();
 
-        [BackgroundDependencyLoader]
-        private void load(IAPIProvider api)
+        public override bool AcceptsFocus => false;
+
+        protected override void CreateDisplayToLoad(DashboardOverlayTabs tab)
         {
-            apiState.BindTo(api.State);
-            apiState.BindValueChanged(onlineStateChanged, true);
-
-            Children = new Drawable[]
+            switch (tab)
             {
-                new Box
-                {
-                    RelativeSizeAxes = Axes.Both,
-                    Colour = ColourProvider.Background5
-                },
-                scrollFlow = new OverlayScrollContainer
-                {
-                    RelativeSizeAxes = Axes.Both,
-                    ScrollbarVisible = false,
-                    Child = new FillFlowContainer
-                    {
-                        AutoSizeAxes = Axes.Y,
-                        RelativeSizeAxes = Axes.X,
-                        Direction = FillDirection.Vertical,
-                        Children = new Drawable[]
-                        {
-                            Header,
-                            content = new Container
-                            {
-                                RelativeSizeAxes = Axes.X,
-                                AutoSizeAxes = Axes.Y
-                            }
-                        }
-                    }
-                },
-                loading = new LoadingLayer(content),
-            };
+                case DashboardOverlayTabs.Friends:
+                    LoadDisplay(new FriendDisplay());
+                    break;
+
+                case DashboardOverlayTabs.CurrentlyPlaying:
+                    LoadDisplay(new CurrentlyOnlineDisplay());
+                    break;
+
+                default:
+                    throw new NotImplementedException($"Display for {tab} tab is not implemented");
+            }
         }
 
         protected override void LoadComplete()
         {
             base.LoadComplete();
 
-            Header.Current.BindValueChanged(onTabChanged);
+            metadataConnected = metadataClient.IsConnected.GetBoundCopy();
+            metadataConnected.BindValueChanged(_ => updateUserPresenceState());
+            State.BindValueChanged(_ => updateUserPresenceState());
+            updateUserPresenceState();
         }
 
-        private bool displayUpdateRequired = true;
-
-        protected override void PopIn()
+        private void updateUserPresenceState()
         {
-            base.PopIn();
-
-            // We don't want to create a new display on every call, only when exiting from fully closed state.
-            if (displayUpdateRequired)
-            {
-                Header.Current.TriggerChange();
-                displayUpdateRequired = false;
-            }
-        }
-
-        protected override void PopOutComplete()
-        {
-            base.PopOutComplete();
-            loadDisplay(Empty());
-            displayUpdateRequired = true;
-        }
-
-        private void loadDisplay(Drawable display)
-        {
-            scrollFlow.ScrollToStart();
-
-            LoadComponentAsync(display, loaded =>
-            {
-                if (API.IsLoggedIn)
-                    loading.Hide();
-
-                content.Child = loaded;
-            }, (cancellationToken = new CancellationTokenSource()).Token);
-        }
-
-        private void onTabChanged(ValueChangedEvent<DashboardOverlayTabs> tab)
-        {
-            cancellationToken?.Cancel();
-            loading.Show();
-
-            if (!API.IsLoggedIn)
-            {
-                loadDisplay(Empty());
-                return;
-            }
-
-            switch (tab.NewValue)
-            {
-                case DashboardOverlayTabs.Friends:
-                    loadDisplay(new FriendDisplay());
-                    break;
-
-                case DashboardOverlayTabs.CurrentlyPlaying:
-                    loadDisplay(new CurrentlyPlayingDisplay());
-                    break;
-
-                default:
-                    throw new NotImplementedException($"Display for {tab.NewValue} tab is not implemented");
-            }
-        }
-
-        private void onlineStateChanged(ValueChangedEvent<APIState> state) => Schedule(() =>
-        {
-            if (State.Value == Visibility.Hidden)
+            if (!metadataConnected.Value)
                 return;
 
-            Header.Current.TriggerChange();
-        });
-
-        protected override void Dispose(bool isDisposing)
-        {
-            cancellationToken?.Cancel();
-            base.Dispose(isDisposing);
+            if (State.Value == Visibility.Visible)
+                metadataClient.BeginWatchingUserPresence().FireAndForget();
+            else
+                metadataClient.EndWatchingUserPresence().FireAndForget();
         }
     }
 }
