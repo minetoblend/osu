@@ -14,9 +14,10 @@ using osu.Game.Graphics.UserInterface;
 using osu.Game.Rulesets.Edit;
 using osu.Game.Rulesets.Objects;
 using osu.Game.Rulesets.Objects.Types;
-using osu.Game.Rulesets.Osu.Beatmaps;
+using osu.Game.Rulesets.Osu.Edit.Commands;
 using osu.Game.Rulesets.Osu.Objects;
 using osu.Game.Rulesets.Osu.UI;
+using osu.Game.Screens.Edit.Commands;
 using osu.Game.Screens.Edit.Compose.Components;
 using osu.Game.Utils;
 using osuTK;
@@ -51,8 +52,37 @@ namespace osu.Game.Rulesets.Osu.Edit
             return false;
         }
 
+        [Resolved]
+        private EditorCommandHandler commandHandler { get; set; } = null!;
+
+        private MoveOperation? moveOperation;
+
+        public override void BeginMovement()
+        {
+            var hitObjects = SelectedItems.Cast<OsuHitObject>().ToArray();
+
+            commandHandler.BeginOperation(moveOperation = new MoveOperation(hitObjects));
+        }
+
+        public override void EndMovement()
+        {
+            moveOperation?.Finish();
+            moveOperation = null;
+        }
+
         public override bool HandleMovement(MoveSelectionEvent<HitObject> moveEvent)
         {
+            if (moveOperation == null)
+            {
+                // if there is no active move operation we are doing an instantaneous move (i.e. nudge)
+
+                BeginMovement();
+                bool result = HandleMovement(moveEvent);
+                EndMovement();
+
+                return result;
+            }
+
             var hitObjects = selectedMovableObjects;
 
             var localDelta = this.ScreenSpaceDeltaToParentSpace(moveEvent.ScreenSpaceDelta);
@@ -70,17 +100,10 @@ namespace osu.Game.Rulesets.Osu.Edit
             if (hitObjects.Any(h => Precision.AlmostEquals(localDelta, -h.StackOffset)))
                 return true;
 
-            // this will potentially move the selection out of bounds...
-            foreach (var h in hitObjects)
-                h.Position += localDelta;
+            moveSelectionInBounds(localDelta);
 
-            // but this will be corrected.
-            moveSelectionInBounds();
-
-            // manually update stacking.
-            // this intentionally bypasses the editor `UpdateState()` / beatmap processor flow for performance reasons,
-            // as the entire flow is too expensive to run on every movement.
-            Scheduler.AddOnce(OsuBeatmapProcessor.ApplyStacking, EditorBeatmap);
+            moveOperation!.Delta += localDelta;
+            moveOperation!.Update();
 
             return true;
         }
@@ -187,26 +210,23 @@ namespace osu.Game.Rulesets.Osu.Edit
 
         public override SelectionScaleHandler CreateScaleHandler() => new OsuSelectionScaleHandler();
 
-        private void moveSelectionInBounds()
+        private Vector2 moveSelectionInBounds(Vector2 delta)
         {
             var hitObjects = selectedMovableObjects;
 
             Quad quad = GeometryUtils.GetSurroundingQuad(hitObjects);
 
-            Vector2 delta = Vector2.Zero;
+            if (quad.TopLeft.X + delta.X < 0)
+                delta.X -= quad.TopLeft.X + delta.X;
+            if (quad.TopLeft.Y + delta.Y < 0)
+                delta.Y -= quad.TopLeft.Y + delta.Y;
 
-            if (quad.TopLeft.X < 0)
-                delta.X -= quad.TopLeft.X;
-            if (quad.TopLeft.Y < 0)
-                delta.Y -= quad.TopLeft.Y;
+            if (quad.BottomRight.X + delta.X > DrawWidth)
+                delta.X -= quad.BottomRight.X + delta.X - DrawWidth;
+            if (quad.BottomRight.Y + delta.Y > DrawHeight)
+                delta.Y -= quad.BottomRight.Y + delta.Y - DrawHeight;
 
-            if (quad.BottomRight.X > DrawWidth)
-                delta.X -= quad.BottomRight.X - DrawWidth;
-            if (quad.BottomRight.Y > DrawHeight)
-                delta.Y -= quad.BottomRight.Y - DrawHeight;
-
-            foreach (var h in hitObjects)
-                h.Position += delta;
+            return delta;
         }
 
         /// <summary>

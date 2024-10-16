@@ -190,7 +190,7 @@ namespace osu.Game.Screens.Edit.Compose.Components
             if (movementBlueprints != null)
             {
                 isDraggingBlueprint = true;
-                changeHandler?.BeginChange();
+                SelectionHandler?.BeginMovement();
                 return true;
             }
 
@@ -218,7 +218,7 @@ namespace osu.Game.Screens.Edit.Compose.Components
             if (isDraggingBlueprint)
             {
                 DragOperationCompleted();
-                changeHandler?.EndChange();
+                SelectionHandler?.EndMovement();
             }
 
             DragBox.Hide();
