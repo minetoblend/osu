@@ -3,10 +3,20 @@
 
 namespace osu.Game.Screens.Edit.Commands
 {
+    /// <summary>
+    /// Represents a change which can be undone
+    /// </summary>
     public interface IEditorCommand
     {
+        /// <summary>
+        /// Applies this command to the current state.
+        /// </summary>
         public void Apply();
 
+        /// <summary>
+        /// Creates a command which undoes the change of this command.
+        /// </summary>
+        /// <returns>The undo command</returns>
         public IEditorCommand CreateUndo();
     }
 }
