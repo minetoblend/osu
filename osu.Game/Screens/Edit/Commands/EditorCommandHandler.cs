@@ -2,12 +2,14 @@
 // See the LICENCE file in the repository root for full licence text.
 
 using System.Diagnostics;
+using osu.Framework.Allocation;
 using osu.Framework.Bindables;
+using osu.Framework.Graphics;
 using osu.Framework.Logging;
 
 namespace osu.Game.Screens.Edit.Commands
 {
-    public class EditorCommandHandler
+    public partial class EditorCommandHandler : Component
     {
         public void Submit(IEditorCommand command)
         {
@@ -94,7 +96,18 @@ namespace osu.Game.Screens.Edit.Commands
             return false;
         }
 
-        internal void Apply(IEditorCommand command) => command.Apply();
+        internal void Apply(IEditorCommand command) => command.Apply(commandContext);
+
+        private CommandContext commandContext = null!;
+
+        [BackgroundDependencyLoader]
+        private void load(EditorBeatmap editorBeatmap)
+        {
+            commandContext = new CommandContext(
+                editorBeatmap,
+                Scheduler
+            );
+        }
 
         private void recordUndoCommand(IEditorCommand command)
         {

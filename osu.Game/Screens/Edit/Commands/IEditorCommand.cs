@@ -11,7 +11,8 @@ namespace osu.Game.Screens.Edit.Commands
         /// <summary>
         /// Applies this command to the current state.
         /// </summary>
-        public void Apply();
+        /// <param name="ctx">The command context which can be used to access various resources.</param>
+        public void Apply(CommandContext ctx);
 
         /// <summary>
         /// Creates a command which undoes the change of this command.

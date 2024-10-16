@@ -66,7 +66,7 @@ namespace osu.Game.Screens.Edit.Commands
             CommandHandler.Apply(this);
         }
 
-        public abstract void Apply();
+        public abstract void Apply(CommandContext ctx);
 
         public abstract IEditorCommand CreateUndo();
 
