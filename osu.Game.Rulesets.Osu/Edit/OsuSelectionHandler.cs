@@ -100,7 +100,7 @@ namespace osu.Game.Rulesets.Osu.Edit
             if (hitObjects.Any(h => Precision.AlmostEquals(localDelta, -h.StackOffset)))
                 return true;
 
-            moveSelectionInBounds(localDelta);
+            localDelta = moveSelectionInBounds(localDelta);
 
             moveOperation!.Delta += localDelta;
             moveOperation!.Update();
