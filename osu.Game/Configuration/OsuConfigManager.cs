@@ -448,10 +448,6 @@ namespace osu.Game.Configuration
         EditorTimelineShowTimingChanges,
         EditorTimelineShowTicks,
         AlwaysShowHoldForMenuButton,
-
-        // toy stuff
-        IntifaceAddress,
-        MultiplayerConsentAcknowledged
         EditorContractSidebars,
         EditorScaleOrigin,
         EditorRotationOrigin,
@@ -460,5 +456,9 @@ namespace osu.Game.Configuration
         AlwaysRequireHoldingForPause,
         MultiplayerShowInProgressFilter,
         BeatmapListingFeaturedArtistFilter,
+
+        // toy stuff
+        IntifaceAddress,
+        MultiplayerConsentAcknowledged,
     }
 }
