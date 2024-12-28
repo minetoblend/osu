@@ -12,10 +12,11 @@ using osu.Game.Graphics;
 using osu.Game.Screens.Edit.Components.Timelines.Summary.Parts;
 using osu.Game.Screens.Edit.Components.Timelines.Summary.Visualisations;
 using osuTK;
+using osuTK.Graphics;
 
 namespace osu.Game.Screens.Edit.Compose.Components.Timeline
 {
-    public partial class TimelineTickDisplay : TimelinePart<PointVisualisation>
+    public partial class TimelineTickDisplay : TimelinePart
     {
         public const float TICK_WIDTH = 3;
 
@@ -136,16 +137,17 @@ namespace osu.Game.Screens.Edit.Compose.Components.Timeline
                         int indexInBar = beat % (point.TimeSignature.Numerator * beatDivisor.Value);
 
                         int divisor = BindableBeatDivisor.GetDivisorForBeatIndex(beat, beatDivisor.Value);
-                        var colour = BindableBeatDivisor.GetColourFor(divisor, colours);
+                        var colour = GetColourFor(divisor);
+                        float alpha = GetAlphaFor(divisor);
 
                         // even though "bar lines" take up the full vertical space, we render them in two pieces because it allows for less anchor/origin churn.
 
-                        var size = indexInBar == 0
-                            ? new Vector2(1.3f, 1)
-                            : BindableBeatDivisor.GetSize(divisor);
+                        var size = GetSize(indexInBar, divisor);
 
                         var line = getNextUsableLine();
                         line.X = xPos;
+
+                        line.Alpha = alpha;
 
                         line.Width = TICK_WIDTH * size.X;
                         line.Height = size.Y;
@@ -170,25 +172,43 @@ namespace osu.Game.Screens.Edit.Compose.Components.Timeline
 
             Drawable getNextUsableLine()
             {
-                PointVisualisation point;
+                Drawable point;
 
                 if (drawableIndex >= Count)
                 {
-                    Add(point = new PointVisualisation(0)
-                    {
-                        Anchor = Anchor.CentreLeft,
-                        Origin = Anchor.Centre,
-                    });
+                    Add(point = CreatePointVisualisation());
                 }
                 else
                     point = Children[drawableIndex];
 
                 drawableIndex++;
-                point.Alpha = 1;
 
                 return point;
             }
         }
+
+        protected virtual Color4 GetColourFor(int divisor)
+        {
+            return BindableBeatDivisor.GetColourFor(divisor, colours);
+        }
+
+        protected virtual float GetAlphaFor(int divisor)
+        {
+            return 1;
+        }
+
+        protected virtual Vector2 GetSize(int indexInBar, int divisor)
+        {
+            return indexInBar == 0
+                ? new Vector2(1.3f, 1)
+                : BindableBeatDivisor.GetSize(divisor);
+        }
+
+        protected virtual Drawable CreatePointVisualisation() => new PointVisualisation(0)
+        {
+            Anchor = Anchor.CentreLeft,
+            Origin = Anchor.Centre,
+        };
 
         protected override void Dispose(bool isDisposing)
         {
