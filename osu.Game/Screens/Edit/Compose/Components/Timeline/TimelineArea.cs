@@ -16,7 +16,7 @@ namespace osu.Game.Screens.Edit.Compose.Components.Timeline
 {
     public partial class TimelineArea : CompositeDrawable
     {
-        public Timeline Timeline = null!;
+        public DefaultTimeline Timeline = null!;
 
         private readonly Drawable userContent;
 
@@ -76,7 +76,7 @@ namespace osu.Game.Screens.Edit.Compose.Components.Timeline
                                         Depth = float.MaxValue,
                                         Colour = colourProvider.Background5
                                     },
-                                    Timeline = new Timeline(userContent),
+                                    Timeline = new DefaultTimeline(userContent),
                                 }
                             },
                             new Container
