@@ -58,6 +58,9 @@ namespace osu.Game.Screens.Edit.Compose.Components.Timeline
 
             configManager.BindWith(OsuSetting.EditorTimelineShowTimingChanges, showTimingChanges);
             showTimingChanges.BindValueChanged(_ => invalidateTicks());
+
+            if (timeline != null)
+                timeline.TicksInvalidated += invalidateTicks;
         }
 
         private void invalidateTicks()
@@ -216,6 +219,9 @@ namespace osu.Game.Screens.Edit.Compose.Components.Timeline
 
             if (changeHandler != null)
                 changeHandler.OnStateChange -= invalidateTicks;
+
+            if (timeline != null)
+                timeline.TicksInvalidated -= invalidateTicks;
         }
     }
 }

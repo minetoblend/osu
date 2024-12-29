@@ -14,6 +14,8 @@ namespace osu.Game.Screens.Edit.Compose.Components.Timeline
     [Cached]
     public partial class Timeline : ZoomableScrollContainer, IPositionSnapProvider
     {
+        public event Action? TicksInvalidated = null;
+
         [Resolved]
         private EditorClock editorClock { get; set; } = null!;
 
@@ -54,6 +56,11 @@ namespace osu.Game.Screens.Edit.Compose.Components.Timeline
             ZoomDuration = 200;
             ZoomEasing = Easing.OutQuint;
             ScrollbarVisible = false;
+        }
+
+        public void InvalidateTicks()
+        {
+            TicksInvalidated?.Invoke();
         }
 
         [BackgroundDependencyLoader]
@@ -200,7 +207,7 @@ namespace osu.Game.Screens.Edit.Compose.Components.Timeline
         public SnapResult FindSnappedPositionAndTime(Vector2 screenSpacePosition, SnapType snapType = SnapType.All)
         {
             double time = TimeAtPosition(Content.ToLocalSpace(screenSpacePosition).X);
-            return new SnapResult(screenSpacePosition, beatSnapProvider.SnapTime(time));
+            return new SnapResult(screenSpacePosition, (snapType & SnapType.GlobalGrids) != SnapType.None ? beatSnapProvider.SnapTime(time) : time);
         }
     }
 }

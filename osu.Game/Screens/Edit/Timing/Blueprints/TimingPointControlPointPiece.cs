@@ -72,5 +72,12 @@ namespace osu.Game.Screens.Edit.Timing.Blueprints
 
             content.Colour = selected ? layer.LayerColour.Lighten(0.5f) : layer.LayerColour;
         }
+
+        protected override void OnDrag(DragEvent e)
+        {
+            base.OnDrag(e);
+
+            timeline?.InvalidateTicks();
+        }
     }
 }
