@@ -6,13 +6,16 @@ using System.Collections.Generic;
 using System.Linq;
 using osu.Framework.Allocation;
 using osu.Framework.Graphics;
+using osu.Framework.Input;
+using osu.Framework.Input.Bindings;
+using osu.Framework.Input.Events;
 using osu.Game.Beatmaps.ControlPoints;
 
 namespace osu.Game.Screens.Edit.Timing
 {
-    public partial class ControlPointSelectionManager : Component
+    public partial class ControlPointSelectionManager : Component, IKeyBindingHandler<PlatformAction>
     {
-        private readonly List<ControlPoint> selectedControlPoints = new List<ControlPoint>();
+        private readonly HashSet<ControlPoint> selectedControlPoints = new HashSet<ControlPoint>(ReferenceEqualityComparer.Instance);
 
         public IReadOnlyCollection<ControlPoint> Selection => selectedControlPoints;
 
@@ -22,18 +25,14 @@ namespace osu.Game.Screens.Edit.Timing
 
         public void Select(ControlPoint controlPoint)
         {
-            if (selectedControlPoints.Contains(controlPoint))
-                return;
-
-            selectedControlPoints.Add(controlPoint);
-
-            SelectionChanged?.Invoke(new ControlPointSelectionEvent(controlPoint, true));
+            if (selectedControlPoints.Add(controlPoint))
+                SelectionChanged?.Invoke(new ControlPointSelectionEvent(controlPoint, true));
         }
 
         public void Deselect(ControlPoint controlPoint)
         {
             if (selectedControlPoints.Remove(controlPoint))
-                SelectionChanged?.Invoke(new ControlPointSelectionEvent(controlPoint, true));
+                SelectionChanged?.Invoke(new ControlPointSelectionEvent(controlPoint, false));
         }
 
         public void ToggleSelection(ControlPoint controlPoint)
@@ -56,6 +55,8 @@ namespace osu.Game.Screens.Edit.Timing
                 Select(controlPoint);
         }
 
+        public void SelectAll() => SetSelection(beatmap.ControlPointInfo.AllControlPoints);
+
         public void Clear()
         {
             var controlPoints = selectedControlPoints.ToList();
@@ -64,6 +65,14 @@ namespace osu.Game.Screens.Edit.Timing
 
             foreach (var controlPoint in controlPoints)
                 SelectionChanged?.Invoke(new ControlPointSelectionEvent(controlPoint, false));
+        }
+
+        public void SelectFromMouseDown(ControlPoint controlPoint, UIEvent evt)
+        {
+            if (evt.ControlPressed)
+                ToggleSelection(controlPoint);
+            else if (!IsSelected(controlPoint))
+                SetSelection(new[] { controlPoint });
         }
 
         [Resolved]
@@ -81,6 +90,21 @@ namespace osu.Game.Screens.Edit.Timing
             base.Dispose(isDisposing);
 
             beatmap.ControlPointInfo.ControlPointRemoved -= Deselect;
+        }
+
+        public bool OnPressed(KeyBindingPressEvent<PlatformAction> e)
+        {
+            if (e.Action == PlatformAction.SelectAll)
+            {
+                SelectAll();
+                return true;
+            }
+
+            return false;
+        }
+
+        public void OnReleased(KeyBindingReleaseEvent<PlatformAction> e)
+        {
         }
     }
 

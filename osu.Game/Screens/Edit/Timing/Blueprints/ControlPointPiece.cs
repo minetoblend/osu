@@ -50,7 +50,7 @@ namespace osu.Game.Screens.Edit.Timing.Blueprints
 
         protected override bool OnClick(ClickEvent e)
         {
-            attemptSelectionFromMouse(e);
+            selectionManager?.SelectFromMouseDown(ControlPoint, e);
             return true;
         }
 
@@ -60,20 +60,9 @@ namespace osu.Game.Screens.Edit.Timing.Blueprints
         [Resolved]
         private ControlPointSelectionManager? selectionManager { get; set; }
 
-        private void attemptSelectionFromMouse(MouseEvent e)
-        {
-            if (selectionManager == null)
-                return;
-
-            if (e.ControlPressed)
-                selectionManager.ToggleSelection(ControlPoint);
-            else if (!Blueprint.Selected.Value)
-                selectionManager.SetSelection(new[] { ControlPoint });
-        }
-
         protected override bool OnDragStart(DragStartEvent e)
         {
-            attemptSelectionFromMouse(e);
+            selectionManager?.SelectFromMouseDown(ControlPoint, e);
 
             changeHandler?.BeginChange();
             return true;
