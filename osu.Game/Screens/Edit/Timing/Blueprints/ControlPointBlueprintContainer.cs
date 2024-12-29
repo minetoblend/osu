@@ -30,6 +30,8 @@ namespace osu.Game.Screens.Edit.Timing.Blueprints
         [BackgroundDependencyLoader]
         private void load()
         {
+            var initialClock = Clock;
+
             Clock = editorClock;
             ProcessCustomClock = false;
 
@@ -37,7 +39,12 @@ namespace osu.Game.Screens.Edit.Timing.Blueprints
 
             InternalChildren = new Drawable[]
             {
-                blueprintContainer = new TimelinePart { RelativeSizeAxes = Axes.Both },
+                blueprintContainer = new TimelinePart
+                {
+                    RelativeSizeAxes = Axes.Both,
+                    Clock = initialClock,
+                    ProcessCustomClock = false,
+                },
             };
         }
 

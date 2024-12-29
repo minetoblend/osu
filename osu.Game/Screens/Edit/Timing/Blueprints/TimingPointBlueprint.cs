@@ -5,8 +5,8 @@ using osu.Game.Beatmaps.ControlPoints;
 
 namespace osu.Game.Screens.Edit.Timing.Blueprints
 {
-    public partial class TimingPointBlueprint : ControlPointBlueprint
+    public partial class TimingPointBlueprint : ControlPointBlueprint<TimingControlPoint>
     {
-        public new TimingControlPoint ControlPoint => (TimingControlPoint)base.ControlPoint;
+        protected override ControlPointPiece CreateControlPointPiece() => new TimingPointControlPointPiece(this);
     }
 }

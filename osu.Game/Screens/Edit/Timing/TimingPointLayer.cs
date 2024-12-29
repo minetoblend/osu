@@ -16,7 +16,8 @@ using osuTK.Graphics;
 
 namespace osu.Game.Screens.Edit.Timing
 {
-    public partial class TimingPointLayer : ControlPointLayer<TimingControlPoint, ControlPointBlueprint>
+    [Cached]
+    public partial class TimingPointLayer : ControlPointLayer<TimingControlPoint, TimingPointBlueprint>
     {
         [Resolved]
         private EditorClock editorClock { get; set; } = null!;
@@ -28,6 +29,8 @@ namespace osu.Game.Screens.Edit.Timing
             : base("Timing")
         {
         }
+
+        protected override float LayerHeight => 100;
 
         [Resolved]
         private OsuColour colours { get; set; } = null!;

@@ -3,7 +3,10 @@
 
 using System.Collections.Generic;
 using osu.Framework.Allocation;
+using osu.Framework.Graphics;
 using osu.Framework.Graphics.Pooling;
+using osu.Framework.Graphics.Shapes;
+using osu.Framework.Input.Events;
 using osu.Framework.Localisation;
 using osu.Game.Beatmaps.ControlPoints;
 using osu.Game.Screens.Edit.Timing.Blueprints;
@@ -34,7 +37,16 @@ namespace osu.Game.Screens.Edit.Timing
         {
             AddInternal(pool = new DrawablePool<TDrawable>(10, 40));
 
-            Add(blueprintContainer = new ControlPointBlueprintContainer());
+            Padding = new MarginPadding { Vertical = 10 };
+
+            SelectableAreaBackground background;
+
+            AddRange(new Drawable[]
+            {
+                blueprintContainer = new ControlPointBlueprintContainer(),
+                background = new SelectableAreaBackground(),
+                background.CreateProxy().With(it => it.Depth = 1)
+            });
         }
 
         protected override void LoadComplete()
@@ -46,5 +58,26 @@ namespace osu.Game.Screens.Edit.Timing
         }
 
         public ControlPointBlueprint CreateBlueprintFor(ControlPointLifetimeEntry entry) => pool.Get(d => d.Entry = entry);
+
+        private partial class SelectableAreaBackground : Box
+        {
+            public SelectableAreaBackground()
+            {
+                RelativeSizeAxes = Axes.Both;
+                Alpha = 0;
+                AlwaysPresent = true;
+            }
+
+            protected override bool OnHover(HoverEvent e)
+            {
+                this.FadeTo(0.1f, 200);
+                return false;
+            }
+
+            protected override void OnHoverLost(HoverLostEvent e)
+            {
+                this.FadeOut(200);
+            }
+        }
     }
 }

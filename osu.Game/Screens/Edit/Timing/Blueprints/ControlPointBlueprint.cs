@@ -10,6 +10,12 @@ using osu.Game.Rulesets.Objects.Pooling;
 
 namespace osu.Game.Screens.Edit.Timing.Blueprints
 {
+    public partial class ControlPointBlueprint<T> : ControlPointBlueprint
+        where T : ControlPoint
+    {
+        public new T ControlPoint => (T)base.ControlPoint;
+    }
+
     public partial class ControlPointBlueprint : PoolableDrawableWithLifetime<ControlPointLifetimeEntry>
     {
         public ControlPointBlueprint()
@@ -18,15 +24,30 @@ namespace osu.Game.Screens.Edit.Timing.Blueprints
             RelativeSizeAxes = Axes.Both;
         }
 
+        public readonly Bindable<bool> Selected = new BindableBool();
+
         public readonly Bindable<double> StartTimeBindable = new BindableDouble();
         public readonly Bindable<double> EndTimeBindable = new BindableDouble();
+
+        protected ControlPointPiece ControlPointPiece { get; private set; } = null!;
 
         [BackgroundDependencyLoader]
         private void load()
         {
+            AddInternal(ControlPointPiece = CreateControlPointPiece());
+
             StartTimeBindable.BindValueChanged(_ => Scheduler.AddOnce(updatePosition));
             EndTimeBindable.BindValueChanged(_ => Scheduler.AddOnce(updatePosition));
         }
+
+        protected override void LoadComplete()
+        {
+            base.LoadComplete();
+
+            Selected.BindValueChanged(selected => ControlPointPiece.SelectionChanged(selected.NewValue), true);
+        }
+
+        protected virtual ControlPointPiece CreateControlPointPiece() => new DiamondControlPointPiece(this);
 
         [Resolved]
         private EditorClock editorClock { get; set; } = null!;
