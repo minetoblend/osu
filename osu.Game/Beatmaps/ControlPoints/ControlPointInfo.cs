@@ -117,6 +117,22 @@ namespace osu.Game.Beatmaps.ControlPoints
             effectPoints.Clear();
         }
 
+        private void controlPointChanged(ControlPoint controlPoint)
+        {
+            switch (controlPoint)
+            {
+                case TimingControlPoint:
+                    timingPoints.Sort();
+                    break;
+
+                case EffectControlPoint:
+                    effectPoints.Sort();
+                    break;
+            }
+
+            raiseControlPointsChanged();
+        }
+
         /// <summary>
         /// Add a new <see cref="ControlPoint"/>. Note that the provided control point may not be added if the correct state is already present at the provided time.
         /// </summary>
@@ -144,7 +160,7 @@ namespace osu.Game.Beatmaps.ControlPoints
             if (addIfNotExisting)
             {
                 newGroup.ItemAdded += GroupItemAdded;
-                newGroup.ItemChanged += raiseControlPointsChanged;
+                newGroup.ItemChanged += controlPointChanged;
                 newGroup.ItemRemoved += GroupItemRemoved;
 
                 groups.Insert(~i, newGroup);
@@ -160,7 +176,7 @@ namespace osu.Game.Beatmaps.ControlPoints
                 group.Remove(item);
 
             group.ItemAdded -= GroupItemAdded;
-            group.ItemChanged -= raiseControlPointsChanged;
+            group.ItemChanged -= controlPointChanged;
             group.ItemRemoved -= GroupItemRemoved;
 
             groups.Remove(group);
