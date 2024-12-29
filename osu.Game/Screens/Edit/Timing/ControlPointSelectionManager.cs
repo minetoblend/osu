@@ -10,28 +10,31 @@ using osu.Framework.Input;
 using osu.Framework.Input.Bindings;
 using osu.Framework.Input.Events;
 using osu.Game.Beatmaps.ControlPoints;
+using osu.Game.Extensions;
 
 namespace osu.Game.Screens.Edit.Timing
 {
     public partial class ControlPointSelectionManager : Component, IKeyBindingHandler<PlatformAction>
     {
-        private readonly HashSet<ControlPoint> selectedControlPoints = new HashSet<ControlPoint>(ReferenceEqualityComparer.Instance);
+        private readonly HashSet<ControlPoint> selection = new HashSet<ControlPoint>(ReferenceEqualityComparer.Instance);
 
-        public IReadOnlyCollection<ControlPoint> Selection => selectedControlPoints;
+        public IReadOnlyCollection<ControlPoint> Selection => selection;
+
+        public bool AnySelected() => selection.Count > 0;
 
         public event Action<ControlPointSelectionEvent>? SelectionChanged;
 
-        public bool IsSelected(ControlPoint controlPoint) => selectedControlPoints.Contains(controlPoint);
+        public bool IsSelected(ControlPoint controlPoint) => selection.Contains(controlPoint);
 
         public void Select(ControlPoint controlPoint)
         {
-            if (selectedControlPoints.Add(controlPoint))
+            if (selection.Add(controlPoint))
                 SelectionChanged?.Invoke(new ControlPointSelectionEvent(controlPoint, true));
         }
 
         public void Deselect(ControlPoint controlPoint)
         {
-            if (selectedControlPoints.Remove(controlPoint))
+            if (selection.Remove(controlPoint))
                 SelectionChanged?.Invoke(new ControlPointSelectionEvent(controlPoint, false));
         }
 
@@ -45,26 +48,25 @@ namespace osu.Game.Screens.Edit.Timing
 
         public void SetSelection(IEnumerable<ControlPoint> controlPoints)
         {
-            var toSelect = controlPoints.Except(selectedControlPoints).ToList();
-            var toDeselect = selectedControlPoints.Except(controlPoints).ToList();
+            var toSelect = controlPoints.Except(selection).ToList();
+            var toDeselect = selection.Except(controlPoints).ToList();
+
+            selection.Clear();
+            selection.AddRange(controlPoints);
 
             foreach (var controlPoint in toDeselect)
-                Deselect(controlPoint);
+                SelectionChanged?.Invoke(new ControlPointSelectionEvent(controlPoint, false));
 
             foreach (var controlPoint in toSelect)
-                Select(controlPoint);
+                SelectionChanged?.Invoke(new ControlPointSelectionEvent(controlPoint, true));
         }
 
         public void SelectAll() => SetSelection(beatmap.ControlPointInfo.AllControlPoints);
 
         public void Clear()
         {
-            var controlPoints = selectedControlPoints.ToList();
-
-            selectedControlPoints.Clear();
-
-            foreach (var controlPoint in controlPoints)
-                SelectionChanged?.Invoke(new ControlPointSelectionEvent(controlPoint, false));
+            foreach (var controlPoint in selection.ToList())
+                Deselect(controlPoint);
         }
 
         public void SelectFromMouseDown(ControlPoint controlPoint, UIEvent evt)

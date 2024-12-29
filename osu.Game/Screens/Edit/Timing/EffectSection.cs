@@ -1,6 +1,7 @@
 // Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
+using System.Collections.Generic;
 using osu.Framework.Allocation;
 using osu.Framework.Bindables;
 using osu.Framework.Graphics;
@@ -47,49 +48,38 @@ namespace osu.Game.Screens.Edit.Timing
 
         private bool isRebinding;
 
-        protected override void OnControlPointChanged(ValueChangedEvent<EffectControlPoint?> point)
+        protected override void OnControlPointsChanged(ValueChangedEvent<IReadOnlyList<EffectControlPoint>> points)
         {
             scrollSpeedSlider.Current.ValueChanged -= updateControlPointFromSlider;
 
-            if (point.NewValue is EffectControlPoint newEffectPoint)
+            if (points.NewValue.Count > 0)
             {
-                isRebinding = true;
-
-                kiai.Current = newEffectPoint.KiaiModeBindable;
-                scrollSpeedSlider.Current = new BindableDouble
-                {
-                    MinValue = 0.01,
-                    MaxValue = 10,
-                    Precision = 0.01,
-                    Value = newEffectPoint.ScrollSpeedBindable.Value
-                };
-                scrollSpeedSlider.Current.ValueChanged += updateControlPointFromSlider;
-                // at this point in time the above is enough to keep the slider control in sync with reality,
-                // since undo/redo causes `OnControlPointChanged()` to fire.
-                // whenever that stops being the case, or there is a possibility that the scroll speed could be changed
-                // by something else other than this control, this code should probably be revisited to have a binding in the other direction, too.
-
-                isRebinding = false;
+                // isRebinding = true;
+                //
+                // kiai.Current = newEffectPoint.KiaiModeBindable;
+                // scrollSpeedSlider.Current = new BindableDouble
+                // {
+                //     MinValue = 0.01,
+                //     MaxValue = 10,
+                //     Precision = 0.01,
+                //     Value = newEffectPoint.ScrollSpeedBindable.Value
+                // };
+                // scrollSpeedSlider.Current.ValueChanged += updateControlPointFromSlider;
+                // // at this point in time the above is enough to keep the slider control in sync with reality,
+                // // since undo/redo causes `OnControlPointChanged()` to fire.
+                // // whenever that stops being the case, or there is a possibility that the scroll speed could be changed
+                // // by something else other than this control, this code should probably be revisited to have a binding in the other direction, too.
+                //
+                // isRebinding = false;
             }
         }
 
         private void updateControlPointFromSlider(ValueChangedEvent<double> scrollSpeed)
         {
-            if (ControlPoint.Value is not EffectControlPoint effectPoint || isRebinding)
+            if (ControlPoints.Value is not EffectControlPoint effectPoint || isRebinding)
                 return;
 
             effectPoint.ScrollSpeedBindable.Value = scrollSpeed.NewValue;
-        }
-
-        protected override EffectControlPoint CreatePoint()
-        {
-            var reference = Beatmap.ControlPointInfo.EffectPointAt(SelectedGroup.Value.Time);
-
-            return new EffectControlPoint
-            {
-                KiaiMode = reference.KiaiMode,
-                ScrollSpeed = reference.ScrollSpeed,
-            };
         }
     }
 }

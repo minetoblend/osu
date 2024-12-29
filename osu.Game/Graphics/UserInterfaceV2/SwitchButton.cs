@@ -34,6 +34,8 @@ namespace osu.Game.Graphics.UserInterfaceV2
         private Sample? sampleChecked;
         private Sample? sampleUnchecked;
 
+        public Bindable<bool> Indeterminate = new BindableBool();
+
         public SwitchButton()
         {
             Size = new Vector2(45, 20);
@@ -89,14 +91,23 @@ namespace osu.Game.Graphics.UserInterfaceV2
         {
             base.LoadComplete();
 
+            Indeterminate.BindValueChanged(_ => Current.TriggerChange());
             Current.BindValueChanged(updateState, true);
             FinishTransforms(true);
         }
 
         private void updateState(ValueChangedEvent<bool> state)
         {
-            switchCircle.MoveToX(state.NewValue ? switchContainer.DrawWidth - switchCircle.DrawWidth : 0, 200, Easing.OutQuint);
-            fill.FadeTo(state.NewValue ? 1 : 0, 250, Easing.OutQuint);
+            if (Indeterminate.Value)
+            {
+                switchCircle.MoveToX((switchContainer.DrawWidth - switchCircle.DrawWidth) * 0.5f, 200, Easing.OutQuint);
+                fill.FadeTo(0.5f, 250, Easing.OutQuint);
+            }
+            else
+            {
+                switchCircle.MoveToX(state.NewValue ? switchContainer.DrawWidth - switchCircle.DrawWidth : 0, 200, Easing.OutQuint);
+                fill.FadeTo(state.NewValue ? 1 : 0, 250, Easing.OutQuint);
+            }
 
             updateBorder();
         }
@@ -117,6 +128,12 @@ namespace osu.Game.Graphics.UserInterfaceV2
         {
             base.OnUserChange(value);
 
+            if (Indeterminate.Value)
+            {
+                Indeterminate.Value = false;
+                Current.Value = true;
+            }
+
             if (value)
                 sampleChecked?.Play();
             else
@@ -125,7 +142,7 @@ namespace osu.Game.Graphics.UserInterfaceV2
 
         private void updateBorder()
         {
-            circularContainer.TransformBorderTo((Current.Value ? enabledColour : disabledColour).Lighten(IsHovered ? 0.3f : 0));
+            circularContainer.TransformBorderTo((Current.Value && !Indeterminate.Value ? enabledColour : disabledColour).Lighten(IsHovered ? 0.3f : 0));
         }
 
         private partial class CircularBorderContainer : CircularContainer

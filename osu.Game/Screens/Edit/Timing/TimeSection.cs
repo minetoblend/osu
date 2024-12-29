@@ -2,10 +2,8 @@
 // See the LICENCE file in the repository root for full licence text.
 
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using osu.Framework.Allocation;
-using osu.Framework.Bindables;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Utils;
@@ -25,9 +23,6 @@ namespace osu.Game.Screens.Edit.Timing
         private Container offsetContainer = null!;
 
         private OsuButton button = null!;
-
-        [Resolved]
-        protected Bindable<IReadOnlyList<ControlPoint>> SelectedControlPoints { get; private set; } = null!;
 
         [Resolved]
         protected EditorBeatmap Beatmap { get; private set; } = null!;
@@ -112,7 +107,7 @@ namespace osu.Game.Screens.Edit.Timing
                 }
                 else
                 {
-                    SelectedControlPoints.TriggerChange();
+                    selectionChanged();
                 }
             };
 
@@ -122,66 +117,55 @@ namespace osu.Game.Screens.Edit.Timing
                     return;
 
                 if (!double.TryParse(sender.Text, out double offset))
-                    SelectedControlPoints.TriggerChange();
+                    selectionChanged();
             };
 
-            SelectedControlPoints.BindValueChanged(controlPoints =>
-            {
-                if (controlPoints.NewValue.Count == 0)
-                {
-                    timeTextBox.Show();
-                    offsetContainer.Hide();
-
-                    timeTextBox.Text = string.Empty;
-
-                    // cannot use textBox.Current.Disabled due to https://github.com/ppy/osu-framework/issues/3919
-                    timeTextBox.ReadOnly = true;
-                    button.Enabled.Value = false;
-                    return;
-                }
-
-                timeTextBox.ReadOnly = false;
-                button.Enabled.Value = true;
-
-                double? time = getCommonControlPointTime();
-
-                if (time == null)
-                {
-                    timeTextBox.Hide();
-                    offsetContainer.Show();
-                    offsetTextBox.Text = "0";
-                }
-                else
-                {
-                    timeTextBox.Show();
-                    offsetContainer.Hide();
-
-                    timeTextBox.Text = $"{time:n0}";
-                }
-            }, true);
+            selectionManager.SelectionChanged += _ => Scheduler.AddOnce(selectionChanged);
+            selectionChanged();
         }
 
-        private double? getCommonControlPointTime()
+        private ControlPointSelectionFacade<ControlPoint> selectionFacade = null!;
+
+        private void selectionChanged()
         {
-            if (SelectedControlPoints.Value.Count == 0)
-                return null;
+            selectionFacade?.Expire();
+            AddInternal(selectionFacade = new ControlPointSelectionFacade<ControlPoint>(selectionManager.Selection));
 
-            double time = SelectedControlPoints.Value.First().Time;
-
-            for (int i = 1; i < SelectedControlPoints.Value.Count; i++)
+            if (!selectionManager.AnySelected())
             {
-                if (!Precision.AlmostEquals(SelectedControlPoints.Value[i].Time, time))
-                    return null;
+                timeTextBox.Show();
+                offsetContainer.Hide();
+
+                timeTextBox.Text = string.Empty;
+
+                // cannot use textBox.Current.Disabled due to https://github.com/ppy/osu-framework/issues/3919
+                timeTextBox.ReadOnly = true;
+                button.Enabled.Value = false;
+                return;
             }
 
-            return time;
+            timeTextBox.ReadOnly = false;
+
+            if (selectionFacade.Time.Indeterminate.Value)
+            {
+                timeTextBox.Hide();
+                offsetContainer.Show();
+                offsetTextBox.Text = "0";
+            }
+            else
+            {
+                timeTextBox.Show();
+                offsetContainer.Hide();
+
+                timeTextBox.Text = $"{selectionFacade.Time.Value:n0}";
+            }
+
+            button.Enabled.Value = true;
         }
 
         private void changeSelectionTime(double time)
         {
-            double? controlPointTime = getCommonControlPointTime();
-
-            if (SelectedControlPoints.Value.Count == 0 || time == controlPointTime)
+            if (!selectionManager.AnySelected() || (!selectionFacade.Time.Indeterminate.Value && time == selectionFacade.Time.Value))
                 return;
 
             updateSelectionTime(_ => time);
@@ -189,7 +173,7 @@ namespace osu.Game.Screens.Edit.Timing
 
         private void applyOffsetToSelection()
         {
-            if (SelectedControlPoints.Value.Count == 0)
+            if (!selectionManager.AnySelected())
                 return;
 
             if (double.TryParse(offsetTextBox.Text, out double offset))
@@ -205,7 +189,7 @@ namespace osu.Game.Screens.Edit.Timing
         {
             changeHandler?.BeginChange();
 
-            var controlPoints = SelectedControlPoints.Value.ToList();
+            var controlPoints = selectionManager.Selection.ToList();
 
             foreach (var controlPoint in controlPoints)
                 controlPoint.Group?.Remove(controlPoint);

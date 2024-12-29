@@ -1,13 +1,9 @@
 ﻿// Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
-using System.Collections.Generic;
-using System.Linq;
 using osu.Framework.Allocation;
-using osu.Framework.Bindables;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
-using osu.Game.Beatmaps.ControlPoints;
 
 namespace osu.Game.Screens.Edit.Timing
 {
@@ -17,9 +13,6 @@ namespace osu.Game.Screens.Edit.Timing
             : base(EditorScreenMode.Timing)
         {
         }
-
-        [Cached]
-        private readonly Bindable<IReadOnlyList<ControlPoint>> selectedControlPoints = new Bindable<IReadOnlyList<ControlPoint>>(new List<ControlPoint>());
 
         [Cached]
         private readonly ControlPointSelectionManager selectionManager = new ControlPointSelectionManager();
@@ -52,10 +45,6 @@ namespace osu.Game.Screens.Edit.Timing
                     },
                 }
             });
-
-            selectionManager.SelectionChanged += _ => Scheduler.AddOnce(updateSelection);
         }
-
-        private void updateSelection() => selectedControlPoints.Value = selectionManager.Selection.ToList();
     }
 }

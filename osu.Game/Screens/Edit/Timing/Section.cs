@@ -1,6 +1,7 @@
 // Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
+using System.Collections.Generic;
 using System.Linq;
 using osu.Framework.Allocation;
 using osu.Framework.Bindables;
@@ -8,7 +9,7 @@ using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Shapes;
 using osu.Game.Beatmaps.ControlPoints;
-using osu.Game.Graphics.UserInterface;
+using osu.Game.Graphics.Containers;
 using osu.Game.Overlays;
 using osuTK;
 
@@ -17,12 +18,11 @@ namespace osu.Game.Screens.Edit.Timing
     internal abstract partial class Section<T> : CompositeDrawable
         where T : ControlPoint
     {
-        private OsuCheckbox checkbox = null!;
         private Container content = null!;
 
         protected FillFlowContainer Flow { get; private set; } = null!;
 
-        protected Bindable<T?> ControlPoint { get; } = new Bindable<T?>();
+        protected Bindable<IReadOnlyList<T>> ControlPoints { get; } = new Bindable<IReadOnlyList<T>>();
 
         private const float header_height = 50;
 
@@ -30,7 +30,7 @@ namespace osu.Game.Screens.Edit.Timing
         protected EditorBeatmap Beatmap { get; private set; } = null!;
 
         [Resolved]
-        protected Bindable<ControlPointGroup> SelectedGroup { get; private set; } = null!;
+        protected ControlPointSelectionManager SelectionManager { get; private set; } = null!;
 
         [Resolved]
         protected IEditorChangeHandler? ChangeHandler { get; private set; }
@@ -42,6 +42,7 @@ namespace osu.Game.Screens.Edit.Timing
             AutoSizeDuration = 200;
             AutoSizeEasing = Easing.OutQuint;
             AutoSizeAxes = Axes.Y;
+            AlwaysPresent = true;
 
             Masking = true;
             CornerRadius = 5;
@@ -60,11 +61,9 @@ namespace osu.Game.Screens.Edit.Timing
                     Padding = new MarginPadding { Horizontal = 10 },
                     Children = new Drawable[]
                     {
-                        checkbox = new OsuCheckbox
+                        new OsuTextFlowContainer
                         {
-                            Anchor = Anchor.CentreLeft,
-                            Origin = Anchor.CentreLeft,
-                            LabelText = typeof(T).Name.Replace(nameof(Beatmaps.ControlPoints.ControlPoint), string.Empty)
+                            Text = typeof(T).Name.Replace(nameof(Beatmaps.ControlPoints.ControlPoint), string.Empty)
                         }
                     }
                 },
@@ -92,42 +91,30 @@ namespace osu.Game.Screens.Edit.Timing
         {
             base.LoadComplete();
 
-            checkbox.Current.BindValueChanged(selected =>
-            {
-                if (selected.NewValue)
-                {
-                    if (SelectedGroup.Value == null)
-                    {
-                        checkbox.Current.Value = false;
-                        return;
-                    }
+            SelectionManager.SelectionChanged += _ => Scheduler.AddOnce(selectionChanged);
+            selectionChanged();
 
-                    if (ControlPoint.Value == null)
-                        SelectedGroup.Value.Add(ControlPoint.Value = CreatePoint());
-                }
-                else
-                {
-                    if (ControlPoint.Value != null)
-                    {
-                        SelectedGroup.Value.Remove(ControlPoint.Value);
-                        ControlPoint.Value = null;
-                    }
-                }
-
-                content.BypassAutoSizeAxes = selected.NewValue ? Axes.None : Axes.Y;
-            }, true);
-
-            SelectedGroup.BindValueChanged(points =>
-            {
-                ControlPoint.Value = points.NewValue?.ControlPoints.OfType<T>().FirstOrDefault();
-                checkbox.Current.Value = ControlPoint.Value != null;
-            }, true);
-
-            ControlPoint.BindValueChanged(OnControlPointChanged, true);
+            ControlPoints.BindValueChanged(OnControlPointsChanged, true);
         }
 
-        protected abstract void OnControlPointChanged(ValueChangedEvent<T?> point);
+        private void selectionChanged()
+        {
+            var pointsOfType = SelectionManager.Selection.OfType<T>().ToList();
 
-        protected abstract T CreatePoint();
+            ControlPoints.Value = pointsOfType;
+
+            if (pointsOfType.Count > 0)
+            {
+                content.BypassAutoSizeAxes = Axes.None;
+                this.FadeIn(200);
+            }
+            else
+            {
+                content.BypassAutoSizeAxes = Axes.Y;
+                this.FadeOut(200);
+            }
+        }
+
+        protected abstract void OnControlPointsChanged(ValueChangedEvent<IReadOnlyList<T>> points);
     }
 }

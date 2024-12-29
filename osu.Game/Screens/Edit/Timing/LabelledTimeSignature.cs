@@ -21,6 +21,8 @@ namespace osu.Game.Screens.Edit.Timing
         {
         }
 
+        public Bindable<bool> Indeterminate => Component.Indeterminate;
+
         protected override TimeSignatureBox CreateComponent() => new TimeSignatureBox();
 
         public partial class TimeSignatureBox : CompositeDrawable, IHasCurrentValue<TimeSignature>
@@ -32,6 +34,8 @@ namespace osu.Game.Screens.Edit.Timing
                 get => current.Current;
                 set => current.Current = value;
             }
+
+            public readonly Bindable<bool> Indeterminate = new BindableBool();
 
             private OsuNumberBox numeratorBox = null!;
 
@@ -73,6 +77,7 @@ namespace osu.Game.Screens.Edit.Timing
             {
                 base.LoadComplete();
 
+                Indeterminate.BindValueChanged(_ => updateFromCurrent());
                 Current.BindValueChanged(_ => updateFromCurrent(), true);
                 numeratorBox.OnCommit += (_, _) => updateFromNumeratorBox();
             }
@@ -80,6 +85,9 @@ namespace osu.Game.Screens.Edit.Timing
             private void updateFromCurrent()
             {
                 numeratorBox.Current.Value = Current.Value.Numerator.ToString();
+
+                if (Indeterminate.Value)
+                    numeratorBox.Text = "";
             }
 
             private void updateFromNumeratorBox()
