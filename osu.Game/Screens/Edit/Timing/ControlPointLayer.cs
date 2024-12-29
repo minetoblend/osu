@@ -4,12 +4,15 @@
 using System.Collections.Generic;
 using osu.Framework.Allocation;
 using osu.Framework.Graphics;
+using osu.Framework.Graphics.Colour;
+using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Pooling;
 using osu.Framework.Graphics.Shapes;
 using osu.Framework.Input.Events;
 using osu.Framework.Localisation;
 using osu.Game.Beatmaps.ControlPoints;
 using osu.Game.Screens.Edit.Timing.Blueprints;
+using osuTK.Graphics;
 
 namespace osu.Game.Screens.Edit.Timing
 {
@@ -82,24 +85,53 @@ namespace osu.Game.Screens.Edit.Timing
             beatmap.ControlPointInfo.ControlPointRemoved += controlPointRemoved;
         }
 
-        private partial class SelectableAreaBackground : Box
+        private partial class SelectableAreaBackground : CompositeDrawable
         {
             public SelectableAreaBackground()
             {
                 RelativeSizeAxes = Axes.Both;
-                Alpha = 0;
+                Alpha = 0.05f;
                 AlwaysPresent = true;
+                AddRangeInternal(new Drawable[]
+                {
+                    new Box
+                    {
+                        RelativeSizeAxes = Axes.Both
+                    },
+                    new Container
+                    {
+                        RelativeSizeAxes = Axes.Both,
+                        Padding = new MarginPadding { Horizontal = -200 },
+                        Children = new Drawable[]
+                        {
+                            new Box
+                            {
+                                RelativeSizeAxes = Axes.Y,
+                                Width = 200,
+                                Colour = ColourInfo.GradientHorizontal(Color4.Transparent, Color4.White)
+                            },
+                            new Box
+                            {
+                                RelativeSizeAxes = Axes.Y,
+                                Width = 200,
+                                Anchor = Anchor.TopRight,
+                                Origin = Anchor.TopRight,
+                                Colour = ColourInfo.GradientHorizontal(Color4.White, Color4.Transparent)
+                            }
+                        }
+                    }
+                });
             }
 
             protected override bool OnHover(HoverEvent e)
             {
-                this.FadeTo(0.1f, 200);
+                this.FadeTo(0.15f, 200);
                 return false;
             }
 
             protected override void OnHoverLost(HoverLostEvent e)
             {
-                this.FadeOut(200);
+                this.FadeTo(0.05f, 200);
             }
         }
     }

@@ -12,7 +12,7 @@ namespace osu.Game.Screens.Edit.Timing
         {
             new TimeSection(),
             new TimingSection(),
-            // TODO: new EffectSection(),
+            new EffectSection(),
         };
     }
 }

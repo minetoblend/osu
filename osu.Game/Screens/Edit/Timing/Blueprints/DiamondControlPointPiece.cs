@@ -14,7 +14,7 @@ namespace osu.Game.Screens.Edit.Timing.Blueprints
     public partial class DiamondControlPointPiece : ControlPointPiece
     {
         [Resolved]
-        private TimingPointLayer layer { get; set; } = null!;
+        private TimelineLayer layer { get; set; } = null!;
 
         public DiamondControlPointPiece(ControlPointBlueprint blueprint)
             : base(blueprint)
