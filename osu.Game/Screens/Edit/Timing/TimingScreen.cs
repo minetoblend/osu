@@ -12,9 +12,22 @@ namespace osu.Game.Screens.Edit.Timing
         {
         }
 
+        private DependencyContainer dependencies = null!;
+
+        protected override IReadOnlyDependencyContainer CreateChildDependencies(IReadOnlyDependencyContainer parent)
+        {
+            return dependencies = new DependencyContainer(parent);
+        }
+
         [BackgroundDependencyLoader]
         private void load()
         {
+            ControlPointSelectionManager selectionManager;
+
+            AddInternal(selectionManager = new ControlPointSelectionManager());
+
+            dependencies.CacheAs(selectionManager);
+
             Add(new LayeredTimeline
             {
                 Children = new TimelineLayer[]

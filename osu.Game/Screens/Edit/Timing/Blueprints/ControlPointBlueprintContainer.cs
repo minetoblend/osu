@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using osu.Framework.Allocation;
 using osu.Framework.Extensions;
 using osu.Framework.Graphics;
+using osu.Framework.Input.Events;
 using osu.Game.Beatmaps.ControlPoints;
 using osu.Game.Rulesets.Objects.Pooling;
 using osu.Game.Screens.Edit.Components.Timelines.Summary.Parts;
@@ -122,6 +123,16 @@ namespace osu.Game.Screens.Edit.Timing.Blueprints
             base.Update();
 
             PastLifetimeExtension = FutureLifetimeExtension = timeline.VisibleRange * 0.5f;
+        }
+
+        [Resolved]
+        private ControlPointSelectionManager? selectionManager { get; set; }
+
+        protected override bool OnClick(ClickEvent e)
+        {
+            selectionManager?.Clear();
+
+            return false;
         }
     }
 }

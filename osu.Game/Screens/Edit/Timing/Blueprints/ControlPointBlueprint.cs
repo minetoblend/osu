@@ -31,6 +31,9 @@ namespace osu.Game.Screens.Edit.Timing.Blueprints
 
         protected ControlPointPiece ControlPointPiece { get; private set; } = null!;
 
+        [Resolved]
+        private ControlPointSelectionManager? selectionManager { get; set; }
+
         [BackgroundDependencyLoader]
         private void load()
         {
@@ -68,6 +71,12 @@ namespace osu.Game.Screens.Edit.Timing.Blueprints
 
             entry.Invalidated += onInvalidated;
 
+            if (selectionManager != null)
+            {
+                Selected.Value = selectionManager.IsSelected(ControlPoint);
+                selectionManager.SelectionChanged += selectionChanged;
+            }
+
             onInvalidated();
         }
 
@@ -76,12 +85,21 @@ namespace osu.Game.Screens.Edit.Timing.Blueprints
             base.OnFree(entry);
 
             entry.Invalidated -= onInvalidated;
+
+            if (selectionManager != null)
+                selectionManager.SelectionChanged -= selectionChanged;
         }
 
         private void onInvalidated()
         {
             StartTimeBindable.Value = Entry!.LifetimeStart;
             EndTimeBindable.Value = Entry!.LifetimeEnd;
+        }
+
+        private void selectionChanged(ControlPointSelectionEvent e)
+        {
+            if (ReferenceEquals(e.ControlPoint, ControlPoint))
+                Selected.Value = e.Selected;
         }
 
         protected override bool ShouldBeAlive => true;

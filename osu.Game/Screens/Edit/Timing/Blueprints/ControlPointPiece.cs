@@ -44,14 +44,36 @@ namespace osu.Game.Screens.Edit.Timing.Blueprints
 
         protected virtual bool EnableSnapping(UIEvent e) => !e.ShiftPressed;
 
-        protected override bool OnDragStart(DragStartEvent e)
+        protected override bool OnClick(ClickEvent e)
         {
-            changeHandler?.BeginChange();
+            attemptSelectionFromMouse(e);
             return true;
         }
 
         [Resolved]
         private EditorClock editorClock { get; set; } = null!;
+
+        [Resolved]
+        private ControlPointSelectionManager? selectionManager { get; set; }
+
+        private void attemptSelectionFromMouse(MouseEvent e)
+        {
+            if (selectionManager == null)
+                return;
+
+            if (e.ControlPressed)
+                selectionManager.ToggleSelection(Blueprint.ControlPoint);
+            else if (!Blueprint.Selected.Value)
+                selectionManager.SetSelection(new[] { Blueprint.ControlPoint });
+        }
+
+        protected override bool OnDragStart(DragStartEvent e)
+        {
+            attemptSelectionFromMouse(e);
+
+            changeHandler?.BeginChange();
+            return true;
+        }
 
         protected override void OnDrag(DragEvent e)
         {
