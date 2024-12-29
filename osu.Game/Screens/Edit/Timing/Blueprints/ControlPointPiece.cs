@@ -7,6 +7,7 @@ using osu.Framework.Allocation;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Input.Events;
+using osu.Game.Beatmaps.ControlPoints;
 using osu.Game.Rulesets.Edit;
 
 namespace osu.Game.Screens.Edit.Timing.Blueprints
@@ -26,6 +27,8 @@ namespace osu.Game.Screens.Edit.Timing.Blueprints
         }
 
         protected readonly ControlPointBlueprint Blueprint;
+
+        public ControlPoint ControlPoint => Blueprint.ControlPoint;
 
         internal virtual void SelectionChanged(bool selected)
         {
@@ -62,9 +65,9 @@ namespace osu.Game.Screens.Edit.Timing.Blueprints
                 return;
 
             if (e.ControlPressed)
-                selectionManager.ToggleSelection(Blueprint.ControlPoint);
+                selectionManager.ToggleSelection(ControlPoint);
             else if (!Blueprint.Selected.Value)
-                selectionManager.SetSelection(new[] { Blueprint.ControlPoint });
+                selectionManager.SetSelection(new[] { ControlPoint });
         }
 
         protected override bool OnDragStart(DragStartEvent e)
@@ -86,11 +89,12 @@ namespace osu.Game.Screens.Edit.Timing.Blueprints
                 var snapTarget = GetContainingInputManager()?.HoveredDrawables.OfType<ControlPointPiece>().FirstOrDefault(it => it != this);
 
                 if (snapTarget != null)
-                    time = snapTarget.Blueprint.ControlPoint.Time;
+                    time = snapTarget.ControlPoint.Time;
 
                 time = Math.Clamp(time, 0, editorClock.TrackLength);
 
-                Blueprint.ControlPoint.Time = time;
+                // TODO: update entire selection instead of just current point
+                ControlPoint.Time = time;
             }
         }
 
