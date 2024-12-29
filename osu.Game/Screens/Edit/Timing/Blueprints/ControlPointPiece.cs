@@ -6,7 +6,9 @@ using System.Linq;
 using osu.Framework.Allocation;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
+using osu.Framework.Graphics.Cursor;
 using osu.Framework.Input.Events;
+using osu.Framework.Localisation;
 using osu.Framework.Utils;
 using osu.Game.Beatmaps.ControlPoints;
 using osu.Game.Graphics;
@@ -15,9 +17,11 @@ using osuTK.Graphics;
 
 namespace osu.Game.Screens.Edit.Timing.Blueprints
 {
-    public abstract partial class ControlPointPiece : CompositeDrawable
+    public abstract partial class ControlPointPiece : CompositeDrawable, IHasTooltip
     {
         protected abstract Drawable CreateContent();
+
+        public virtual LocalisableString TooltipText { get; private set; }
 
         protected ControlPointPiece(ControlPointBlueprint blueprint)
         {
@@ -90,6 +94,8 @@ namespace osu.Game.Screens.Edit.Timing.Blueprints
 
                 // TODO: update entire selection instead of just current point
                 ControlPoint.Time = time;
+
+                TooltipText = $"{time:N0}";
             }
         }
 
@@ -100,6 +106,8 @@ namespace osu.Game.Screens.Edit.Timing.Blueprints
             changeHandler?.EndChange();
 
             updateControlPointGroup();
+
+            TooltipText = string.Empty;
         }
 
         private void updateControlPointGroup()
