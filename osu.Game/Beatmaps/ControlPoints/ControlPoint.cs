@@ -4,6 +4,7 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
 using Newtonsoft.Json;
+using osu.Framework.Bindables;
 using osu.Game.Graphics;
 using osu.Game.Utils;
 using osuTK.Graphics;
@@ -20,20 +21,18 @@ namespace osu.Game.Beatmaps.ControlPoints
 
         protected void RaiseChanged() => Changed?.Invoke(this);
 
-        private double time;
+        public readonly Bindable<double> TimeBindable = new BindableDouble();
 
         [JsonIgnore]
         public double Time
         {
-            get => time;
-            set
-            {
-                if (time == value)
-                    return;
+            get => TimeBindable.Value;
+            set => TimeBindable.Value = value;
+        }
 
-                time = value;
-                RaiseChanged();
-            }
+        protected ControlPoint()
+        {
+            TimeBindable.BindValueChanged(_ => RaiseChanged());
         }
 
         public ControlPointGroup? Group { get; private set; }

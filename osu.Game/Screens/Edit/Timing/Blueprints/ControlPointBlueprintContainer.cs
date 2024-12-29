@@ -2,7 +2,9 @@
 // See the LICENCE file in the repository root for full licence text.
 
 using System.Collections.Generic;
+using System.Diagnostics;
 using osu.Framework.Allocation;
+using osu.Framework.Bindables;
 using osu.Framework.Extensions;
 using osu.Framework.Graphics;
 using osu.Framework.Input.Events;
@@ -25,6 +27,7 @@ namespace osu.Game.Screens.Edit.Timing.Blueprints
         private IPooledControlPointBlueprintProvider blueprintProvider { get; set; } = null!;
 
         private readonly List<ControlPointLifetimeEntry> lifetimeEntries = new List<ControlPointLifetimeEntry>();
+        private readonly Dictionary<ControlPoint, IBindable> timeMap = new Dictionary<ControlPoint, IBindable>(ReferenceEqualityComparer.Instance);
 
         private TimelinePart blueprintContainer = null!;
 
@@ -58,18 +61,44 @@ namespace osu.Game.Screens.Edit.Timing.Blueprints
         public void AddControlPoint(ControlPoint controlPoint)
         {
             addEntry(controlPoint);
+
+            var timeBindable = controlPoint.TimeBindable.GetBoundCopy();
+            timeBindable.ValueChanged += _ => onTimeChanged(controlPoint);
+            timeMap[controlPoint] = timeBindable;
+        }
+
+        private void onTimeChanged(ControlPoint controlPoint)
+        {
+            int index = lifetimeEntries.FindIndex(e => ReferenceEquals(e.Start, controlPoint));
+
+            Debug.Assert(index >= 0);
+
+            var entry = lifetimeEntries[index];
+
+            removeLifetimeEnd(index);
+            assignLifetimeEnd(entry);
         }
 
         public void RemoveControlPoint(ControlPoint controlPoint)
         {
             removeEntry(controlPoint);
+
+            timeMap[controlPoint].UnbindAll();
+            timeMap.Remove(controlPoint);
         }
 
         private void addEntry(ControlPoint controlPoint)
         {
             var newEntry = new ControlPointLifetimeEntry(controlPoint);
 
-            int index = lifetimeEntries.AddInPlace(newEntry, Comparer<ControlPointLifetimeEntry>.Create((e1, e2) =>
+            assignLifetimeEnd(newEntry);
+
+            Add(newEntry);
+        }
+
+        private void assignLifetimeEnd(ControlPointLifetimeEntry entry)
+        {
+            int index = lifetimeEntries.AddInPlace(entry, Comparer<ControlPointLifetimeEntry>.Create((e1, e2) =>
             {
                 int comp = e1.Start.Time.CompareTo(e2.Start.Time);
 
@@ -82,12 +111,12 @@ namespace osu.Game.Screens.Edit.Timing.Blueprints
             if (index < lifetimeEntries.Count - 1)
             {
                 ControlPointLifetimeEntry nextEntry = lifetimeEntries[index + 1];
-                newEntry.End = nextEntry.Start;
+                entry.End = nextEntry.Start;
             }
             else
             {
                 // The end point may be non-null during re-ordering
-                newEntry.End = null;
+                entry.End = null;
             }
 
             if (index > 0)
@@ -95,10 +124,8 @@ namespace osu.Game.Screens.Edit.Timing.Blueprints
                 // Update the previous control point's end point to the current control point
 
                 ControlPointLifetimeEntry previousEntry = lifetimeEntries[index - 1];
-                previousEntry.End = newEntry.Start;
+                previousEntry.End = entry.Start;
             }
-
-            Add(newEntry);
         }
 
         private void removeEntry(ControlPoint controlPoint)
@@ -107,9 +134,16 @@ namespace osu.Game.Screens.Edit.Timing.Blueprints
 
             var entry = lifetimeEntries[index];
             entry.UnbindEvents();
+            Remove(entry);
+
+            removeLifetimeEnd(index);
+        }
+
+        private void removeLifetimeEnd(int index)
+        {
+            var entry = lifetimeEntries[index];
 
             lifetimeEntries.RemoveAt(index);
-            Remove(entry);
 
             if (index > 0)
             {
