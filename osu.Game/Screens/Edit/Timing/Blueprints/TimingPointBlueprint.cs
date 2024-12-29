@@ -8,7 +8,7 @@ namespace osu.Game.Screens.Edit.Timing.Blueprints
 {
     public partial class TimingPointBlueprint : ControlPointBlueprint<TimingControlPoint>
     {
-        protected override ControlPointPiece CreateControlPointPiece() => new TimingPointControlPointPiece(this);
+        protected override ControlPointPiece CreateControlPointPiece() => new TimingControlPointPiece(this);
 
         [BackgroundDependencyLoader]
         private void load()

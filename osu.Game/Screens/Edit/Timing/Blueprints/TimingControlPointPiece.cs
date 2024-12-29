@@ -10,12 +10,13 @@ using osu.Framework.Graphics.Shapes;
 using osu.Framework.Input.Events;
 using osu.Game.Screens.Edit.Compose.Components.Timeline;
 using osuTK;
+using osuTK.Graphics;
 
 namespace osu.Game.Screens.Edit.Timing.Blueprints
 {
-    public partial class TimingPointControlPointPiece : ControlPointPiece
+    public partial class TimingControlPointPiece : ControlPointPiece
     {
-        public TimingPointControlPointPiece(ControlPointBlueprint blueprint)
+        public TimingControlPointPiece(ControlPointBlueprint blueprint)
             : base(blueprint)
         {
             Width = 10;
@@ -63,14 +64,11 @@ namespace osu.Game.Screens.Edit.Timing.Blueprints
         [Resolved]
         private Timeline? timeline { get; set; }
 
-        [Resolved]
-        private TimelineLayer layer { get; set; } = null!;
-
-        internal override void SelectionChanged(bool selected)
+        protected override void UpdateColours(Color4 primaryColour)
         {
-            base.SelectionChanged(selected);
+            base.UpdateColours(primaryColour);
 
-            content.Colour = selected ? layer.LayerColour.Lighten(0.5f) : layer.LayerColour;
+            content.Colour = Blueprint.Selected.Value ? primaryColour.Lighten(0.5f) : primaryColour;
         }
 
         protected override void OnDrag(DragEvent e)

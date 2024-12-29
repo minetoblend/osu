@@ -9,7 +9,9 @@ using osu.Framework.Graphics.Containers;
 using osu.Framework.Input.Events;
 using osu.Framework.Utils;
 using osu.Game.Beatmaps.ControlPoints;
+using osu.Game.Graphics;
 using osu.Game.Rulesets.Edit;
+using osuTK.Graphics;
 
 namespace osu.Game.Screens.Edit.Timing.Blueprints
 {
@@ -31,9 +33,12 @@ namespace osu.Game.Screens.Edit.Timing.Blueprints
 
         public ControlPoint ControlPoint => Blueprint.ControlPoint;
 
-        internal virtual void SelectionChanged(bool selected)
-        {
-        }
+        internal void SelectionChanged(bool selected) => UpdateColours(ControlPoint.GetRepresentingColour(colours));
+
+        [Resolved]
+        private OsuColour colours { get; set; } = null!;
+
+        protected virtual void UpdateColours(Color4 primaryColour) { }
 
         protected override bool OnHover(HoverEvent e) => true;
 

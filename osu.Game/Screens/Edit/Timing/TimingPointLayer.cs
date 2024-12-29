@@ -12,7 +12,6 @@ using osu.Game.Beatmaps;
 using osu.Game.Beatmaps.ControlPoints;
 using osu.Game.Graphics;
 using osu.Game.Screens.Edit.Timing.Blueprints;
-using osuTK.Graphics;
 
 namespace osu.Game.Screens.Edit.Timing
 {
@@ -36,8 +35,6 @@ namespace osu.Game.Screens.Edit.Timing
         private OsuColour colours { get; set; } = null!;
 
         protected override IReadOnlyList<TimingControlPoint> GetControlPointList(ControlPointInfo controlPointInfo) => controlPointInfo.TimingPoints;
-
-        public override Color4 LayerColour => colours.Red2;
 
         private readonly IBindable<Track> track = new Bindable<Track>();
 

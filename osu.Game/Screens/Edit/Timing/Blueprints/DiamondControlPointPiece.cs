@@ -8,6 +8,7 @@ using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Shapes;
 using osu.Framework.Input.Events;
 using osuTK;
+using osuTK.Graphics;
 
 namespace osu.Game.Screens.Edit.Timing.Blueprints
 {
@@ -63,22 +64,16 @@ namespace osu.Game.Screens.Edit.Timing.Blueprints
             },
         };
 
-        internal override void SelectionChanged(bool selected)
+        protected override void UpdateColours(Color4 primaryColour)
         {
-            base.SelectionChanged(selected);
+            base.UpdateColours(primaryColour);
 
-            body.Colour = layer.LayerColour;
+            body.Colour = primaryColour;
 
-            if (selected)
-            {
-                outline.Colour = layer.LayerColour.Lighten(0.5f);
-                outline.Alpha = 1;
-            }
-            else
-            {
-                outline.Colour = layer.LayerColour;
-                outline.Alpha = 0.5f;
-            }
+            bool selected = Blueprint.Selected.Value;
+
+            outline.Colour = selected ? primaryColour.Lighten(0.5f) : primaryColour;
+            outline.Alpha = selected ? 1 : 0.5f;
         }
 
         protected override bool OnHover(HoverEvent e)

@@ -5,7 +5,6 @@ using osu.Framework.Allocation;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Localisation;
-using osuTK.Graphics;
 
 namespace osu.Game.Screens.Edit.Timing
 {
@@ -18,8 +17,6 @@ namespace osu.Game.Screens.Edit.Timing
         }
 
         public readonly LocalisableString Title;
-
-        public abstract Color4 LayerColour { get; }
 
         protected virtual float LayerHeight => 60;
 

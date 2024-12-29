@@ -2,11 +2,8 @@
 // See the LICENCE file in the repository root for full licence text.
 
 using System.Collections.Generic;
-using osu.Framework.Allocation;
 using osu.Game.Beatmaps.ControlPoints;
-using osu.Game.Graphics;
 using osu.Game.Screens.Edit.Timing.Blueprints;
-using osuTK.Graphics;
 
 namespace osu.Game.Screens.Edit.Timing
 {
@@ -16,11 +13,6 @@ namespace osu.Game.Screens.Edit.Timing
             : base("Effects")
         {
         }
-
-        [Resolved]
-        private OsuColour colours { get; set; } = null!;
-
-        public override Color4 LayerColour => colours.Orange1;
 
         protected override IReadOnlyList<EffectControlPoint> GetControlPointList(ControlPointInfo controlPointInfo)
             => controlPointInfo.EffectPoints;
