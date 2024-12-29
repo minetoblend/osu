@@ -36,7 +36,15 @@ namespace osu.Game.Beatmaps.ControlPoints
             }
         }
 
-        public void AttachGroup(ControlPointGroup pointGroup) => Time = pointGroup.Time;
+        public ControlPointGroup? Group { get; private set; }
+
+        public void AttachGroup(ControlPointGroup? pointGroup)
+        {
+            Group = pointGroup;
+
+            if (pointGroup != null)
+                Time = pointGroup.Time;
+        }
 
         public int CompareTo(ControlPoint? other) => Time.CompareTo(other?.Time);
 

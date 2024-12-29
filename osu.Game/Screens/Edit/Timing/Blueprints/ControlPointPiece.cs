@@ -7,6 +7,7 @@ using osu.Framework.Allocation;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Input.Events;
+using osu.Framework.Utils;
 using osu.Game.Beatmaps.ControlPoints;
 using osu.Game.Rulesets.Edit;
 
@@ -103,6 +104,37 @@ namespace osu.Game.Screens.Edit.Timing.Blueprints
             base.OnDragEnd(e);
 
             changeHandler?.EndChange();
+
+            updateControlPointGroup();
+        }
+
+        private void updateControlPointGroup()
+        {
+            // unfortunately control point groups are a thing that exists, so we need to make sure detach the control point from its group
+            // and readd it to a new group after we're done changing the control point's time
+
+            var controlPoint = ControlPoint;
+
+            if (controlPoint.Group != null && Precision.AlmostEquals(ControlPoint.Time, controlPoint.Group.Time))
+                return;
+
+            bool wasSelected = Blueprint.Selected.Value;
+
+            var group = controlPoint.Group;
+
+            if (group != null)
+            {
+                group.Remove(controlPoint);
+
+                if (group.ControlPoints.Count == 0)
+                    beatmap.ControlPointInfo.RemoveGroup(group);
+            }
+
+            beatmap.ControlPointInfo.GroupAt(controlPoint.Time, true).Add(controlPoint);
+
+            // since removing a control point from the group will automatically deselect it, we need to re-add it to the selection
+            if (wasSelected)
+                selectionManager?.Select(controlPoint);
         }
     }
 }

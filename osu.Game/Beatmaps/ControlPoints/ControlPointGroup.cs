@@ -47,6 +47,8 @@ namespace osu.Game.Beatmaps.ControlPoints
 
         public void Remove(ControlPoint point)
         {
+            point.AttachGroup(null);
+
             controlPoints.Remove(point);
             ItemRemoved?.Invoke(point);
             point.Changed -= raiseItemChanged;
