@@ -19,6 +19,7 @@ namespace osu.Game.Screens.Edit.Timing
             {
                 Children = new TimelineLayer[]
                 {
+                    new TimingPointLayer()
                 }
             });
         }
