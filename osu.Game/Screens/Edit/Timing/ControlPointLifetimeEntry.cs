@@ -2,7 +2,6 @@
 // See the LICENCE file in the repository root for full licence text.
 
 using System;
-using System.Diagnostics;
 using osu.Framework.Graphics.Performance;
 using osu.Game.Beatmaps.ControlPoints;
 
@@ -17,6 +16,8 @@ namespace osu.Game.Screens.Edit.Timing
         {
             Start = start;
             LifetimeStart = Start.Time;
+
+            bindEvents();
         }
 
         private ControlPoint? end;
@@ -42,11 +43,10 @@ namespace osu.Game.Screens.Edit.Timing
         {
             UnbindEvents();
 
-            if (End == null)
-                return;
-
             Start.Changed += onChanged;
-            End.Changed += onChanged;
+
+            if (End != null)
+                End.Changed += onChanged;
 
             wasBound = true;
         }
@@ -56,10 +56,10 @@ namespace osu.Game.Screens.Edit.Timing
             if (!wasBound)
                 return;
 
-            Debug.Assert(End != null);
-
             Start.Changed -= onChanged;
-            End.Changed -= onChanged;
+
+            if (End != null)
+                End.Changed -= onChanged;
 
             wasBound = false;
         }
