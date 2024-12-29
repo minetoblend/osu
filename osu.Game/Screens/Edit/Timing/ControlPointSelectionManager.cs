@@ -46,8 +46,8 @@ namespace osu.Game.Screens.Edit.Timing
 
         public void SetSelection(IEnumerable<ControlPoint> controlPoints)
         {
-            var toSelect = controlPoints.Except(selectedControlPoints);
-            var toDeselect = selectedControlPoints.Except(controlPoints);
+            var toSelect = controlPoints.Except(selectedControlPoints).ToList();
+            var toDeselect = selectedControlPoints.Except(controlPoints).ToList();
 
             foreach (var controlPoint in toDeselect)
                 Deselect(controlPoint);
