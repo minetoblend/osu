@@ -121,7 +121,7 @@ namespace osu.Game.Screens.Edit.Timing.Blueprints
 
             if (snapResult.Time != null && snapResult.Time != timeAtMousePosition)
             {
-                timeAtMousePosition = snapResult.Time.Value;
+                timeAtMousePosition = Math.Clamp(snapResult.Time.Value, blueprint.StartTimeBindable.Value, blueprint.EndTimeBindable.Value);
                 updateHandleVisibility();
             }
 
