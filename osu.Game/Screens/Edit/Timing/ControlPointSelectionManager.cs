@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using osu.Framework.Allocation;
 using osu.Framework.Graphics;
 using osu.Game.Beatmaps.ControlPoints;
 
@@ -63,6 +64,23 @@ namespace osu.Game.Screens.Edit.Timing
 
             foreach (var controlPoint in controlPoints)
                 SelectionChanged?.Invoke(new ControlPointSelectionEvent(controlPoint, false));
+        }
+
+        [Resolved]
+        private EditorBeatmap beatmap { get; set; } = null!;
+
+        protected override void LoadComplete()
+        {
+            base.LoadComplete();
+
+            beatmap.ControlPointInfo.ControlPointRemoved += Deselect;
+        }
+
+        protected override void Dispose(bool isDisposing)
+        {
+            base.Dispose(isDisposing);
+
+            beatmap.ControlPointInfo.ControlPointRemoved -= Deselect;
         }
     }
 

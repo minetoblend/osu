@@ -26,6 +26,12 @@ namespace osu.Game.Beatmaps.ControlPoints
         [CanBeNull]
         public event Action ControlPointsChanged;
 
+        [CanBeNull]
+        public event Action<ControlPoint> ControlPointAdedd;
+
+        [CanBeNull]
+        public event Action<ControlPoint> ControlPointRemoved;
+
         private void raiseControlPointsChanged([CanBeNull] ControlPoint _ = null) => ControlPointsChanged?.Invoke();
 
         /// <summary>
@@ -368,6 +374,7 @@ namespace osu.Game.Beatmaps.ControlPoints
                     throw new ArgumentException($"A control point of unexpected type {controlPoint.GetType()} was added to this {nameof(ControlPointInfo)}");
             }
 
+            ControlPointAdedd?.Invoke(controlPoint);
             raiseControlPointsChanged();
         }
 
@@ -384,6 +391,7 @@ namespace osu.Game.Beatmaps.ControlPoints
                     break;
             }
 
+            ControlPointRemoved?.Invoke(controlPoint);
             raiseControlPointsChanged();
         }
 

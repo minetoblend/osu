@@ -55,9 +55,32 @@ namespace osu.Game.Screens.Edit.Timing
 
             foreach (var controlPoint in GetControlPointList(beatmap.ControlPointInfo))
                 blueprintContainer.AddControlPoint(controlPoint);
+
+            beatmap.ControlPointInfo.ControlPointAdedd += controlPointAdded;
+            beatmap.ControlPointInfo.ControlPointRemoved += controlPointRemoved;
+        }
+
+        private void controlPointAdded(ControlPoint controlPoint)
+        {
+            if (controlPoint is T)
+                blueprintContainer.AddControlPoint(controlPoint);
+        }
+
+        private void controlPointRemoved(ControlPoint controlPoint)
+        {
+            if (controlPoint is T)
+                blueprintContainer.RemoveControlPoint(controlPoint);
         }
 
         public ControlPointBlueprint CreateBlueprintFor(ControlPointLifetimeEntry entry) => pool.Get(d => d.Entry = entry);
+
+        protected override void Dispose(bool isDisposing)
+        {
+            base.Dispose(isDisposing);
+
+            beatmap.ControlPointInfo.ControlPointAdedd += controlPointAdded;
+            beatmap.ControlPointInfo.ControlPointRemoved += controlPointRemoved;
+        }
 
         private partial class SelectableAreaBackground : Box
         {
