@@ -10,7 +10,7 @@ namespace osu.Game.Screens.Edit.Timing
     {
         protected override IReadOnlyList<Drawable> CreateSections() => new Drawable[]
         {
-            new GroupSection(),
+            new TimeSection(),
             new TimingSection(),
             new EffectSection(),
         };

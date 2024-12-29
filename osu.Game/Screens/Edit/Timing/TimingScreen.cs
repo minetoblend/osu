@@ -1,7 +1,13 @@
 ﻿// Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
+using System.Collections.Generic;
+using System.Linq;
 using osu.Framework.Allocation;
+using osu.Framework.Bindables;
+using osu.Framework.Graphics;
+using osu.Framework.Graphics.Containers;
+using osu.Game.Beatmaps.ControlPoints;
 
 namespace osu.Game.Screens.Edit.Timing
 {
@@ -12,29 +18,44 @@ namespace osu.Game.Screens.Edit.Timing
         {
         }
 
-        private DependencyContainer dependencies = null!;
+        [Cached]
+        private readonly Bindable<IReadOnlyList<ControlPoint>> selectedControlPoints = new Bindable<IReadOnlyList<ControlPoint>>(new List<ControlPoint>());
 
-        protected override IReadOnlyDependencyContainer CreateChildDependencies(IReadOnlyDependencyContainer parent)
-        {
-            return dependencies = new DependencyContainer(parent);
-        }
+        [Cached]
+        private readonly ControlPointSelectionManager selectionManager = new ControlPointSelectionManager();
 
         [BackgroundDependencyLoader]
         private void load()
         {
-            ControlPointSelectionManager selectionManager;
+            AddInternal(selectionManager);
 
-            AddInternal(selectionManager = new ControlPointSelectionManager());
-
-            dependencies.CacheAs(selectionManager);
-
-            Add(new LayeredTimeline
+            Add(new GridContainer
             {
-                Children = new TimelineLayer[]
+                RelativeSizeAxes = Axes.Both,
+                ColumnDimensions = new[]
                 {
-                    new TimingPointLayer()
+                    new Dimension(),
+                    new Dimension(GridSizeMode.Absolute, 350),
+                },
+                Content = new[]
+                {
+                    new Drawable[]
+                    {
+                        new LayeredTimeline
+                        {
+                            Children = new TimelineLayer[]
+                            {
+                                new TimingPointLayer()
+                            }
+                        },
+                        new ControlPointSettings(),
+                    },
                 }
             });
+
+            selectionManager.SelectionChanged += _ => Scheduler.AddOnce(updateSelection);
         }
+
+        private void updateSelection() => selectedControlPoints.Value = selectionManager.Selection.ToList();
     }
 }
