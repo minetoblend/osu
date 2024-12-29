@@ -6,9 +6,11 @@ using System.Linq;
 using osu.Framework.Allocation;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
+using osu.Framework.Graphics.Cursor;
 using osu.Framework.Graphics.Shapes;
 using osu.Framework.Input;
 using osu.Framework.Input.Events;
+using osu.Framework.Localisation;
 using osu.Framework.Utils;
 using osu.Game.Rulesets.Edit;
 using osu.Game.Screens.Edit.Compose.Components.Timeline;
@@ -16,7 +18,7 @@ using osuTK.Input;
 
 namespace osu.Game.Screens.Edit.Timing.Blueprints
 {
-    public partial class BeatLengthAdjustmentPiece : CompositeDrawable
+    public partial class BeatLengthAdjustmentPiece : CompositeDrawable, IHasTooltip
     {
         [Resolved]
         private Timeline timeline { get; set; } = null!;
@@ -25,6 +27,8 @@ namespace osu.Game.Screens.Edit.Timing.Blueprints
         private IEditorChangeHandler? changeHandler { get; set; }
 
         private readonly TimingPointBlueprint blueprint;
+
+        public virtual LocalisableString TooltipText { get; private set; }
 
         public BeatLengthAdjustmentPiece(TimingPointBlueprint blueprint)
         {
@@ -158,9 +162,10 @@ namespace osu.Game.Screens.Edit.Timing.Blueprints
 
             double ratio = (time - blueprint.ControlPoint.Time) / dragOffset;
 
-            // TODO: find sensible limits here
             blueprint.ControlPoint.BeatLength = Math.Clamp(initialBeatLength * ratio, 100, 10000);
             timeline.InvalidateTicks();
+
+            TooltipText = $"{blueprint.ControlPoint.BPM:N2} bpm";
         }
 
         protected override void OnDragEnd(DragEndEvent e)
@@ -168,6 +173,8 @@ namespace osu.Game.Screens.Edit.Timing.Blueprints
             base.OnDragEnd(e);
 
             changeHandler?.EndChange();
+
+            TooltipText = string.Empty;
         }
     }
 }
