@@ -3,14 +3,11 @@
 
 using osu.Framework.Allocation;
 using osu.Framework.Bindables;
-using osu.Framework.Graphics;
-using osu.Framework.Graphics.Containers;
 using osu.Game.Beatmaps.ControlPoints;
-using osu.Game.Screens.Edit.Compose.Components.Timeline;
 
 namespace osu.Game.Screens.Edit.Timing
 {
-    public partial class TimingScreen : EditorScreenWithTimeline
+    public partial class TimingScreen : EditorScreen
     {
         [Cached]
         public readonly Bindable<ControlPointGroup> SelectedGroup = new Bindable<ControlPointGroup>();
@@ -21,45 +18,6 @@ namespace osu.Game.Screens.Edit.Timing
         public TimingScreen()
             : base(EditorScreenMode.Timing)
         {
-        }
-
-        protected override Drawable CreateMainContent() => new GridContainer
-        {
-            RelativeSizeAxes = Axes.Both,
-            ColumnDimensions = new[]
-            {
-                new Dimension(),
-                new Dimension(GridSizeMode.Absolute, 350),
-            },
-            Content = new[]
-            {
-                new Drawable[]
-                {
-                    new ControlPointList(),
-                    new ControlPointSettings(),
-                },
-            }
-        };
-
-        protected override void LoadComplete()
-        {
-            base.LoadComplete();
-
-            if (editorClock != null)
-            {
-                // When entering the timing screen, let's choose the closest valid timing point.
-                // This will emulate the osu-stable behaviour where a metronome and timing information
-                // are presented on entering the screen.
-                var nearestTimingPoint = EditorBeatmap.ControlPointInfo.TimingPointAt(editorClock.CurrentTime);
-                SelectedGroup.Value = EditorBeatmap.ControlPointInfo.GroupAt(nearestTimingPoint.Time);
-            }
-        }
-
-        protected override void ConfigureTimeline(TimelineArea timelineArea)
-        {
-            base.ConfigureTimeline(timelineArea);
-
-            timelineArea.Timeline.AlwaysShowControlPoints = true;
         }
     }
 }
