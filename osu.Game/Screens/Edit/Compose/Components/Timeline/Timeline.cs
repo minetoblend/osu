@@ -22,6 +22,8 @@ namespace osu.Game.Screens.Edit.Compose.Components.Timeline
         [Resolved]
         private EditorBeatmap editorBeatmap { get; set; } = null!;
 
+        protected virtual bool SyncWithEditorClock => true;
+
         /// <summary>
         /// The timeline's scroll position in the last frame.
         /// </summary>
@@ -139,13 +141,16 @@ namespace osu.Game.Screens.Edit.Compose.Components.Timeline
 
         private void seekTrackToCurrent()
         {
+            if (!SyncWithEditorClock)
+                return;
+
             double target = TimeAtPosition(Current);
             editorClock.Seek(Math.Min(editorClock.TrackLength, target));
         }
 
         private void scrollToTrackTime()
         {
-            if (editorClock.TrackLength == 0)
+            if (!SyncWithEditorClock || editorClock.TrackLength == 0)
                 return;
 
             // covers the case where the user starts playback after a drag is in progress.
