@@ -111,15 +111,6 @@ namespace osu.Game.Rulesets.Catch.Edit
             return true;
         }
 
-        protected override void OnSelectionChanged()
-        {
-            base.OnSelectionChanged();
-
-            var selectionRange = CatchHitObjectUtils.GetPositionRange(SelectedItems);
-            SelectionBox.CanFlipX = selectionRange.Length > 0 && SelectedItems.Any(h => h is CatchHitObject && !(h is BananaShower));
-            SelectionBox.CanReverse = SelectedItems.Count > 1 || SelectedItems.Any(h => h is JuiceStream);
-        }
-
         /// <summary>
         /// Limit positional movement of the objects by the constraint that moved objects should stay in bounds.
         /// </summary>
