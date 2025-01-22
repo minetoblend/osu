@@ -22,6 +22,7 @@ using osu.Game.Configuration;
 using osu.Game.Graphics;
 using osu.Game.Overlays;
 using osu.Game.Rulesets.Configuration;
+using osu.Game.Rulesets.Edit.Interactions;
 using osu.Game.Rulesets.Edit.Tools;
 using osu.Game.Rulesets.Mods;
 using osu.Game.Rulesets.Objects;
@@ -43,7 +44,8 @@ namespace osu.Game.Rulesets.Edit
     /// Responsible for providing snapping and generally gluing components together.
     /// </summary>
     /// <typeparam name="TObject">The base type of supported objects.</typeparam>
-    public abstract partial class HitObjectComposer<TObject> : HitObjectComposer, IPlacementHandler
+    [Cached(typeof(IInteractionContainer))]
+    public abstract partial class HitObjectComposer<TObject> : HitObjectComposer, IPlacementHandler, IInteractionContainer
         where TObject : HitObject
     {
         /// <summary>
@@ -148,7 +150,7 @@ namespace osu.Game.Rulesets.Edit
                         drawableRulesetWrapper,
                         // layers above playfield
                         drawableRulesetWrapper.CreatePlayfieldAdjustmentContainer()
-                                              .WithChild(blueprintContainer = CreateBlueprintContainer())
+                                              .WithChild(blueprintContainer = CreateBlueprintContainer()),
                     }
                 },
                 new Container
@@ -277,7 +279,16 @@ namespace osu.Game.Rulesets.Edit
             SetSelectTool();
 
             EditorBeatmap.SelectedHitObjects.CollectionChanged += selectionChanged;
+
+            AddInternal(interactionContainer = new Container<ComposeInteraction>
+            {
+                RelativeSizeAxes = Axes.Y,
+                Anchor = Anchor.Centre,
+                Origin = Anchor.Centre
+            });
         }
+
+        private Container<ComposeInteraction> interactionContainer;
 
         /// <summary>
         /// Houses all content relevant to the playfield.
@@ -351,6 +362,8 @@ namespace osu.Game.Rulesets.Edit
             composerFocusMode.Value = PlayfieldContentContainer.Contains(InputManager.CurrentState.Mouse.Position)
                                       && !LeftToolbox.Contains(InputManager.CurrentState.Mouse.Position)
                                       && !RightToolbox.Contains(InputManager.CurrentState.Mouse.Position);
+
+            interactionContainer.Width = DrawWidth - TOOLBOX_CONTRACTED_SIZE_RIGHT * 2;
         }
 
         public override Playfield Playfield => drawableRulesetWrapper.Playfield;
@@ -589,6 +602,41 @@ namespace osu.Game.Rulesets.Edit
         }
 
         #endregion
+
+        #region IInteractionContainer
+
+        public override ComposeInteraction CurrentInteraction { get; internal set; }
+
+        public override void BeginInteraction(ComposeInteraction interaction)
+        {
+            this.CompleteCurrentInteraction();
+
+            interactionContainer.Add(CurrentInteraction = interaction);
+        }
+
+        public override bool CompleteInteraction(ComposeInteraction interaction)
+        {
+            if (interaction != CurrentInteraction)
+                return false;
+
+            interaction.OnComplete();
+
+            interaction.Expire();
+            return true;
+        }
+
+        public override bool CancelInteraction(ComposeInteraction interaction)
+        {
+            if (interaction != CurrentInteraction)
+                return false;
+
+            interaction.OnCancel();
+
+            interaction.Expire();
+            return true;
+        }
+
+        #endregion
     }
 
     /// <summary>
@@ -596,12 +644,13 @@ namespace osu.Game.Rulesets.Edit
     /// Generally used to access certain methods without requiring a generic type for <see cref="HitObjectComposer{T}" />.
     /// </summary>
     [Cached]
-    public abstract partial class HitObjectComposer : CompositeDrawable, IPositionSnapProvider
+    public abstract partial class HitObjectComposer : CompositeDrawable, IPositionSnapProvider, IInteractionContainer
     {
         public const float TOOLBOX_CONTRACTED_SIZE_LEFT = 60;
         public const float TOOLBOX_CONTRACTED_SIZE_RIGHT = 120;
 
         public readonly Ruleset Ruleset;
+        private IInteractionContainer interactionContainerImplementation;
 
         protected HitObjectComposer(Ruleset ruleset)
         {
@@ -643,6 +692,15 @@ namespace osu.Game.Rulesets.Edit
         #region IPositionSnapProvider
 
         public abstract SnapResult FindSnappedPositionAndTime(Vector2 screenSpacePosition, SnapType snapType = SnapType.All);
+
+        #endregion
+
+        #region IInteractionContainer
+
+        public abstract ComposeInteraction CurrentInteraction { get; internal set; }
+        public abstract void BeginInteraction(ComposeInteraction interaction);
+        public abstract bool CompleteInteraction(ComposeInteraction interaction);
+        public abstract bool CancelInteraction(ComposeInteraction interaction);
 
         #endregion
     }
