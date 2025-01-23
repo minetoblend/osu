@@ -17,6 +17,16 @@ namespace osu.Game.Rulesets.Mania.Edit
         [Resolved]
         private HitObjectComposer composer { get; set; } = null!;
 
+        protected override void OnSelectionChanged()
+        {
+            base.OnSelectionChanged();
+
+            var selectedObjects = SelectedItems.OfType<ManiaHitObject>().ToArray();
+
+            SelectionBox.CanFlipX = canFlipX(selectedObjects);
+            SelectionBox.CanFlipY = canFlipY(selectedObjects);
+        }
+
         public override bool HandleMovement(MoveSelectionEvent<HitObject> moveEvent)
         {
             var hitObjectBlueprint = (HitObjectSelectionBlueprint)moveEvent.Blueprint;

@@ -9,6 +9,7 @@ using osu.Framework.Bindables;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Cursor;
+using osu.Framework.Graphics.Primitives;
 using osu.Framework.Graphics.UserInterface;
 using osu.Framework.Input;
 using osu.Framework.Input.Bindings;
@@ -48,6 +49,8 @@ namespace osu.Game.Screens.Edit.Compose.Components
 
         private readonly List<SelectionBlueprint<T>> selectedBlueprints;
 
+        protected SelectionBox SelectionBox { get; private set; } = null!;
+
         [Resolved(CanBeNull = true)]
         protected IEditorChangeHandler? ChangeHandler { get; private set; }
 
@@ -81,10 +84,21 @@ namespace osu.Game.Screens.Edit.Compose.Components
             {
                 RotationHandler,
                 ScaleHandler,
+                SelectionBox = CreateSelectionBox(),
             });
 
             SelectedItems.BindCollectionChanged((_, _) => Scheduler.AddOnce(updateVisibility), true);
         }
+
+        public SelectionBox CreateSelectionBox()
+            => new SelectionBox
+            {
+                OperationStarted = OnOperationBegan,
+                OperationEnded = OnOperationEnded,
+
+                OnFlip = HandleFlip,
+                OnReverse = HandleReverse,
+            };
 
         /// <summary>
         /// Fired when a drag operation ends from the selection box.
@@ -348,6 +362,11 @@ namespace osu.Game.Screens.Edit.Compose.Components
         /// </summary>
         private void updateVisibility()
         {
+            int count = SelectedItems.Count;
+
+            SelectionBox.Text = count > 0 ? count.ToString() : string.Empty;
+            SelectionBox.FadeTo(count > 0 ? 1 : 0);
+
             OnSelectionChanged();
         }
 
@@ -357,6 +376,25 @@ namespace osu.Game.Screens.Edit.Compose.Components
         /// </summary>
         protected virtual void OnSelectionChanged()
         {
+        }
+
+        protected override void Update()
+        {
+            base.Update();
+
+            if (selectedBlueprints.Count == 0)
+                return;
+
+            // Move the rectangle to cover the items
+            RectangleF selectionRect = ToLocalSpace(selectedBlueprints[0].SelectionQuad).AABBFloat;
+
+            for (int i = 1; i < selectedBlueprints.Count; i++)
+                selectionRect = RectangleF.Union(selectionRect, ToLocalSpace(selectedBlueprints[i].SelectionQuad).AABBFloat);
+
+            selectionRect = selectionRect.Inflate(INFLATE_SIZE);
+
+            SelectionBox.Position = selectionRect.Location;
+            SelectionBox.Size = selectionRect.Size;
         }
 
         #endregion
@@ -379,10 +417,7 @@ namespace osu.Game.Screens.Edit.Compose.Components
 
                 items.Add(new OsuMenuItem(CommonStrings.ButtonsDelete, MenuItemType.Destructive, DeleteSelected)
                 {
-                    Hotkey = new Hotkey
-                    {
-                        PlatformAction = PlatformAction.Delete, KeyCombinations = [new KeyCombination(InputKey.Shift, InputKey.MouseRight), new KeyCombination(InputKey.MouseMiddle)]
-                    }
+                    Hotkey = new Hotkey { PlatformAction = PlatformAction.Delete, KeyCombinations = [new KeyCombination(InputKey.Shift, InputKey.MouseRight), new KeyCombination(InputKey.MouseMiddle)] }
                 });
 
                 return items.ToArray();

@@ -11,7 +11,6 @@ using osu.Framework.Timing;
 using osu.Game.Beatmaps.ControlPoints;
 using osu.Game.Configuration;
 using osu.Game.Rulesets.Edit;
-using osu.Game.Rulesets.Edit.Interactions;
 using osu.Game.Rulesets.Mania.Beatmaps;
 using osu.Game.Rulesets.Mania.Edit;
 using osu.Game.Rulesets.Mania.UI;
@@ -90,14 +89,6 @@ namespace osu.Game.Rulesets.Mania.Tests.Editor
         public override ComposeBlueprintContainer BlueprintContainer => throw new NotImplementedException();
         public override IEnumerable<DrawableHitObject> HitObjects => Enumerable.Empty<DrawableHitObject>();
         public override bool CursorInPlacementArea => false;
-
-        public override void BeginInteraction(ComposeInteraction interaction) { }
-
-        public override bool CompleteInteraction(ComposeInteraction interaction) => false;
-
-        public override bool CancelInteraction(ComposeInteraction interaction) => false;
-
-        public override ComposeInteraction? CurrentInteraction => null;
 
         public TestHitObjectComposer(Playfield playfield)
             : base(new ManiaRuleset())
