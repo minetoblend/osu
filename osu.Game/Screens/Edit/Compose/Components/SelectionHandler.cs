@@ -365,9 +365,21 @@ namespace osu.Game.Screens.Edit.Compose.Components
             int count = SelectedItems.Count;
 
             SelectionBox.Text = count > 0 ? count.ToString() : string.Empty;
-            SelectionBox.FadeTo(count > 0 ? 1 : 0);
+            SelectionBox.FadeTo(ShowSelectionBox && count > 0 ? 1 : 0);
 
             OnSelectionChanged();
+        }
+
+        private bool showSelectionBox;
+
+        protected bool ShowSelectionBox
+        {
+            get => showSelectionBox;
+            set
+            {
+                showSelectionBox = value;
+                UpdateVisibility();
+            }
         }
 
         /// <summary>
