@@ -9,7 +9,6 @@ using osu.Framework.Bindables;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Cursor;
-using osu.Framework.Graphics.Primitives;
 using osu.Framework.Graphics.UserInterface;
 using osu.Framework.Input;
 using osu.Framework.Input.Bindings;
@@ -20,6 +19,7 @@ using osu.Game.Input.Bindings;
 using osu.Game.Resources.Localisation.Web;
 using osu.Game.Rulesets.Edit;
 using osu.Game.Screens.Edit.Compose.Components.Timeline;
+using osu.Game.Screens.Utility;
 using osuTK;
 using osuTK.Input;
 
@@ -87,12 +87,14 @@ namespace osu.Game.Screens.Edit.Compose.Components
                 SelectionBox = CreateSelectionBox(),
             });
 
-            SelectedItems.BindCollectionChanged((_, _) => Scheduler.AddOnce(updateVisibility), true);
+            SelectedItems.BindCollectionChanged((_, _) => Scheduler.AddOnce(UpdateVisibility), true);
         }
 
         public SelectionBox CreateSelectionBox()
             => new SelectionBox
             {
+                InflateSize = INFLATE_SIZE,
+
                 OperationStarted = OnOperationBegan,
                 OperationEnded = OnOperationEnded,
 
@@ -360,7 +362,7 @@ namespace osu.Game.Screens.Edit.Compose.Components
         /// <summary>
         /// Updates whether this <see cref="SelectionHandler{T}"/> is visible.
         /// </summary>
-        private void updateVisibility()
+        protected void UpdateVisibility()
         {
             int count = SelectedItems.Count;
 
@@ -397,15 +399,14 @@ namespace osu.Game.Screens.Edit.Compose.Components
             if (selectedBlueprints.Count == 0)
                 return;
 
-            // Move the rectangle to cover the items
-            RectangleF selectionRect = ToLocalSpace(selectedBlueprints[0].SelectionQuad).AABBFloat;
+            var bounds = new Bounds(SelectionBox);
 
-            for (int i = 1; i < selectedBlueprints.Count; i++)
-                selectionRect = RectangleF.Union(selectionRect, ToLocalSpace(selectedBlueprints[i].SelectionQuad).AABBFloat);
+            foreach (var selectionBlueprint in selectedBlueprints)
+                selectionBlueprint.BuildSelectionBounds(bounds);
 
-            selectionRect = selectionRect.Inflate(INFLATE_SIZE);
+            var selectionRect = bounds.Rectangle!.Value;
 
-            SelectionBox.Position = selectionRect.Location;
+            SelectionBox.Position = SelectionBox.ToParentSpace(selectionRect.Location);
             SelectionBox.Size = selectionRect.Size;
         }
 
@@ -429,7 +430,10 @@ namespace osu.Game.Screens.Edit.Compose.Components
 
                 items.Add(new OsuMenuItem(CommonStrings.ButtonsDelete, MenuItemType.Destructive, DeleteSelected)
                 {
-                    Hotkey = new Hotkey { PlatformAction = PlatformAction.Delete, KeyCombinations = [new KeyCombination(InputKey.Shift, InputKey.MouseRight), new KeyCombination(InputKey.MouseMiddle)] }
+                    Hotkey = new Hotkey
+                    {
+                        PlatformAction = PlatformAction.Delete, KeyCombinations = [new KeyCombination(InputKey.Shift, InputKey.MouseRight), new KeyCombination(InputKey.MouseMiddle)]
+                    }
                 });
 
                 return items.ToArray();
