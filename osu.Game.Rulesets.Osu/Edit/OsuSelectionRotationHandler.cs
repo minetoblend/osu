@@ -7,8 +7,13 @@ using System.Diagnostics;
 using System.Linq;
 using osu.Framework.Allocation;
 using osu.Framework.Bindables;
+using osu.Framework.Graphics.UserInterface;
+using osu.Game.Graphics.UserInterfaceV2;
+using osu.Game.Rulesets.Edit;
+using osu.Game.Rulesets.Edit.Interactions;
 using osu.Game.Rulesets.Objects;
 using osu.Game.Rulesets.Objects.Types;
+using osu.Game.Rulesets.Osu.Edit.Interactions;
 using osu.Game.Rulesets.Osu.Objects;
 using osu.Game.Screens.Edit;
 using osu.Game.Screens.Edit.Compose.Components;
@@ -21,6 +26,9 @@ namespace osu.Game.Rulesets.Osu.Edit
     {
         [Resolved]
         private IEditorChangeHandler? changeHandler { get; set; }
+
+        [Resolved(CanBeNull = true)]
+        private HitObjectComposer? composer { get; set; }
 
         private BindableList<HitObject> selectedItems { get; } = new BindableList<HitObject>();
 
@@ -35,6 +43,29 @@ namespace osu.Game.Rulesets.Osu.Edit
             base.LoadComplete();
 
             selectedItems.CollectionChanged += (_, __) => updateState();
+            updateState();
+
+            if (composer != null)
+            {
+                composer.InteractionBegan += interactionBegan;
+                composer.InteractionEnded += interactionEnded;
+            }
+        }
+
+        private IRequiresSelectionBox? selectBoxUsage;
+
+        private void interactionBegan(ComposeInteraction interaction)
+        {
+            if (interaction is IRequiresSelectionBox usage)
+                selectBoxUsage = usage;
+            else
+                selectBoxUsage = null;
+            updateState();
+        }
+
+        private void interactionEnded(ComposeInteraction interaction)
+        {
+            selectBoxUsage = null;
             updateState();
         }
 

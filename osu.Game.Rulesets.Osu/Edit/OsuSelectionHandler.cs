@@ -12,9 +12,11 @@ using osu.Framework.Utils;
 using osu.Game.Extensions;
 using osu.Game.Graphics.UserInterface;
 using osu.Game.Rulesets.Edit;
+using osu.Game.Rulesets.Edit.Interactions;
 using osu.Game.Rulesets.Objects;
 using osu.Game.Rulesets.Objects.Types;
 using osu.Game.Rulesets.Osu.Beatmaps;
+using osu.Game.Rulesets.Osu.Edit.Interactions;
 using osu.Game.Rulesets.Osu.Objects;
 using osu.Game.Rulesets.Osu.UI;
 using osu.Game.Screens.Edit.Compose.Components;
@@ -28,6 +30,32 @@ namespace osu.Game.Rulesets.Osu.Edit
     {
         [Resolved]
         private OsuGridToolboxGroup gridToolbox { get; set; } = null!;
+
+        [Resolved]
+        private HitObjectComposer composer { get; set; } = null!;
+
+        protected override void LoadComplete()
+        {
+            base.LoadComplete();
+
+            ShowSelectionBox = false;
+
+            composer.InteractionBegan += interactionBegan;
+            composer.InteractionEnded += interactionEnded;
+        }
+
+        private void interactionBegan(ComposeInteraction interaction)
+        {
+            if (interaction is not IRequiresSelectionBox needsSelectBox)
+            {
+                ShowSelectionBox = false;
+                return;
+            }
+
+            ShowSelectionBox = true;
+        }
+
+        private void interactionEnded(ComposeInteraction interaction) => ShowSelectionBox = false;
 
         protected override void OnSelectionChanged()
         {

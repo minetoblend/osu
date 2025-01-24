@@ -9,10 +9,14 @@ using osu.Framework.Allocation;
 using osu.Framework.Bindables;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Primitives;
+using osu.Framework.Graphics.UserInterface;
 using osu.Framework.Utils;
+using osu.Game.Graphics.UserInterfaceV2;
 using osu.Game.Rulesets.Edit;
+using osu.Game.Rulesets.Edit.Interactions;
 using osu.Game.Rulesets.Objects;
 using osu.Game.Rulesets.Objects.Types;
+using osu.Game.Rulesets.Osu.Edit.Interactions;
 using osu.Game.Rulesets.Osu.Objects;
 using osu.Game.Rulesets.Osu.UI;
 using osu.Game.Screens.Edit;
@@ -40,6 +44,9 @@ namespace osu.Game.Rulesets.Osu.Edit
         [Resolved(CanBeNull = true)]
         private IDistanceSnapProvider? snapProvider { get; set; }
 
+        [Resolved(CanBeNull = true)]
+        private HitObjectComposer? composer { get; set; }
+
         private BindableList<HitObject> selectedItems { get; } = new BindableList<HitObject>();
 
         [BackgroundDependencyLoader]
@@ -54,14 +61,37 @@ namespace osu.Game.Rulesets.Osu.Edit
 
             selectedItems.CollectionChanged += (_, __) => updateState();
             updateState();
+
+            if (composer != null)
+            {
+                composer.InteractionBegan += interactionBegan;
+                composer.InteractionEnded += interactionEnded;
+            }
+        }
+
+        private IRequiresSelectionBox? selectBoxUsage;
+
+        private void interactionBegan(ComposeInteraction interaction)
+        {
+            if (interaction is IRequiresSelectionBox usage)
+                selectBoxUsage = usage;
+            else
+                selectBoxUsage = null;
+            updateState();
+        }
+
+        private void interactionEnded(ComposeInteraction interaction)
+        {
+            selectBoxUsage = null;
+            updateState();
         }
 
         private void updateState()
         {
             var quad = GeometryUtils.GetSurroundingQuad(selectedMovableObjects);
 
-            CanScaleX.Value = quad.Width > 0;
-            CanScaleY.Value = quad.Height > 0;
+            CanScaleX.Value = selectBoxUsage?.CanScale != false && quad.Width > 0;
+            CanScaleY.Value = selectBoxUsage?.CanScale != false && quad.Height > 0;
             CanScaleDiagonally.Value = CanScaleX.Value && CanScaleY.Value;
             CanScaleFromPlayfieldOrigin.Value = selectedMovableObjects.Any();
             IsScalingSlider.Value = selectedMovableObjects.Count() == 1 && selectedMovableObjects.First() is Slider;
