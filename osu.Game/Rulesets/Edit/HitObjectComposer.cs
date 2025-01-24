@@ -44,8 +44,7 @@ namespace osu.Game.Rulesets.Edit
     /// Responsible for providing snapping and generally gluing components together.
     /// </summary>
     /// <typeparam name="TObject">The base type of supported objects.</typeparam>
-    [Cached(typeof(IInteractionContainer))]
-    public abstract partial class HitObjectComposer<TObject> : HitObjectComposer, IPlacementHandler, IInteractionContainer
+    public abstract partial class HitObjectComposer<TObject> : HitObjectComposer, IPlacementHandler
         where TObject : HitObject
     {
         /// <summary>
@@ -280,7 +279,7 @@ namespace osu.Game.Rulesets.Edit
 
             EditorBeatmap.SelectedHitObjects.CollectionChanged += selectionChanged;
 
-            AddInternal(interactionContainer = new Container<ComposeInteraction>
+            AddInternal(interactionContainer = new Container
             {
                 RelativeSizeAxes = Axes.Y,
                 Anchor = Anchor.Centre,
@@ -288,7 +287,9 @@ namespace osu.Game.Rulesets.Edit
             });
         }
 
-        private Container<ComposeInteraction> interactionContainer;
+        private Container interactionContainer = null!;
+
+        protected override Container InteractionContainer => interactionContainer;
 
         /// <summary>
         /// Houses all content relevant to the playfield.
@@ -363,7 +364,7 @@ namespace osu.Game.Rulesets.Edit
                                       && !LeftToolbox.Contains(InputManager.CurrentState.Mouse.Position)
                                       && !RightToolbox.Contains(InputManager.CurrentState.Mouse.Position);
 
-            interactionContainer.Width = DrawWidth - TOOLBOX_CONTRACTED_SIZE_RIGHT * 2;
+            InteractionContainer.Width = DrawWidth - TOOLBOX_CONTRACTED_SIZE_RIGHT * 2;
         }
 
         public override Playfield Playfield => drawableRulesetWrapper.Playfield;
@@ -602,41 +603,6 @@ namespace osu.Game.Rulesets.Edit
         }
 
         #endregion
-
-        #region IInteractionContainer
-
-        public override ComposeInteraction CurrentInteraction { get; internal set; }
-
-        public override void BeginInteraction(ComposeInteraction interaction)
-        {
-            this.CompleteCurrentInteraction();
-
-            interactionContainer.Add(CurrentInteraction = interaction);
-        }
-
-        public override bool CompleteInteraction(ComposeInteraction interaction)
-        {
-            if (interaction != CurrentInteraction)
-                return false;
-
-            interaction.OnComplete();
-
-            interaction.Expire();
-            return true;
-        }
-
-        public override bool CancelInteraction(ComposeInteraction interaction)
-        {
-            if (interaction != CurrentInteraction)
-                return false;
-
-            interaction.OnCancel();
-
-            interaction.Expire();
-            return true;
-        }
-
-        #endregion
     }
 
     /// <summary>
@@ -644,13 +610,12 @@ namespace osu.Game.Rulesets.Edit
     /// Generally used to access certain methods without requiring a generic type for <see cref="HitObjectComposer{T}" />.
     /// </summary>
     [Cached]
-    public abstract partial class HitObjectComposer : CompositeDrawable, IPositionSnapProvider, IInteractionContainer
+    public abstract partial class HitObjectComposer : CompositeDrawable, IPositionSnapProvider
     {
         public const float TOOLBOX_CONTRACTED_SIZE_LEFT = 60;
         public const float TOOLBOX_CONTRACTED_SIZE_RIGHT = 120;
 
         public readonly Ruleset Ruleset;
-        private IInteractionContainer interactionContainerImplementation;
 
         protected HitObjectComposer(Ruleset ruleset)
         {
@@ -695,12 +660,54 @@ namespace osu.Game.Rulesets.Edit
 
         #endregion
 
-        #region IInteractionContainer
+        #region ComposeInteraction
 
-        public abstract ComposeInteraction CurrentInteraction { get; internal set; }
-        public abstract void BeginInteraction(ComposeInteraction interaction);
-        public abstract bool CompleteInteraction(ComposeInteraction interaction);
-        public abstract bool CancelInteraction(ComposeInteraction interaction);
+        protected abstract Container InteractionContainer { get; }
+
+        public ComposeInteraction CurrentInteraction { get; internal set; }
+
+        [CanBeNull]
+        public event Action<ComposeInteraction> InteractionBegan;
+
+        [CanBeNull]
+        public event Action<ComposeInteraction> InteractionEnded;
+
+        public void BeginInteraction(ComposeInteraction interaction)
+        {
+            if (CurrentInteraction != null)
+                CompleteInteraction(CurrentInteraction);
+
+            InteractionContainer.Add(interaction);
+            InteractionBegan?.Invoke(interaction);
+
+            CurrentInteraction = interaction;
+        }
+
+        public bool CompleteInteraction(ComposeInteraction interaction)
+        {
+            if (interaction != CurrentInteraction)
+                return false;
+
+            interaction.OnComplete();
+
+            interaction.Expire();
+
+            InteractionEnded?.Invoke(interaction);
+            return true;
+        }
+
+        public bool CancelInteraction(ComposeInteraction interaction)
+        {
+            if (interaction != CurrentInteraction)
+                return false;
+
+            interaction.OnCancel();
+
+            interaction.Expire();
+
+            InteractionEnded?.Invoke(interaction);
+            return true;
+        }
 
         #endregion
     }

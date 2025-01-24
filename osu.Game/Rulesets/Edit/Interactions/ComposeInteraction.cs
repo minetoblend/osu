@@ -13,7 +13,7 @@ namespace osu.Game.Rulesets.Edit.Interactions
     public abstract partial class ComposeInteraction : CompositeDrawable, IKeyBindingHandler<GlobalAction>
     {
         [Resolved]
-        private IInteractionContainer interactionContainer { get; set; } = null!;
+        private HitObjectComposer composer { get; set; } = null!;
 
         protected ComposeInteraction()
         {
@@ -22,16 +22,9 @@ namespace osu.Game.Rulesets.Edit.Interactions
 
         #region Lifecycle
 
-        protected void Complete() => interactionContainer.CompleteInteraction(this);
-
-        protected void Cancel() => interactionContainer.CancelInteraction(this);
-
         internal virtual void OnComplete() => IsActive = false;
 
-        internal virtual void OnCancel()
-        {
-            IsActive = false;
-        }
+        internal virtual void OnCancel() => IsActive = false;
 
         protected bool IsActive { get; private set; } = true;
 
@@ -48,11 +41,11 @@ namespace osu.Game.Rulesets.Edit.Interactions
             switch (e.Action)
             {
                 case GlobalAction.Select:
-                    Complete();
+                    composer.CompleteInteraction(this);
                     return true;
 
                 case GlobalAction.Back:
-                    Cancel();
+                    composer.CancelInteraction(this);
                     return false;
             }
 
