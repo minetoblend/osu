@@ -12,6 +12,7 @@ using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Primitives;
 using osu.Framework.Graphics.UserInterface;
 using osu.Game.Graphics.UserInterface;
+using osu.Game.Screens.Utility;
 using osuTK;
 
 namespace osu.Game.Rulesets.Edit
@@ -152,6 +153,8 @@ namespace osu.Game.Rulesets.Edit
         /// The screen-space quad that outlines this <see cref="HitObjectSelectionBlueprint"/> for selections.
         /// </summary>
         public virtual Quad SelectionQuad => ScreenSpaceDrawQuad;
+
+        public virtual void BuildSelectionBounds(Bounds bounds) => bounds.Add(SelectionQuad);
 
         /// <summary>
         /// Handle to perform a partial deletion when the user requests a quick delete (Shift+Right Click).

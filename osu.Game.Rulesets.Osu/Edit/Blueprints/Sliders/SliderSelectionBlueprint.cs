@@ -25,6 +25,7 @@ using osu.Game.Rulesets.Osu.Objects;
 using osu.Game.Rulesets.Osu.Objects.Drawables;
 using osu.Game.Screens.Edit;
 using osu.Game.Screens.Edit.Compose;
+using osu.Game.Screens.Utility;
 using osuTK;
 using osuTK.Input;
 
@@ -73,6 +74,30 @@ namespace osu.Game.Rulesets.Osu.Edit.Blueprints.Sliders
                 }
 
                 return result;
+            }
+        }
+
+        public override void BuildSelectionBounds(Bounds bounds)
+        {
+            float screenSpaceRadius = HeadOverlay.CirclePiece.ScreenSpaceDrawQuad.Width / 2;
+
+            bounds.Add(HeadOverlay.CirclePiece.ScreenSpaceDrawQuad.Centre, radius: screenSpaceRadius);
+            bounds.Add(TailOverlay.CirclePiece.ScreenSpaceDrawQuad.Centre, radius: screenSpaceRadius * 1.4f);
+
+            var path = new List<Vector2>();
+            HitObject.Path.GetPathToProgress(path, 0, 1);
+
+            foreach (var p in path)
+            {
+                var screenSpacePos = ToScreenSpace(p + HitObject.StackedPosition);
+
+                bounds.Add(screenSpacePos, radius: screenSpaceRadius);
+            }
+
+            if (ControlPointVisualiser != null)
+            {
+                foreach (var piece in ControlPointVisualiser.Pieces)
+                    bounds.Add(piece.ScreenSpaceDrawQuad);
             }
         }
 

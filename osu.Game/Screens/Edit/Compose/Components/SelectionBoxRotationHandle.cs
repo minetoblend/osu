@@ -111,6 +111,8 @@ namespace osu.Game.Screens.Edit.Compose.Components
             cumulativeRotation.Value = null;
             rawCumulativeRotation = 0;
             TooltipText = default;
+
+            selectionBox.Rotation = 0;
         }
 
         private float convertDragEventToAngleOfRotation(DragEvent e)
@@ -130,6 +132,8 @@ namespace osu.Game.Screens.Edit.Compose.Components
             newRotation = (newRotation - 180) % 360 + 180;
 
             cumulativeRotation.Value = newRotation;
+
+            selectionBox.Rotation = newRotation;
 
             rotationHandler?.Update(newRotation);
             TooltipText = shouldSnap ? EditorStrings.RotationSnapped(newRotation) : EditorStrings.RotationUnsnapped(newRotation);

@@ -9,6 +9,7 @@ using osu.Game.Configuration;
 using osu.Game.Rulesets.Osu.Edit.Blueprints.HitCircles.Components;
 using osu.Game.Rulesets.Osu.Objects;
 using osu.Game.Rulesets.Osu.Objects.Drawables;
+using osu.Game.Screens.Utility;
 using osuTK;
 
 namespace osu.Game.Rulesets.Osu.Edit.Blueprints.HitCircles
@@ -62,5 +63,10 @@ namespace osu.Game.Rulesets.Osu.Edit.Blueprints.HitCircles
         public override bool ReceivePositionalInputAt(Vector2 screenSpacePos) => DrawableObject.HitArea.ReceivePositionalInputAt(screenSpacePos);
 
         public override Quad SelectionQuad => CirclePiece.ScreenSpaceDrawQuad;
+
+        public override void BuildSelectionBounds(Bounds bounds)
+        {
+            bounds.Add(CirclePiece.ScreenSpaceDrawQuad.Centre, CirclePiece.ScreenSpaceDrawQuad.Width / 2);
+        }
     }
 }

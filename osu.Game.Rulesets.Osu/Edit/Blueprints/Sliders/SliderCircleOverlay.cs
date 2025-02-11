@@ -28,7 +28,7 @@ namespace osu.Game.Rulesets.Osu.Edit.Blueprints.Sliders
             }
         }
 
-        protected readonly HitCirclePiece CirclePiece;
+        internal readonly HitCirclePiece CirclePiece;
 
         private readonly Slider slider;
         private readonly SliderPosition position;
