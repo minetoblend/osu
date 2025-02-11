@@ -120,6 +120,8 @@ namespace osu.Game.Screens.Edit.Compose.Components
 
         private OsuSpriteText? selectionDetailsText;
 
+        private readonly Bindable<bool> rotationInProgress = new BindableBool();
+
         [Resolved]
         private OsuColour colours { get; set; } = null!;
 
@@ -127,7 +129,10 @@ namespace osu.Game.Screens.Edit.Compose.Components
         private void load()
         {
             if (rotationHandler != null)
+            {
                 canRotate.BindTo(rotationHandler.CanRotateAroundSelectionOrigin);
+                rotationInProgress.BindTo(rotationHandler.OperationInProgress);
+            }
 
             if (scaleHandler != null)
             {
@@ -140,6 +145,17 @@ namespace osu.Game.Screens.Edit.Compose.Components
             canScaleX.BindValueChanged(_ => recreate());
             canScaleY.BindValueChanged(_ => recreate());
             canScaleDiagonally.BindValueChanged(_ => recreate(), true);
+
+            rotationInProgress.BindValueChanged(e =>
+            {
+                if (e.NewValue)
+                    buttons.FadeOut(100);
+                else
+                {
+                    buttons.ClearTransforms(targetMember: nameof(Alpha));
+                    buttons.Alpha = 1;
+                }
+            });
         }
 
         protected override bool OnKeyDown(KeyDownEvent e)
