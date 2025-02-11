@@ -8,11 +8,11 @@ using osu.Framework.Bindables;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Primitives;
 using osu.Framework.Graphics.UserInterface;
-using osu.Framework.Input.Bindings;
 using osu.Framework.Input.Events;
 using osu.Framework.Utils;
 using osu.Game.Extensions;
 using osu.Game.Graphics.UserInterface;
+using osu.Game.Input.Bindings;
 using osu.Game.Rulesets.Edit;
 using osu.Game.Rulesets.Objects;
 using osu.Game.Rulesets.Objects.Types;
@@ -54,23 +54,33 @@ namespace osu.Game.Rulesets.Osu.Edit
                 Mode.Value = SelectionMode.Select;
         }
 
+        public override bool OnPressed(KeyBindingPressEvent<GlobalAction> e)
+        {
+            switch (e.Action)
+            {
+                case GlobalAction.EditorFreeTransformMode:
+                    if (canEnterFreeTransformMode())
+                        Mode.Value = SelectionMode.FreeTransform;
+                    return true;
+
+                case GlobalAction.Back:
+                    if (Mode.Value == SelectionMode.FreeTransform)
+                    {
+                        Mode.Value = SelectionMode.Select;
+                        return true;
+                    }
+
+                    break;
+            }
+
+            return base.OnPressed(e);
+        }
+
         protected override bool OnKeyDown(KeyDownEvent e)
         {
             if (e.Key == Key.M && e.ControlPressed && e.ShiftPressed)
             {
                 mergeSelection();
-                return true;
-            }
-
-            if (e.Key == Key.T && e.ControlPressed && canEnterFreeTransformMode())
-            {
-                Mode.Value = SelectionMode.FreeTransform;
-                return true;
-            }
-
-            if (e.Key == Key.Escape && Mode.Value == SelectionMode.FreeTransform)
-            {
-                Mode.Value = SelectionMode.Select;
                 return true;
             }
 
@@ -342,10 +352,7 @@ namespace osu.Game.Rulesets.Osu.Edit
 
             if (canEnterFreeTransformMode())
             {
-                yield return new OsuMenuItem("Transform", MenuItemType.Standard, () => Mode.Value = SelectionMode.FreeTransform)
-                {
-                    Hotkey = new Hotkey(new KeyCombination(InputKey.Control, InputKey.Shift, InputKey.T))
-                };
+                yield return new OsuMenuItem("Transform", MenuItemType.Standard, () => Mode.Value = SelectionMode.FreeTransform) { Hotkey = new Hotkey(GlobalAction.EditorFreeTransformMode) };
             }
 
             if (canMerge(selectedMergeableObjects))

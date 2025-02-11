@@ -155,6 +155,7 @@ namespace osu.Game.Input.Bindings
             new KeyBinding(new[] { InputKey.Control, InputKey.Shift, InputKey.B }, GlobalAction.EditorRemoveClosestBookmark),
             new KeyBinding(new[] { InputKey.Alt, InputKey.Left }, GlobalAction.EditorSeekToPreviousBookmark),
             new KeyBinding(new[] { InputKey.Alt, InputKey.Right }, GlobalAction.EditorSeekToNextBookmark),
+            new KeyBinding(new[] { InputKey.Control, InputKey.Shift, InputKey.T }, GlobalAction.EditorFreeTransformMode),
         };
 
         private static IEnumerable<KeyBinding> editorTestPlayKeyBindings => new[]
@@ -498,6 +499,9 @@ namespace osu.Game.Input.Bindings
 
         [LocalisableDescription(typeof(GlobalActionKeyBindingStrings), nameof(GlobalActionKeyBindingStrings.EditorToggleMoveControl))]
         EditorToggleMoveControl,
+
+        [LocalisableDescription(typeof(GlobalActionKeyBindingStrings), nameof(GlobalActionKeyBindingStrings.FreeTransformMode))]
+        EditorFreeTransformMode,
     }
 
     public enum GlobalActionCategory

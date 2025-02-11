@@ -300,6 +300,11 @@ namespace osu.Game.Localisation
         public static LocalisableString EditorCycleNextBeatSnapDivisor => new TranslatableString(getKey(@"editor_cycle_next_snap_divisor"), @"Cycle next beat snap divisor");
 
         /// <summary>
+        /// "Enter Free-Transform Mode"
+        /// </summary>
+        public static LocalisableString FreeTransformMode => new TranslatableString(getKey(@"editor_free_transform"), @"Enter Free-Transform Mode");
+
+        /// <summary>
         /// "Toggle skin editor"
         /// </summary>
         public static LocalisableString ToggleSkinEditor => new TranslatableString(getKey(@"toggle_skin_editor"), @"Toggle skin editor");
