@@ -4,9 +4,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using osu.Framework.Allocation;
+using osu.Framework.Bindables;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Primitives;
 using osu.Framework.Graphics.UserInterface;
+using osu.Framework.Input.Bindings;
 using osu.Framework.Input.Events;
 using osu.Framework.Utils;
 using osu.Game.Extensions;
@@ -29,6 +31,15 @@ namespace osu.Game.Rulesets.Osu.Edit
         [Resolved]
         private OsuGridToolboxGroup gridToolbox { get; set; } = null!;
 
+        public readonly Bindable<SelectionMode> Mode = new Bindable<SelectionMode>();
+
+        protected override void LoadComplete()
+        {
+            base.LoadComplete();
+
+            Mode.BindValueChanged(e => ShowSelectionBox = e.NewValue != SelectionMode.Select, true);
+        }
+
         protected override void OnSelectionChanged()
         {
             base.OnSelectionChanged();
@@ -38,6 +49,9 @@ namespace osu.Game.Rulesets.Osu.Edit
             SelectionBox.CanFlipX = quad.Width > 0;
             SelectionBox.CanFlipY = quad.Height > 0;
             SelectionBox.CanReverse = EditorBeatmap.SelectedHitObjects.Count > 1 || EditorBeatmap.SelectedHitObjects.Any(s => s is Slider);
+
+            if (Mode.Value == SelectionMode.FreeTransform)
+                Mode.Value = SelectionMode.Select;
         }
 
         protected override bool OnKeyDown(KeyDownEvent e)
@@ -45,6 +59,18 @@ namespace osu.Game.Rulesets.Osu.Edit
             if (e.Key == Key.M && e.ControlPressed && e.ShiftPressed)
             {
                 mergeSelection();
+                return true;
+            }
+
+            if (e.Key == Key.T && e.ControlPressed && canEnterFreeTransformMode())
+            {
+                Mode.Value = SelectionMode.FreeTransform;
+                return true;
+            }
+
+            if (e.Key == Key.Escape && Mode.Value == SelectionMode.FreeTransform)
+            {
+                Mode.Value = SelectionMode.Select;
                 return true;
             }
 
@@ -314,9 +340,33 @@ namespace osu.Game.Rulesets.Osu.Edit
             foreach (var item in base.GetContextMenuItemsForSelection(selection))
                 yield return item;
 
+            if (canEnterFreeTransformMode())
+            {
+                yield return new OsuMenuItem("Transform", MenuItemType.Standard, () => Mode.Value = SelectionMode.FreeTransform)
+                {
+                    Hotkey = new Hotkey(new KeyCombination(InputKey.Control, InputKey.Shift, InputKey.T))
+                };
+            }
+
             if (canMerge(selectedMergeableObjects))
                 yield return new OsuMenuItem("Merge selection", MenuItemType.Destructive, mergeSelection);
         }
+
+        private bool canEnterFreeTransformMode()
+        {
+            if (Mode.Value == SelectionMode.FreeTransform)
+                return false;
+
+            var selection = SelectedItems.OfType<OsuHitObject>().Where(it => it is not Spinner);
+
+            if (selection.Any(it => it is Slider))
+                return true;
+
+            // If we have only circles selected we need to make sure they don't all have the same position
+            return zipWithNext(selection).Any((it) => it.First.Position != it.Second.Position);
+        }
+
+        private static IEnumerable<(T First, T Second)> zipWithNext<T>(IEnumerable<T> source) => source.Zip(source.Skip(1));
 
         private bool canMerge(IReadOnlyList<OsuHitObject> objects) =>
             objects.Count > 1

@@ -87,7 +87,7 @@ namespace osu.Game.Screens.Edit.Compose.Components
                 SelectionBox = CreateSelectionBox(),
             });
 
-            SelectedItems.BindCollectionChanged((_, _) => Scheduler.AddOnce(updateVisibility), true);
+            SelectedItems.BindCollectionChanged((_, _) => Scheduler.AddOnce(selectionChanged), true);
         }
 
         public SelectionBox CreateSelectionBox()
@@ -360,14 +360,30 @@ namespace osu.Game.Screens.Edit.Compose.Components
         /// <summary>
         /// Updates whether this <see cref="SelectionHandler{T}"/> is visible.
         /// </summary>
+        private void selectionChanged()
+        {
+            updateVisibility();
+            OnSelectionChanged();
+        }
+
         private void updateVisibility()
         {
             int count = SelectedItems.Count;
 
             SelectionBox.Text = count > 0 ? count.ToString() : string.Empty;
-            SelectionBox.FadeTo(count > 0 ? 1 : 0);
+            SelectionBox.FadeTo((ShowSelectionBox && count > 0) ? 1 : 0);
+        }
 
-            OnSelectionChanged();
+        private bool showSelectionBox = true;
+
+        protected bool ShowSelectionBox
+        {
+            get => showSelectionBox;
+            set
+            {
+                showSelectionBox = value;
+                updateVisibility();
+            }
         }
 
         /// <summary>
@@ -417,7 +433,10 @@ namespace osu.Game.Screens.Edit.Compose.Components
 
                 items.Add(new OsuMenuItem(CommonStrings.ButtonsDelete, MenuItemType.Destructive, DeleteSelected)
                 {
-                    Hotkey = new Hotkey { PlatformAction = PlatformAction.Delete, KeyCombinations = [new KeyCombination(InputKey.Shift, InputKey.MouseRight), new KeyCombination(InputKey.MouseMiddle)] }
+                    Hotkey = new Hotkey
+                    {
+                        PlatformAction = PlatformAction.Delete, KeyCombinations = [new KeyCombination(InputKey.Shift, InputKey.MouseRight), new KeyCombination(InputKey.MouseMiddle)]
+                    }
                 });
 
                 return items.ToArray();
