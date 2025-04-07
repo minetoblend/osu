@@ -300,7 +300,7 @@ namespace osu.Game.Screens.Ranking
             protected Box MainBackground { get; private set; } = null!;
             private Box voteBackground = null!;
 
-            protected OsuSpriteText TagCategoryText { get; private set; } = null!;
+            protected Drawable TagCategoryText { get; private set; } = null!;
             protected OsuSpriteText TagNameText { get; private set; } = null!;
             protected OsuSpriteText VoteCountText { get; private set; } = null!;
 
@@ -348,14 +348,7 @@ namespace osu.Game.Screens.Ranking
                         Direction = FillDirection.Horizontal,
                         Children = new[]
                         {
-                            TagCategoryText = new OsuSpriteText
-                            {
-                                Alpha = UserTag.GroupName != null ? 0.6f : 0,
-                                Text = UserTag.GroupName ?? default(LocalisableString),
-                                Anchor = Anchor.CentreLeft,
-                                Origin = Anchor.CentreLeft,
-                                Margin = new MarginPadding { Horizontal = 6 }
-                            },
+                            TagCategoryText = CreateTagCategoryText(),
                             new Container
                             {
                                 AutoSizeAxes = Axes.Both,
@@ -458,6 +451,15 @@ namespace osu.Game.Screens.Ranking
 
                 Action = () => OnSelected?.Invoke(UserTag);
             }
+
+            protected virtual Drawable CreateTagCategoryText() => new OsuSpriteText
+            {
+                Alpha = UserTag.GroupName != null ? 0.6f : 0,
+                Text = UserTag.GroupName ?? default(LocalisableString),
+                Anchor = Anchor.CentreLeft,
+                Origin = Anchor.CentreLeft,
+                Margin = new MarginPadding { Horizontal = 6 }
+            };
         }
 
         private partial class AddNewTagUserTag : DrawableUserTag, IHasPopover
@@ -470,7 +472,7 @@ namespace osu.Game.Screens.Ranking
             private OverlayColourProvider overlayColourProvider { get; set; } = null!;
 
             public AddNewTagUserTag()
-                : base(new UserTag(new APITag { Name = "+/add" }), false)
+                : base(new UserTag(new APITag { Name = "add" }), false)
             {
             }
 
@@ -486,6 +488,17 @@ namespace osu.Game.Screens.Ranking
                 TagNameText.FadeColour(overlayColourProvider.Colour0);
                 FadeEdgeEffectTo(0);
             }
+
+            protected override Drawable CreateTagCategoryText() =>
+                new SpriteIcon
+                {
+                    Alpha = 0.6f,
+                    Size = new Vector2(8),
+                    Icon = FontAwesome.Solid.Plus,
+                    Anchor = Anchor.CentreLeft,
+                    Origin = Anchor.CentreLeft,
+                    Margin = new MarginPadding { Horizontal = 6 },
+                };
 
             public Popover GetPopover() => new AddTagsPopover
             {
