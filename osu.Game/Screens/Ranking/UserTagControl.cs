@@ -196,7 +196,26 @@ namespace osu.Game.Screens.Ranking
                     {
                         var tag = (UserTag)e.OldItems[i]!;
                         tag.VoteCount.ValueChanged -= voteCountChanged;
-                        tagFlow.Remove(oldItems[1 + e.OldStartingIndex + i], true);
+
+                        var drawable = oldItems[1 + e.OldStartingIndex + i];
+                        var position = drawable.ScreenSpaceDrawQuad.TopLeft;
+
+                        drawable.FinishTransforms(true);
+
+                        tagFlow.Remove(drawable, false);
+
+                        const float transition_duration = 200;
+
+                        drawable.Anchor = drawable.Origin = Anchor.TopLeft;
+                        drawable.Position = ToLocalSpace(position);
+                        drawable.BypassAutoSizeAxes = Axes.Both;
+
+                        AddInternal(drawable);
+
+                        drawable
+                            .MoveToOffset(new Vector2(0, 20), transition_duration, Easing.InQuad)
+                            .FadeOut(transition_duration, Easing.OutQuad)
+                            .Expire();
                     }
 
                     break;
