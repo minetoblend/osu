@@ -10,7 +10,6 @@ using System.Linq;
 using osu.Framework.Allocation;
 using osu.Framework.Bindables;
 using osu.Framework.Graphics;
-using osu.Framework.Graphics.Primitives;
 using osu.Game.Rulesets.Judgements;
 using osu.Game.Rulesets.Objects.Drawables;
 using osu.Game.Rulesets.Osu.Judgements;
@@ -19,6 +18,7 @@ using osu.Game.Rulesets.Osu.UI;
 using osu.Game.Rulesets.Scoring;
 using osuTK;
 using osuTK.Graphics;
+using RectangleF = osu.Framework.Graphics.Primitives.RectangleF;
 
 namespace osu.Game.Rulesets.Osu.Objects.Drawables
 {
@@ -62,6 +62,13 @@ namespace osu.Game.Rulesets.Osu.Objects.Drawables
             PositionBindable.BindTo(HitObject.PositionBindable);
             StackHeightBindable.BindTo(HitObject.StackHeightBindable);
             ScaleBindable.BindTo(HitObject.ScaleBindable);
+
+            if (HitObject is OsuHitObject osuHitObject)
+            {
+                Colour = osuHitObject.IsVibeMapped
+                    ? Color4.White with { A = 0.65f }
+                    : Color4.White;
+            }
         }
 
         protected override void OnFree()

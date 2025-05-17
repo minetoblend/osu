@@ -207,5 +207,7 @@ namespace osu.Game.Rulesets.Osu.Objects
         }
 
         protected override HitWindows CreateHitWindows() => new OsuHitWindows();
+
+        public bool IsVibeMapped = false;
     }
 }

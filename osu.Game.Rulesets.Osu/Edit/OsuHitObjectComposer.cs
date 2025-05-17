@@ -83,6 +83,8 @@ namespace osu.Game.Rulesets.Osu.Edit
         [BackgroundDependencyLoader]
         private void load()
         {
+            LoadComponent(copilot);
+
             AddInternal(DistanceSnapProvider);
             DistanceSnapProvider.AttachToToolbox(RightToolbox);
 
@@ -121,7 +123,12 @@ namespace osu.Game.Rulesets.Osu.Edit
                     FreehandSliderToolboxGroup
                 }
             );
+
+            AddInternal(copilot);
         }
+
+        [Cached]
+        private readonly OsuCopilot copilot = new OsuCopilot();
 
         private void updatePositionSnapGrid(ValueChangedEvent<PositionSnapGridType> obj)
         {
