@@ -10,15 +10,18 @@ using osu.Framework.Input.Bindings;
 using osu.Framework.Localisation;
 using osu.Game.Beatmaps;
 using osu.Game.Beatmaps.Legacy;
+using osu.Game.Configuration;
 using osu.Game.Graphics;
+using osu.Game.Overlays.Settings;
+using osu.Game.Rulesets.Configuration;
 using osu.Game.Rulesets.Difficulty;
-using osu.Game.Rulesets.Edit;
 using osu.Game.Rulesets.Mods;
 using osu.Game.Rulesets.Replays.Types;
 using osu.Game.Rulesets.Scoring;
+using osu.Game.Rulesets.Scoring.Legacy;
 using osu.Game.Rulesets.Taiko.Beatmaps;
+using osu.Game.Rulesets.Taiko.Configuration;
 using osu.Game.Rulesets.Taiko.Difficulty;
-using osu.Game.Rulesets.Taiko.Edit;
 using osu.Game.Rulesets.Taiko.Mods;
 using osu.Game.Rulesets.Taiko.Objects;
 using osu.Game.Rulesets.Taiko.Replays;
@@ -27,16 +30,9 @@ using osu.Game.Rulesets.Taiko.Skinning.Argon;
 using osu.Game.Rulesets.Taiko.Skinning.Legacy;
 using osu.Game.Rulesets.Taiko.UI;
 using osu.Game.Rulesets.UI;
-using osu.Game.Overlays.Settings;
 using osu.Game.Scoring;
 using osu.Game.Screens.Ranking.Statistics;
 using osu.Game.Skinning;
-using osu.Game.Rulesets.Configuration;
-using osu.Game.Configuration;
-using osu.Game.Rulesets.Scoring.Legacy;
-using osu.Game.Rulesets.Taiko.Configuration;
-using osu.Game.Rulesets.Taiko.Edit.Setup;
-using osu.Game.Screens.Edit.Setup;
 
 namespace osu.Game.Rulesets.Taiko
 {
@@ -187,18 +183,6 @@ namespace osu.Game.Rulesets.Taiko
         public override string PlayingVerb => "Bashing drums";
 
         public override Drawable CreateIcon() => new SpriteIcon { Icon = OsuIcon.RulesetTaiko };
-
-        public override HitObjectComposer CreateHitObjectComposer() => new TaikoHitObjectComposer(this);
-
-        public override IEnumerable<Drawable> CreateEditorSetupSections() =>
-        [
-            new MetadataSection(),
-            new TaikoDifficultySection(),
-            new ResourcesSection(),
-            new DesignSection(),
-        ];
-
-        public override IBeatmapVerifier CreateBeatmapVerifier() => new TaikoBeatmapVerifier();
 
         public override DifficultyCalculator CreateDifficultyCalculator(IWorkingBeatmap beatmap) => new TaikoDifficultyCalculator(RulesetInfo, beatmap);
 

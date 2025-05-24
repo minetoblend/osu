@@ -13,8 +13,6 @@ using osu.Game.Beatmaps.Legacy;
 using osu.Game.Graphics;
 using osu.Game.Rulesets.Catch.Beatmaps;
 using osu.Game.Rulesets.Catch.Difficulty;
-using osu.Game.Rulesets.Catch.Edit;
-using osu.Game.Rulesets.Catch.Edit.Setup;
 using osu.Game.Rulesets.Catch.Mods;
 using osu.Game.Rulesets.Catch.Objects;
 using osu.Game.Rulesets.Catch.Replays;
@@ -23,7 +21,6 @@ using osu.Game.Rulesets.Catch.Skinning.Argon;
 using osu.Game.Rulesets.Catch.Skinning.Legacy;
 using osu.Game.Rulesets.Catch.UI;
 using osu.Game.Rulesets.Difficulty;
-using osu.Game.Rulesets.Edit;
 using osu.Game.Rulesets.Mods;
 using osu.Game.Rulesets.Replays.Types;
 using osu.Game.Rulesets.Scoring;
@@ -224,12 +221,9 @@ namespace osu.Game.Rulesets.Catch
 
         public override IConvertibleReplayFrame CreateConvertibleReplayFrame() => new CatchReplayFrame();
 
-        public override HitObjectComposer CreateHitObjectComposer() => new CatchHitObjectComposer(this);
-
         public override IEnumerable<Drawable> CreateEditorSetupSections() =>
         [
             new MetadataSection(),
-            new CatchDifficultySection(),
             new FillFlowContainer
             {
                 AutoSizeAxes = Axes.Y,
@@ -249,8 +243,6 @@ namespace osu.Game.Rulesets.Catch
             },
             new DesignSection(),
         ];
-
-        public override IBeatmapVerifier CreateBeatmapVerifier() => new CatchBeatmapVerifier();
 
         public override StatisticItem[] CreateStatisticsForScore(ScoreInfo score, IBeatmap playableBeatmap)
         {

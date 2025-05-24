@@ -12,7 +12,6 @@ using osu.Framework.Graphics.Containers;
 using osu.Framework.Platform;
 using osu.Game.Beatmaps;
 using osu.Game.Configuration;
-using osu.Game.Extensions;
 using osu.Game.IO.Serialization;
 using osu.Game.Rulesets;
 using osu.Game.Rulesets.Edit;
@@ -88,7 +87,6 @@ namespace osu.Game.Screens.Edit.Compose
                     // We want to display this below hitobjects to better expose placement objects visually.
                     // It needs to be above the blueprint container to handle drags on breaks though.
                     breakDisplay.CreateProxy(),
-                    new TimelineBlueprintContainer(composer),
                     breakDisplay
                 }
             });
@@ -138,7 +136,6 @@ namespace osu.Game.Screens.Edit.Compose
             // regardless of whether anything was even selected at all.
             // UX-wise this is generally strange and unexpected, but make it work anyways to preserve muscle memory.
             // note that this means that `getTimestamp()` must handle no-selection case, too.
-            hostClipboard.SetText(getTimestamp());
 
             if (CanCopy.Value)
                 clipboard.Value = new ClipboardContent(EditorBeatmap).Serialize();
@@ -172,19 +169,6 @@ namespace osu.Game.Screens.Edit.Compose
         {
             CanCut.Value = CanCopy.Value = EditorBeatmap.SelectedHitObjects.Any();
             CanPaste.Value = composer.IsLoaded && !string.IsNullOrEmpty(clipboard.Value);
-        }
-
-        private string getTimestamp()
-        {
-            if (composer == null)
-                return string.Empty;
-
-            double displayTime = EditorBeatmap.SelectedHitObjects.MinBy(h => h.StartTime)?.StartTime ?? clock.CurrentTime;
-            string selectionAsString = composer.ConvertSelectionToString();
-
-            return !string.IsNullOrEmpty(selectionAsString)
-                ? $"{displayTime.ToEditorFormattedString()} ({selectionAsString}) - "
-                : $"{displayTime.ToEditorFormattedString()} - ";
         }
 
         #endregion

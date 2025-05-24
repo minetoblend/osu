@@ -16,13 +16,10 @@ using osu.Game.Graphics;
 using osu.Game.Overlays.Settings;
 using osu.Game.Rulesets.Configuration;
 using osu.Game.Rulesets.Difficulty;
-using osu.Game.Rulesets.Edit;
 using osu.Game.Rulesets.Mods;
 using osu.Game.Rulesets.Osu.Beatmaps;
 using osu.Game.Rulesets.Osu.Configuration;
 using osu.Game.Rulesets.Osu.Difficulty;
-using osu.Game.Rulesets.Osu.Edit;
-using osu.Game.Rulesets.Osu.Edit.Setup;
 using osu.Game.Rulesets.Osu.Mods;
 using osu.Game.Rulesets.Osu.Objects;
 using osu.Game.Rulesets.Osu.Replays;
@@ -236,10 +233,6 @@ namespace osu.Game.Rulesets.Osu
 
         public override PerformanceCalculator CreatePerformanceCalculator() => new OsuPerformanceCalculator();
 
-        public override HitObjectComposer CreateHitObjectComposer() => new OsuHitObjectComposer(this);
-
-        public override IBeatmapVerifier CreateBeatmapVerifier() => new OsuBeatmapVerifier();
-
         public override string Description => "osu!";
 
         public override string ShortName => SHORT_NAME;
@@ -342,7 +335,6 @@ namespace osu.Game.Rulesets.Osu
         public override IEnumerable<Drawable> CreateEditorSetupSections() =>
         [
             new MetadataSection(),
-            new OsuDifficultySection(),
             new FillFlowContainer
             {
                 AutoSizeAxes = Axes.Y,

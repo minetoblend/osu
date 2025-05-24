@@ -15,13 +15,10 @@ using osu.Game.Graphics;
 using osu.Game.Overlays.Settings;
 using osu.Game.Rulesets.Configuration;
 using osu.Game.Rulesets.Difficulty;
-using osu.Game.Rulesets.Edit;
 using osu.Game.Rulesets.Filter;
 using osu.Game.Rulesets.Mania.Beatmaps;
 using osu.Game.Rulesets.Mania.Configuration;
 using osu.Game.Rulesets.Mania.Difficulty;
-using osu.Game.Rulesets.Mania.Edit;
-using osu.Game.Rulesets.Mania.Edit.Setup;
 using osu.Game.Rulesets.Mania.Mods;
 using osu.Game.Rulesets.Mania.Replays;
 using osu.Game.Rulesets.Mania.Scoring;
@@ -61,10 +58,6 @@ namespace osu.Game.Rulesets.Mania
         public const string SHORT_NAME = "mania";
 
         public override string RulesetAPIVersionSupported => CURRENT_RULESET_API_VERSION;
-
-        public override HitObjectComposer CreateHitObjectComposer() => new ManiaHitObjectComposer(this);
-
-        public override IBeatmapVerifier CreateBeatmapVerifier() => new ManiaBeatmapVerifier();
 
         public override ISkin? CreateSkinTransformer(ISkin skin, IBeatmap beatmap)
         {
@@ -422,7 +415,6 @@ namespace osu.Game.Rulesets.Mania
         public override IEnumerable<Drawable> CreateEditorSetupSections() =>
         [
             new MetadataSection(),
-            new ManiaDifficultySection(),
             new ResourcesSection(),
             new DesignSection(),
         ];

@@ -9,7 +9,6 @@ using osu.Framework.Graphics.Shapes;
 using osu.Framework.Graphics.Sprites;
 using osu.Game.Graphics;
 using osu.Game.Overlays;
-using osu.Game.Rulesets.Edit;
 using osuTK;
 
 namespace osu.Game.Screens.Edit.Compose.Components.Timeline
@@ -42,7 +41,7 @@ namespace osu.Game.Screens.Edit.Compose.Components.Timeline
                 {
                     Anchor = Anchor.TopRight,
                     Origin = Anchor.TopRight,
-                    Width = 35 + HitObjectComposer.TOOLBOX_CONTRACTED_SIZE_RIGHT,
+                    Width = 35 + 120,
                     RelativeSizeAxes = Axes.Y,
                     Colour = colourProvider.Background4
                 },
@@ -58,7 +57,7 @@ namespace osu.Game.Screens.Edit.Compose.Components.Timeline
                     {
                         new Dimension(),
                         new Dimension(GridSizeMode.Absolute, 35),
-                        new Dimension(GridSizeMode.Absolute, HitObjectComposer.TOOLBOX_CONTRACTED_SIZE_RIGHT),
+                        new Dimension(GridSizeMode.Absolute, 120),
                     },
                     Content = new[]
                     {
