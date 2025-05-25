@@ -52,6 +52,7 @@ using osu.Game.Screens.Edit.Compose;
 using osu.Game.Screens.Edit.Compose.Components.Timeline;
 using osu.Game.Screens.Edit.Design;
 using osu.Game.Screens.Edit.GameplayTest;
+using osu.Game.Screens.Edit.HitSounds;
 using osu.Game.Screens.Edit.Setup;
 using osu.Game.Screens.Edit.Submission;
 using osu.Game.Screens.Edit.Timing;
@@ -1095,6 +1096,10 @@ namespace osu.Game.Screens.Edit
                         currentScreen = new TimingScreen();
                         break;
 
+                    case EditorScreenMode.HitSounds:
+                        currentScreen = new HitSoundScreen();
+                        break;
+
                     case EditorScreenMode.Verify:
                         currentScreen = new VerifyScreen();
                         break;
@@ -1309,7 +1314,8 @@ namespace osu.Game.Screens.Edit
                 yield return new EditorMenuItem(EditorStrings.OpenInfoPage, MenuItemType.Standard,
                     () => (Game as OsuGame)?.OpenUrlExternally(editorBeatmap.BeatmapInfo.GetOnlineURL(api, editorBeatmap.BeatmapInfo.Ruleset)));
                 yield return new EditorMenuItem(EditorStrings.OpenDiscussionPage, MenuItemType.Standard,
-                    () => (Game as OsuGame)?.OpenUrlExternally($@"{api.Endpoints.WebsiteUrl}/beatmapsets/{editorBeatmap.BeatmapInfo.BeatmapSet!.OnlineID}/discussion/{editorBeatmap.BeatmapInfo.OnlineID}"));
+                    () => (Game as OsuGame)?.OpenUrlExternally(
+                        $@"{api.Endpoints.WebsiteUrl}/beatmapsets/{editorBeatmap.BeatmapInfo.BeatmapSet!.OnlineID}/discussion/{editorBeatmap.BeatmapInfo.OnlineID}"));
             }
 
             yield return new OsuMenuItemSpacer();

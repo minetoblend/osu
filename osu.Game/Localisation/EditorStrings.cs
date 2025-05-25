@@ -100,6 +100,11 @@ namespace osu.Game.Localisation
         public static LocalisableString TimingScreen => new TranslatableString(getKey(@"timing_screen"), @"timing");
 
         /// <summary>
+        /// "hitsounds"
+        /// </summary>
+        public static LocalisableString HitSoundScreen => new TranslatableString(getKey(@"hitsound_screen"), @"hitsounds");
+
+        /// <summary>
         /// "verify"
         /// </summary>
         public static LocalisableString VerifyScreen => new TranslatableString(getKey(@"verify_screen"), @"verify");
