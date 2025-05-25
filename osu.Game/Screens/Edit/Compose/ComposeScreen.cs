@@ -37,6 +37,7 @@ namespace osu.Game.Screens.Edit.Compose
         private Bindable<string> clipboard { get; set; }
 
         private HitObjectComposer composer;
+        private ScreenWhiteBox.UnderConstructionMessage underConstructionMessage;
 
         public ComposeScreen()
             : base(EditorScreenMode.Compose)
@@ -62,7 +63,12 @@ namespace osu.Game.Screens.Edit.Compose
         protected override Drawable CreateMainContent()
         {
             if (ruleset == null || composer == null)
-                return new ScreenWhiteBox.UnderConstructionMessage(ruleset == null ? "This beatmap" : $"{ruleset.Description}'s composer");
+            {
+                return underConstructionMessage = new ScreenWhiteBox.UnderConstructionMessage(ruleset == null ? "This beatmap" : $"{ruleset.Description}'s composer")
+                {
+                    AutoPlayAnimation = false,
+                };
+            }
 
             return wrapSkinnableContent(composer);
         }
@@ -195,5 +201,12 @@ namespace osu.Game.Screens.Edit.Compose
 
         // Arguable.
         IBindable<float> IGameplaySettings.PositionalHitsoundsLevel => globalGameplaySettings.PositionalHitsoundsLevel;
+
+        protected override void PopIn()
+        {
+            base.PopIn();
+
+            underConstructionMessage?.PlayEntryAnimation();
+        }
     }
 }

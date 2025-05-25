@@ -107,6 +107,8 @@ namespace osu.Game.Screens
 
         public partial class UnderConstructionMessage : CompositeDrawable
         {
+            public bool AutoPlayAnimation = true;
+
             public FillFlowContainer TextContainer { get; }
 
             private readonly Container boxContainer;
@@ -187,6 +189,14 @@ namespace osu.Game.Screens
             {
                 base.LoadComplete();
 
+                boxContainer.Hide();
+
+                if (AutoPlayAnimation)
+                    PlayEntryAnimation();
+            }
+
+            public void PlayEntryAnimation()
+            {
                 TextContainer.Position = new Vector2(DrawSize.X / 16, 0);
 
                 boxContainer.Hide();

@@ -5,10 +5,22 @@ namespace osu.Game.Screens.Edit.Design
 {
     public partial class DesignScreen : EditorScreen
     {
+        private readonly ScreenWhiteBox.UnderConstructionMessage message;
+
         public DesignScreen()
             : base(EditorScreenMode.Design)
         {
-            Child = new ScreenWhiteBox.UnderConstructionMessage("Design mode");
+            Child = message = new ScreenWhiteBox.UnderConstructionMessage("Design mode")
+            {
+                AutoPlayAnimation = false
+            };
+        }
+
+        protected override void PopIn()
+        {
+            base.PopIn();
+
+            message.PlayEntryAnimation();
         }
     }
 }
