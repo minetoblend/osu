@@ -8,6 +8,7 @@ using System.IO;
 using System.Threading;
 using osu.Framework.Audio.Track;
 using osu.Framework.Graphics.Textures;
+using osu.Game.Beatmaps.HitSounds;
 using osu.Game.Rulesets;
 using osu.Game.Rulesets.Mods;
 using osu.Game.Rulesets.Objects;
@@ -68,6 +69,11 @@ namespace osu.Game.Beatmaps
         /// Retrieves the <see cref="Skin"/> which this <see cref="IWorkingBeatmap"/> provides.
         /// </summary>
         ISkin Skin { get; }
+
+        /// <summary>
+        /// Retrieves the <see cref="HitSoundInfo"/> which this <see cref="IWorkingBeatmap"/> provides.
+        /// </summary>
+        HitSoundInfo HitSoundInfo { get; }
 
         /// <summary>
         /// Retrieves the <see cref="Track"/> which this <see cref="IWorkingBeatmap"/> has loaded.

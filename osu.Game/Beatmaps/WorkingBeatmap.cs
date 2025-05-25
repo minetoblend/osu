@@ -16,6 +16,7 @@ using osu.Framework.Audio.Track;
 using osu.Framework.Extensions;
 using osu.Framework.Graphics.Textures;
 using osu.Framework.Logging;
+using osu.Game.Beatmaps.HitSounds;
 using osu.Game.Rulesets;
 using osu.Game.Rulesets.Mods;
 using osu.Game.Rulesets.UI;
@@ -36,6 +37,8 @@ namespace osu.Game.Beatmaps
 
         public ISkin Skin => skin.Value;
 
+        public HitSoundInfo HitSoundInfo => hitsoundInfo.Value;
+
         private AudioManager audioManager { get; }
 
         private CancellationTokenSource loadCancellationSource = new CancellationTokenSource();
@@ -44,6 +47,7 @@ namespace osu.Game.Beatmaps
 
         private readonly Lazy<Storyboard> storyboard;
         private readonly Lazy<ISkin> skin;
+        private readonly Lazy<HitSoundInfo> hitsoundInfo;
 
         private Track track; // track is not Lazy as we allow transferring and loading multiple times.
         private Waveform waveform; // waveform is also not Lazy as the track may change.
@@ -57,6 +61,7 @@ namespace osu.Game.Beatmaps
 
             storyboard = new Lazy<Storyboard>(GetStoryboard);
             skin = new Lazy<ISkin>(GetSkin);
+            hitsoundInfo = new Lazy<HitSoundInfo>();
         }
 
         #region Resource getters
@@ -68,6 +73,8 @@ namespace osu.Game.Beatmaps
             BeatmapInfo = BeatmapInfo,
             Beatmap = Beatmap,
         };
+
+        protected virtual HitSoundInfo GetHitsoundInfo() => new HitSoundInfo();
 
         protected abstract IBeatmap GetBeatmap();
         public abstract Texture GetBackground();

@@ -16,6 +16,7 @@ using osu.Framework.Graphics.Textures;
 using osu.Framework.Lists;
 using osu.Framework.Logging;
 using osu.Framework.Threading;
+using osu.Game.Beatmaps.HitSounds;
 using osu.Game.Configuration;
 using osu.Game.Database;
 using osu.Game.Rulesets;
@@ -381,6 +382,7 @@ namespace osu.Game.Beatmaps
             Storyboard IWorkingBeatmap.Storyboard => working.Storyboard;
             ISkin IWorkingBeatmap.Skin => working.Skin;
             Track IWorkingBeatmap.Track => working.Track;
+            HitSoundInfo IWorkingBeatmap.HitSoundInfo => working.HitSoundInfo;
             Track IWorkingBeatmap.LoadTrack() => working.LoadTrack();
             Stream IWorkingBeatmap.GetStream(string storagePath) => working.GetStream(storagePath);
             void IWorkingBeatmap.BeginAsyncLoad() => working.BeginAsyncLoad();
