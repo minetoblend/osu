@@ -2,19 +2,12 @@
 // See the LICENCE file in the repository root for full licence text.
 
 using osu.Framework.Bindables;
+using osu.Game.Rulesets.Objects;
 
 namespace osu.Game.Beatmaps.HitSounds
 {
-    public class HitSound
+    public class HitSound : HitObject
     {
-        public readonly Bindable<double> StartTimeBindable = new Bindable<double>();
-
-        public double StartTime
-        {
-            get => StartTimeBindable.Value;
-            set => StartTimeBindable.Value = value;
-        }
-
         public readonly Bindable<int> LayerBindable = new Bindable<int>();
 
         public int Layer

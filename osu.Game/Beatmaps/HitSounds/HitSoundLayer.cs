@@ -23,5 +23,7 @@ namespace osu.Game.Beatmaps.HitSounds
             get => SampleInfoBindable.Value;
             set => SampleInfoBindable.Value = value;
         }
+
+        public int Index;
     }
 }

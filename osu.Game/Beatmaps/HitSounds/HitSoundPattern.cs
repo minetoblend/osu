@@ -25,7 +25,11 @@ namespace osu.Game.Beatmaps.HitSounds
 
         private readonly List<HitSound> hitSounds = new List<HitSound>();
 
-        public IList<HitSound> HitSounds => hitSounds;
+        public IList<HitSound> HitSounds
+        {
+            get => hitSounds;
+            init => hitSounds.AddRange(value);
+        }
 
         public void AddRange(IEnumerable<HitSound> hitSound)
         {
