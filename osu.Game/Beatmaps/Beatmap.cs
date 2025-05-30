@@ -61,6 +61,7 @@ namespace osu.Game.Beatmaps
         [JsonIgnore]
         public BeatmapMetadata Metadata => BeatmapInfo.Metadata;
 
+        [JsonConverter(typeof(PolymorphicJsonConverter<ControlPointInfo>))]
         public ControlPointInfo ControlPointInfo { get; set; } = new ControlPointInfo();
 
         public SortedList<BreakPeriod> Breaks { get; set; } = new SortedList<BreakPeriod>(Comparer<BreakPeriod>.Default);
