@@ -33,7 +33,7 @@ namespace osu.Game.Overlays
 
         public const float TRANSITION_LENGTH = 600;
 
-        private const float sidebar_width = SettingsSidebar.DEFAULT_WIDTH;
+        private const float sidebar_width = SettingsSidebar.EXPANDED_WIDTH;
 
         /// <summary>
         /// The width of the settings panel content, excluding the sidebar.
@@ -54,12 +54,12 @@ namespace osu.Game.Overlays
 
         public SettingsSectionsContainer SectionsContainer { get; private set; }
 
-        private SeekLimitedSearchTextBox searchTextBox;
+        protected SeekLimitedSearchTextBox SearchTextBox { get; private set; }
 
         protected override string PopInSampleName => "UI/settings-pop-in";
         protected override double PopInOutSampleBalance => -OsuGameBase.SFX_STEREO_STRENGTH;
 
-        private readonly bool showSidebar;
+        private readonly bool showBackButton;
 
         private LoadingLayer loading;
 
@@ -72,9 +72,9 @@ namespace osu.Game.Overlays
         [Cached]
         private OverlayColourProvider colourProvider = new OverlayColourProvider(OverlayColourScheme.Purple);
 
-        protected SettingsPanel(bool showSidebar)
+        protected SettingsPanel(bool showBackButton)
         {
-            this.showSidebar = showSidebar;
+            this.showBackButton = showBackButton;
             RelativeSizeAxes = Axes.Y;
             AutoSizeAxes = Axes.X;
         }
@@ -135,7 +135,7 @@ namespace osu.Game.Overlays
                         },
                         Anchor = Anchor.TopCentre,
                         Origin = Anchor.TopCentre,
-                        Child = searchTextBox = new SeekLimitedSearchTextBox
+                        Child = SearchTextBox = new SettingsSearchTextBox
                         {
                             RelativeSizeAxes = Axes.X,
                             Origin = Anchor.TopCentre,
@@ -146,10 +146,11 @@ namespace osu.Game.Overlays
                 }
             });
 
-            if (showSidebar)
+            AddInternal(Sidebar = new SettingsSidebar(showBackButton)
             {
-                AddInternal(Sidebar = new SettingsSidebar { Width = sidebar_width });
-            }
+                BackButtonAction = Hide,
+                Width = sidebar_width
+            });
 
             CreateSections()?.ForEach(AddSection);
         }
@@ -180,10 +181,10 @@ namespace osu.Game.Overlays
             Scheduler.AddDelayed(loadSections, TRANSITION_LENGTH / 3);
 
             Sidebar?.MoveToX(0, TRANSITION_LENGTH, Easing.OutQuint);
-            this.FadeTo(1, TRANSITION_LENGTH, Easing.OutQuint);
+            this.FadeTo(1, TRANSITION_LENGTH / 2, Easing.OutQuint);
 
-            searchTextBox.TakeFocus();
-            searchTextBox.HoldFocus = true;
+            SearchTextBox.TakeFocus();
+            SearchTextBox.HoldFocus = true;
         }
 
         protected virtual float ExpandedPosition => 0;
@@ -196,18 +197,18 @@ namespace osu.Game.Overlays
             ContentContainer.MoveToX(-WIDTH + ExpandedPosition, TRANSITION_LENGTH, Easing.OutQuint);
 
             Sidebar?.MoveToX(-sidebar_width, TRANSITION_LENGTH, Easing.OutQuint);
-            this.FadeTo(0, TRANSITION_LENGTH, Easing.OutQuint);
+            this.FadeTo(0, TRANSITION_LENGTH / 2, Easing.OutQuint);
 
-            searchTextBox.HoldFocus = false;
-            if (searchTextBox.HasFocus)
-                GetContainingInputManager().ChangeFocus(null);
+            SearchTextBox.HoldFocus = false;
+            if (SearchTextBox.HasFocus)
+                GetContainingFocusManager()!.ChangeFocus(null);
         }
 
         public override bool AcceptsFocus => true;
 
         protected override void OnFocus(FocusEvent e)
         {
-            searchTextBox.TakeFocus();
+            SearchTextBox.TakeFocus();
             base.OnFocus(e);
         }
 
@@ -233,7 +234,7 @@ namespace osu.Game.Overlays
 
                 loading.Hide();
 
-                searchTextBox.Current.BindValueChanged(term => SectionsContainer.SearchTerm = term.NewValue, true);
+                SearchTextBox.Current.BindValueChanged(term => SectionsContainer.SearchTerm = term.NewValue, true);
 
                 loadSidebarButtons();
             });
@@ -285,7 +286,6 @@ namespace osu.Game.Overlays
                             return;
 
                         SectionsContainer.ScrollTo(section);
-                        Sidebar.Expanded.Value = false;
                     },
                 };
             }

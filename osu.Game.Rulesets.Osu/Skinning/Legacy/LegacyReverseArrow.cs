@@ -1,24 +1,27 @@
 // Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
+using System;
 using System.Diagnostics;
 using osu.Framework.Allocation;
 using osu.Framework.Bindables;
 using osu.Framework.Extensions.ObjectExtensions;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
+using osu.Framework.Graphics.Sprites;
+using osu.Framework.Utils;
 using osu.Game.Rulesets.Objects.Drawables;
 using osu.Game.Rulesets.Osu.Objects;
 using osu.Game.Rulesets.Osu.Objects.Drawables;
 using osu.Game.Skinning;
+using osuTK;
 using osuTK.Graphics;
 
 namespace osu.Game.Rulesets.Osu.Skinning.Legacy
 {
     public partial class LegacyReverseArrow : CompositeDrawable
     {
-        [Resolved]
-        private DrawableHitObject drawableObject { get; set; } = null!;
+        private DrawableSliderRepeat drawableRepeat { get; set; } = null!;
 
         private Drawable proxy = null!;
 
@@ -31,23 +34,24 @@ namespace osu.Game.Rulesets.Osu.Skinning.Legacy
         private bool shouldRotate;
 
         [BackgroundDependencyLoader]
-        private void load(ISkinSource skinSource)
+        private void load(DrawableHitObject drawableObject, ISkinSource skinSource)
         {
+            const string lookup_name = @"reversearrow";
+
+            drawableRepeat = (DrawableSliderRepeat)drawableObject;
+
             AutoSizeAxes = Axes.Both;
 
-            string lookupName = new OsuSkinComponentLookup(OsuSkinComponents.ReverseArrow).LookupName;
+            var skin = skinSource.FindProvider(s => s.GetTexture(lookup_name) != null);
 
-            var skin = skinSource.FindProvider(s => s.GetTexture(lookupName) != null);
-
-            InternalChild = arrow = (skin?.GetAnimation(lookupName, true, true, maxSize: OsuHitObject.OBJECT_DIMENSIONS * 2) ?? Empty()).With(d =>
+            InternalChild = arrow = new Sprite
             {
-                d.Anchor = Anchor.Centre;
-                d.Origin = Anchor.Centre;
-            });
+                Anchor = Anchor.Centre,
+                Origin = Anchor.Centre,
+                Texture = skin?.GetTexture(lookup_name)?.WithMaximumSize(maxSize: OsuHitObject.OBJECT_DIMENSIONS * 2),
+            };
 
             textureIsDefaultSkin = skin is ISkinTransformer transformer && transformer.Skin is DefaultLegacySkin;
-
-            drawableObject.ApplyCustomUpdateState += updateStateTransforms;
 
             shouldRotate = skinSource.GetConfig<SkinConfiguration.LegacySetting, decimal>(SkinConfiguration.LegacySetting.Version)?.Value <= 1;
         }
@@ -58,13 +62,13 @@ namespace osu.Game.Rulesets.Osu.Skinning.Legacy
 
             proxy = CreateProxy();
 
-            drawableObject.HitObjectApplied += onHitObjectApplied;
-            onHitObjectApplied(drawableObject);
+            drawableRepeat.HitObjectApplied += onHitObjectApplied;
+            onHitObjectApplied(drawableRepeat);
 
-            accentColour = drawableObject.AccentColour.GetBoundCopy();
+            accentColour = drawableRepeat.AccentColour.GetBoundCopy();
             accentColour.BindValueChanged(c =>
             {
-                arrow.Colour = textureIsDefaultSkin && c.NewValue.R + c.NewValue.G + c.NewValue.B > (600 / 255f) ? Color4.Black : Color4.White;
+                arrow.Colour = textureIsDefaultSkin && c.NewValue.R + c.NewValue.G + c.NewValue.B > 600 / 255f ? Color4.Black : Color4.White;
             }, true);
         }
 
@@ -73,35 +77,35 @@ namespace osu.Game.Rulesets.Osu.Skinning.Legacy
             Debug.Assert(proxy.Parent == null);
 
             // see logic in LegacySliderHeadHitCircle.
-            (drawableObject as DrawableSliderRepeat)?.DrawableSlider
-                                                    .OverlayElementContainer.Add(proxy);
+            drawableRepeat.DrawableSlider.OverlayElementContainer.Add(proxy);
         }
 
-        private void updateStateTransforms(DrawableHitObject hitObject, ArmedState state)
+        protected override void Update()
         {
-            const double duration = 300;
-            const float rotation = 5.625f;
+            base.Update();
 
-            switch (state)
+            if (Time.Current >= drawableRepeat.HitStateUpdateTime && drawableRepeat.State.Value == ArmedState.Hit)
             {
-                case ArmedState.Idle:
-                    if (shouldRotate)
-                    {
-                        InternalChild.ScaleTo(1.3f)
-                                     .RotateTo(rotation)
-                                     .Then()
-                                     .ScaleTo(1f, duration)
-                                     .RotateTo(-rotation, duration)
-                                     .Loop();
-                    }
-                    else
-                    {
-                        InternalChild.ScaleTo(1.3f).Then()
-                                     .ScaleTo(1f, duration, Easing.Out)
-                                     .Loop();
-                    }
+                double animDuration = Math.Min(300, drawableRepeat.HitObject.SpanDuration);
+                arrow.Scale = new Vector2(Interpolation.ValueAt(Time.Current, 1, 1.4f, drawableRepeat.HitStateUpdateTime, drawableRepeat.HitStateUpdateTime + animDuration, Easing.Out));
+            }
+            else
+            {
+                const double duration = 300;
+                const float rotation = 5.625f;
 
-                    break;
+                double loopCurrentTime = (Time.Current - drawableRepeat.AnimationStartTime.Value) % duration;
+
+                // Reference: https://github.com/peppy/osu-stable-reference/blob/2280c4c436f80d04f9c79d3c905db00ac2902273/osu!/GameplayElements/HitObjects/Osu/HitCircleSliderEnd.cs#L79-L96
+                if (shouldRotate)
+                {
+                    arrow.Rotation = Interpolation.ValueAt(loopCurrentTime, rotation, -rotation, 0, duration);
+                    arrow.Scale = new Vector2(Interpolation.ValueAt(loopCurrentTime, 1.3f, 1, 0, duration));
+                }
+                else
+                {
+                    arrow.Scale = new Vector2(Interpolation.ValueAt(loopCurrentTime, 1.3f, 1, 0, duration, Easing.Out));
+                }
             }
         }
 
@@ -109,10 +113,9 @@ namespace osu.Game.Rulesets.Osu.Skinning.Legacy
         {
             base.Dispose(isDisposing);
 
-            if (drawableObject.IsNotNull())
+            if (drawableRepeat.IsNotNull())
             {
-                drawableObject.HitObjectApplied -= onHitObjectApplied;
-                drawableObject.ApplyCustomUpdateState -= updateStateTransforms;
+                drawableRepeat.HitObjectApplied -= onHitObjectApplied;
             }
         }
     }

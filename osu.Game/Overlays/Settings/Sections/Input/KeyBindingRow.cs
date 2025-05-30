@@ -6,6 +6,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using osu.Framework.Allocation;
+using osu.Framework.Audio;
+using osu.Framework.Audio.Sample;
 using osu.Framework.Bindables;
 using osu.Framework.Extensions;
 using osu.Framework.Extensions.Color4Extensions;
@@ -17,6 +19,7 @@ using osu.Framework.Input;
 using osu.Framework.Input.Bindings;
 using osu.Framework.Input.Events;
 using osu.Framework.Localisation;
+using osu.Framework.Utils;
 using osu.Game.Database;
 using osu.Game.Graphics.Sprites;
 using osu.Game.Graphics.UserInterface;
@@ -96,6 +99,8 @@ namespace osu.Game.Overlays.Settings.Sections.Input
 
         private KeyButton? bindTarget;
 
+        private Sample?[]? keypressSamples;
+
         private const float transition_time = 150;
         private const float height = 20;
         private const float padding = 5;
@@ -118,7 +123,7 @@ namespace osu.Game.Overlays.Settings.Sections.Input
         }
 
         [BackgroundDependencyLoader]
-        private void load(OverlayColourProvider colourProvider)
+        private void load(OverlayColourProvider colourProvider, AudioManager audioManager)
         {
             RelativeSizeAxes = Axes.X;
             AutoSizeAxes = Axes.Y;
@@ -202,6 +207,10 @@ namespace osu.Game.Overlays.Settings.Sections.Input
                 Scheduler.AddOnce(updateButtons);
                 updateIsDefaultValue();
             }, true);
+
+            keypressSamples = new Sample[4];
+            for (int i = 0; i < keypressSamples.Length; i++)
+                keypressSamples[i] = audioManager.Samples.Get($@"Keyboard/key-press-{1 + i}");
         }
 
         public void RestoreDefaults()
@@ -213,7 +222,7 @@ namespace osu.Game.Overlays.Settings.Sections.Input
                 var button = buttons[i++];
                 button.UpdateKeyCombination(d);
 
-                tryPersistKeyBinding(button.KeyBinding.Value, advanceToNextBinding: false);
+                tryPersistKeyBinding(button.KeyBinding.Value, advanceToNextBinding: false, restoringDefaults: true);
             }
 
             isDefault.Value = true;
@@ -300,6 +309,8 @@ namespace osu.Game.Overlays.Settings.Sections.Input
                 return false;
 
             Debug.Assert(bindTarget != null);
+
+            keypressSamples?[RNG.Next(0, keypressSamples.Length)]?.Play();
 
             bindTarget.UpdateKeyCombination(KeyCombination.FromInputState(e.CurrentState), KeyCombination.FromKey(e.Key));
             if (!isModifier(e.Key)) finalise();
@@ -454,7 +465,7 @@ namespace osu.Game.Overlays.Settings.Sections.Input
             }
 
             if (HasFocus)
-                GetContainingInputManager().ChangeFocus(null);
+                GetContainingFocusManager()!.ChangeFocus(null);
 
             cancelAndClearButtons.FadeOut(300, Easing.OutQuint);
             cancelAndClearButtons.BypassAutoSizeAxes |= Axes.Y;
@@ -478,16 +489,29 @@ namespace osu.Game.Overlays.Settings.Sections.Input
             base.OnFocusLost(e);
         }
 
-        private void tryPersistKeyBinding(RealmKeyBinding keyBinding, bool advanceToNextBinding)
+        private bool isConflictingBinding(RealmKeyBinding first, RealmKeyBinding second, bool restoringDefaults)
+        {
+            if (first.ID == second.ID)
+                return false;
+
+            // ignore conflicts with same action bindings during revert. the assumption is that the other binding will be reverted subsequently in the same higher-level operation.
+            // this happens if the bindings for an action are rebound to the same keys, but the ordering of the bindings itself is different.
+            if (restoringDefaults && first.ActionInt == second.ActionInt)
+                return false;
+
+            return first.KeyCombination.Equals(second.KeyCombination);
+        }
+
+        private void tryPersistKeyBinding(RealmKeyBinding keyBinding, bool advanceToNextBinding, bool restoringDefaults = false)
         {
             List<RealmKeyBinding> bindings = GetAllSectionBindings();
             RealmKeyBinding? existingBinding = keyBinding.KeyCombination.Equals(new KeyCombination(InputKey.None))
                 ? null
-                : bindings.FirstOrDefault(other => other.ID != keyBinding.ID && other.KeyCombination.Equals(keyBinding.KeyCombination));
+                : bindings.FirstOrDefault(other => isConflictingBinding(keyBinding, other, restoringDefaults));
 
             if (existingBinding == null)
             {
-                realm.WriteAsync(r => r.Find<RealmKeyBinding>(keyBinding.ID)!.KeyCombinationString = keyBinding.KeyCombination.ToString());
+                realm.Write(r => r.Find<RealmKeyBinding>(keyBinding.ID)!.KeyCombinationString = keyBinding.KeyCombination.ToString());
                 BindingUpdated?.Invoke(this, new KeyBindingUpdatedEventArgs(bindingConflictResolved: false, advanceToNextBinding));
                 return;
             }

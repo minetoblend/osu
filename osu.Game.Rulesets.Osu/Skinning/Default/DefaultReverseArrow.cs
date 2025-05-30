@@ -1,21 +1,22 @@
 // Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
+using System;
 using osu.Framework.Allocation;
-using osu.Framework.Extensions.ObjectExtensions;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Sprites;
+using osu.Framework.Utils;
 using osu.Game.Rulesets.Objects.Drawables;
 using osu.Game.Rulesets.Osu.Objects;
+using osu.Game.Rulesets.Osu.Objects.Drawables;
 using osuTK;
 
 namespace osu.Game.Rulesets.Osu.Skinning.Default
 {
     public partial class DefaultReverseArrow : CompositeDrawable
     {
-        [Resolved]
-        private DrawableHitObject drawableObject { get; set; } = null!;
+        private DrawableSliderRepeat drawableRepeat { get; set; } = null!;
 
         public DefaultReverseArrow()
         {
@@ -36,34 +37,34 @@ namespace osu.Game.Rulesets.Osu.Skinning.Default
         }
 
         [BackgroundDependencyLoader]
-        private void load()
+        private void load(DrawableHitObject drawableObject)
         {
-            drawableObject.ApplyCustomUpdateState += updateStateTransforms;
+            drawableRepeat = (DrawableSliderRepeat)drawableObject;
         }
 
-        private void updateStateTransforms(DrawableHitObject hitObject, ArmedState state)
+        protected override void Update()
         {
-            const double move_out_duration = 35;
-            const double move_in_duration = 250;
-            const double total = 300;
+            base.Update();
 
-            switch (state)
+            if (Time.Current >= drawableRepeat.HitStateUpdateTime && drawableRepeat.State.Value == ArmedState.Hit)
             {
-                case ArmedState.Idle:
-                    InternalChild.ScaleTo(1.3f, move_out_duration, Easing.Out)
-                                 .Then()
-                                 .ScaleTo(1f, move_in_duration, Easing.Out)
-                                 .Loop(total - (move_in_duration + move_out_duration));
-                    break;
+                double animDuration = Math.Min(300, drawableRepeat.HitObject.SpanDuration);
+                Scale = new Vector2(Interpolation.ValueAt(Time.Current, 1, 1.5f, drawableRepeat.HitStateUpdateTime, drawableRepeat.HitStateUpdateTime + animDuration, Easing.Out));
             }
-        }
+            else
+            {
+                const float scale_amount = 1.3f;
 
-        protected override void Dispose(bool isDisposing)
-        {
-            base.Dispose(isDisposing);
+                const double move_out_duration = 35;
+                const double move_in_duration = 250;
+                const double total = 300;
 
-            if (drawableObject.IsNotNull())
-                drawableObject.ApplyCustomUpdateState -= updateStateTransforms;
+                double loopCurrentTime = (Time.Current - drawableRepeat.AnimationStartTime.Value) % total;
+                if (loopCurrentTime < move_out_duration)
+                    Scale = new Vector2(Interpolation.ValueAt(loopCurrentTime, 1, scale_amount, 0, move_out_duration, Easing.Out));
+                else
+                    Scale = new Vector2(Interpolation.ValueAt(loopCurrentTime, scale_amount, 1f, move_out_duration, move_out_duration + move_in_duration, Easing.Out));
+            }
         }
     }
 }

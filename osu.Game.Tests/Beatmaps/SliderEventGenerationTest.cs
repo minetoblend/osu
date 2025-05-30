@@ -87,8 +87,8 @@ namespace osu.Game.Tests.Beatmaps
         {
             var events = SliderEventGenerator.Generate(start_time, span_duration, 1, span_duration / 2, span_duration, 1).ToArray();
 
-            Assert.That(events[2].Type, Is.EqualTo(SliderEventType.LastTick));
-            Assert.That(events[2].Time, Is.EqualTo(span_duration + SliderEventGenerator.LAST_TICK_OFFSET));
+            Assert.That(events[2].Type, Is.EqualTo(SliderEventType.LegacyLastTick));
+            Assert.That(events[2].Time, Is.EqualTo(span_duration + SliderEventGenerator.TAIL_LENIENCY));
         }
 
         [Test]
@@ -111,6 +111,21 @@ namespace osu.Game.Tests.Beatmaps
                     Assert.That(events[tickIndex].Time, Is.LessThan(span_duration - min_distance).Or.GreaterThan(span_duration + min_distance));
                 }
             });
+        }
+
+        [Test]
+        public void TestRepeatsGeneratedEvenForZeroLengthSlider()
+        {
+            var events = SliderEventGenerator.Generate(start_time, span_duration, 1, span_duration / 2, 0, 2).ToArray();
+
+            Assert.That(events[0].Type, Is.EqualTo(SliderEventType.Head));
+            Assert.That(events[0].Time, Is.EqualTo(start_time));
+
+            Assert.That(events[1].Type, Is.EqualTo(SliderEventType.Repeat));
+            Assert.That(events[1].Time, Is.EqualTo(span_duration));
+
+            Assert.That(events[3].Type, Is.EqualTo(SliderEventType.Tail));
+            Assert.That(events[3].Time, Is.EqualTo(span_duration * 2));
         }
     }
 }

@@ -25,6 +25,11 @@ namespace osu.Game.Localisation
         public static LocalisableString MenuCursorSize => new TranslatableString(getKey(@"menu_cursor_size"), @"Menu cursor size");
 
         /// <summary>
+        /// "Menu tips"
+        /// </summary>
+        public static LocalisableString ShowMenuTips => new TranslatableString(getKey(@"show_menu_tips"), @"Menu tips");
+
+        /// <summary>
         /// "Parallax"
         /// </summary>
         public static LocalisableString Parallax => new TranslatableString(getKey(@"parallax"), @"Parallax");
@@ -80,6 +85,11 @@ namespace osu.Game.Localisation
         public static LocalisableString RightMouseScroll => new TranslatableString(getKey(@"right_mouse_scroll"), @"Right mouse drag to absolute scroll");
 
         /// <summary>
+        /// "Show converts"
+        /// </summary>
+        public static LocalisableString ShowConverts => new TranslatableString(getKey(@"show_converts"), @"Show converts");
+
+        /// <summary>
         /// "Show converted beatmaps"
         /// </summary>
         public static LocalisableString ShowConvertedBeatmaps => new TranslatableString(getKey(@"show_converted_beatmaps"), @"Show converted beatmaps");
@@ -103,6 +113,11 @@ namespace osu.Game.Localisation
         /// "Mod select hotkey style"
         /// </summary>
         public static LocalisableString ModSelectHotkeyStyle => new TranslatableString(getKey(@"mod_select_hotkey_style"), @"Mod select hotkey style");
+
+        /// <summary>
+        /// "Automatically focus search text box in mod select"
+        /// </summary>
+        public static LocalisableString ModSelectTextSearchStartsActive => new TranslatableString(getKey(@"mod_select_text_search_starts_active"), @"Automatically focus search text box in mod select");
 
         /// <summary>
         /// "no limit"
@@ -149,6 +164,6 @@ namespace osu.Game.Localisation
         /// </summary>
         public static LocalisableString TrueRandom => new TranslatableString(getKey(@"true_random"), @"True Random");
 
-        private static string getKey(string key) => $"{prefix}:{key}";
+        private static string getKey(string key) => $@"{prefix}:{key}";
     }
 }

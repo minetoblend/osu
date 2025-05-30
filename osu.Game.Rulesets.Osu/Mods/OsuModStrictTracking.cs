@@ -36,6 +36,9 @@ namespace osu.Game.Rulesets.Osu.Mods
                 {
                     if (e.NewValue || slider.Judged) return;
 
+                    if (slider.Time.Current < slider.HitObject.StartTime)
+                        return;
+
                     var tail = slider.NestedHitObjects.OfType<StrictTrackingDrawableSliderTail>().First();
 
                     if (!tail.Judged)
@@ -117,6 +120,7 @@ namespace osu.Game.Rulesets.Osu.Mods
                                 Position = Position + Path.PositionAt(e.PathProgress),
                                 StackHeight = StackHeight,
                                 Scale = Scale,
+                                PathProgress = e.PathProgress,
                             });
                             break;
 
@@ -129,7 +133,7 @@ namespace osu.Game.Rulesets.Osu.Mods
                             });
                             break;
 
-                        case SliderEventType.LastTick:
+                        case SliderEventType.Tail:
                             AddNested(TailCircle = new StrictTrackingSliderTailCircle(this)
                             {
                                 RepeatIndex = e.SpanIndex,
@@ -147,6 +151,7 @@ namespace osu.Game.Rulesets.Osu.Mods
                                 Position = Position + Path.PositionAt(e.PathProgress),
                                 StackHeight = StackHeight,
                                 Scale = Scale,
+                                PathProgress = e.PathProgress,
                             });
                             break;
                     }

@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using osu.Game.Rulesets.Objects;
 using System.Linq;
 using System.Threading;
+using JetBrains.Annotations;
 using Newtonsoft.Json;
 using osu.Framework.Bindables;
 using osu.Framework.Caching;
@@ -41,7 +42,7 @@ namespace osu.Game.Rulesets.Osu.Objects
 
         public Vector2 StackedPositionAt(double t) => StackedPosition + this.CurvePositionAt(t);
 
-        private readonly SliderPath path = new SliderPath();
+        private readonly SliderPath path = new SliderPath { OptimiseCatmull = true };
 
         public SliderPath Path
         {
@@ -49,13 +50,9 @@ namespace osu.Game.Rulesets.Osu.Objects
             set
             {
                 path.ControlPoints.Clear();
-                path.ExpectedDistance.Value = null;
+                path.ControlPoints.AddRange(value.ControlPoints.Select(c => new PathControlPoint(c.Position, c.Type)));
 
-                if (value != null)
-                {
-                    path.ControlPoints.AddRange(value.ControlPoints.Select(c => new PathControlPoint(c.Position, c.Type)));
-                    path.ExpectedDistance.Value = value.ExpectedDistance.Value;
-                }
+                path.ExpectedDistance.Value = value.ExpectedDistance.Value;
             }
         }
 
@@ -128,10 +125,23 @@ namespace osu.Game.Rulesets.Osu.Objects
         public double TickDistanceMultiplier = 1;
 
         /// <summary>
-        /// Whether this <see cref="Slider"/>'s judgement is fully handled by its nested <see cref="HitObject"/>s.
-        /// If <c>false</c>, this <see cref="Slider"/> will be judged proportionally to the number of nested <see cref="HitObject"/>s hit.
+        /// If <see langword="false"/>, <see cref="Slider"/>'s judgement is fully handled by its nested <see cref="HitObject"/>s.
+        /// If <see langword="true"/>, this <see cref="Slider"/> will be judged proportionally to the number of nested <see cref="HitObject"/>s hit.
         /// </summary>
-        public bool OnlyJudgeNestedObjects = true;
+        public bool ClassicSliderBehaviour
+        {
+            get => classicSliderBehaviour;
+            set
+            {
+                classicSliderBehaviour = value;
+                if (HeadCircle != null)
+                    HeadCircle.ClassicSliderBehaviour = value;
+                if (TailCircle != null)
+                    TailCircle.ClassicSliderBehaviour = value;
+            }
+        }
+
+        private bool classicSliderBehaviour;
 
         public BindableNumber<double> SliderVelocityMultiplierBindable { get; } = new BindableDouble(1)
         {
@@ -152,6 +162,10 @@ namespace osu.Game.Rulesets.Osu.Objects
 
         [JsonIgnore]
         public SliderTailCircle TailCircle { get; protected set; }
+
+        [JsonIgnore]
+        [CanBeNull]
+        public SliderRepeat LastRepeat { get; protected set; }
 
         public Slider()
         {
@@ -190,8 +204,8 @@ namespace osu.Game.Rulesets.Osu.Objects
                             SpanStartTime = e.SpanStartTime,
                             StartTime = e.Time,
                             Position = Position + Path.PositionAt(e.PathProgress),
+                            PathProgress = e.PathProgress,
                             StackHeight = StackHeight,
-                            Scale = Scale,
                         });
                         break;
 
@@ -201,31 +215,29 @@ namespace osu.Game.Rulesets.Osu.Objects
                             StartTime = e.Time,
                             Position = Position,
                             StackHeight = StackHeight,
+                            ClassicSliderBehaviour = ClassicSliderBehaviour,
                         });
                         break;
 
-                    case SliderEventType.LastTick:
-                        // Of note, we are directly mapping LastTick (instead of `SliderEventType.Tail`)  to SliderTailCircle.
-                        // It is required as difficulty calculation and gameplay relies on reading this value.
-                        // (although it is displayed in classic skins, which may be a concern).
-                        // If this is to change, we should revisit this.
+                    case SliderEventType.Tail:
                         AddNested(TailCircle = new SliderTailCircle(this)
                         {
                             RepeatIndex = e.SpanIndex,
                             StartTime = e.Time,
                             Position = EndPosition,
-                            StackHeight = StackHeight
+                            StackHeight = StackHeight,
+                            ClassicSliderBehaviour = ClassicSliderBehaviour,
                         });
                         break;
 
                     case SliderEventType.Repeat:
-                        AddNested(new SliderRepeat(this)
+                        AddNested(LastRepeat = new SliderRepeat(this)
                         {
                             RepeatIndex = e.SpanIndex,
                             StartTime = StartTime + (e.SpanIndex + 1) * SpanDuration,
                             Position = Position + Path.PositionAt(e.PathProgress),
                             StackHeight = StackHeight,
-                            Scale = Scale,
+                            PathProgress = e.PathProgress,
                         });
                         break;
                 }
@@ -238,27 +250,52 @@ namespace osu.Game.Rulesets.Osu.Objects
         {
             endPositionCache.Invalidate();
 
-            if (HeadCircle != null)
-                HeadCircle.Position = Position;
+            foreach (var nested in NestedHitObjects)
+            {
+                switch (nested)
+                {
+                    case SliderHeadCircle headCircle:
+                        headCircle.Position = Position;
+                        break;
 
-            if (TailCircle != null)
-                TailCircle.Position = EndPosition;
+                    case SliderTailCircle tailCircle:
+                        tailCircle.Position = EndPosition;
+                        break;
+
+                    case SliderRepeat repeat:
+                        repeat.Position = Position + Path.PositionAt(repeat.PathProgress);
+                        break;
+
+                    case SliderTick tick:
+                        tick.Position = Position + Path.PositionAt(tick.PathProgress);
+                        break;
+                }
+            }
         }
 
         protected void UpdateNestedSamples()
         {
-            var firstSample = Samples.FirstOrDefault(s => s.Name == HitSampleInfo.HIT_NORMAL)
-                              ?? Samples.FirstOrDefault(); // TODO: remove this when guaranteed sort is present for samples (https://github.com/ppy/osu/issues/1933)
-            var sampleList = new List<HitSampleInfo>();
+            this.PopulateNodeSamples();
 
-            if (firstSample != null)
-                sampleList.Add(firstSample.With("slidertick"));
+            // TODO: remove this when guaranteed sort is present for samples (https://github.com/ppy/osu/issues/1933)
+            HitSampleInfo tickSample = (Samples.FirstOrDefault(s => s.Name == HitSampleInfo.HIT_NORMAL) ?? Samples.FirstOrDefault())?.With("slidertick");
 
-            foreach (var tick in NestedHitObjects.OfType<SliderTick>())
-                tick.Samples = sampleList;
+            foreach (var nested in NestedHitObjects)
+            {
+                switch (nested)
+                {
+                    case SliderTick tick:
+                        tick.SamplesBindable.Clear();
 
-            foreach (var repeat in NestedHitObjects.OfType<SliderRepeat>())
-                repeat.Samples = this.GetNodeSamples(repeat.RepeatIndex + 1);
+                        if (tickSample != null)
+                            tick.SamplesBindable.Add(tickSample);
+                        break;
+
+                    case SliderRepeat repeat:
+                        repeat.Samples = this.GetNodeSamples(repeat.RepeatIndex + 1);
+                        break;
+                }
+            }
 
             if (HeadCircle != null)
                 HeadCircle.Samples = this.GetNodeSamples(0);
@@ -270,7 +307,11 @@ namespace osu.Game.Rulesets.Osu.Objects
             TailSamples = this.GetNodeSamples(repeatCount + 1);
         }
 
-        public override Judgement CreateJudgement() => OnlyJudgeNestedObjects ? new OsuIgnoreJudgement() : new OsuJudgement();
+        public override Judgement CreateJudgement() => ClassicSliderBehaviour
+            // Final combo is provided by the slider itself - see logic in `DrawableSlider.CheckForResult()`
+            ? new OsuJudgement()
+            // Final combo is provided by the tail circle - see `SliderTailCircle`
+            : new OsuIgnoreJudgement();
 
         protected override HitWindows CreateHitWindows() => HitWindows.Empty;
     }

@@ -108,7 +108,11 @@ namespace osu.Game.Rulesets.Mania.Objects.Drawables
                     RelativeSizeAxes = Axes.X
                 },
                 tailContainer = new Container<DrawableHoldNoteTail> { RelativeSizeAxes = Axes.Both },
-                slidingSample = new PausableSkinnableSound { Looping = true }
+                slidingSample = new PausableSkinnableSound
+                {
+                    Looping = true,
+                    MinimumSampleVolume = MINIMUM_SAMPLE_VOLUME,
+                }
             });
 
             maskedContents.AddRange(new[]
@@ -261,14 +265,17 @@ namespace osu.Game.Rulesets.Mania.Objects.Drawables
             if (Tail.AllJudged)
             {
                 if (Tail.IsHit)
-                    ApplyResult(r => r.Type = r.Judgement.MaxResult);
+                    ApplyMaxResult();
                 else
                     MissForcefully();
-            }
 
-            // Make sure that the hold note is fully judged by giving the body a judgement.
-            if (Tail.AllJudged && !Body.AllJudged)
-                Body.TriggerResult(Tail.IsHit);
+                // Make sure that the hold note is fully judged by giving the body a judgement.
+                if (!Body.AllJudged)
+                    Body.TriggerResult(Tail.IsHit);
+
+                // Important that this is always called when a result is applied.
+                endHold();
+            }
         }
 
         public override void MissForcefully()
