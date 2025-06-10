@@ -248,6 +248,12 @@ namespace osu.Game.Rulesets.Osu.Skinning.Legacy
 
                             return null;
 
+                        case OsuSkinComponents.SliderSelect:
+                            if (GetTexture(@"hitcircleselect") != null)
+                                return new LegacySliderSelect();
+
+                            return null;
+
                         default:
                             throw new UnsupportedSkinComponentException(lookup);
                     }

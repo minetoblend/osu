@@ -73,9 +73,11 @@ namespace osu.Game.Skinning
         /// </summary>
         protected virtual bool ApplySizeRestrictionsToDefault => false;
 
+        protected virtual Drawable? GetDrawableComponent(ISkinSource skin) => skin.GetDrawableComponent(ComponentLookup);
+
         protected override void SkinChanged(ISkinSource skin)
         {
-            var retrieved = skin.GetDrawableComponent(ComponentLookup);
+            var retrieved = GetDrawableComponent(skin);
 
             if (retrieved == null)
             {
@@ -125,6 +127,23 @@ namespace osu.Game.Skinning
                 }
             }
         }
+    }
+
+    /// <summary>
+    /// A typesafe wrapper around <see cref="SkinnableDrawable"/>
+    /// </summary>
+    /// <typeparam name="T">Type of the drawable</typeparam>
+    public partial class SkinnableDrawable<T> : SkinnableDrawable
+        where T : Drawable
+    {
+        public SkinnableDrawable(ISkinComponentLookup lookup, Func<ISkinComponentLookup, T> defaultImplementation, ConfineMode confineMode = ConfineMode.NoScaling)
+            : base(lookup, defaultImplementation, confineMode) { }
+
+        public new T Drawable => (T)base.Drawable;
+
+        protected override Drawable? GetDrawableComponent(ISkinSource skin) => base.GetDrawableComponent(skin) as T;
+
+        protected override T CreateDefault(ISkinComponentLookup lookup) => (T)base.CreateDefault(lookup);
     }
 
     public enum ConfineMode

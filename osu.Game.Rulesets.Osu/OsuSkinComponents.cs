@@ -23,5 +23,6 @@ namespace osu.Game.Rulesets.Osu
         CursorSmoke,
         ApproachCircle,
         HitCircleSelect,
+        SliderSelect,
     }
 }

@@ -22,7 +22,7 @@ namespace osu.Game.Rulesets.Osu.Skinning.Legacy
             // legacy skins use a constant value for slider track alpha, regardless of the source colour.
             => (skin.GetConfig<OsuSkinColour, Color4>(OsuSkinColour.SliderTrackOverride)?.Value ?? hitObjectAccentColour).Opacity(0.7f);
 
-        private partial class LegacyDrawableSliderPath : DrawableSliderPath
+        public partial class LegacyDrawableSliderPath : DrawableSliderPath
         {
             protected override Color4 ColourAt(float position)
             {
