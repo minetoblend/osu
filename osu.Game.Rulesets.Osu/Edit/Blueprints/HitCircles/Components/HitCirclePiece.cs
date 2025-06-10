@@ -6,6 +6,7 @@ using osu.Framework.Graphics;
 using osu.Game.Graphics;
 using osu.Game.Rulesets.Osu.Objects;
 using osu.Game.Rulesets.Osu.Skinning.Default;
+using osu.Game.Skinning;
 using osuTK;
 
 namespace osu.Game.Rulesets.Osu.Edit.Blueprints.HitCircles.Components
@@ -20,14 +21,12 @@ namespace osu.Game.Rulesets.Osu.Edit.Blueprints.HitCircles.Components
 
             CornerRadius = Size.X / 2;
             CornerExponent = 2;
-
-            InternalChild = new RingPiece();
         }
 
         [BackgroundDependencyLoader]
         private void load(OsuColour colours)
         {
-            Colour = colours.Yellow;
+            InternalChild = new SkinnableDrawable(new OsuSkinComponentLookup(OsuSkinComponents.HitCircleSelect), _ => new RingPiece { Colour = colours.Yellow });
         }
 
         public override void UpdateFrom(HitCircle hitObject)

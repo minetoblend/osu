@@ -242,6 +242,12 @@ namespace osu.Game.Rulesets.Osu.Skinning.Legacy
 
                             return null;
 
+                        case OsuSkinComponents.HitCircleSelect:
+                            if (GetTexture(@"hitcircleselect") != null)
+                                return this.GetAnimation("hitcircleselect", false, false);
+
+                            return null;
+
                         default:
                             throw new UnsupportedSkinComponentException(lookup);
                     }
