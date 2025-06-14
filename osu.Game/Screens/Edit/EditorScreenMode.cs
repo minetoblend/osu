@@ -22,5 +22,8 @@ namespace osu.Game.Screens.Edit
 
         [LocalisableDescription(typeof(EditorStrings), nameof(EditorStrings.VerifyScreen))]
         Verify,
+
+        [LocalisableDescription(typeof(EditorStrings), nameof(EditorStrings.ModdingScreen))]
+        Modding,
     }
 }

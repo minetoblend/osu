@@ -52,6 +52,7 @@ using osu.Game.Screens.Edit.Compose;
 using osu.Game.Screens.Edit.Compose.Components.Timeline;
 using osu.Game.Screens.Edit.Design;
 using osu.Game.Screens.Edit.GameplayTest;
+using osu.Game.Screens.Edit.Modding;
 using osu.Game.Screens.Edit.Setup;
 using osu.Game.Screens.Edit.Submission;
 using osu.Game.Screens.Edit.Timing;
@@ -1106,6 +1107,10 @@ namespace osu.Game.Screens.Edit
 
                     case EditorScreenMode.Verify:
                         currentScreen = new VerifyScreen();
+                        break;
+
+                    case EditorScreenMode.Modding:
+                        currentScreen = new ModdingScreen();
                         break;
 
                     default:
