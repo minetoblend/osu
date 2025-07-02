@@ -39,7 +39,13 @@ namespace osu.Game.Screens.Edit.Compose.Components
 
         protected new EditorSelectionHandler SelectionHandler => (EditorSelectionHandler)base.SelectionHandler;
 
-        public PlacementBlueprint CurrentPlacement { get; private set; }
+        public readonly Bindable<PlacementBlueprint> CurrentPlacementBindable = new Bindable<PlacementBlueprint>();
+
+        public PlacementBlueprint CurrentPlacement
+        {
+            get => CurrentPlacementBindable.Value;
+            private set => CurrentPlacementBindable.Value = value;
+        }
 
         public HitObjectPlacementBlueprint CurrentHitObjectPlacement => CurrentPlacement as HitObjectPlacementBlueprint;
 

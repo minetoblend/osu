@@ -122,6 +122,8 @@ namespace osu.Game.Rulesets.Edit
         protected override void PopIn() => this.FadeIn();
         protected override void PopOut() => this.FadeOut();
 
+        public virtual Drawable? CreateSidebarContent() => null;
+
         public enum PlacementState
         {
             Waiting,

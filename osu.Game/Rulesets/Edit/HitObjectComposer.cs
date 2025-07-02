@@ -253,6 +253,8 @@ namespace osu.Game.Rulesets.Edit
                 },
             };
 
+            RightToolbox.Add(SidebarCategory.TOOLS, new ActiveToolSidebarPanel(blueprintContainer));
+
             RightToolbox.Add(SidebarCategory.INSPECT, new SidebarPanel("Inspector")
             {
                 Child = CreateHitObjectInspector()
