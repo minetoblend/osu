@@ -14,6 +14,7 @@ using osu.Game.Configuration;
 using osu.Game.Rulesets.Edit;
 using osu.Game.Rulesets.Objects;
 using osu.Game.Rulesets.Objects.Types;
+using osu.Game.Rulesets.Osu.Configuration;
 using osu.Game.Rulesets.Osu.Edit.Blueprints.HitCircles.Components;
 using osu.Game.Rulesets.Osu.Edit.Blueprints.Sliders.Components;
 using osu.Game.Rulesets.Osu.Objects;
@@ -45,11 +46,30 @@ namespace osu.Game.Rulesets.Osu.Edit.Blueprints.Sliders
         private int currentSegmentLength;
         private bool usingCustomSegmentType;
 
-        [Resolved]
-        private IDistanceSnapProvider? distanceSnapProvider { get; set; }
+        private readonly BindableInt displayTolerance = new BindableInt(90)
+        {
+            MinValue = 5,
+            MaxValue = 100
+        };
+
+        private readonly BindableInt displayCornerThreshold = new BindableInt(40)
+        {
+            MinValue = 5,
+            MaxValue = 100
+        };
+
+        private readonly BindableInt displayCircleThreshold = new BindableInt(30)
+        {
+            MinValue = 0,
+            MaxValue = 100
+        };
+
+        private float tolerance => displayTolerance.Value / 50f;
+        private float cornerThreshold => displayCornerThreshold.Value / 100f;
+        private float circleThreshold => displayCircleThreshold.Value / 20000f;
 
         [Resolved]
-        private FreehandSliderToolboxGroup? freehandToolboxGroup { get; set; }
+        private IDistanceSnapProvider? distanceSnapProvider { get; set; }
 
         [Resolved]
         private EditorClock? editorClock { get; set; }
@@ -70,7 +90,7 @@ namespace osu.Game.Rulesets.Osu.Edit.Blueprints.Sliders
         }
 
         [BackgroundDependencyLoader]
-        private void load(OsuConfigManager config)
+        private void load(OsuConfigManager config, OsuRulesetConfigManager? rulesetConfig)
         {
             InternalChildren = new Drawable[]
             {
@@ -82,6 +102,10 @@ namespace osu.Game.Rulesets.Osu.Edit.Blueprints.Sliders
 
             state = SliderPlacementState.Initial;
             limitedDistanceSnap = config.GetBindable<bool>(OsuSetting.EditorLimitedDistanceSnap);
+
+            rulesetConfig?.BindWith(OsuRulesetSetting.EditorFreeHandSliderTolerance, displayTolerance);
+            rulesetConfig?.BindWith(OsuRulesetSetting.EditorFreeHandSliderCornerThreshold, displayCornerThreshold);
+            rulesetConfig?.BindWith(OsuRulesetSetting.EditorFreeHandSliderCircleThreshold, displayCircleThreshold);
         }
 
         protected override void LoadComplete()
@@ -90,26 +114,28 @@ namespace osu.Game.Rulesets.Osu.Edit.Blueprints.Sliders
 
             inputManager = GetContainingInputManager()!;
 
-            if (freehandToolboxGroup != null)
+            displayTolerance.BindValueChanged(_ =>
             {
-                freehandToolboxGroup.Tolerance.BindValueChanged(e =>
-                {
-                    bSplineBuilder.Tolerance = e.NewValue;
-                    Scheduler.AddOnce(updateSliderPathFromBSplineBuilder);
-                }, true);
-
-                freehandToolboxGroup.CornerThreshold.BindValueChanged(e =>
-                {
-                    bSplineBuilder.CornerThreshold = e.NewValue;
-                    Scheduler.AddOnce(updateSliderPathFromBSplineBuilder);
-                }, true);
-
-                freehandToolboxGroup.CircleThreshold.BindValueChanged(e =>
-                {
-                    Scheduler.AddOnce(updateSliderPathFromBSplineBuilder);
-                }, true);
-            }
+                bSplineBuilder.Tolerance = tolerance;
+                Scheduler.AddOnce(updateSliderPathFromBSplineBuilder);
+            }, true);
+            displayCornerThreshold.BindValueChanged(_ =>
+            {
+                bSplineBuilder.CornerThreshold = cornerThreshold;
+                Scheduler.AddOnce(updateSliderPathFromBSplineBuilder);
+            }, true);
+            displayCircleThreshold.BindValueChanged(_ =>
+            {
+                Scheduler.AddOnce(updateSliderPathFromBSplineBuilder);
+            }, true);
         }
+
+        public override Drawable? CreateSidebarContent() => new FreehandSliderToolboxGroup
+        {
+            DisplayTolerance = { BindTarget = displayTolerance },
+            DisplayCornerThreshold = { BindTarget = displayCornerThreshold },
+            DisplayCircleThreshold = { BindTarget = displayCircleThreshold },
+        };
 
         [Resolved]
         private EditorBeatmap editorBeatmap { get; set; } = null!;
@@ -434,7 +460,8 @@ namespace osu.Game.Rulesets.Osu.Edit.Blueprints.Sliders
             if (state == SliderPlacementState.Drawing)
                 HitObject.Path.ExpectedDistance.Value = (float)HitObject.Path.CalculatedDistance;
             else
-                HitObject.Path.ExpectedDistance.Value = distanceSnapProvider?.FindSnappedDistance((float)HitObject.Path.CalculatedDistance, HitObject.StartTime, HitObject) ?? (float)HitObject.Path.CalculatedDistance;
+                HitObject.Path.ExpectedDistance.Value = distanceSnapProvider?.FindSnappedDistance((float)HitObject.Path.CalculatedDistance, HitObject.StartTime, HitObject)
+                                                        ?? (float)HitObject.Path.CalculatedDistance;
 
             bodyPiece.UpdateFrom(HitObject);
             headCirclePiece.UpdateFrom(HitObject.HeadCircle);
@@ -481,7 +508,7 @@ namespace osu.Game.Rulesets.Osu.Edit.Blueprints.Sliders
 
         private Vector2[]? tryCircleArc(List<Vector2> segment)
         {
-            if (segment.Count < 3 || freehandToolboxGroup?.CircleThreshold.Value == 0) return null;
+            if (segment.Count < 3 || circleThreshold == 0) return null;
 
             // Assume the segment creates a reasonable circular arc and then check if it reasonable
             var points = PathApproximator.BSplineToPiecewiseLinear(segment.ToArray(), bSplineBuilder.Degree);
@@ -554,7 +581,7 @@ namespace osu.Game.Rulesets.Osu.Edit.Blueprints.Sliders
 
             loss /= points.Count;
 
-            return loss > freehandToolboxGroup?.CircleThreshold.Value || totalWinding > MathHelper.TwoPi ? null : circleArcControlPoints;
+            return loss > circleThreshold || totalWinding > MathHelper.TwoPi ? null : circleArcControlPoints;
         }
 
         private enum SliderPlacementState

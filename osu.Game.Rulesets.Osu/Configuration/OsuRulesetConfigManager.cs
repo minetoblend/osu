@@ -28,6 +28,10 @@ namespace osu.Game.Rulesets.Osu.Configuration
             SetDefault(OsuRulesetSetting.ReplayCursorPathEnabled, false);
             SetDefault(OsuRulesetSetting.ReplayCursorHideEnabled, false);
             SetDefault(OsuRulesetSetting.ReplayAnalysisDisplayLength, 800);
+
+            SetDefault(OsuRulesetSetting.EditorFreeHandSliderTolerance, 90, min: 5, max: 100);
+            SetDefault(OsuRulesetSetting.EditorFreeHandSliderCornerThreshold, 40, min: 5, max: 100);
+            SetDefault(OsuRulesetSetting.EditorFreeHandSliderCircleThreshold, 30, min: 0, max: 100);
         }
     }
 
@@ -45,5 +49,10 @@ namespace osu.Game.Rulesets.Osu.Configuration
         ReplayCursorPathEnabled,
         ReplayCursorHideEnabled,
         ReplayAnalysisDisplayLength,
+
+        // Editor
+        EditorFreeHandSliderTolerance,
+        EditorFreeHandSliderCornerThreshold,
+        EditorFreeHandSliderCircleThreshold,
     }
 }
