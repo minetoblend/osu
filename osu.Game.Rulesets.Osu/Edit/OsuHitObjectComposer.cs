@@ -78,14 +78,11 @@ namespace osu.Game.Rulesets.Osu.Edit
         [Cached]
         protected readonly OsuGridToolboxGroup OsuGridToolboxGroup = new OsuGridToolboxGroup();
 
-        [Cached]
-        protected readonly FreehandSliderToolboxGroup FreehandSliderToolboxGroup = new FreehandSliderToolboxGroup();
-
         [BackgroundDependencyLoader]
         private void load()
         {
             AddInternal(DistanceSnapProvider);
-            Toolbox.Add(SidebarCategory.TOOLS, DistanceSnapProvider.CreateSidebarPanel());
+            Toolbox.Add(SidebarCategory.SNAPPING, DistanceSnapProvider.CreateSidebarPanel());
 
             // Give a bit of breathing room around the playfield content.
             PlayfieldContentContainer.Padding = new MarginPadding(10);
@@ -120,7 +117,7 @@ namespace osu.Game.Rulesets.Osu.Edit
                 new GenerateToolboxGroup()
             });
 
-            Toolbox.Add(SidebarCategory.VIEW, OsuGridToolboxGroup);
+            Toolbox.Add(SidebarCategory.SNAPPING, OsuGridToolboxGroup);
         }
 
         private void updatePositionSnapGrid(ValueChangedEvent<PositionSnapGridType> obj)

@@ -9,7 +9,7 @@ namespace osu.Game.Rulesets.Edit.UI
     {
         public static readonly SidebarCategory TOOLS = new SidebarCategory("Tools", 0);
 
-        public static readonly SidebarCategory VIEW = new SidebarCategory("View", 1);
+        public static readonly SidebarCategory SNAPPING = new SidebarCategory("Grid & Snapping", 1);
 
         public static readonly SidebarCategory INSPECT = new SidebarCategory("Inspector", 2);
     }
