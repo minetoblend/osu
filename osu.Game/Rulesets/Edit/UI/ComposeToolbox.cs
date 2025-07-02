@@ -8,15 +8,27 @@ using osu.Framework.Audio.Sample;
 using osu.Framework.Bindables;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
+using osu.Framework.Graphics.Shapes;
 using osu.Game.Graphics.Containers;
+using osu.Game.Overlays;
 using osuTK;
 
 namespace osu.Game.Rulesets.Edit.UI
 {
     public partial class ComposeToolbox : CompositeDrawable
     {
-        private readonly Container tabContent;
-        private readonly FillFlowContainer<SidebarCategoryButton> buttonFlow;
+        private readonly Container tabContent = new Container
+        {
+            RelativeSizeAxes = Axes.Y,
+            Width = 240
+        };
+
+        private readonly FillFlowContainer<SidebarCategoryButton> buttonFlow = new FillFlowContainer<SidebarCategoryButton>
+        {
+            RelativeSizeAxes = Axes.Y,
+            AutoSizeAxes = Axes.X,
+            Direction = FillDirection.Vertical,
+        };
 
         private readonly HashSet<SidebarCategory> categories = new HashSet<SidebarCategory>();
         private readonly Dictionary<SidebarCategory, SidebarTabContent> categoryContentMap = new Dictionary<SidebarCategory, SidebarTabContent>();
@@ -26,8 +38,12 @@ namespace osu.Game.Rulesets.Edit.UI
 
         private Sample? samplePopIn, samplePopOut;
 
-        public ComposeToolbox()
+        [BackgroundDependencyLoader]
+        private void load(AudioManager audio, OverlayColourProvider colourProvider)
         {
+            samplePopIn = audio.Samples.Get("UI/overlay-pop-in");
+            samplePopOut = audio.Samples.Get("UI/overlay-pop-out");
+
             AutoSizeAxes = Axes.X;
             RelativeSizeAxes = Axes.Y;
 
@@ -45,27 +61,24 @@ namespace osu.Game.Rulesets.Edit.UI
                         Masking = true,
                         AutoSizeDuration = 300,
                         AutoSizeEasing = Easing.OutExpo,
-                        Child = tabContent = new Container
-                        {
-                            Width = 250,
-                            RelativeSizeAxes = Axes.Y,
-                        },
+                        Child = tabContent,
                     },
-                    buttonFlow = new FillFlowContainer<SidebarCategoryButton>
+                    new Container
                     {
                         RelativeSizeAxes = Axes.Y,
                         AutoSizeAxes = Axes.X,
-                        Direction = FillDirection.Vertical,
-                    },
+                        Children = new Drawable[]
+                        {
+                            new Box
+                            {
+                                RelativeSizeAxes = Axes.Both,
+                                Colour = colourProvider.Background5
+                            },
+                            buttonFlow,
+                        },
+                    }
                 },
             };
-        }
-
-        [BackgroundDependencyLoader]
-        private void load(AudioManager audio)
-        {
-            samplePopIn = audio.Samples.Get("UI/overlay-pop-in");
-            samplePopOut = audio.Samples.Get("UI/overlay-pop-out");
         }
 
         public void Add(SidebarCategory category, EditorToolboxGroup toolboxGroup)

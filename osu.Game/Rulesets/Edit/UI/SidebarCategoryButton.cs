@@ -12,6 +12,7 @@ using osu.Game.Graphics;
 using osu.Game.Graphics.Sprites;
 using osu.Game.Graphics.UserInterface;
 using osu.Game.Overlays;
+using osu.Game.Screens.Edit;
 using osuTK;
 using osuTK.Graphics;
 
@@ -21,6 +22,8 @@ namespace osu.Game.Rulesets.Edit.UI
     {
         private readonly SidebarCategory category;
         private readonly Bindable<SidebarCategory?> activeCategory;
+
+        private readonly Bindable<bool> active = new Bindable<bool>();
 
         private VerticalText text = null!;
         private Box background = null!;
@@ -35,7 +38,7 @@ namespace osu.Game.Rulesets.Edit.UI
         }
 
         [BackgroundDependencyLoader]
-        private void load()
+        private void load(Editor? editor)
         {
             AutoSizeAxes = Axes.Both;
             InternalChildren = new Drawable[]
@@ -59,13 +62,15 @@ namespace osu.Game.Rulesets.Edit.UI
         {
             base.LoadComplete();
 
-            activeCategory.BindValueChanged(c =>
-            {
-                if (c.NewValue == category)
-                    onActivated();
-                else
-                    onDeactivated();
-            }, true);
+            activeCategory.BindValueChanged(c => active.Value = c.NewValue == category, true);
+
+            active.BindValueChanged(_ => updateState(), true);
+        }
+
+        private void updateState()
+        {
+            background.FadeColour(active.Value ? colourProvider.Background3 : colourProvider.Background5, 100);
+            text.FadeColour(active.Value ? Color4.White : colourProvider.Light3, 100);
         }
 
         private void onActivated()
