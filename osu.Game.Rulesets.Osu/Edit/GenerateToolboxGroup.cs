@@ -12,7 +12,7 @@ using osuTK.Input;
 
 namespace osu.Game.Rulesets.Osu.Edit
 {
-    public partial class GenerateToolboxGroup : SidebarPanel
+    public partial class GenerateToolboxGroup : EditorToolboxGroup
     {
         private readonly EditorToolButton polygonButton;
 

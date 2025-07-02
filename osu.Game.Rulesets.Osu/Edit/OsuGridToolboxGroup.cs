@@ -21,7 +21,7 @@ using osuTK.Graphics;
 
 namespace osu.Game.Rulesets.Osu.Edit
 {
-    public partial class OsuGridToolboxGroup : SidebarPanel, IKeyBindingHandler<GlobalAction>
+    public partial class OsuGridToolboxGroup : EditorToolboxGroup, IKeyBindingHandler<GlobalAction>
     {
         [Resolved]
         private EditorBeatmap editorBeatmap { get; set; } = null!;

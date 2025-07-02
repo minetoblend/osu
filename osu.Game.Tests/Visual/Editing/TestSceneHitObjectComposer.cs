@@ -148,9 +148,9 @@ namespace osu.Game.Tests.Visual.Editing
 
             AddStep("Change to hitcircle", () => hitObjectComposer.ChildrenOfType<EditorRadioButton>().First(d => d.Button.Label == "HitCircle").TriggerClick());
 
-            ExpandingToolboxContainer toolboxContainer = null!;
+            ComposeToolbar toolboxContainer = null!;
 
-            AddStep("move mouse to toolbox", () => InputManager.MoveMouseTo(toolboxContainer = hitObjectComposer.ChildrenOfType<ExpandingToolboxContainer>().First()));
+            AddStep("move mouse to toolbox", () => InputManager.MoveMouseTo(toolboxContainer = hitObjectComposer.ChildrenOfType<ComposeToolbar>().First()));
             AddUntilStep("toolbox is expanded", () => toolboxContainer.Expanded.Value);
             AddUntilStep("wait for toolbox to expand", () => toolboxContainer.LatestTransformEndTime, () => Is.EqualTo(Time.Current));
 
@@ -192,7 +192,7 @@ namespace osu.Game.Tests.Visual.Editing
             {
                 // Specifically wanting to test the area of overlap between the left expanding toolbox container
                 // and the playfield/composer.
-                var scrollArea = hitObjectComposer.ChildrenOfType<ExpandingToolboxContainer>().First().ScreenSpaceDrawQuad;
+                var scrollArea = hitObjectComposer.ChildrenOfType<ComposeToolbar>().First().ScreenSpaceDrawQuad;
                 var playfield = hitObjectComposer.Playfield.ScreenSpaceDrawQuad;
                 InputManager.MoveMouseTo(new Vector2(scrollArea.TopLeft.X + 1, playfield.Centre.Y));
             });

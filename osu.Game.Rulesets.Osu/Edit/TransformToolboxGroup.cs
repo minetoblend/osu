@@ -20,7 +20,7 @@ using osuTK;
 
 namespace osu.Game.Rulesets.Osu.Edit
 {
-    public partial class TransformToolboxGroup : SidebarPanel, IKeyBindingHandler<GlobalAction>
+    public partial class TransformToolboxGroup : EditorToolboxGroup, IKeyBindingHandler<GlobalAction>
     {
         private readonly BindableList<HitObject> selectedHitObjects = new BindableList<HitObject>();
         private readonly BindableBool canMove = new BindableBool();

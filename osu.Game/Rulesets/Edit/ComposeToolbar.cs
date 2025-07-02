@@ -15,7 +15,7 @@ using osuTK;
 
 namespace osu.Game.Rulesets.Edit
 {
-    public partial class ExpandingToolboxContainer : ExpandingContainer
+    public partial class ComposeToolbar : ExpandingContainer
     {
         protected override double HoverExpansionDelay => 250;
 
@@ -29,7 +29,7 @@ namespace osu.Game.Rulesets.Edit
         [Resolved]
         private Editor? editor { get; set; }
 
-        public ExpandingToolboxContainer(float contractedWidth, float expandedWidth)
+        public ComposeToolbar(float contractedWidth, float expandedWidth)
             : base(contractedWidth, expandedWidth)
         {
             RelativeSizeAxes = Axes.Y;

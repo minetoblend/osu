@@ -13,7 +13,7 @@ using osuTK;
 
 namespace osu.Game.Rulesets.Edit.UI
 {
-    public partial class ComposeSidebar : CompositeDrawable
+    public partial class ComposeToolbox : CompositeDrawable
     {
         private readonly Container tabContent;
         private readonly FillFlowContainer<SidebarCategoryButton> buttonFlow;
@@ -26,7 +26,7 @@ namespace osu.Game.Rulesets.Edit.UI
 
         private Sample? samplePopIn, samplePopOut;
 
-        public ComposeSidebar()
+        public ComposeToolbox()
         {
             AutoSizeAxes = Axes.X;
             RelativeSizeAxes = Axes.Y;
@@ -68,14 +68,14 @@ namespace osu.Game.Rulesets.Edit.UI
             samplePopOut = audio.Samples.Get("UI/overlay-pop-out");
         }
 
-        public void Add(SidebarCategory category, SidebarPanel panel)
+        public void Add(SidebarCategory category, EditorToolboxGroup toolboxGroup)
         {
             ensureCategoryAdded(category);
 
-            categoryContentMap[category].Add(panel);
+            categoryContentMap[category].Add(toolboxGroup);
         }
 
-        public void AddRange(SidebarCategory category, IEnumerable<SidebarPanel> panels)
+        public void AddRange(SidebarCategory category, IEnumerable<EditorToolboxGroup> panels)
         {
             ensureCategoryAdded(category);
 

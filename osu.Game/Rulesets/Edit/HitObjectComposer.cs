@@ -72,9 +72,9 @@ namespace osu.Game.Rulesets.Edit
         public override ComposeBlueprintContainer BlueprintContainer => blueprintContainer;
         private ComposeBlueprintContainer blueprintContainer;
 
-        protected ExpandingToolboxContainer LeftToolbox { get; private set; }
+        protected ComposeToolbar Toolbar { get; private set; }
 
-        protected ComposeSidebar RightToolbox { get; private set; }
+        protected ComposeToolbox Toolbox { get; private set; }
 
         private DrawableEditorRulesetWrapper<TObject> drawableRulesetWrapper;
 
@@ -163,15 +163,15 @@ namespace osu.Game.Rulesets.Edit
                             Colour = colourProvider.Background5,
                             RelativeSizeAxes = Axes.Both,
                         },
-                        LeftToolbox = new ExpandingToolboxContainer(TOOLBOX_CONTRACTED_SIZE_LEFT, 200)
+                        Toolbar = new ComposeToolbar(TOOLBOX_CONTRACTED_SIZE_LEFT, 200)
                         {
                             Children = new Drawable[]
                             {
-                                new EditorToolboxGroup("toolbox (1-9)")
+                                new EditorToolbarGroup("toolbox (1-9)")
                                 {
                                     Child = toolboxCollection = new EditorRadioButtonCollection { RelativeSizeAxes = Axes.X }
                                 },
-                                new EditorToolboxGroup("toggles (Q~P)")
+                                new EditorToolbarGroup("toggles (Q~P)")
                                 {
                                     Child = togglesCollection = new FillFlowContainer
                                     {
@@ -181,7 +181,7 @@ namespace osu.Game.Rulesets.Edit
                                         Spacing = new Vector2(0, 5),
                                     },
                                 },
-                                new EditorToolboxGroup("bank (Shift/Alt-Q~R)")
+                                new EditorToolbarGroup("bank (Shift/Alt-Q~R)")
                                 {
                                     Child = new FillFlowContainer
                                     {
@@ -248,14 +248,14 @@ namespace osu.Game.Rulesets.Edit
                             Colour = colourProvider.Background5,
                             RelativeSizeAxes = Axes.Both,
                         },
-                        RightToolbox = new ComposeSidebar()
+                        Toolbox = new ComposeToolbox()
                     }
                 },
             };
 
-            RightToolbox.Add(SidebarCategory.TOOLS, new ActiveToolSidebarPanel(blueprintContainer));
+            Toolbox.Add(SidebarCategory.TOOLS, new ActiveToolEditorToolboxGroup(blueprintContainer));
 
-            RightToolbox.Add(SidebarCategory.INSPECT, new SidebarPanel("Inspector")
+            Toolbox.Add(SidebarCategory.INSPECT, new EditorToolboxGroup("Inspector")
             {
                 Child = CreateHitObjectInspector()
             });
@@ -347,12 +347,12 @@ namespace osu.Game.Rulesets.Edit
                 PlayfieldContentContainer.Origin = Anchor.CentreLeft;
 
                 PlayfieldContentContainer.Width = Math.Max(1024, DrawWidth);
-                PlayfieldContentContainer.X = LeftToolbox.DrawWidth;
+                PlayfieldContentContainer.X = Toolbar.DrawWidth;
             }
 
             composerFocusMode.Value = PlayfieldContentContainer.Contains(InputManager.CurrentState.Mouse.Position)
-                                      && !LeftToolbox.Contains(InputManager.CurrentState.Mouse.Position)
-                                      && !RightToolbox.Contains(InputManager.CurrentState.Mouse.Position);
+                                      && !Toolbar.Contains(InputManager.CurrentState.Mouse.Position)
+                                      && !Toolbox.Contains(InputManager.CurrentState.Mouse.Position);
         }
 
         public override Playfield Playfield => drawableRulesetWrapper.Playfield;

@@ -8,7 +8,9 @@ using osu.Framework.Graphics.Cursor;
 using osu.Framework.Testing;
 using osu.Framework.Utils;
 using osu.Game.Beatmaps.ControlPoints;
+using osu.Game.Graphics.UserInterfaceV2;
 using osu.Game.Rulesets.Edit;
+using osu.Game.Rulesets.Edit.UI;
 using osu.Game.Rulesets.Objects;
 using osu.Game.Rulesets.Objects.Types;
 using osu.Game.Rulesets.Osu;
@@ -223,8 +225,8 @@ namespace osu.Game.Tests.Editing
         [Test]
         public void TestUseCurrentSnap()
         {
-            ExpandableButton getCurrentSnapButton() => composer.ChildrenOfType<EditorToolboxGroup>().Single(g => g.Name == "snapping")
-                                                               .ChildrenOfType<ExpandableButton>().Single();
+            RoundedButton getCurrentSnapButton() => composer.ChildrenOfType<EditorToolboxGroup>().Single(g => g.Name == "snapping")
+                                                            .ChildrenOfType<RoundedButton>().Single();
 
             AddStep("add objects to beatmap", () =>
             {
@@ -233,7 +235,6 @@ namespace osu.Game.Tests.Editing
             });
 
             AddStep("hover use current snap button", () => InputManager.MoveMouseTo(getCurrentSnapButton()));
-            AddUntilStep("use current snap expanded", () => getCurrentSnapButton().Expanded.Value, () => Is.True);
 
             AddStep("seek before first object", () => EditorClock.Seek(0));
             AddUntilStep("use current snap not available", () => getCurrentSnapButton().Enabled.Value, () => Is.False);

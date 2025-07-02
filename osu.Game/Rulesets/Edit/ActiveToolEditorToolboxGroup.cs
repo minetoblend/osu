@@ -7,13 +7,13 @@ using osu.Game.Screens.Edit.Compose.Components;
 
 namespace osu.Game.Rulesets.Edit
 {
-    public partial class ActiveToolSidebarPanel : SidebarPanel
+    public partial class ActiveToolEditorToolboxGroup : EditorToolboxGroup
     {
         private readonly Bindable<PlacementBlueprint> activePlacement;
 
         private readonly ComposeBlueprintContainer blueprintContainer;
 
-        public ActiveToolSidebarPanel(ComposeBlueprintContainer blueprintContainer)
+        public ActiveToolEditorToolboxGroup(ComposeBlueprintContainer blueprintContainer)
             : base("Active tool")
         {
             this.blueprintContainer = blueprintContainer;

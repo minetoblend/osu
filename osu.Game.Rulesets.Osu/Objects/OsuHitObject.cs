@@ -3,6 +3,7 @@
 
 using System;
 using osu.Framework.Bindables;
+using osu.Framework.Utils;
 using osu.Game.Beatmaps;
 using osu.Game.Beatmaps.ControlPoints;
 using osu.Game.Rulesets.Objects;
@@ -56,7 +57,12 @@ namespace osu.Game.Rulesets.Osu.Objects
         public virtual Vector2 Position
         {
             get => position.Value;
-            set => position.Value = value;
+            set
+            {
+                if (!Validation.IsFinite(value)) throw new ArgumentException($@"{nameof(Position)} must be finite, but is {value}.");
+
+                position.Value = value;
+            }
         }
 
         public float X

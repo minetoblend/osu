@@ -18,7 +18,7 @@ namespace osu.Game.Tests.Visual.Editing
         [Cached]
         private readonly OverlayColourProvider colourProvider = new OverlayColourProvider(OverlayColourScheme.Aquamarine);
 
-        private readonly ComposeSidebar sidebar;
+        private readonly ComposeToolbox toolbox;
 
         public TestSceneSidebar()
         {
@@ -35,7 +35,7 @@ namespace osu.Game.Tests.Visual.Editing
                         RelativeSizeAxes = Axes.Both,
                         Colour = colourProvider.Background3,
                     },
-                    sidebar = new ComposeSidebar
+                    toolbox = new ComposeToolbox
                     {
                         Anchor = Anchor.TopRight,
                         Origin = Anchor.TopRight,
@@ -43,7 +43,7 @@ namespace osu.Game.Tests.Visual.Editing
                 }
             });
 
-            sidebar.Add(SidebarCategory.TOOLS, new SidebarPanel("Active Tool")
+            toolbox.Add(SidebarCategory.TOOLS, new EditorToolboxGroup("Active Tool")
             {
                 Child = new OsuSpriteText
                 {
@@ -53,7 +53,7 @@ namespace osu.Game.Tests.Visual.Editing
                     Origin = Anchor.Centre,
                 }
             });
-            sidebar.Add(SidebarCategory.INSPECT, new SidebarPanel("Inspector")
+            toolbox.Add(SidebarCategory.INSPECT, new EditorToolboxGroup("Inspector")
             {
                 Child = new OsuSpriteText
                 {

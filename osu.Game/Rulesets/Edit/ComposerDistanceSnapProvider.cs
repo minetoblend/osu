@@ -67,14 +67,14 @@ namespace osu.Game.Rulesets.Edit
         private bool distanceSnapMomentary;
         private TernaryState? distanceSnapStateBeforeMomentaryToggle;
 
-        private SidebarPanel? toolboxGroup;
+        private EditorToolboxGroup? toolboxGroup;
 
-        public SidebarPanel CreateSidebarPanel()
+        public EditorToolboxGroup CreateSidebarPanel()
         {
             if (toolboxGroup != null)
                 throw new InvalidOperationException($"{nameof(CreateSidebarPanel)} may be called only once for a single {nameof(ComposerDistanceSnapProvider)} instance.");
 
-            toolboxGroup = new SidebarPanel("snapping")
+            toolboxGroup = new EditorToolboxGroup("snapping")
             {
                 Name = "snapping",
                 Alpha = DistanceSpacingMultiplier.Disabled ? 0 : 1,

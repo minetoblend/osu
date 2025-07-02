@@ -18,7 +18,7 @@ using osuTK.Graphics;
 
 namespace osu.Game.Rulesets.Edit.UI
 {
-    public partial class SidebarPanel : Container
+    public partial class EditorToolboxGroup : Container
     {
         private LocalisableString title;
 
@@ -57,7 +57,7 @@ namespace osu.Game.Rulesets.Edit.UI
 
         protected sealed override Container<Drawable> Content => content;
 
-        public SidebarPanel(LocalisableString title)
+        public EditorToolboxGroup(LocalisableString title)
         {
             this.title = title;
         }

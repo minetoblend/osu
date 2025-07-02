@@ -6,9 +6,9 @@ using osu.Game.Overlays;
 
 namespace osu.Game.Rulesets.Edit
 {
-    public partial class EditorToolboxGroup : SettingsToolboxGroup
+    public partial class EditorToolbarGroup : SettingsToolboxGroup
     {
-        public EditorToolboxGroup(string title)
+        public EditorToolbarGroup(string title)
             : base(title)
         {
             RelativeSizeAxes = Axes.X;

@@ -4,6 +4,7 @@
 using osu.Framework.Allocation;
 using osu.Framework.Bindables;
 using osu.Framework.Input.Events;
+using osu.Framework.Logging;
 using osu.Game.Configuration;
 using osu.Game.Rulesets.Edit;
 using osu.Game.Rulesets.Osu.Edit.Blueprints.HitCircles.Components;
@@ -66,6 +67,11 @@ namespace osu.Game.Rulesets.Osu.Edit.Blueprints.HitCircles
 
         public override SnapResult UpdateTimeAndPosition(Vector2 screenSpacePosition, double fallbackTime)
         {
+            if (GetContainingInputManager()?.CurrentState.Keyboard.ShiftPressed == true)
+            {
+                Logger.Log("Shift pressed");
+            }
+
             var result = composer?.TrySnapToNearbyObjects(screenSpacePosition, fallbackTime);
             result ??= composer?.TrySnapToDistanceGrid(screenSpacePosition, limitedDistanceSnap.Value && editorClock != null ? editorClock.CurrentTime : null);
             if (composer?.TrySnapToPositionGrid(result?.ScreenSpacePosition ?? screenSpacePosition, result?.Time ?? fallbackTime) is SnapResult gridSnapResult)
