@@ -30,6 +30,7 @@ namespace osu.Game.Rulesets.Edit.UI
                 if (title == value)
                     return;
 
+                title = value;
                 header.Text = value;
 
                 if (LoadState >= LoadState.Ready)
