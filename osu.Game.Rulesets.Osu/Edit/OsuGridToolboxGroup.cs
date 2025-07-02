@@ -166,11 +166,6 @@ namespace osu.Game.Rulesets.Osu.Edit
             };
 
             Spacing.Value = editorBeatmap.GridSize;
-        }
-
-        protected override void LoadComplete()
-        {
-            base.LoadComplete();
 
             gridTypeButtons.Items.First().Select();
 
