@@ -16,6 +16,7 @@ using osu.Game.Rulesets.Catch.Objects;
 using osu.Game.Rulesets.Catch.UI;
 using osu.Game.Rulesets.Edit;
 using osu.Game.Rulesets.Edit.Tools;
+using osu.Game.Rulesets.Edit.UI;
 using osu.Game.Rulesets.Mods;
 using osu.Game.Rulesets.Objects;
 using osu.Game.Rulesets.UI;
@@ -49,7 +50,7 @@ namespace osu.Game.Rulesets.Catch.Edit
         private void load()
         {
             AddInternal(DistanceSnapProvider);
-            DistanceSnapProvider.AttachToToolbox(RightToolbox);
+            RightToolbox.Add(SidebarCategory.TOOLS, DistanceSnapProvider.CreateSidebarPanel());
 
             // todo: enable distance spacing once catch supports applying it to its existing distance snap grid implementation.
             DistanceSnapProvider.DistanceSpacingMultiplier.Disabled = true;

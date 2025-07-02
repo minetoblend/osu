@@ -23,6 +23,7 @@ using osu.Game.Graphics;
 using osu.Game.Overlays;
 using osu.Game.Rulesets.Configuration;
 using osu.Game.Rulesets.Edit.Tools;
+using osu.Game.Rulesets.Edit.UI;
 using osu.Game.Rulesets.Mods;
 using osu.Game.Rulesets.Objects;
 using osu.Game.Rulesets.Objects.Drawables;
@@ -73,7 +74,7 @@ namespace osu.Game.Rulesets.Edit
 
         protected ExpandingToolboxContainer LeftToolbox { get; private set; }
 
-        protected ExpandingToolboxContainer RightToolbox { get; private set; }
+        protected ComposeSidebar RightToolbox { get; private set; }
 
         private DrawableEditorRulesetWrapper<TObject> drawableRulesetWrapper;
 
@@ -247,16 +248,15 @@ namespace osu.Game.Rulesets.Edit
                             Colour = colourProvider.Background5,
                             RelativeSizeAxes = Axes.Both,
                         },
-                        RightToolbox = new ExpandingToolboxContainer(TOOLBOX_CONTRACTED_SIZE_RIGHT, 250)
-                        {
-                            Child = new EditorToolboxGroup("inspector")
-                            {
-                                Child = CreateHitObjectInspector()
-                            },
-                        }
+                        RightToolbox = new ComposeSidebar()
                     }
                 },
             };
+
+            RightToolbox.Add(SidebarCategory.INSPECT, new SidebarPanel("Inspector")
+            {
+                Child = CreateHitObjectInspector()
+            });
 
             toolboxCollection.Items = (CompositionTools.Prepend(new SelectTool()))
                                       .Select(t => new HitObjectCompositionToolButton(t, () => toolSelected(t)))

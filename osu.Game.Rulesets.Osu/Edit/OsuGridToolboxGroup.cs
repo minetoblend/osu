@@ -11,10 +11,8 @@ using osu.Framework.Graphics.Shapes;
 using osu.Framework.Graphics.Sprites;
 using osu.Framework.Input.Bindings;
 using osu.Framework.Input.Events;
-using osu.Game.Graphics.Containers;
-using osu.Game.Graphics.UserInterface;
 using osu.Game.Input.Bindings;
-using osu.Game.Rulesets.Edit;
+using osu.Game.Rulesets.Edit.UI;
 using osu.Game.Rulesets.Osu.UI;
 using osu.Game.Screens.Edit;
 using osu.Game.Screens.Edit.Components.RadioButtons;
@@ -23,13 +21,10 @@ using osuTK.Graphics;
 
 namespace osu.Game.Rulesets.Osu.Edit
 {
-    public partial class OsuGridToolboxGroup : EditorToolboxGroup, IKeyBindingHandler<GlobalAction>
+    public partial class OsuGridToolboxGroup : SidebarPanel, IKeyBindingHandler<GlobalAction>
     {
         [Resolved]
         private EditorBeatmap editorBeatmap { get; set; } = null!;
-
-        [Resolved]
-        private IExpandingContainer? expandingContainer { get; set; }
 
         /// <summary>
         /// X position of the grid's origin.
@@ -85,10 +80,10 @@ namespace osu.Game.Rulesets.Osu.Edit
 
         public Bindable<PositionSnapGridType> GridType { get; } = new Bindable<PositionSnapGridType>();
 
-        private ExpandableSlider<float> startPositionXSlider = null!;
-        private ExpandableSlider<float> startPositionYSlider = null!;
-        private ExpandableSlider<float> spacingSlider = null!;
-        private ExpandableSlider<float> gridLinesRotationSlider = null!;
+        private SidebarSlider<float> startPositionXSlider = null!;
+        private SidebarSlider<float> startPositionYSlider = null!;
+        private SidebarSlider<float> spacingSlider = null!;
+        private SidebarSlider<float> gridLinesRotationSlider = null!;
         private EditorRadioButtonCollection gridTypeButtons = null!;
 
         public OsuGridToolboxGroup()
@@ -123,22 +118,22 @@ namespace osu.Game.Rulesets.Osu.Edit
         {
             Children = new Drawable[]
             {
-                startPositionXSlider = new ExpandableSlider<float>
+                startPositionXSlider = new SidebarSlider<float>
                 {
                     Current = StartPositionX,
                     KeyboardStep = 1,
                 },
-                startPositionYSlider = new ExpandableSlider<float>
+                startPositionYSlider = new SidebarSlider<float>
                 {
                     Current = StartPositionY,
                     KeyboardStep = 1,
                 },
-                spacingSlider = new ExpandableSlider<float>
+                spacingSlider = new SidebarSlider<float>
                 {
                     Current = Spacing,
                     KeyboardStep = 1,
                 },
-                gridLinesRotationSlider = new ExpandableSlider<float>
+                gridLinesRotationSlider = new SidebarSlider<float>
                 {
                     Current = GridLinesRotation,
                     KeyboardStep = 1,
@@ -181,15 +176,13 @@ namespace osu.Game.Rulesets.Osu.Edit
 
             StartPositionX.BindValueChanged(x =>
             {
-                startPositionXSlider.ContractedLabelText = $"X: {x.NewValue:#,0.##}";
-                startPositionXSlider.ExpandedLabelText = $"X Offset: {x.NewValue:#,0.##}";
+                startPositionXSlider.LabelText = $"X Offset: {x.NewValue:#,0.##}";
                 StartPosition.Value = new Vector2(x.NewValue, StartPosition.Value.Y);
             }, true);
 
             StartPositionY.BindValueChanged(y =>
             {
-                startPositionYSlider.ContractedLabelText = $"Y: {y.NewValue:#,0.##}";
-                startPositionYSlider.ExpandedLabelText = $"Y Offset: {y.NewValue:#,0.##}";
+                startPositionYSlider.LabelText = $"Y Offset: {y.NewValue:#,0.##}";
                 StartPosition.Value = new Vector2(StartPosition.Value.X, y.NewValue);
             }, true);
 
@@ -201,16 +194,14 @@ namespace osu.Game.Rulesets.Osu.Edit
 
             Spacing.BindValueChanged(spacing =>
             {
-                spacingSlider.ContractedLabelText = $"S: {spacing.NewValue:#,0.##}";
-                spacingSlider.ExpandedLabelText = $"Spacing: {spacing.NewValue:#,0.##}";
+                spacingSlider.LabelText = $"Spacing: {spacing.NewValue:#,0.##}";
                 SpacingVector.Value = new Vector2(spacing.NewValue);
                 editorBeatmap.GridSize = (int)spacing.NewValue;
             }, true);
 
             GridLinesRotation.BindValueChanged(rotation =>
             {
-                gridLinesRotationSlider.ContractedLabelText = $"R: {rotation.NewValue:#,0.##}";
-                gridLinesRotationSlider.ExpandedLabelText = $"Rotation: {rotation.NewValue:#,0.##}";
+                gridLinesRotationSlider.LabelText = $"Rotation: {rotation.NewValue:#,0.##}";
             }, true);
 
             GridType.BindValueChanged(v =>
@@ -233,12 +224,6 @@ namespace osu.Game.Rulesets.Osu.Edit
                         GridLinesRotation.MaxValue = 30;
                         break;
                 }
-            }, true);
-
-            expandingContainer?.Expanded.BindValueChanged(v =>
-            {
-                gridTypeButtons.FadeTo(v.NewValue ? 1f : 0f, 500, Easing.OutQuint);
-                gridTypeButtons.BypassAutoSizeAxes = !v.NewValue ? Axes.Y : Axes.None;
             }, true);
         }
 

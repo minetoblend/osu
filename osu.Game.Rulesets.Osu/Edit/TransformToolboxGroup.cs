@@ -10,7 +10,7 @@ using osu.Framework.Graphics.Sprites;
 using osu.Framework.Input.Bindings;
 using osu.Framework.Input.Events;
 using osu.Game.Input.Bindings;
-using osu.Game.Rulesets.Edit;
+using osu.Game.Rulesets.Edit.UI;
 using osu.Game.Rulesets.Objects;
 using osu.Game.Rulesets.Osu.Objects;
 using osu.Game.Screens.Edit;
@@ -20,7 +20,7 @@ using osuTK;
 
 namespace osu.Game.Rulesets.Osu.Edit
 {
-    public partial class TransformToolboxGroup : EditorToolboxGroup, IKeyBindingHandler<GlobalAction>
+    public partial class TransformToolboxGroup : SidebarPanel, IKeyBindingHandler<GlobalAction>
     {
         private readonly BindableList<HitObject> selectedHitObjects = new BindableList<HitObject>();
         private readonly BindableBool canMove = new BindableBool();
@@ -37,7 +37,7 @@ namespace osu.Game.Rulesets.Osu.Edit
         public OsuGridToolboxGroup GridToolbox { get; init; } = null!;
 
         public TransformToolboxGroup()
-            : base("transform")
+            : base("Transform")
         {
         }
 

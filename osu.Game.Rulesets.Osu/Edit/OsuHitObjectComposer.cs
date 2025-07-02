@@ -21,6 +21,7 @@ using osu.Game.Graphics;
 using osu.Game.Graphics.UserInterface;
 using osu.Game.Rulesets.Edit;
 using osu.Game.Rulesets.Edit.Tools;
+using osu.Game.Rulesets.Edit.UI;
 using osu.Game.Rulesets.Mods;
 using osu.Game.Rulesets.Objects;
 using osu.Game.Rulesets.Objects.Types;
@@ -84,7 +85,7 @@ namespace osu.Game.Rulesets.Osu.Edit
         private void load()
         {
             AddInternal(DistanceSnapProvider);
-            DistanceSnapProvider.AttachToToolbox(RightToolbox);
+            RightToolbox.Add(SidebarCategory.TOOLS, DistanceSnapProvider.CreateSidebarPanel());
 
             // Give a bit of breathing room around the playfield content.
             PlayfieldContentContainer.Padding = new MarginPadding(10);
@@ -108,19 +109,18 @@ namespace osu.Game.Rulesets.Osu.Edit
 
             OsuGridToolboxGroup.GridType.BindValueChanged(updatePositionSnapGrid, true);
 
-            RightToolbox.AddRange(new Drawable[]
+            RightToolbox.AddRange(SidebarCategory.TOOLS, new SidebarPanel[]
+            {
+                new TransformToolboxGroup
                 {
-                    OsuGridToolboxGroup,
-                    new TransformToolboxGroup
-                    {
-                        RotationHandler = BlueprintContainer.SelectionHandler.RotationHandler,
-                        ScaleHandler = (OsuSelectionScaleHandler)BlueprintContainer.SelectionHandler.ScaleHandler,
-                        GridToolbox = OsuGridToolboxGroup,
-                    },
-                    new GenerateToolboxGroup(),
-                    FreehandSliderToolboxGroup
-                }
-            );
+                    RotationHandler = BlueprintContainer.SelectionHandler.RotationHandler,
+                    ScaleHandler = (OsuSelectionScaleHandler)BlueprintContainer.SelectionHandler.ScaleHandler,
+                    GridToolbox = OsuGridToolboxGroup,
+                },
+                new GenerateToolboxGroup()
+            });
+
+            RightToolbox.Add(SidebarCategory.VIEW, OsuGridToolboxGroup);
         }
 
         private void updatePositionSnapGrid(ValueChangedEvent<PositionSnapGridType> obj)

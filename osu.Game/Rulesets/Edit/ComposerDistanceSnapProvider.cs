@@ -16,11 +16,13 @@ using osu.Framework.Localisation;
 using osu.Framework.Utils;
 using osu.Game.Graphics;
 using osu.Game.Graphics.UserInterface;
+using osu.Game.Graphics.UserInterfaceV2;
 using osu.Game.Input;
 using osu.Game.Input.Bindings;
 using osu.Game.Overlays;
 using osu.Game.Overlays.OSD;
 using osu.Game.Overlays.Settings.Sections;
+using osu.Game.Rulesets.Edit.UI;
 using osu.Game.Rulesets.Objects;
 using osu.Game.Rulesets.Objects.Types;
 using osu.Game.Rulesets.UI;
@@ -42,8 +44,8 @@ namespace osu.Game.Rulesets.Edit
 
         Bindable<double> IDistanceSnapProvider.DistanceSpacingMultiplier => DistanceSpacingMultiplier;
 
-        private ExpandableSlider<double, SizeSlider<double>> distanceSpacingSlider = null!;
-        private ExpandableButton currentDistanceSpacingButton = null!;
+        private SidebarSlider<double, SizeSlider<double>> distanceSpacingSlider = null!;
+        private RoundedButton currentDistanceSpacingButton = null!;
 
         [Resolved]
         private Playfield playfield { get; set; } = null!;
@@ -65,26 +67,26 @@ namespace osu.Game.Rulesets.Edit
         private bool distanceSnapMomentary;
         private TernaryState? distanceSnapStateBeforeMomentaryToggle;
 
-        private EditorToolboxGroup? toolboxGroup;
+        private SidebarPanel? toolboxGroup;
 
-        public void AttachToToolbox(ExpandingToolboxContainer toolboxContainer)
+        public SidebarPanel CreateSidebarPanel()
         {
             if (toolboxGroup != null)
-                throw new InvalidOperationException($"{nameof(AttachToToolbox)} may be called only once for a single {nameof(ComposerDistanceSnapProvider)} instance.");
+                throw new InvalidOperationException($"{nameof(CreateSidebarPanel)} may be called only once for a single {nameof(ComposerDistanceSnapProvider)} instance.");
 
-            toolboxContainer.Add(toolboxGroup = new EditorToolboxGroup("snapping")
+            toolboxGroup = new SidebarPanel("snapping")
             {
                 Name = "snapping",
                 Alpha = DistanceSpacingMultiplier.Disabled ? 0 : 1,
                 Children = new Drawable[]
                 {
-                    distanceSpacingSlider = new ExpandableSlider<double, SizeSlider<double>>
+                    distanceSpacingSlider = new SidebarSlider<double, SizeSlider<double>>()
                     {
                         KeyboardStep = adjust_step,
                         // Manual binding in LoadComplete to handle one-way event flow.
                         Current = DistanceSpacingMultiplier.GetUnboundCopy(),
                     },
-                    currentDistanceSpacingButton = new ExpandableButton
+                    currentDistanceSpacingButton = new RoundedButton
                     {
                         Action = () =>
                         {
@@ -98,13 +100,12 @@ namespace osu.Game.Rulesets.Edit
                         RelativeSizeAxes = Axes.X,
                     }
                 }
-            });
+            };
 
             DistanceSpacingMultiplier.Value = EditorBeatmap.DistanceSpacing;
             DistanceSpacingMultiplier.BindValueChanged(multiplier =>
             {
-                distanceSpacingSlider.ContractedLabelText = $"D. S. ({multiplier.NewValue:0.##x})";
-                distanceSpacingSlider.ExpandedLabelText = $"Distance Spacing ({multiplier.NewValue:0.##x})";
+                distanceSpacingSlider.LabelText = $"Distance Spacing ({multiplier.NewValue:0.##x})";
 
                 if (multiplier.NewValue != multiplier.OldValue)
                     onScreenDisplay?.Display(new DistanceSpacingToast(multiplier.NewValue.ToLocalisableString(@"0.##x"), multiplier));
@@ -121,6 +122,8 @@ namespace osu.Game.Rulesets.Edit
                 DistanceSnapToggle.Value = TernaryState.True;
             });
             DistanceSpacingMultiplier.BindValueChanged(spacing => distanceSpacingSlider.Current.Value = spacing.NewValue);
+
+            return toolboxGroup;
         }
 
         private (HitObject before, HitObject after)? getObjectsOnEitherSideOfCurrentTime()
@@ -177,17 +180,15 @@ namespace osu.Game.Rulesets.Edit
 
             if (currentSnap > DistanceSpacingMultiplier.MinValue)
             {
-                currentDistanceSpacingButton.Enabled.Value = currentDistanceSpacingButton.Expanded.Value
-                                                             && !DistanceSpacingMultiplier.Disabled
+                currentDistanceSpacingButton.Enabled.Value = !DistanceSpacingMultiplier.Disabled
                                                              && !Precision.AlmostEquals(currentSnap, DistanceSpacingMultiplier.Value, DistanceSpacingMultiplier.Precision / 2);
-                currentDistanceSpacingButton.ContractedLabelText = $"current {currentSnap:N2}x";
-                currentDistanceSpacingButton.ExpandedLabelText = $"Use current ({currentSnap:N2}x)";
+                // currentDistanceSpacingButton.ContractedLabelText = $"current {currentSnap:N2}x";
+                currentDistanceSpacingButton.Text = $"Use current ({currentSnap:N2}x)";
             }
             else
             {
                 currentDistanceSpacingButton.Enabled.Value = false;
-                currentDistanceSpacingButton.ContractedLabelText = string.Empty;
-                currentDistanceSpacingButton.ExpandedLabelText = "Use current (unavailable)";
+                currentDistanceSpacingButton.Text = "Use current (unavailable)";
             }
         }
 

@@ -5,14 +5,14 @@ using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Sprites;
 using osu.Framework.Input.Events;
-using osu.Game.Rulesets.Edit;
+using osu.Game.Rulesets.Edit.UI;
 using osu.Game.Screens.Edit.Components;
 using osuTK;
 using osuTK.Input;
 
 namespace osu.Game.Rulesets.Osu.Edit
 {
-    public partial class GenerateToolboxGroup : EditorToolboxGroup
+    public partial class GenerateToolboxGroup : SidebarPanel
     {
         private readonly EditorToolButton polygonButton;
 
