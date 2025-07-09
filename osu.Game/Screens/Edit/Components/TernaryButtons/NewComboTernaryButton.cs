@@ -94,8 +94,8 @@ namespace osu.Game.Screens.Edit.Components.TernaryButtons
         private void updateState()
         {
             const float button_spacing = 3;
-            const float target_picker_button_width_expanded = 25;
-            const float target_picker_button_width_collapsed = 7;
+            const float target_picker_button_width_expanded = 27;
+            const float target_picker_button_width_collapsed = 9;
 
             const float icon_offset = (Editor.BUTTON_HEIGHT - Editor.BUTTON_ICON_SIZE) / 2;
             const float icon_offset_collapsed = (Editor.BUTTON_HEIGHT - Editor.BUTTON_ICON_SIZE - target_picker_button_width_collapsed - button_spacing) / 2;
