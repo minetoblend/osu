@@ -10,7 +10,7 @@ namespace osu.Game.Screens.Edit
     {
         public const float BUTTON_HEIGHT = 40;
         public const float BUTTON_CORNER_RADIUS = 5;
-        public const float BUTTON_ICON_SIZE = 18;
+        public const float BUTTON_ICON_SIZE = 20;
 
         public static class Fonts
         {
