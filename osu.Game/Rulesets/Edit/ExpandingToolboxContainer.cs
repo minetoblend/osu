@@ -71,7 +71,7 @@ namespace osu.Game.Rulesets.Edit
         {
             base.Update();
 
-            bool requireContracting = contractSidebars.Value || editor?.DrawSize.X / editor?.DrawSize.Y < 1.5f;
+            bool requireContracting = contractSidebars.Value || editor?.DrawSize.X / editor?.DrawSize.Y < 1.7f;
 
             if (expandOnHover != requireContracting)
             {
