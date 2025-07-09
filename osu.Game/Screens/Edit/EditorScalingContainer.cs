@@ -43,7 +43,7 @@ namespace osu.Game.Screens.Edit
         {
             float inverseParentScale = Parent!.DrawInfo.MatrixInverse.ExtractScale().X;
 
-            float scale = CurrentScale * float.Lerp(1, inverseParentScale, absoluteScaleFactor);
+            float scale = CurrentScale * float.Lerp(1, inverseParentScale, absoluteScaleFactor) * 1.4f;
 
             Scale = new Vector2(scale);
             Size = new Vector2(1 / scale);
