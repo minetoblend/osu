@@ -87,7 +87,7 @@ namespace osu.Game.Rulesets.Osu.Edit
             DistanceSnapProvider.AttachToToolbox(RightToolbox);
 
             // Give a bit of breathing room around the playfield content.
-            PlayfieldContentContainer.Padding = new MarginPadding(10);
+            PlayfieldContentContainer.Padding = new MarginPadding(30);
 
             LayerBelowRuleset.Add(
                 distanceSnapGridContainer = new Container
