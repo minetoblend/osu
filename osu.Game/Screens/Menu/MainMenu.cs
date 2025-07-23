@@ -159,6 +159,7 @@ namespace osu.Game.Screens.Menu
                             },
                             OnSolo = loadSongSelect,
                             OnMultiplayer = () => this.Push(new Multiplayer()),
+                            OnMatchmaking = joinMatchmakingQueue,
                             OnPlaylists = () => this.Push(new Playlists()),
                             OnDailyChallenge = room =>
                             {
@@ -480,6 +481,10 @@ namespace osu.Game.Screens.Menu
         }
 
         private void loadSongSelect() => this.Push(new SoloSongSelect());
+
+        private void joinMatchmakingQueue()
+        {
+        }
 
         private partial class MobileDisclaimerDialog : PopupDialog
         {
