@@ -16,6 +16,7 @@ using osu.Game.Localisation;
 using osu.Game.Online.API;
 using osu.Game.Online.API.Requests;
 using osu.Game.Online.API.Requests.Responses;
+using osu.Game.Online.Matchmaking;
 using osu.Game.Online.Multiplayer.Countdown;
 using osu.Game.Online.Rooms;
 using osu.Game.Overlays.Notifications;
@@ -110,6 +111,8 @@ namespace osu.Game.Online.Multiplayer
         /// Invoked just prior to disconnection requested by the server via <see cref="IStatefulUserHubClient.DisconnectRequested"/>.
         /// </summary>
         public event Action? Disconnecting;
+
+        public event Action<MatchmakingQueueStatus?>? MatchmakingQueueStatusChanged;
 
         /// <summary>
         /// Whether the <see cref="MultiplayerClient"/> is currently connected.
@@ -980,6 +983,16 @@ namespace osu.Game.Online.Multiplayer
                 Disconnecting?.Invoke();
                 DisconnectInternal();
             });
+            return Task.CompletedTask;
+        }
+
+        Task IMultiplayerClient.MatchmakingQueueStatusChanged(MatchmakingQueueStatus? status)
+        {
+            Scheduler.Add(() =>
+            {
+                MatchmakingQueueStatusChanged?.Invoke(status);
+            });
+
             return Task.CompletedTask;
         }
     }
