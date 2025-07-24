@@ -26,16 +26,15 @@ namespace osu.Game.Online.Matchmaking
     {
         private const int panel_width = 300;
 
-        public Action<APIBeatmap>? OnSelectRequested;
-
-        private readonly APIBeatmap beatmap;
+        public readonly APIBeatmap Beatmap;
+        public Action<APIBeatmap>? SelectionRequested;
 
         private Drawable background = null!;
         private FillFlowContainer<SelectionBadge> badges = null!;
 
         public MatchmakingBeatmapPanel(APIBeatmap beatmap)
         {
-            this.beatmap = beatmap;
+            Beatmap = beatmap;
             Size = new Vector2(panel_width, 50);
         }
 
@@ -61,9 +60,9 @@ namespace osu.Game.Online.Matchmaking
                             new Box
                             {
                                 RelativeSizeAxes = Axes.Both,
-                                Colour = colours.ForStarDifficulty(beatmap.StarRating)
+                                Colour = colours.ForStarDifficulty(Beatmap.StarRating)
                             },
-                            new StarRatingDisplay(new StarDifficulty(beatmap.StarRating, beatmap.MaxCombo ?? 0), StarRatingDisplaySize.Small)
+                            new StarRatingDisplay(new StarDifficulty(Beatmap.StarRating, Beatmap.MaxCombo ?? 0), StarRatingDisplaySize.Small)
                             {
                                 Anchor = Anchor.Centre,
                                 Origin = Anchor.Centre
@@ -75,7 +74,7 @@ namespace osu.Game.Online.Matchmaking
                         Anchor = Anchor.Centre,
                         Origin = Anchor.Centre,
                         MaxWidth = panel_width,
-                        Text = beatmap.GetDisplayTitleRomanisable()
+                        Text = Beatmap.GetDisplayTitleRomanisable()
                     },
                     badges = new AlwaysUpdateFillFlowContainer<SelectionBadge>
                     {
@@ -115,7 +114,7 @@ namespace osu.Game.Online.Matchmaking
         protected override bool OnClick(ClickEvent e)
         {
             background.FlashColour(Color4.SaddleBrown.Lighten(0.5f), 200, Easing.OutQuint);
-            OnSelectRequested?.Invoke(beatmap);
+            SelectionRequested?.Invoke(Beatmap);
             return true;
         }
 
