@@ -33,6 +33,8 @@ namespace osu.Game.Online.Matchmaking
         /// <summary>
         /// The next round is starting.
         /// </summary>
-        WaitForStart
+        WaitForStart,
+
+        InGameplay
     }
 }
