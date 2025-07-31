@@ -31,13 +31,13 @@ namespace osu.Game.Tests.Visual.Matchmaking
         {
             AddStep("out of queue", () => ((IMultiplayerClient)MultiplayerClient).MatchmakingQueueStatusChanged(null));
 
-            AddStep("in queue (1/8)", () => ((IMultiplayerClient)MultiplayerClient).MatchmakingQueueStatusChanged(new MatchmakingInQueueStatus
+            AddStep("in queue (1/8)", () => ((IMultiplayerClient)MultiplayerClient).MatchmakingQueueStatusChanged(new MatchmakingQueueStatus.InQueue
             {
                 PlayerCount = 1,
                 RoomSize = 8
             }));
 
-            AddStep("in queue (4/8)", () => ((IMultiplayerClient)MultiplayerClient).MatchmakingQueueStatusChanged(new MatchmakingInQueueStatus
+            AddStep("in queue (4/8)", () => ((IMultiplayerClient)MultiplayerClient).MatchmakingQueueStatusChanged(new MatchmakingQueueStatus.InQueue
             {
                 PlayerCount = 4,
                 RoomSize = 8
@@ -59,7 +59,7 @@ namespace osu.Game.Tests.Visual.Matchmaking
                     ]
                 }, API.LocalUser.Value);
 
-                ((IMultiplayerClient)MultiplayerClient).MatchmakingQueueStatusChanged(new MatchmakingFoundMatchStatus
+                ((IMultiplayerClient)MultiplayerClient).MatchmakingQueueStatusChanged(new MatchmakingQueueStatus.FoundMatch
                 {
                     RoomId = room.RoomID!.Value
                 });

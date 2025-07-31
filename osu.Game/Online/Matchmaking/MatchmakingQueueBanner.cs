@@ -73,12 +73,12 @@ namespace osu.Game.Online.Matchmaking
                     statusText.Text = string.Empty;
                     break;
 
-                case MatchmakingInQueueStatus inQueue:
+                case MatchmakingQueueStatus.InQueue inQueue:
                     background.Colour = Color4.Yellow;
                     statusText.Text = $"finding a match ({inQueue.PlayerCount} / {inQueue.RoomSize})...";
                     break;
 
-                case MatchmakingFoundMatchStatus:
+                case MatchmakingQueueStatus.FoundMatch:
                     background.Colour = Color4.LightBlue;
                     statusText.Text = "match ready! click to join!";
                     break;
@@ -87,7 +87,7 @@ namespace osu.Game.Online.Matchmaking
 
         protected override bool OnClick(ClickEvent e)
         {
-            if (currentStatus is MatchmakingFoundMatchStatus found)
+            if (currentStatus is MatchmakingQueueStatus.FoundMatch found)
             {
                 client.JoinRoom(new Room { RoomID = found.RoomId }).FireAndForget();
                 background.FlashColour(Color4.LightBlue.Lighten(0.5f), 100, Easing.OutQuint);

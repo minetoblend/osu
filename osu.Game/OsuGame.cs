@@ -48,6 +48,7 @@ using osu.Game.Online;
 using osu.Game.Online.API.Requests;
 using osu.Game.Online.Chat;
 using osu.Game.Online.Leaderboards;
+using osu.Game.Online.Matchmaking;
 using osu.Game.Online.Rooms;
 using osu.Game.Overlays;
 using osu.Game.Overlays.BeatmapListing;
@@ -157,6 +158,8 @@ namespace osu.Game
         private Container overlayOffsetContainer;
 
         private OnScreenDisplay onScreenDisplay;
+
+        private MatchmakingQueueBanner matchmakingQueueBanner;
 
         [Resolved]
         private FrameworkConfigManager frameworkConfig { get; set; }
@@ -1270,6 +1273,11 @@ namespace osu.Game
 
             loadComponentSingleFile(new BackgroundDataStoreProcessor(), Add);
             loadComponentSingleFile<BeatmapStore>(detachedBeatmapStore = new RealmDetachedBeatmapStore(), Add, true);
+            loadComponentSingleFile(matchmakingQueueBanner = new MatchmakingQueueBanner
+            {
+                Anchor = Anchor.TopCentre,
+                Origin = Anchor.TopCentre
+            }, topMostOverlayContent.Add);
 
             Add(externalLinkOpener = new ExternalLinkOpener());
             Add(new MusicKeyBindingHandler());

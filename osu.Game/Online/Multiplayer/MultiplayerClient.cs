@@ -986,10 +986,17 @@ namespace osu.Game.Online.Multiplayer
             return Task.CompletedTask;
         }
 
+        public bool IsInMatchmakingQueue { get; private set; }
+
+        public abstract Task JoinMatchmakingQueue();
+
+        public abstract Task LeaveMatchmakingQueue();
+
         Task IMultiplayerClient.MatchmakingQueueStatusChanged(MatchmakingQueueStatus? status)
         {
             Scheduler.Add(() =>
             {
+                IsInMatchmakingQueue = status != null;
                 MatchmakingQueueStatusChanged?.Invoke(status);
             });
 
