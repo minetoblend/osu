@@ -8,15 +8,15 @@ using osu.Game.Tests.Visual.Multiplayer;
 
 namespace osu.Game.Tests.Visual.Matchmaking
 {
-    public class TestSceneMatchmakingRoomSubScreen : MultiplayerTestScene
+    public class TestSceneMatchmakingScreen : MultiplayerTestScene
     {
-        private MatchmakingRoomSubScreen screen = null!;
+        private MatchmakingScreen screen = null!;
 
         public override void SetUpSteps()
         {
             base.SetUpSteps();
 
-            AddStep("load match", () => LoadScreen(screen = new MatchmakingRoomSubScreen(new Room { Name = "matchmaking" })));
+            AddStep("load match", () => LoadScreen(screen = new MatchmakingScreen(new Room { Name = "matchmaking" })));
             AddUntilStep("wait for load", () => screen.IsCurrentScreen());
         }
     }

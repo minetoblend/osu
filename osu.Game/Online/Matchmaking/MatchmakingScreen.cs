@@ -10,6 +10,7 @@ using osu.Framework.Graphics.Shapes;
 using osu.Game.Graphics.Cursor;
 using osu.Game.Online.Rooms;
 using osu.Game.Overlays;
+using osu.Game.Screens;
 using osu.Game.Screens.OnlinePlay;
 using osu.Game.Screens.OnlinePlay.Match.Components;
 using osu.Game.Screens.OnlinePlay.Multiplayer;
@@ -17,16 +18,12 @@ using osu.Game.Users;
 
 namespace osu.Game.Online.Matchmaking
 {
-    public class MatchmakingRoomSubScreen : OnlinePlaySubScreen
+    public class MatchmakingScreen : OsuScreen
     {
         /// <summary>
         /// Padding between rows of the content.
         /// </summary>
         private const float row_padding = 10;
-
-        public override string Title { get; }
-
-        public override string ShortTitle => "room";
 
         public override bool? ApplyModTrackAdjustments => true;
 
@@ -37,14 +34,12 @@ namespace osu.Game.Online.Matchmaking
 
         private readonly Room room;
 
-        public MatchmakingRoomSubScreen(Room room)
+        public MatchmakingScreen(Room room)
         {
             this.room = room;
 
-            Title = room.Name;
             Activity.Value = new UserActivity.InLobby(room);
-
-            Padding = new MarginPadding { Top = Header.HEIGHT };
+            Padding = new MarginPadding { Horizontal = -HORIZONTAL_OVERFLOW_PADDING };
         }
 
         [BackgroundDependencyLoader]
@@ -60,7 +55,6 @@ namespace osu.Game.Online.Matchmaking
                     {
                         beatmapAvailabilityTracker,
                         new MultiplayerRoomSounds(),
-
                         new GridContainer
                         {
                             RelativeSizeAxes = Axes.Both,
