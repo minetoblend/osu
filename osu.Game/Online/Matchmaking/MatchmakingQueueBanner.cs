@@ -9,9 +9,11 @@ using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Shapes;
 using osu.Framework.Graphics.Sprites;
 using osu.Framework.Input.Events;
+using osu.Framework.Screens;
 using osu.Game.Graphics.Sprites;
 using osu.Game.Online.Multiplayer;
 using osu.Game.Online.Rooms;
+using osu.Game.Screens;
 using osuTK.Graphics;
 
 namespace osu.Game.Online.Matchmaking
@@ -20,6 +22,9 @@ namespace osu.Game.Online.Matchmaking
     {
         [Resolved]
         private MultiplayerClient client { get; set; } = null!;
+
+        [Resolved]
+        private IPerformFromScreenRunner performer { get; set; } = null!;
 
         private SpriteText statusText = null!;
         private Drawable background = null!;
@@ -89,8 +94,16 @@ namespace osu.Game.Online.Matchmaking
         {
             if (currentStatus is MatchmakingQueueStatus.FoundMatch found)
             {
-                client.JoinRoom(new Room { RoomID = found.RoomId }).FireAndForget();
                 background.FlashColour(Color4.LightBlue.Lighten(0.5f), 100, Easing.OutQuint);
+
+                client.JoinRoom(new Room { RoomID = found.RoomId })
+                      .FireAndForget(() => Schedule(() =>
+                      {
+                          MultiplayerRoom room = client.Room!;
+                          performer.PerformFromScreen(screen => screen.Push(new MatchmakingScreen(room)));
+                      }));
+
+                onMatchmakingQueueStatusChanged(null);
                 return true;
             }
 

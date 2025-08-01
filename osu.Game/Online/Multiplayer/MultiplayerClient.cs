@@ -114,6 +114,8 @@ namespace osu.Game.Online.Multiplayer
 
         public event Action<MatchmakingQueueStatus?>? MatchmakingQueueStatusChanged;
 
+        public event Action<MatchRoomState>? MatchRoomStateChanged;
+
         /// <summary>
         /// Whether the <see cref="MultiplayerClient"/> is currently connected.
         /// This is NOT thread safe and usage should be scheduled.
@@ -660,6 +662,7 @@ namespace osu.Game.Online.Multiplayer
                     return;
 
                 Room.MatchState = state;
+                MatchRoomStateChanged?.Invoke(state);
                 RoomUpdated?.Invoke();
             }, false);
 

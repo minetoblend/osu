@@ -7,23 +7,23 @@ using osu.Framework.Allocation;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Game.Graphics.Containers;
-using osu.Game.Online.API.Requests.Responses;
 using osu.Game.Online.Multiplayer;
+using osu.Game.Online.Rooms;
 using osuTK;
 
 namespace osu.Game.Online.Matchmaking
 {
     public class MatchmakingBeatmapList : CompositeDrawable
     {
-        public Action<APIBeatmap>? SelectionRequested;
+        public Action<MultiplayerPlaylistItem>? SelectionRequested;
 
-        private readonly APIBeatmap[] beatmaps;
+        private readonly MultiplayerPlaylistItem[] playlist;
 
         private FillFlowContainer<MatchmakingBeatmapPanel> panels = null!;
 
-        public MatchmakingBeatmapList(APIBeatmap[] beatmaps)
+        public MatchmakingBeatmapList(MultiplayerPlaylistItem[] playlist)
         {
-            this.beatmaps = beatmaps;
+            this.playlist = playlist;
         }
 
         [BackgroundDependencyLoader]
@@ -40,25 +40,25 @@ namespace osu.Game.Online.Matchmaking
                 }
             };
 
-            foreach (var beatmap in beatmaps)
+            foreach (MultiplayerPlaylistItem item in playlist)
             {
-                panels.Add(new MatchmakingBeatmapPanel(beatmap)
+                panels.Add(new MatchmakingBeatmapPanel(item)
                 {
                     Anchor = Anchor.TopCentre,
                     Origin = Anchor.TopCentre,
-                    SelectionRequested = b => SelectionRequested?.Invoke(b)
+                    SelectionRequested = i => SelectionRequested?.Invoke(i)
                 });
             }
         }
 
-        public void AddSelection(APIBeatmap beatmap, MultiplayerRoomUser user)
+        public void AddSelection(MultiplayerPlaylistItem item, MultiplayerRoomUser user)
         {
-            panels.Single(b => b.Beatmap.Equals(beatmap)).AddSelection(user);
+            panels.Single(b => b.Item.Equals(item)).AddSelection(user);
         }
 
-        public void RemoveSelection(APIBeatmap beatmap, MultiplayerRoomUser user)
+        public void RemoveSelection(MultiplayerPlaylistItem item, MultiplayerRoomUser user)
         {
-            panels.Single(b => b.Beatmap.Equals(beatmap)).RemoveSelection(user);
+            panels.Single(b => b.Item.Equals(item)).RemoveSelection(user);
         }
     }
 }

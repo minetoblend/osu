@@ -4,6 +4,7 @@
 using NUnit.Framework;
 using osu.Framework.Graphics;
 using osu.Game.Online.Matchmaking;
+using osu.Game.Online.Multiplayer.MatchTypes.Matchmaking;
 using osu.Game.Tests.Visual.Multiplayer;
 
 namespace osu.Game.Tests.Visual.Matchmaking
@@ -23,7 +24,7 @@ namespace osu.Game.Tests.Visual.Matchmaking
             });
         }
 
-        [TestCase(MatchmakingRoomStatus.WaitForJoin)]
+        [TestCase(MatchmakingRoomStatus.WaitingForJoin)]
         [TestCase(MatchmakingRoomStatus.WaitForReturn)]
         [TestCase(MatchmakingRoomStatus.WaitForNextRound)]
         [TestCase(MatchmakingRoomStatus.Pick)]

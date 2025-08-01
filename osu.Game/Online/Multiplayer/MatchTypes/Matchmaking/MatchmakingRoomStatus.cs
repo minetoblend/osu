@@ -1,14 +1,19 @@
 // Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
-namespace osu.Game.Online.Matchmaking
+namespace osu.Game.Online.Multiplayer.MatchTypes.Matchmaking
 {
     public enum MatchmakingRoomStatus
     {
         /// <summary>
         /// Waiting for all players to join the room.
         /// </summary>
-        WaitForJoin,
+        WaitingForJoin,
+
+        /// <summary>
+        /// All players have joined the room and is now ready to be displayed.
+        /// </summary>
+        ReadyForOpen,
 
         /// <summary>
         /// Waiting for all players to return from the results screen.

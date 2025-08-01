@@ -7,6 +7,7 @@ using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Game.Graphics;
 using osu.Game.Graphics.Sprites;
+using osu.Game.Online.Multiplayer.MatchTypes.Matchmaking;
 
 namespace osu.Game.Online.Matchmaking
 {
@@ -41,7 +42,7 @@ namespace osu.Game.Online.Matchmaking
         {
             switch (status.NewValue)
             {
-                case MatchmakingRoomStatus.WaitForJoin:
+                case MatchmakingRoomStatus.WaitingForJoin:
                     text.Text = "Players are joining the room...";
                     break;
 

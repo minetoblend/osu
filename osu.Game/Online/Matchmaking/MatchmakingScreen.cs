@@ -2,6 +2,7 @@
 // See the LICENCE file in the repository root for full licence text.
 
 using System.Collections.Generic;
+using System.Linq;
 using osu.Framework.Allocation;
 using osu.Framework.Extensions.Color4Extensions;
 using osu.Framework.Graphics;
@@ -10,8 +11,8 @@ using osu.Framework.Graphics.Cursor;
 using osu.Framework.Graphics.Shapes;
 using osu.Framework.Screens;
 using osu.Game.Graphics.Cursor;
-using osu.Game.Online.API.Requests.Responses;
 using osu.Game.Online.Multiplayer;
+using osu.Game.Online.Multiplayer.MatchTypes.Matchmaking;
 using osu.Game.Online.Rooms;
 using osu.Game.Overlays;
 using osu.Game.Screens;
@@ -39,20 +40,15 @@ namespace osu.Game.Online.Matchmaking
         [Resolved]
         private MultiplayerClient client { get; set; } = null!;
 
-        private readonly Room room;
-        private readonly MultiplayerRoomUser[] users;
-        private readonly APIBeatmap[] beatmaps;
-
-        private readonly List<APIBeatmap> selectedBeatmaps = new List<APIBeatmap>();
+        private readonly MultiplayerRoom room;
+        private readonly List<MultiplayerPlaylistItem> selectedItems = new List<MultiplayerPlaylistItem>();
 
         private MatchmakingRoomStatusDisplay statusDisplay = null!;
         private MatchmakingCarousel carousel = null!;
 
-        public MatchmakingScreen(Room room, MultiplayerRoomUser[] users, APIBeatmap[] beatmaps)
+        public MatchmakingScreen(MultiplayerRoom room)
         {
             this.room = room;
-            this.users = users;
-            this.beatmaps = beatmaps;
 
             Activity.Value = new UserActivity.InLobby(room);
             Padding = new MarginPadding { Horizontal = -HORIZONTAL_OVERFLOW_PADDING };
@@ -109,17 +105,17 @@ namespace osu.Game.Online.Matchmaking
                                                 RelativeSizeAxes = Axes.Both,
                                                 Colour = Color4Extensions.FromHex(@"3e3a44") // Temporary.
                                             },
-                                            carousel = new MatchmakingCarousel(users, beatmaps)
+                                            carousel = new MatchmakingCarousel(room.Users.ToArray(), room.Playlist.ToArray())
                                             {
                                                 RelativeSizeAxes = Axes.Both,
-                                                SelectionRequested = onBeatmapSelectionRequested
+                                                SelectionRequested = onSelectionRequested
                                             }
                                         }
                                     }
                                 ],
                                 null,
                                 [
-                                    new MatchChatDisplay(room)
+                                    new MatchChatDisplay(new Room(room))
                                     {
                                         RelativeSizeAxes = Axes.X,
                                         Height = 100
@@ -140,7 +136,7 @@ namespace osu.Game.Online.Matchmaking
             switch (status)
             {
                 case MatchmakingRoomStatus.InGameplay:
-                    this.Push(new MultiplayerPlayerLoader(() => new MultiplayerPlayer(room, new PlaylistItem(client.Room!.CurrentPlaylistItem), users)));
+                    this.Push(new MultiplayerPlayerLoader(() => new MultiplayerPlayer(new Room(room), new PlaylistItem(client.Room!.CurrentPlaylistItem), room.Users.ToArray())));
                     break;
             }
         }
@@ -148,14 +144,14 @@ namespace osu.Game.Online.Matchmaking
         public void ApplyScoreChanges(params MatchmakingScoreChange[] changes)
             => carousel.ApplyScoreChanges(changes);
 
-        private void onBeatmapSelectionRequested(APIBeatmap beatmap)
+        private void onSelectionRequested(MultiplayerPlaylistItem item)
         {
-            if (selectedBeatmaps.Remove(beatmap))
-                carousel.RemoveSelection(beatmap, client.LocalUser!);
+            if (selectedItems.Remove(item))
+                carousel.RemoveSelection(item, client.LocalUser!);
             else
             {
-                selectedBeatmaps.Add(beatmap);
-                carousel.AddSelection(beatmap, client.LocalUser!);
+                selectedItems.Add(item);
+                carousel.AddSelection(item, client.LocalUser!);
             }
         }
     }

@@ -6,6 +6,7 @@ using osu.Framework.Graphics;
 using osu.Game.Online.API.Requests.Responses;
 using osu.Game.Online.Matchmaking;
 using osu.Game.Online.Multiplayer;
+using osu.Game.Online.Rooms;
 using osu.Game.Tests.Visual.Multiplayer;
 
 namespace osu.Game.Tests.Visual.Matchmaking
@@ -20,10 +21,7 @@ namespace osu.Game.Tests.Visual.Matchmaking
 
             AddStep("add beatmap panel", () =>
             {
-                var beatmap = CreateAPIBeatmap();
-                beatmap.StarRating = 5.3;
-
-                Child = panel = new MatchmakingBeatmapPanel(beatmap)
+                Child = panel = new MatchmakingBeatmapPanel(new MultiplayerPlaylistItem { StarRating = 5.3 })
                 {
                     Anchor = Anchor.Centre,
                     Origin = Anchor.Centre,

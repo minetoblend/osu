@@ -7,26 +7,27 @@ using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Input.Events;
 using osu.Game.Graphics.Containers;
-using osu.Game.Online.API.Requests.Responses;
 using osu.Game.Online.Multiplayer;
+using osu.Game.Online.Multiplayer.MatchTypes.Matchmaking;
+using osu.Game.Online.Rooms;
 
 namespace osu.Game.Online.Matchmaking
 {
     public class MatchmakingCarousel : CompositeDrawable
     {
-        public Action<APIBeatmap>? SelectionRequested;
+        public Action<MultiplayerPlaylistItem>? SelectionRequested;
 
         private readonly MultiplayerRoomUser[] users;
-        private readonly APIBeatmap[] beatmaps;
+        private readonly MultiplayerPlaylistItem[] playlist;
 
         private OsuScrollContainer scroll = null!;
         private MatchmakingPlayerList playerList = null!;
         private MatchmakingBeatmapList beatmapList = null!;
 
-        public MatchmakingCarousel(MultiplayerRoomUser[] users, APIBeatmap[] beatmaps)
+        public MatchmakingCarousel(MultiplayerRoomUser[] users, MultiplayerPlaylistItem[] playlist)
         {
             this.users = users;
-            this.beatmaps = beatmaps;
+            this.playlist = playlist;
         }
 
         [BackgroundDependencyLoader]
@@ -53,10 +54,10 @@ namespace osu.Game.Online.Matchmaking
                         new WidthReferenceContainer(() => scroll)
                         {
                             RelativeSizeAxes = Axes.Y,
-                            Child = beatmapList = new MatchmakingBeatmapList(beatmaps)
+                            Child = beatmapList = new MatchmakingBeatmapList(playlist)
                             {
                                 RelativeSizeAxes = Axes.Both,
-                                SelectionRequested = b => SelectionRequested?.Invoke(b)
+                                SelectionRequested = item => SelectionRequested?.Invoke(item)
                             }
                         }
                     }
@@ -86,11 +87,11 @@ namespace osu.Game.Online.Matchmaking
         public void ApplyScoreChanges(params MatchmakingScoreChange[] changes)
             => playerList.ApplyScoreChanges(changes);
 
-        public void AddSelection(APIBeatmap beatmap, MultiplayerRoomUser user)
-            => beatmapList.AddSelection(beatmap, user);
+        public void AddSelection(MultiplayerPlaylistItem item, MultiplayerRoomUser user)
+            => beatmapList.AddSelection(item, user);
 
-        public void RemoveSelection(APIBeatmap beatmap, MultiplayerRoomUser user)
-            => beatmapList.RemoveSelection(beatmap, user);
+        public void RemoveSelection(MultiplayerPlaylistItem item, MultiplayerRoomUser user)
+            => beatmapList.RemoveSelection(item, user);
 
         private class NoUserScrollContainer : OsuScrollContainer
         {

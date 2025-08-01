@@ -8,5 +8,7 @@ namespace osu.Game.Online.Multiplayer.MatchTypes.Matchmaking
     [MessagePackObject]
     public class MatchmakingRoomState : MatchRoomState
     {
+        [Key(0)]
+        public MatchmakingRoomStatus RoomStatus { get; set; }
     }
 }

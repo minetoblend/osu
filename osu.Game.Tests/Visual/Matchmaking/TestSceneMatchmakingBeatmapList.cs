@@ -8,6 +8,7 @@ using osu.Framework.Graphics.Containers;
 using osu.Game.Online.API.Requests.Responses;
 using osu.Game.Online.Matchmaking;
 using osu.Game.Online.Multiplayer;
+using osu.Game.Online.Rooms;
 using osu.Game.Tests.Visual.Multiplayer;
 using osuTK;
 
@@ -15,7 +16,7 @@ namespace osu.Game.Tests.Visual.Matchmaking
 {
     public class TestSceneMatchmakingBeatmapList : MultiplayerTestScene
     {
-        private List<APIBeatmap> selectedBeatmaps = null!;
+        private List<MultiplayerPlaylistItem> selectedBeatmaps = null!;
         private MatchmakingBeatmapList list = null!;
 
         public override void SetUpSteps()
@@ -24,14 +25,11 @@ namespace osu.Game.Tests.Visual.Matchmaking
 
             AddStep("add list", () =>
             {
-                selectedBeatmaps = new List<APIBeatmap>();
-                APIBeatmap[] beatmaps = Enumerable.Range(1, 50).Select(i =>
+                selectedBeatmaps = new List<MultiplayerPlaylistItem>();
+                MultiplayerPlaylistItem[] beatmaps = Enumerable.Range(1, 50).Select(i => new MultiplayerPlaylistItem
                 {
-                    var beatmap = CreateAPIBeatmap();
-                    beatmap.OnlineID = i;
-                    beatmap.StarRating = i / 10.0;
-                    beatmap.DifficultyName = $"Beatmap {i}";
-                    return beatmap;
+                    BeatmapID = i,
+                    StarRating = i / 10.0,
                 }).ToArray();
 
                 Child = new Container
@@ -50,19 +48,19 @@ namespace osu.Game.Tests.Visual.Matchmaking
             });
         }
 
-        private void onSelectionRequested(APIBeatmap beatmap)
+        private void onSelectionRequested(MultiplayerPlaylistItem item)
         {
-            if (selectedBeatmaps.Remove(beatmap))
+            if (selectedBeatmaps.Remove(item))
             {
-                list.RemoveSelection(beatmap, new MultiplayerRoomUser(1)
+                list.RemoveSelection(item, new MultiplayerRoomUser(1)
                 {
                     User = new APIUser { Id = 1 }
                 });
             }
             else
             {
-                selectedBeatmaps.Add(beatmap);
-                list.AddSelection(beatmap, new MultiplayerRoomUser(1)
+                selectedBeatmaps.Add(item);
+                list.AddSelection(item, new MultiplayerRoomUser(1)
                 {
                     User = new APIUser { Id = 1 }
                 });

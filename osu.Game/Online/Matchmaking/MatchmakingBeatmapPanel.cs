@@ -4,6 +4,7 @@
 using System;
 using System.Linq;
 using osu.Framework.Allocation;
+using osu.Framework.Extensions;
 using osu.Framework.Extensions.Color4Extensions;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
@@ -11,10 +12,12 @@ using osu.Framework.Graphics.Shapes;
 using osu.Framework.Input.Events;
 using osu.Game.Beatmaps;
 using osu.Game.Beatmaps.Drawables;
+using osu.Game.Database;
 using osu.Game.Graphics;
 using osu.Game.Graphics.Sprites;
 using osu.Game.Online.API.Requests.Responses;
 using osu.Game.Online.Multiplayer;
+using osu.Game.Online.Rooms;
 using osu.Game.Overlays.Notifications;
 using osu.Game.Users.Drawables;
 using osuTK;
@@ -26,21 +29,23 @@ namespace osu.Game.Online.Matchmaking
     {
         private const int panel_width = 300;
 
-        public readonly APIBeatmap Beatmap;
-        public Action<APIBeatmap>? SelectionRequested;
+        public readonly MultiplayerPlaylistItem Item;
+        public Action<MultiplayerPlaylistItem>? SelectionRequested;
 
         private Drawable background = null!;
         private FillFlowContainer<SelectionBadge> badges = null!;
 
-        public MatchmakingBeatmapPanel(APIBeatmap beatmap)
+        public MatchmakingBeatmapPanel(MultiplayerPlaylistItem item)
         {
-            Beatmap = beatmap;
+            Item = item;
             Size = new Vector2(panel_width, 50);
         }
 
         [BackgroundDependencyLoader]
-        private void load(OsuColour colours)
+        private void load(OsuColour colours, BeatmapLookupCache beatmapLookupCache)
         {
+            APIBeatmap beatmap = beatmapLookupCache.GetBeatmapAsync(Item.BeatmapID).GetResultSafely()!;
+
             InternalChild = new Container
             {
                 RelativeSizeAxes = Axes.Both,
@@ -60,9 +65,9 @@ namespace osu.Game.Online.Matchmaking
                             new Box
                             {
                                 RelativeSizeAxes = Axes.Both,
-                                Colour = colours.ForStarDifficulty(Beatmap.StarRating)
+                                Colour = colours.ForStarDifficulty(beatmap.StarRating)
                             },
-                            new StarRatingDisplay(new StarDifficulty(Beatmap.StarRating, Beatmap.MaxCombo ?? 0), StarRatingDisplaySize.Small)
+                            new StarRatingDisplay(new StarDifficulty(beatmap.StarRating, beatmap.MaxCombo ?? 0), StarRatingDisplaySize.Small)
                             {
                                 Anchor = Anchor.Centre,
                                 Origin = Anchor.Centre
@@ -74,7 +79,7 @@ namespace osu.Game.Online.Matchmaking
                         Anchor = Anchor.Centre,
                         Origin = Anchor.Centre,
                         MaxWidth = panel_width,
-                        Text = Beatmap.GetDisplayTitleRomanisable()
+                        Text = beatmap.GetDisplayTitleRomanisable()
                     },
                     badges = new AlwaysUpdateFillFlowContainer<SelectionBadge>
                     {
@@ -114,7 +119,7 @@ namespace osu.Game.Online.Matchmaking
         protected override bool OnClick(ClickEvent e)
         {
             background.FlashColour(Color4.SaddleBrown.Lighten(0.5f), 200, Easing.OutQuint);
-            SelectionRequested?.Invoke(Beatmap);
+            SelectionRequested?.Invoke(Item);
             return true;
         }
 

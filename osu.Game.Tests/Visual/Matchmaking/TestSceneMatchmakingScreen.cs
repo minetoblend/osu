@@ -9,6 +9,7 @@ using osu.Framework.Testing;
 using osu.Game.Online.API.Requests.Responses;
 using osu.Game.Online.Matchmaking;
 using osu.Game.Online.Multiplayer;
+using osu.Game.Online.Multiplayer.MatchTypes.Matchmaking;
 using osu.Game.Online.Rooms;
 using osu.Game.Tests.Visual.Multiplayer;
 using osuTK.Input;
@@ -43,16 +44,17 @@ namespace osu.Game.Tests.Visual.Matchmaking
 
                 scores = new int[users.Length];
 
-                var beatmaps = Enumerable.Range(1, beatmap_count).Select(i =>
+                var beatmaps = Enumerable.Range(1, beatmap_count).Select(i => new MultiplayerPlaylistItem
                 {
-                    var beatmap = CreateAPIBeatmap();
-                    beatmap.OnlineID = i;
-                    beatmap.StarRating = i / 10.0;
-                    beatmap.DifficultyName = $"Beatmap {i}";
-                    return beatmap;
+                    BeatmapID = i,
+                    StarRating = i / 10.0
                 }).ToArray();
 
-                LoadScreen(screen = new MatchmakingScreen(new Room { Name = "matchmaking" }, users, beatmaps));
+                LoadScreen(screen = new MatchmakingScreen(new MultiplayerRoom(0)
+                {
+                    Users = users,
+                    Playlist = beatmaps
+                }));
             });
             AddUntilStep("wait for load", () => screen.IsCurrentScreen());
         }
