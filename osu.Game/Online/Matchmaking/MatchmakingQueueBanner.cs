@@ -103,6 +103,8 @@ namespace osu.Game.Online.Matchmaking
                           performer.PerformFromScreen(screen => screen.Push(new MatchmakingScreen(room)));
                       }));
 
+                // Immediately consume the status to ensure a secondary click doesn't attempt to re-join.
+                currentStatus = null;
                 onMatchmakingQueueStatusChanged(null);
                 return true;
             }
