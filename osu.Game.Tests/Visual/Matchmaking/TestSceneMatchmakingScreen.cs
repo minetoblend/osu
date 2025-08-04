@@ -4,8 +4,11 @@
 using System;
 using System.Linq;
 using NUnit.Framework;
+using osu.Framework.Graphics;
+using osu.Framework.Graphics.Containers;
 using osu.Framework.Screens;
 using osu.Framework.Testing;
+using osu.Game.Graphics.UserInterface;
 using osu.Game.Online.API.Requests.Responses;
 using osu.Game.Online.Matchmaking;
 using osu.Game.Online.Multiplayer;
@@ -24,6 +27,16 @@ namespace osu.Game.Tests.Visual.Matchmaking
         private MultiplayerRoomUser[] users = null!;
         private int[] scores = null!;
         private MatchmakingScreen screen = null!;
+
+        public TestSceneMatchmakingScreen()
+        {
+            Add(new BackButton
+            {
+                Anchor = Anchor.BottomLeft,
+                Origin = Anchor.BottomLeft,
+                State = { Value = Visibility.Visible }
+            });
+        }
 
         public override void SetUpSteps()
         {

@@ -115,10 +115,18 @@ namespace osu.Game.Online.Matchmaking
                                 ],
                                 null,
                                 [
-                                    new MatchChatDisplay(new Room(room))
+                                    new Container
                                     {
                                         RelativeSizeAxes = Axes.X,
-                                        Height = 100
+                                        Height = 100,
+                                        Padding = new MarginPadding
+                                        {
+                                            Horizontal = 200,
+                                        },
+                                        Child = new MatchChatDisplay(new Room(room))
+                                        {
+                                            RelativeSizeAxes = Axes.Both
+                                        }
                                     }
                                 ]
                             }
