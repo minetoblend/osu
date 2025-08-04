@@ -9,6 +9,7 @@ using osu.Framework.Extensions.Color4Extensions;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Shapes;
+using osu.Framework.Graphics.Sprites;
 using osu.Framework.Input.Events;
 using osu.Game.Beatmaps;
 using osu.Game.Beatmaps.Drawables;
@@ -44,7 +45,7 @@ namespace osu.Game.Online.Matchmaking
         [BackgroundDependencyLoader]
         private void load(OsuColour colours, BeatmapLookupCache beatmapLookupCache)
         {
-            APIBeatmap beatmap = beatmapLookupCache.GetBeatmapAsync(Item.BeatmapID).GetResultSafely()!;
+            SpriteText title;
 
             InternalChild = new Container
             {
@@ -65,21 +66,20 @@ namespace osu.Game.Online.Matchmaking
                             new Box
                             {
                                 RelativeSizeAxes = Axes.Both,
-                                Colour = colours.ForStarDifficulty(beatmap.StarRating)
+                                Colour = colours.ForStarDifficulty(Item.StarRating)
                             },
-                            new StarRatingDisplay(new StarDifficulty(beatmap.StarRating, beatmap.MaxCombo ?? 0), StarRatingDisplaySize.Small)
+                            new StarRatingDisplay(new StarDifficulty(Item.StarRating, 0), StarRatingDisplaySize.Small)
                             {
                                 Anchor = Anchor.Centre,
                                 Origin = Anchor.Centre
                             },
                         }
                     },
-                    new TruncatingSpriteText
+                    title = new TruncatingSpriteText
                     {
                         Anchor = Anchor.Centre,
                         Origin = Anchor.Centre,
-                        MaxWidth = panel_width,
-                        Text = beatmap.GetDisplayTitleRomanisable()
+                        MaxWidth = panel_width
                     },
                     badges = new AlwaysUpdateFillFlowContainer<SelectionBadge>
                     {
@@ -91,6 +91,12 @@ namespace osu.Game.Online.Matchmaking
                     }
                 }
             };
+
+            beatmapLookupCache.GetBeatmapAsync(Item.BeatmapID).ContinueWith(b => Schedule(() =>
+            {
+                APIBeatmap beatmap = b.GetResultSafely()!;
+                title.Text = beatmap.GetDisplayTitleRomanisable();
+            }));
         }
 
         public void AddSelection(MultiplayerRoomUser user)
