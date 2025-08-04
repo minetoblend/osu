@@ -107,7 +107,10 @@ namespace osu.Game.Screens.Edit
                 BeatmapSkin.BeatmapSkinChanged += SaveState;
             }
 
-            beatmapProcessor = new EditorBeatmapProcessor(this, playableBeatmap.BeatmapInfo.Ruleset.CreateInstance());
+            var processor = new EditorBeatmapProcessor(this, playableBeatmap.BeatmapInfo.Ruleset.CreateInstance());
+            beatmapProcessor = processor;
+
+            AddInternal(processor);
 
             foreach (var obj in HitObjects)
                 trackStartTime(obj);

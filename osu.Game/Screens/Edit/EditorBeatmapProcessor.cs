@@ -4,21 +4,27 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using osu.Framework.Allocation;
+using osu.Framework.Bindables;
+using osu.Framework.Graphics;
 using osu.Game.Beatmaps;
 using osu.Game.Beatmaps.Timing;
+using osu.Game.Configuration;
 using osu.Game.Rulesets;
 using osu.Game.Rulesets.Objects;
 using osu.Game.Rulesets.Objects.Types;
 
 namespace osu.Game.Screens.Edit
 {
-    public class EditorBeatmapProcessor : IBeatmapProcessor
+    public partial class EditorBeatmapProcessor : Component, IBeatmapProcessor
     {
         public EditorBeatmap Beatmap { get; }
 
         IBeatmap IBeatmapProcessor.Beatmap => Beatmap;
 
         private readonly IBeatmapProcessor? rulesetBeatmapProcessor;
+
+        private readonly Bindable<bool> editorAutoInsertBreaks = new BindableBool();
 
         /// <summary>
         /// Kept for the purposes of reducing redundant regeneration of automatic breaks.
@@ -31,6 +37,12 @@ namespace osu.Game.Screens.Edit
             rulesetBeatmapProcessor = ruleset.CreateBeatmapProcessor(beatmap);
         }
 
+        [BackgroundDependencyLoader]
+        private void load(OsuConfigManager config)
+        {
+            config.BindWith(OsuSetting.EditorAutoInsertBreaks, editorAutoInsertBreaks);
+        }
+
         public void PreProcess()
         {
             rulesetBeatmapProcessor?.PreProcess();
@@ -40,7 +52,9 @@ namespace osu.Game.Screens.Edit
         {
             rulesetBeatmapProcessor?.PostProcess();
 
-            autoGenerateBreaks();
+            if (editorAutoInsertBreaks.Value)
+                autoGenerateBreaks();
+
             ensureNewComboAfterBreaks();
         }
 

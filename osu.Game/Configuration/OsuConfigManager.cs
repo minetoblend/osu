@@ -232,6 +232,7 @@ namespace osu.Game.Configuration
 
             // intentionally uses `DateTime?` and not `DateTimeOffset?` because the latter fails due to `DateTimeOffset` not implementing `IConvertible`
             SetDefault(OsuSetting.LastOnlineTagsPopulation, (DateTime?)null);
+            SetDefault(OsuSetting.EditorAutoInsertBreaks, true);
         }
 
         protected override bool CheckLookupContainsPrivateInformation(OsuSetting lookup)
@@ -482,5 +483,6 @@ namespace osu.Game.Configuration
         WasSupporter,
 
         LastOnlineTagsPopulation,
+        EditorAutoInsertBreaks,
     }
 }

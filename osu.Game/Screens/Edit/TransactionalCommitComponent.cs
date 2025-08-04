@@ -2,14 +2,14 @@
 // See the LICENCE file in the repository root for full licence text.
 
 using System;
-using osu.Framework.Graphics;
+using osu.Framework.Graphics.Containers;
 
 namespace osu.Game.Screens.Edit
 {
     /// <summary>
     /// A component that tracks a batch change, only applying after all active changes are completed.
     /// </summary>
-    public abstract partial class TransactionalCommitComponent : Component
+    public abstract partial class TransactionalCommitComponent : CompositeComponent
     {
         /// <summary>
         /// Fires whenever a transaction begins. Will not fire on nested transactions.
