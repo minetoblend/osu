@@ -142,6 +142,8 @@ namespace osu.Game.Online.Matchmaking
             base.LoadComplete();
 
             client.MatchRoomStateChanged += onMatchRoomStateChanged;
+            client.LoadRequested += onLoadRequested;
+
             onMatchRoomStateChanged(client.Room!.MatchState);
         }
 
@@ -153,17 +155,15 @@ namespace osu.Game.Online.Matchmaking
             SetStatus(matchmakingState.RoomStatus);
         });
 
+        private void onLoadRequested() => Scheduler.Add(() =>
+        {
+            this.Push(new MultiplayerPlayerLoader(() => new MultiplayerPlayer(new Room(room), new PlaylistItem(client.Room!.CurrentPlaylistItem), room.Users.ToArray())));
+        });
+
         public void SetStatus(MatchmakingRoomStatus status)
         {
             statusDisplay.Status.Value = status;
             carousel.SetStatus(status);
-
-            switch (status)
-            {
-                case MatchmakingRoomStatus.InGameplay:
-                    this.Push(new MultiplayerPlayerLoader(() => new MultiplayerPlayer(new Room(room), new PlaylistItem(client.Room!.CurrentPlaylistItem), room.Users.ToArray())));
-                    break;
-            }
         }
 
         public void ApplyScoreChanges(params MatchmakingScoreChange[] changes)
@@ -194,7 +194,10 @@ namespace osu.Game.Online.Matchmaking
             base.Dispose(isDisposing);
 
             if (client.IsNotNull())
+            {
                 client.MatchRoomStateChanged -= onMatchRoomStateChanged;
+                client.LoadRequested -= onLoadRequested;
+            }
         }
     }
 }
