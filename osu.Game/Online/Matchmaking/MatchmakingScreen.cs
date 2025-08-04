@@ -154,5 +154,14 @@ namespace osu.Game.Online.Matchmaking
                 carousel.AddSelection(item, client.LocalUser!);
             }
         }
+
+        public override bool OnExiting(ScreenExitEvent e)
+        {
+            if (base.OnExiting(e))
+                return true;
+
+            client.LeaveRoom();
+            return false;
+        }
     }
 }
