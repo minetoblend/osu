@@ -152,6 +152,14 @@ namespace osu.Game.Online.Multiplayer
         /// <param name="item">The changed item.</param>
         Task PlaylistItemChanged(MultiplayerPlaylistItem item);
 
+        /// <summary>
+        /// The matchmaking status of the current user has changed.
+        /// </summary>
         Task MatchmakingQueueStatusChanged([CanBeNull] MatchmakingQueueStatus status);
+
+        /// <summary>
+        /// A user has toggled their selection.
+        /// </summary>
+        Task MatchmakingSelectionToggled(int userId, long playlistItemId);
     }
 }

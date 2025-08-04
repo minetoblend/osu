@@ -114,6 +114,8 @@ namespace osu.Game.Online.Multiplayer
 
         public event Action<MatchmakingQueueStatus?>? MatchmakingQueueStatusChanged;
 
+        public event Action<int, long>? MatchmakingSelectionToggled;
+
         public event Action<MatchRoomState>? MatchRoomStateChanged;
 
         /// <summary>
@@ -1005,5 +1007,18 @@ namespace osu.Game.Online.Multiplayer
 
             return Task.CompletedTask;
         }
+
+        Task IMultiplayerClient.MatchmakingSelectionToggled(int userId, long playlistItemId)
+        {
+            Scheduler.Add(() =>
+            {
+                MatchmakingSelectionToggled?.Invoke(userId, playlistItemId);
+                RoomUpdated?.Invoke();
+            });
+
+            return Task.CompletedTask;
+        }
+
+        public abstract Task MatchmakingToggleSelection(long playlistItemId);
     }
 }

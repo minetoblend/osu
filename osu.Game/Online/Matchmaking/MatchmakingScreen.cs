@@ -1,7 +1,6 @@
 // Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
-using System.Collections.Generic;
 using System.Linq;
 using osu.Framework.Allocation;
 using osu.Framework.Extensions.Color4Extensions;
@@ -42,7 +41,6 @@ namespace osu.Game.Online.Matchmaking
         private MultiplayerClient client { get; set; } = null!;
 
         private readonly MultiplayerRoom room;
-        private readonly List<MultiplayerPlaylistItem> selectedItems = new List<MultiplayerPlaylistItem>();
 
         private MatchmakingRoomStatusDisplay statusDisplay = null!;
         private MatchmakingCarousel carousel = null!;
@@ -108,8 +106,7 @@ namespace osu.Game.Online.Matchmaking
                                             },
                                             carousel = new MatchmakingCarousel(room.Users.ToArray(), room.Playlist.ToArray())
                                             {
-                                                RelativeSizeAxes = Axes.Both,
-                                                SelectionRequested = onSelectionRequested
+                                                RelativeSizeAxes = Axes.Both
                                             }
                                         }
                                     }
@@ -168,17 +165,6 @@ namespace osu.Game.Online.Matchmaking
 
         public void ApplyScoreChanges(params MatchmakingScoreChange[] changes)
             => carousel.ApplyScoreChanges(changes);
-
-        private void onSelectionRequested(MultiplayerPlaylistItem item)
-        {
-            if (selectedItems.Remove(item))
-                carousel.RemoveSelection(item, client.LocalUser!);
-            else
-            {
-                selectedItems.Add(item);
-                carousel.AddSelection(item, client.LocalUser!);
-            }
-        }
 
         public override bool OnExiting(ScreenExitEvent e)
         {

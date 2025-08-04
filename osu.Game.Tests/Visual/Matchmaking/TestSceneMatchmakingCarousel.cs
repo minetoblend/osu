@@ -25,6 +25,9 @@ namespace osu.Game.Tests.Visual.Matchmaking
         {
             base.SetUpSteps();
 
+            AddStep("join room", () => JoinRoom(CreateDefaultRoom()));
+            WaitForJoined();
+
             AddStep("add carousel", () =>
             {
                 var users = Enumerable.Range(1, user_count).Select(i => new MultiplayerRoomUser(i)
@@ -37,6 +40,7 @@ namespace osu.Game.Tests.Visual.Matchmaking
 
                 var beatmaps = Enumerable.Range(1, beatmap_count).Select(i => new MultiplayerPlaylistItem
                 {
+                    ID = i,
                     BeatmapID = i,
                     StarRating = i / 10.0
                 }).ToArray();

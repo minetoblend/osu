@@ -73,6 +73,7 @@ namespace osu.Game.Online.Multiplayer
                     connection.On(nameof(IStatefulUserHubClient.DisconnectRequested), ((IMultiplayerClient)this).DisconnectRequested);
 
                     connection.On<MatchmakingQueueStatus?>(nameof(IMultiplayerClient.MatchmakingQueueStatusChanged), ((IMultiplayerClient)this).MatchmakingQueueStatusChanged);
+                    connection.On<int, long>(nameof(IMultiplayerClient.MatchmakingSelectionToggled), ((IMultiplayerClient)this).MatchmakingSelectionToggled);
                 };
 
                 IsConnected.BindTo(connector.IsConnected);
@@ -335,6 +336,15 @@ namespace osu.Game.Online.Multiplayer
 
             Debug.Assert(connection != null);
             return connection.InvokeAsync(nameof(IMultiplayerLoungeServer.LeaveMatchmakingQueue));
+        }
+
+        public override Task MatchmakingToggleSelection(long playlistItemId)
+        {
+            if (!IsConnected.Value)
+                return Task.CompletedTask;
+
+            Debug.Assert(connection != null);
+            return connection.InvokeAsync(nameof(IMultiplayerServer.MatchmakingToggleSelection), playlistItemId);
         }
     }
 }

@@ -1,11 +1,11 @@
 // Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
-using System;
 using System.Linq;
 using osu.Framework.Allocation;
 using osu.Framework.Extensions;
 using osu.Framework.Extensions.Color4Extensions;
+using osu.Framework.Extensions.ObjectExtensions;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Shapes;
@@ -30,8 +30,10 @@ namespace osu.Game.Online.Matchmaking
     {
         private const int panel_width = 300;
 
+        [Resolved]
+        private MultiplayerClient client { get; set; } = null!;
+
         public readonly MultiplayerPlaylistItem Item;
-        public Action<MultiplayerPlaylistItem>? SelectionRequested;
 
         private Drawable background = null!;
         private FillFlowContainer<SelectionBadge> badges = null!;
@@ -99,15 +101,27 @@ namespace osu.Game.Online.Matchmaking
             }));
         }
 
-        public void AddSelection(MultiplayerRoomUser user)
+        protected override void LoadComplete()
         {
-            if (!badges.Any(b => b.User.Equals(user)))
-                badges.Add(new SelectionBadge(user));
+            base.LoadComplete();
+
+            client.MatchmakingSelectionToggled += onSelectionToggled;
         }
 
-        public void RemoveSelection(MultiplayerRoomUser user)
+        private void onSelectionToggled(int userId, long playlistItemId)
         {
-            badges.RemoveAll(b => b.User.Equals(user), true);
+            if (Item.ID != playlistItemId)
+                return;
+
+            Scheduler.Add(() =>
+            {
+                SelectionBadge? existing = badges.SingleOrDefault(b => b.UserId == userId);
+
+                if (existing != null)
+                    existing.Expire();
+                else
+                    badges.Add(new SelectionBadge(userId));
+            });
         }
 
         protected override bool OnHover(HoverEvent e)
@@ -125,24 +139,32 @@ namespace osu.Game.Online.Matchmaking
         protected override bool OnClick(ClickEvent e)
         {
             background.FlashColour(Color4.SaddleBrown.Lighten(0.5f), 200, Easing.OutQuint);
-            SelectionRequested?.Invoke(Item);
+            client.MatchmakingToggleSelection(Item.ID);
             return true;
+        }
+
+        protected override void Dispose(bool isDisposing)
+        {
+            base.Dispose(isDisposing);
+
+            if (client.IsNotNull())
+                client.MatchmakingSelectionToggled -= onSelectionToggled;
         }
 
         private class SelectionBadge : CompositeDrawable
         {
-            public readonly MultiplayerRoomUser User;
+            public readonly int UserId;
 
-            public SelectionBadge(MultiplayerRoomUser user)
+            public SelectionBadge(int userId)
             {
-                User = user;
+                UserId = userId;
                 Size = new Vector2(10);
 
                 InternalChild = new CircularContainer
                 {
                     RelativeSizeAxes = Axes.Both,
                     Masking = true,
-                    Child = new UpdateableAvatar(user.User)
+                    Child = new UpdateableAvatar(new APIUser { Id = userId })
                     {
                         RelativeSizeAxes = Axes.Both
                     }

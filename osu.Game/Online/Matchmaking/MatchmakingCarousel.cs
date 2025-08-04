@@ -15,8 +15,6 @@ namespace osu.Game.Online.Matchmaking
 {
     public class MatchmakingCarousel : CompositeDrawable
     {
-        public Action<MultiplayerPlaylistItem>? SelectionRequested;
-
         private readonly MultiplayerRoomUser[] users;
         private readonly MultiplayerPlaylistItem[] playlist;
 
@@ -57,7 +55,6 @@ namespace osu.Game.Online.Matchmaking
                             Child = beatmapList = new MatchmakingBeatmapList(playlist)
                             {
                                 RelativeSizeAxes = Axes.Both,
-                                SelectionRequested = item => SelectionRequested?.Invoke(item)
                             }
                         }
                     }
@@ -86,12 +83,6 @@ namespace osu.Game.Online.Matchmaking
 
         public void ApplyScoreChanges(params MatchmakingScoreChange[] changes)
             => playerList.ApplyScoreChanges(changes);
-
-        public void AddSelection(MultiplayerPlaylistItem item, MultiplayerRoomUser user)
-            => beatmapList.AddSelection(item, user);
-
-        public void RemoveSelection(MultiplayerPlaylistItem item, MultiplayerRoomUser user)
-            => beatmapList.RemoveSelection(item, user);
 
         private class NoUserScrollContainer : OsuScrollContainer
         {

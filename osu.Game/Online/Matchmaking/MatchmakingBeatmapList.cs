@@ -1,8 +1,6 @@
 // Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
-using System;
-using System.Linq;
 using osu.Framework.Allocation;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
@@ -15,10 +13,10 @@ namespace osu.Game.Online.Matchmaking
 {
     public class MatchmakingBeatmapList : CompositeDrawable
     {
-        public Action<MultiplayerPlaylistItem>? SelectionRequested;
+        [Resolved]
+        private MultiplayerClient client { get; set; } = null!;
 
         private readonly MultiplayerPlaylistItem[] playlist;
-
         private FillFlowContainer<MatchmakingBeatmapPanel> panels = null!;
 
         public MatchmakingBeatmapList(MultiplayerPlaylistItem[] playlist)
@@ -45,23 +43,12 @@ namespace osu.Game.Online.Matchmaking
                 var panel = new MatchmakingBeatmapPanel(item)
                 {
                     Anchor = Anchor.TopCentre,
-                    Origin = Anchor.TopCentre,
-                    SelectionRequested = i => SelectionRequested?.Invoke(i)
+                    Origin = Anchor.TopCentre
                 };
 
                 panels.Add(panel);
                 panels.SetLayoutPosition(panel, (float)item.StarRating);
             }
-        }
-
-        public void AddSelection(MultiplayerPlaylistItem item, MultiplayerRoomUser user)
-        {
-            panels.Single(b => b.Item.Equals(item)).AddSelection(user);
-        }
-
-        public void RemoveSelection(MultiplayerPlaylistItem item, MultiplayerRoomUser user)
-        {
-            panels.Single(b => b.Item.Equals(item)).RemoveSelection(user);
         }
     }
 }
