@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using osu.Framework.Allocation;
 using osu.Framework.Extensions.Color4Extensions;
+using osu.Framework.Extensions.ObjectExtensions;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Cursor;
@@ -136,6 +137,22 @@ namespace osu.Game.Online.Matchmaking
             };
         }
 
+        protected override void LoadComplete()
+        {
+            base.LoadComplete();
+
+            client.MatchRoomStateChanged += onMatchRoomStateChanged;
+            onMatchRoomStateChanged(client.Room!.MatchState);
+        }
+
+        private void onMatchRoomStateChanged(MatchRoomState? state) => Scheduler.Add(() =>
+        {
+            if (state is not MatchmakingRoomState matchmakingState)
+                return;
+
+            SetStatus(matchmakingState.RoomStatus);
+        });
+
         public void SetStatus(MatchmakingRoomStatus status)
         {
             statusDisplay.Status.Value = status;
@@ -170,6 +187,14 @@ namespace osu.Game.Online.Matchmaking
 
             client.LeaveRoom();
             return false;
+        }
+
+        protected override void Dispose(bool isDisposing)
+        {
+            base.Dispose(isDisposing);
+
+            if (client.IsNotNull())
+                client.MatchRoomStateChanged -= onMatchRoomStateChanged;
         }
     }
 }
