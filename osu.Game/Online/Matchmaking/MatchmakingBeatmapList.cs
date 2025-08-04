@@ -42,12 +42,15 @@ namespace osu.Game.Online.Matchmaking
 
             foreach (MultiplayerPlaylistItem item in playlist)
             {
-                panels.Add(new MatchmakingBeatmapPanel(item)
+                var panel = new MatchmakingBeatmapPanel(item)
                 {
                     Anchor = Anchor.TopCentre,
                     Origin = Anchor.TopCentre,
                     SelectionRequested = i => SelectionRequested?.Invoke(i)
-                });
+                };
+
+                panels.Add(panel);
+                panels.SetLayoutPosition(panel, (float)item.StarRating);
             }
         }
 
