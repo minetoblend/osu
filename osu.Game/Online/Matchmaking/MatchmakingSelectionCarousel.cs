@@ -6,8 +6,10 @@ using osu.Framework.Allocation;
 using osu.Framework.Bindables;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
+using osu.Framework.Graphics.Shapes;
 using osu.Game.Online.Rooms;
 using osuTK;
+using osuTK.Graphics;
 
 namespace osu.Game.Online.Matchmaking
 {
@@ -30,10 +32,27 @@ namespace osu.Game.Online.Matchmaking
         [BackgroundDependencyLoader]
         private void load()
         {
-            InternalChild = panels = new FillFlowContainer<MatchmakingBeatmapPanel>
+            InternalChildren = new Drawable[]
             {
-                RelativeSizeAxes = Axes.Both,
-                Direction = FillDirection.Vertical
+                new CircularContainer
+                {
+                    Anchor = Anchor.Centre,
+                    Origin = Anchor.Centre,
+                    RelativeSizeAxes = Axes.X,
+                    Height = 3,
+                    Masking = true,
+                    Child = new Box
+                    {
+                        RelativeSizeAxes = Axes.Both,
+                        Colour = Color4.Black,
+                        Alpha = 0.3f,
+                    }
+                },
+                panels = new FillFlowContainer<MatchmakingBeatmapPanel>
+                {
+                    RelativeSizeAxes = Axes.Both,
+                    Direction = FillDirection.Vertical
+                }
             };
         }
 
@@ -56,7 +75,14 @@ namespace osu.Game.Online.Matchmaking
                 return;
 
             int finalPosition = cycles * candidateItems.Length + Array.FindIndex(candidateItems, i => i.Equals(item));
-            this.TransformBindableTo(currentPosition, finalPosition, duration, Easing.OutQuint);
+
+            this.TransformBindableTo(currentPosition, finalPosition, duration, Easing.OutQuint)
+                .Finally(_ =>
+                {
+                    panels[panels.Count / 2]
+                        .Delay(250)
+                        .ScaleTo(new Vector2(1.5f), 1000, Easing.OutQuint);
+                });
         }
 
         private void updatePosition(ValueChangedEvent<float> pos)
