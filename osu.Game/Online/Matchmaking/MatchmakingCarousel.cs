@@ -80,9 +80,10 @@ namespace osu.Game.Online.Matchmaking
             base.LoadComplete();
 
             client.MatchRoomStateChanged += onMatchRoomStateChanged;
+            onMatchRoomStateChanged(client.Room!.MatchState);
         }
 
-        private void onMatchRoomStateChanged(MatchRoomState state) => Scheduler.Add(() =>
+        private void onMatchRoomStateChanged(MatchRoomState? state) => Scheduler.Add(() =>
         {
             if (state is not MatchmakingRoomState matchmakingState)
                 return;
