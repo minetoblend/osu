@@ -2,18 +2,20 @@
 // See the LICENCE file in the repository root for full licence text.
 
 using osu.Framework.Allocation;
-using osu.Framework.Bindables;
+using osu.Framework.Extensions.ObjectExtensions;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Game.Graphics;
 using osu.Game.Graphics.Sprites;
+using osu.Game.Online.Multiplayer;
 using osu.Game.Online.Multiplayer.MatchTypes.Matchmaking;
 
 namespace osu.Game.Online.Matchmaking
 {
     public class MatchmakingRoomStatusDisplay : CompositeDrawable
     {
-        public readonly Bindable<MatchmakingRoomStatus> Status = new Bindable<MatchmakingRoomStatus>();
+        [Resolved]
+        private MultiplayerClient client { get; set; } = null!;
 
         private OsuSpriteText text = null!;
 
@@ -35,12 +37,15 @@ namespace osu.Game.Online.Matchmaking
         {
             base.LoadComplete();
 
-            Status.BindValueChanged(onStatusChanged, true);
+            client.MatchRoomStateChanged += onMatchRoomStateChanged;
         }
 
-        private void onStatusChanged(ValueChangedEvent<MatchmakingRoomStatus> status)
+        private void onMatchRoomStateChanged(MatchRoomState state) => Scheduler.Add(() =>
         {
-            switch (status.NewValue)
+            if (state is not MatchmakingRoomState matchmakingState)
+                return;
+
+            switch (matchmakingState.RoomStatus)
             {
                 case MatchmakingRoomStatus.WaitingForJoin:
                     text.Text = "Players are joining the room...";
@@ -66,6 +71,14 @@ namespace osu.Game.Online.Matchmaking
                     text.Text = "Select your beatmap!";
                     break;
             }
+        });
+
+        protected override void Dispose(bool isDisposing)
+        {
+            base.Dispose(isDisposing);
+
+            if (client.IsNotNull())
+                client.MatchRoomStateChanged -= onMatchRoomStateChanged;
         }
     }
 }

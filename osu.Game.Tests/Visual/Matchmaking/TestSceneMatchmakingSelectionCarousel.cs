@@ -25,7 +25,7 @@ namespace osu.Game.Tests.Visual.Matchmaking
                 Anchor = Anchor.Centre,
                 Origin = Anchor.Centre,
                 Size = new Vector2(700, 500),
-                Child = carousel = new MatchmakingSelectionCarousel()
+                Child = carousel = new MatchmakingSelectionCarousel
                 {
                     Anchor = Anchor.Centre,
                     Origin = Anchor.Centre,

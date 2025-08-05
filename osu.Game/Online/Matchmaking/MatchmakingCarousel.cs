@@ -3,6 +3,7 @@
 
 using System;
 using osu.Framework.Allocation;
+using osu.Framework.Extensions.ObjectExtensions;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Input.Events;
@@ -100,13 +101,21 @@ namespace osu.Game.Online.Matchmaking
                 case MatchmakingRoomStatus.WaitForSelection:
                     scroll.ScrollTo(selectionCarousel);
                     using (BeginDelayedSequence(1000))
-                        selectionCarousel.BeginScroll(matchmakingState.CandidateItems, matchmakingState.GameplayItem, 4000);
+                        selectionCarousel.BeginScroll(matchmakingState.CandidateItems, matchmakingState.GameplayItem!, 4000);
                     break;
             }
         });
 
         public void ApplyScoreChanges(params MatchmakingScoreChange[] changes)
             => playerList.ApplyScoreChanges(changes);
+
+        protected override void Dispose(bool isDisposing)
+        {
+            base.Dispose(isDisposing);
+
+            if (client.IsNotNull())
+                client.MatchRoomStateChanged -= onMatchRoomStateChanged;
+        }
 
         private class NoUserScrollContainer : OsuScrollContainer
         {

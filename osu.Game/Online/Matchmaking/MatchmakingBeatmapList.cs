@@ -5,7 +5,6 @@ using osu.Framework.Allocation;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Game.Graphics.Containers;
-using osu.Game.Online.Multiplayer;
 using osu.Game.Online.Rooms;
 using osuTK;
 
@@ -13,9 +12,6 @@ namespace osu.Game.Online.Matchmaking
 {
     public class MatchmakingBeatmapList : CompositeDrawable
     {
-        [Resolved]
-        private MultiplayerClient client { get; set; } = null!;
-
         private readonly MultiplayerPlaylistItem[] playlist;
         private FillFlowContainer<MatchmakingBeatmapPanel> panels = null!;
 

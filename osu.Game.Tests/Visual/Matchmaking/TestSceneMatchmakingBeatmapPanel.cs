@@ -12,15 +12,13 @@ namespace osu.Game.Tests.Visual.Matchmaking
 {
     public class TestSceneMatchmakingBeatmapPanel : MultiplayerTestScene
     {
-        private MatchmakingBeatmapPanel panel = null!;
-
         public override void SetUpSteps()
         {
             base.SetUpSteps();
 
             AddStep("add beatmap panel", () =>
             {
-                Child = panel = new MatchmakingBeatmapPanel(new MultiplayerPlaylistItem { ID = 1, StarRating = 5.3 })
+                Child = new MatchmakingBeatmapPanel(new MultiplayerPlaylistItem { ID = 1, StarRating = 5.3 })
                 {
                     Anchor = Anchor.Centre,
                     Origin = Anchor.Centre,

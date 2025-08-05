@@ -4,6 +4,7 @@
 using System;
 using System.Linq;
 using NUnit.Framework;
+using osu.Framework.Extensions;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Screens;
@@ -75,17 +76,23 @@ namespace osu.Game.Tests.Visual.Matchmaking
         [Test]
         public void TestGameplayFlow()
         {
-            AddWaitStep("wait", 3);
+            AddWaitStep("wait", 5);
 
             // Initial "ready" status of the room".
 
-            AddStep("set joined status", () => screen.SetStatus(MatchmakingRoomStatus.WaitForNextRound));
-            AddWaitStep("wait", 3);
+            AddStep("wait for next round", () => MultiplayerClient.ChangeMatchRoomState(new MatchmakingRoomState
+            {
+                RoomStatus = MatchmakingRoomStatus.WaitForNextRound
+            }).WaitSafely());
+            AddWaitStep("wait", 5);
 
             // Next round starts with picks.
 
-            AddStep("request pick", () => screen.SetStatus(MatchmakingRoomStatus.Pick));
-            AddWaitStep("wait", 3);
+            AddStep("pick", () => MultiplayerClient.ChangeMatchRoomState(new MatchmakingRoomState
+            {
+                RoomStatus = MatchmakingRoomStatus.Pick
+            }).WaitSafely());
+            AddWaitStep("wait", 5);
 
             // Make some selections
 
@@ -103,18 +110,38 @@ namespace osu.Game.Tests.Visual.Matchmaking
 
             // Lock in the gameplay beatmap
 
-            // Todo:
+            AddStep("wait for selection", () =>
+            {
+                MultiplayerPlaylistItem[] beatmaps = Enumerable.Range(1, 50).Select(i => new MultiplayerPlaylistItem
+                {
+                    ID = i,
+                    BeatmapID = i,
+                    StarRating = i / 10.0,
+                }).ToArray();
+
+                MultiplayerClient.ChangeMatchRoomState(new MatchmakingRoomState
+                {
+                    RoomStatus = MatchmakingRoomStatus.WaitForSelection,
+                    CandidateItems = beatmaps,
+                    GameplayItem = beatmaps[0]
+                }).WaitSafely();
+            });
+
+            AddWaitStep("wait", 25);
 
             // Prepare gameplay.
 
-            AddStep("set wait for start status", () => screen.SetStatus(MatchmakingRoomStatus.WaitForStart));
-            AddWaitStep("wait", 3);
+            AddStep("wait for start", () => MultiplayerClient.ChangeMatchRoomState(new MatchmakingRoomState
+            {
+                RoomStatus = MatchmakingRoomStatus.WaitForStart
+            }).WaitSafely());
+            AddWaitStep("wait", 5);
 
             // Start gameplay.
 
-            AddStep("start gameplay", () => screen.SetStatus(MatchmakingRoomStatus.InGameplay));
+            AddStep("start gameplay", () => MultiplayerClient.StartMatch().WaitSafely());
             // AddUntilStep("wait for player", () => (Stack.CurrentScreen as Player)?.IsLoaded == true);
-            AddWaitStep("wait", 3);
+            AddWaitStep("wait", 5);
 
             // Finish gameplay.
 
@@ -142,7 +169,10 @@ namespace osu.Game.Tests.Visual.Matchmaking
                 screen.ApplyScoreChanges(changes);
             });
 
-            AddStep("set wait for return status", () => screen.SetStatus(MatchmakingRoomStatus.WaitForReturn));
+            AddStep("wait for return", () => MultiplayerClient.ChangeMatchRoomState(new MatchmakingRoomState
+            {
+                RoomStatus = MatchmakingRoomStatus.WaitForReturn
+            }).WaitSafely());
         }
     }
 }

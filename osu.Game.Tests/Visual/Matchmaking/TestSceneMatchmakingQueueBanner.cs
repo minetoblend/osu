@@ -13,13 +13,11 @@ namespace osu.Game.Tests.Visual.Matchmaking
 {
     public class TestSceneMatchmakingQueueBanner : MultiplayerTestScene
     {
-        private MatchmakingQueueBanner banner = null!;
-
         public override void SetUpSteps()
         {
             base.SetUpSteps();
 
-            AddStep("add banner", () => Child = banner = new MatchmakingQueueBanner
+            AddStep("add banner", () => Child = new MatchmakingQueueBanner
             {
                 Anchor = Anchor.Centre,
                 Origin = Anchor.Centre

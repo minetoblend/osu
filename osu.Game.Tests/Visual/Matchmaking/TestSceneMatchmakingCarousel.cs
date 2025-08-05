@@ -20,8 +20,6 @@ namespace osu.Game.Tests.Visual.Matchmaking
         private const int user_count = 8;
         private const int beatmap_count = 50;
 
-        private MatchmakingCarousel carousel = null!;
-
         public override void SetUpSteps()
         {
             base.SetUpSteps();
@@ -46,7 +44,7 @@ namespace osu.Game.Tests.Visual.Matchmaking
                     StarRating = i / 10.0
                 }).ToArray();
 
-                Child = carousel = new MatchmakingCarousel(users, beatmaps)
+                Child = new MatchmakingCarousel(users, beatmaps)
                 {
                     Anchor = Anchor.Centre,
                     Origin = Anchor.Centre,

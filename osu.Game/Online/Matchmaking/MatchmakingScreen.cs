@@ -41,8 +41,6 @@ namespace osu.Game.Online.Matchmaking
         private MultiplayerClient client { get; set; } = null!;
 
         private readonly MultiplayerRoom room;
-
-        private MatchmakingRoomStatusDisplay statusDisplay = null!;
         private MatchmakingCarousel carousel = null!;
 
         public MatchmakingScreen(MultiplayerRoom room)
@@ -84,7 +82,7 @@ namespace osu.Game.Online.Matchmaking
                             Content = new Drawable[]?[]
                             {
                                 [
-                                    statusDisplay = new MatchmakingRoomStatusDisplay
+                                    new MatchmakingRoomStatusDisplay
                                     {
                                         Anchor = Anchor.Centre,
                                         Origin = Anchor.Centre,
@@ -148,19 +146,12 @@ namespace osu.Game.Online.Matchmaking
         {
             if (state is not MatchmakingRoomState matchmakingState)
                 return;
-
-            SetStatus(matchmakingState.RoomStatus);
         });
 
         private void onLoadRequested() => Scheduler.Add(() =>
         {
             this.Push(new MultiplayerPlayerLoader(() => new MultiplayerPlayer(new Room(room), new PlaylistItem(client.Room!.CurrentPlaylistItem), room.Users.ToArray())));
         });
-
-        public void SetStatus(MatchmakingRoomStatus status)
-        {
-            statusDisplay.Status.Value = status;
-        }
 
         public void ApplyScoreChanges(params MatchmakingScoreChange[] changes)
             => carousel.ApplyScoreChanges(changes);

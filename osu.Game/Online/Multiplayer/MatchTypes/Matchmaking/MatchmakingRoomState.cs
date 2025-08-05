@@ -16,12 +16,12 @@ namespace osu.Game.Online.Multiplayer.MatchTypes.Matchmaking
         /// All playlist items that were picked as gameplay candidates.
         /// </summary>
         [Key(1)]
-        public MultiplayerPlaylistItem[] CandidateItems { get; set; }
+        public MultiplayerPlaylistItem[] CandidateItems { get; set; } = [];
 
         /// <summary>
         /// The gameplay playlist item.
         /// </summary>
         [Key(2)]
-        public MultiplayerPlaylistItem GameplayItem { get; set; }
+        public MultiplayerPlaylistItem? GameplayItem { get; set; }
     }
 }
