@@ -18,7 +18,6 @@ namespace osu.Game.Tests.Visual.Matchmaking
     public class TestSceneMatchmakingCarousel : MultiplayerTestScene
     {
         private const int user_count = 8;
-        private const int beatmap_count = 50;
 
         public override void SetUpSteps()
         {
@@ -33,6 +32,8 @@ namespace osu.Game.Tests.Visual.Matchmaking
                     BeatmapID = i,
                     StarRating = i / 10.0,
                 })).ToArray();
+
+                JoinRoom(room);
             });
 
             WaitForJoined();

@@ -16,6 +16,9 @@ namespace osu.Game.Tests.Visual.Matchmaking
         {
             base.SetUpSteps();
 
+            AddStep("join room", () => JoinRoom(CreateDefaultRoom()));
+            WaitForJoined();
+
             AddStep("create display", () => Child = new MatchmakingRoomStatusDisplay
             {
                 Anchor = Anchor.Centre,
