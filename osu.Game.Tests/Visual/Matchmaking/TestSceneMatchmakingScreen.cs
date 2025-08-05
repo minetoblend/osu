@@ -122,8 +122,7 @@ namespace osu.Game.Tests.Visual.Matchmaking
                 MultiplayerClient.ChangeMatchRoomState(new MatchmakingRoomState
                 {
                     RoomStatus = MatchmakingRoomStatus.WaitForSelection,
-                    CandidateItems = beatmaps,
-                    GameplayItem = beatmaps[0]
+                    CandidateItems = beatmaps.Select(b => b.ID).ToArray()
                 }).WaitSafely();
             });
 

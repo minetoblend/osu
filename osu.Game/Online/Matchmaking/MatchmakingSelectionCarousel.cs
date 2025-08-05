@@ -15,6 +15,8 @@ namespace osu.Game.Online.Matchmaking
 {
     public class MatchmakingSelectionCarousel : CompositeDrawable
     {
+        public const double TOTAL_TRANSFORM_TIME = scroll_delay + scroll_duration + finish_delay + finish_duration;
+
         /// <summary>
         /// Number of items visible on either side of the current item in the carousel at any one time.
         /// </summary>
@@ -24,6 +26,11 @@ namespace osu.Game.Online.Matchmaking
         /// Number of cycles of the full list of items before the final item should be presented.
         /// </summary>
         private const int cycles = 5;
+
+        private const double scroll_delay = 1000;
+        private const double scroll_duration = 4000;
+        private const double finish_delay = 250;
+        private const double finish_duration = 1000;
 
         private readonly Bindable<float> currentPosition = new Bindable<float>();
         private Container<MatchmakingBeatmapPanel> panels = null!;
@@ -63,7 +70,7 @@ namespace osu.Game.Online.Matchmaking
             currentPosition.BindValueChanged(updatePosition, true);
         }
 
-        public void BeginScroll(MultiplayerPlaylistItem[] candidateItems, MultiplayerPlaylistItem item, double duration)
+        public void BeginScroll(MultiplayerPlaylistItem[] candidateItems, MultiplayerPlaylistItem item)
         {
             ClearTransforms();
 
@@ -76,12 +83,13 @@ namespace osu.Game.Online.Matchmaking
 
             int finalPosition = cycles * candidateItems.Length + Array.FindIndex(candidateItems, i => i.Equals(item));
 
-            this.TransformBindableTo(currentPosition, finalPosition, duration, Easing.OutQuint)
+            this.Delay(scroll_delay)
+                .TransformBindableTo(currentPosition, finalPosition, scroll_duration, Easing.OutQuint)
                 .Finally(_ =>
                 {
                     panels[panels.Count / 2]
-                        .Delay(250)
-                        .ScaleTo(new Vector2(1.5f), 1000, Easing.OutQuint);
+                        .Delay(finish_delay)
+                        .ScaleTo(new Vector2(1.5f), finish_duration, Easing.OutQuint);
                 });
         }
 

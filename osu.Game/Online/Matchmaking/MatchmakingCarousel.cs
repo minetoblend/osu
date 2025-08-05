@@ -2,6 +2,7 @@
 // See the LICENCE file in the repository root for full licence text.
 
 using System;
+using System.Linq;
 using osu.Framework.Allocation;
 using osu.Framework.Extensions.ObjectExtensions;
 using osu.Framework.Graphics;
@@ -101,8 +102,7 @@ namespace osu.Game.Online.Matchmaking
 
                 case MatchmakingRoomStatus.WaitForSelection:
                     scroll.ScrollTo(selectionCarousel);
-                    using (BeginDelayedSequence(1000))
-                        selectionCarousel.BeginScroll(matchmakingState.CandidateItems, matchmakingState.GameplayItem!, 4000);
+                    selectionCarousel.BeginScroll(matchmakingState.CandidateItems.Select(item => client.Room!.Playlist.Single(i => i.ID == item)).ToArray(), client.Room!.CurrentPlaylistItem);
                     break;
             }
         });
