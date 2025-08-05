@@ -7,6 +7,7 @@ using osu.Framework.Bindables;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Game.Online.Rooms;
+using osuTK;
 
 namespace osu.Game.Online.Matchmaking
 {
@@ -15,7 +16,7 @@ namespace osu.Game.Online.Matchmaking
         /// <summary>
         /// Number of items visible on either side of the current item in the carousel at any one time.
         /// </summary>
-        private const int visible_extent = 3;
+        private const int visible_extent = 8;
 
         /// <summary>
         /// Number of cycles of the full list of items before the final item should be presented.
@@ -62,9 +63,12 @@ namespace osu.Game.Online.Matchmaking
         {
             panels.Clear();
 
-            float itemsPos = pos.NewValue % items.Length;
-            int firstVisibleIndex = (int)itemsPos - visible_extent;
-            int lastVisibleIndex = (int)itemsPos + visible_extent;
+            if (items.Length == 0)
+                return;
+
+            float centrePos = pos.NewValue % items.Length;
+            int firstVisibleIndex = (int)centrePos - visible_extent;
+            int lastVisibleIndex = (int)centrePos + visible_extent;
 
             for (int i = firstVisibleIndex; i <= lastVisibleIndex; i++)
             {
@@ -76,11 +80,14 @@ namespace osu.Game.Online.Matchmaking
                 while (itemIndex >= items.Length)
                     itemIndex -= items.Length;
 
+                float distFromCentre = (i - centrePos) / visible_extent;
+
                 panels.Add(new MatchmakingBeatmapPanel(items[itemIndex])
                 {
                     Anchor = Anchor.Centre,
                     Origin = Anchor.Centre,
-                    AllowSelection = false
+                    AllowSelection = false,
+                    Scale = new Vector2(Math.Clamp(1f - Math.Abs(distFromCentre), 0f, 1))
                 });
             }
         }
