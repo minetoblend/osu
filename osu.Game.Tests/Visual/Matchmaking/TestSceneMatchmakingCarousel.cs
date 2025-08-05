@@ -61,6 +61,8 @@ namespace osu.Game.Tests.Visual.Matchmaking
             AddWaitStep("wait for scroll", 5);
             AddStep("set pick status", () => carousel.SetStatus(MatchmakingRoomStatus.Pick));
             AddWaitStep("wait for scroll", 5);
+            AddStep("set wait for selection status", () => carousel.SetStatus(MatchmakingRoomStatus.WaitForSelection));
+            AddWaitStep("wait for scroll", 5);
             AddStep("set wait for next round status", () => carousel.SetStatus(MatchmakingRoomStatus.WaitForNextRound));
         }
     }

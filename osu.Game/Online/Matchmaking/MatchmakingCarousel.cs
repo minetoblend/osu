@@ -21,6 +21,7 @@ namespace osu.Game.Online.Matchmaking
         private OsuScrollContainer scroll = null!;
         private MatchmakingPlayerList playerList = null!;
         private MatchmakingBeatmapList beatmapList = null!;
+        private MatchmakingSelectionCarousel selectionCarousel = null!;
 
         public MatchmakingCarousel(MultiplayerRoomUser[] users, MultiplayerPlaylistItem[] playlist)
         {
@@ -56,6 +57,14 @@ namespace osu.Game.Online.Matchmaking
                             {
                                 RelativeSizeAxes = Axes.Both,
                             }
+                        },
+                        new WidthReferenceContainer(() => scroll)
+                        {
+                            RelativeSizeAxes = Axes.Y,
+                            Child = selectionCarousel = new MatchmakingSelectionCarousel
+                            {
+                                RelativeSizeAxes = Axes.Both
+                            }
                         }
                     }
                 }
@@ -76,7 +85,7 @@ namespace osu.Game.Online.Matchmaking
                     break;
 
                 case MatchmakingRoomStatus.WaitForSelection:
-                    // Todo:
+                    scroll.ScrollTo(selectionCarousel);
                     break;
             }
         }

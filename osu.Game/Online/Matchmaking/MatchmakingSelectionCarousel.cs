@@ -82,8 +82,8 @@ namespace osu.Game.Online.Matchmaking
 
                 panels.Add(new MatchmakingBeatmapPanel(items[itemIndex])
                 {
-                    Anchor = Anchor.TopCentre,
-                    Origin = Anchor.TopCentre,
+                    Anchor = Anchor.Centre,
+                    Origin = Anchor.Centre,
                     AllowSelection = false
                 });
             }
