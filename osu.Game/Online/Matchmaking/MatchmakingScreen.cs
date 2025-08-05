@@ -160,7 +160,6 @@ namespace osu.Game.Online.Matchmaking
         public void SetStatus(MatchmakingRoomStatus status)
         {
             statusDisplay.Status.Value = status;
-            carousel.SetStatus(status);
         }
 
         public void ApplyScoreChanges(params MatchmakingScoreChange[] changes)

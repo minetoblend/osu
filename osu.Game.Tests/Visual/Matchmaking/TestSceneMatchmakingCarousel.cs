@@ -3,6 +3,7 @@
 
 using System.Linq;
 using NUnit.Framework;
+using osu.Framework.Extensions;
 using osu.Framework.Graphics;
 using osu.Game.Online.API.Requests.Responses;
 using osu.Game.Online.Matchmaking;
@@ -59,11 +60,40 @@ namespace osu.Game.Tests.Visual.Matchmaking
         public void TestStatus()
         {
             AddWaitStep("wait for scroll", 5);
-            AddStep("set pick status", () => carousel.SetStatus(MatchmakingRoomStatus.Pick));
+            AddStep("pick", () => MultiplayerClient.ChangeMatchRoomState(new MatchmakingRoomState
+            {
+                RoomStatus = MatchmakingRoomStatus.Pick
+            }).WaitSafely());
+
             AddWaitStep("wait for scroll", 5);
-            AddStep("set wait for selection status", () => carousel.SetStatus(MatchmakingRoomStatus.WaitForSelection));
-            AddWaitStep("wait for scroll", 5);
-            AddStep("set wait for next round status", () => carousel.SetStatus(MatchmakingRoomStatus.WaitForNextRound));
+            AddStep("wait for selection", () =>
+            {
+                MultiplayerPlaylistItem[] beatmaps = Enumerable.Range(1, 50).Select(i => new MultiplayerPlaylistItem
+                {
+                    ID = i,
+                    BeatmapID = i,
+                    StarRating = i / 10.0,
+                }).ToArray();
+
+                MultiplayerClient.ChangeMatchRoomState(new MatchmakingRoomState
+                {
+                    RoomStatus = MatchmakingRoomStatus.WaitForSelection,
+                    CandidateItems = beatmaps,
+                    GameplayItem = beatmaps[0]
+                }).WaitSafely();
+            });
+
+            AddWaitStep("wait for scroll", 25);
+            AddStep("wait for start", () => MultiplayerClient.ChangeMatchRoomState(new MatchmakingRoomState
+            {
+                RoomStatus = MatchmakingRoomStatus.WaitForStart
+            }).WaitSafely());
+
+            AddWaitStep("wait for selection", 5);
+            AddStep("wait for next round", () => MultiplayerClient.ChangeMatchRoomState(new MatchmakingRoomState
+            {
+                RoomStatus = MatchmakingRoomStatus.WaitForNextRound
+            }).WaitSafely());
         }
     }
 }

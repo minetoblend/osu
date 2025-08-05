@@ -15,6 +15,9 @@ namespace osu.Game.Online.Matchmaking
 {
     public class MatchmakingCarousel : CompositeDrawable
     {
+        [Resolved]
+        private MultiplayerClient client { get; set; } = null!;
+
         private readonly MultiplayerRoomUser[] users;
         private readonly MultiplayerPlaylistItem[] playlist;
 
@@ -71,9 +74,19 @@ namespace osu.Game.Online.Matchmaking
             };
         }
 
-        public void SetStatus(MatchmakingRoomStatus status)
+        protected override void LoadComplete()
         {
-            switch (status)
+            base.LoadComplete();
+
+            client.MatchRoomStateChanged += onMatchRoomStateChanged;
+        }
+
+        private void onMatchRoomStateChanged(MatchRoomState state) => Scheduler.Add(() =>
+        {
+            if (state is not MatchmakingRoomState matchmakingState)
+                return;
+
+            switch (matchmakingState.RoomStatus)
             {
                 case MatchmakingRoomStatus.WaitForReturn:
                 case MatchmakingRoomStatus.WaitForNextRound:
@@ -86,9 +99,11 @@ namespace osu.Game.Online.Matchmaking
 
                 case MatchmakingRoomStatus.WaitForSelection:
                     scroll.ScrollTo(selectionCarousel);
+                    using (BeginDelayedSequence(1000))
+                        selectionCarousel.BeginScroll(matchmakingState.CandidateItems, matchmakingState.GameplayItem, 4000);
                     break;
             }
-        }
+        });
 
         public void ApplyScoreChanges(params MatchmakingScoreChange[] changes)
             => playerList.ApplyScoreChanges(changes);

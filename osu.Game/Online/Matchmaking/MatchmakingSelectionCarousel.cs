@@ -22,11 +22,6 @@ namespace osu.Game.Online.Matchmaking
         /// </summary>
         private const int cycles = 5;
 
-        /// <summary>
-        /// How long before the final item should be presented.
-        /// </summary>
-        private const double duration = 5000;
-
         private readonly Bindable<float> currentPosition = new Bindable<float>();
         private Container<MatchmakingBeatmapPanel> panels = null!;
         private MultiplayerPlaylistItem[] items = [];
@@ -48,12 +43,13 @@ namespace osu.Game.Online.Matchmaking
             currentPosition.BindValueChanged(updatePosition, true);
         }
 
-        public void BeginScroll(MultiplayerPlaylistItem[] candidateItems, MultiplayerPlaylistItem item)
+        public void BeginScroll(MultiplayerPlaylistItem[] candidateItems, MultiplayerPlaylistItem item, double duration)
         {
             ClearTransforms();
 
             items = candidateItems;
             currentPosition.Value = 0;
+            currentPosition.TriggerChange();
 
             if (candidateItems.Length == 0)
                 return;

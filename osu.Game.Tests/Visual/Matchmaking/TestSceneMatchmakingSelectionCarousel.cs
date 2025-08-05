@@ -46,7 +46,7 @@ namespace osu.Game.Tests.Visual.Matchmaking
                     StarRating = i / 10.0,
                 }).ToArray();
 
-                carousel.BeginScroll(beatmaps, beatmaps[0]);
+                carousel.BeginScroll(beatmaps, beatmaps[0], 5000);
             });
         }
 
@@ -62,7 +62,7 @@ namespace osu.Game.Tests.Visual.Matchmaking
                     StarRating = i / 10.0,
                 }).ToArray();
 
-                carousel.BeginScroll(beatmaps, beatmaps[0]);
+                carousel.BeginScroll(beatmaps, beatmaps[0], 5000);
             });
         }
 
@@ -78,7 +78,7 @@ namespace osu.Game.Tests.Visual.Matchmaking
                     StarRating = i / 10.0,
                 }).ToArray();
 
-                carousel.BeginScroll(beatmaps, beatmaps[0]);
+                carousel.BeginScroll(beatmaps, beatmaps[0], 5000);
             });
         }
     }
