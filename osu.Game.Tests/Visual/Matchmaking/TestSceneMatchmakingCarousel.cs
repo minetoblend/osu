@@ -24,7 +24,17 @@ namespace osu.Game.Tests.Visual.Matchmaking
         {
             base.SetUpSteps();
 
-            AddStep("join room", () => JoinRoom(CreateDefaultRoom()));
+            AddStep("join room", () =>
+            {
+                var room = CreateDefaultRoom();
+                room.Playlist = Enumerable.Range(1, 50).Select(i => new PlaylistItem(new MultiplayerPlaylistItem
+                {
+                    ID = i,
+                    BeatmapID = i,
+                    StarRating = i / 10.0,
+                })).ToArray();
+            });
+
             WaitForJoined();
 
             AddStep("add carousel", () =>
@@ -37,14 +47,7 @@ namespace osu.Game.Tests.Visual.Matchmaking
                     }
                 }).ToArray();
 
-                var beatmaps = Enumerable.Range(1, beatmap_count).Select(i => new MultiplayerPlaylistItem
-                {
-                    ID = i,
-                    BeatmapID = i,
-                    StarRating = i / 10.0
-                }).ToArray();
-
-                Child = new MatchmakingCarousel(users, beatmaps)
+                Child = new MatchmakingCarousel(users)
                 {
                     Anchor = Anchor.Centre,
                     Origin = Anchor.Centre,
@@ -60,11 +63,11 @@ namespace osu.Game.Tests.Visual.Matchmaking
             AddWaitStep("wait for scroll", 5);
             AddStep("pick", () => MultiplayerClient.ChangeMatchRoomState(new MatchmakingRoomState
             {
-                RoomStatus = MatchmakingRoomStatus.Pick
+                RoomStatus = MatchmakingRoomStatus.PickBeatmap
             }).WaitSafely());
 
             AddWaitStep("wait for scroll", 5);
-            AddStep("wait for selection", () =>
+            AddStep("selection", () =>
             {
                 MultiplayerPlaylistItem[] beatmaps = Enumerable.Range(1, 50).Select(i => new MultiplayerPlaylistItem
                 {
@@ -75,21 +78,15 @@ namespace osu.Game.Tests.Visual.Matchmaking
 
                 MultiplayerClient.ChangeMatchRoomState(new MatchmakingRoomState
                 {
-                    RoomStatus = MatchmakingRoomStatus.WaitForSelection,
+                    RoomStatus = MatchmakingRoomStatus.Selection,
                     CandidateItems = beatmaps.Select(b => b.ID).ToArray()
                 }).WaitSafely();
             });
 
             AddWaitStep("wait for scroll", 25);
-            AddStep("wait for start", () => MultiplayerClient.ChangeMatchRoomState(new MatchmakingRoomState
+            AddStep("round start", () => MultiplayerClient.ChangeMatchRoomState(new MatchmakingRoomState
             {
-                RoomStatus = MatchmakingRoomStatus.WaitForStart
-            }).WaitSafely());
-
-            AddWaitStep("wait for selection", 5);
-            AddStep("wait for next round", () => MultiplayerClient.ChangeMatchRoomState(new MatchmakingRoomState
-            {
-                RoomStatus = MatchmakingRoomStatus.WaitForNextRound
+                RoomStatus = MatchmakingRoomStatus.RoundStart
             }).WaitSafely());
         }
     }

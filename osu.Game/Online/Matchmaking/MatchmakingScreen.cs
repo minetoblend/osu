@@ -110,7 +110,7 @@ namespace osu.Game.Online.Matchmaking
                                                 RelativeSizeAxes = Axes.Both,
                                                 Colour = Color4Extensions.FromHex(@"3e3a44") // Temporary.
                                             },
-                                            carousel = new MatchmakingCarousel(room.Users.ToArray(), room.Playlist.ToArray())
+                                            carousel = new MatchmakingCarousel(room.Users.ToArray())
                                             {
                                                 RelativeSizeAxes = Axes.Both
                                             }

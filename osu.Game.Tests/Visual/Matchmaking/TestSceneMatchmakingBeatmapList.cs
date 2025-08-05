@@ -17,24 +17,29 @@ namespace osu.Game.Tests.Visual.Matchmaking
         {
             base.SetUpSteps();
 
-            AddStep("join room", () => JoinRoom(CreateDefaultRoom()));
-            WaitForJoined();
-
-            AddStep("add list", () =>
+            AddStep("join room", () =>
             {
-                MultiplayerPlaylistItem[] beatmaps = Enumerable.Range(1, 50).Select(i => new MultiplayerPlaylistItem
+                var room = CreateDefaultRoom();
+                room.Playlist = Enumerable.Range(1, 50).Select(i => new PlaylistItem(new MultiplayerPlaylistItem
                 {
                     ID = i,
                     BeatmapID = i,
                     StarRating = i / 10.0,
-                }).ToArray();
+                })).ToArray();
 
+                JoinRoom(room);
+            });
+
+            WaitForJoined();
+
+            AddStep("add list", () =>
+            {
                 Child = new Container
                 {
                     Anchor = Anchor.Centre,
                     Origin = Anchor.Centre,
                     Size = new Vector2(700, 500),
-                    Child = new MatchmakingBeatmapList(beatmaps)
+                    Child = new MatchmakingBeatmapList
                     {
                         Anchor = Anchor.Centre,
                         Origin = Anchor.Centre,

@@ -2,9 +2,11 @@
 // See the LICENCE file in the repository root for full licence text.
 
 using osu.Framework.Allocation;
+using osu.Framework.Extensions.ObjectExtensions;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Game.Graphics.Containers;
+using osu.Game.Online.Multiplayer;
 using osu.Game.Online.Rooms;
 using osuTK;
 
@@ -12,13 +14,10 @@ namespace osu.Game.Online.Matchmaking
 {
     public class MatchmakingBeatmapList : CompositeDrawable
     {
-        private readonly MultiplayerPlaylistItem[] playlist;
-        private FillFlowContainer<MatchmakingBeatmapPanel> panels = null!;
+        [Resolved]
+        private MultiplayerClient client { get; set; } = null!;
 
-        public MatchmakingBeatmapList(MultiplayerPlaylistItem[] playlist)
-        {
-            this.playlist = playlist;
-        }
+        private FillFlowContainer<MatchmakingBeatmapPanel> panels = null!;
 
         [BackgroundDependencyLoader]
         private void load()
@@ -33,17 +32,52 @@ namespace osu.Game.Online.Matchmaking
                     Spacing = new Vector2(20, 20)
                 }
             };
+        }
 
-            foreach (MultiplayerPlaylistItem item in playlist)
+        protected override void LoadComplete()
+        {
+            base.LoadComplete();
+
+            client.ItemAdded += onItemAdded;
+            client.ItemChanged += onItemChanged;
+            client.ItemRemoved += onItemRemoved;
+
+            foreach (var item in client.Room!.Playlist)
+                onItemAdded(item);
+        }
+
+        private void onItemAdded(MultiplayerPlaylistItem item) => Scheduler.Add(() =>
+        {
+            var panel = new MatchmakingBeatmapPanel(item)
             {
-                var panel = new MatchmakingBeatmapPanel(item)
-                {
-                    Anchor = Anchor.TopCentre,
-                    Origin = Anchor.TopCentre
-                };
+                Anchor = Anchor.TopCentre,
+                Origin = Anchor.TopCentre
+            };
 
-                panels.Add(panel);
-                panels.SetLayoutPosition(panel, (float)item.StarRating);
+            panels.Add(panel);
+            panels.SetLayoutPosition(panel, (float)item.StarRating);
+        });
+
+        private void onItemChanged(MultiplayerPlaylistItem item) => Scheduler.Add(() =>
+        {
+            if (item.Expired)
+                panels.RemoveAll(p => p.Item.ID == item.ID, true);
+        });
+
+        private void onItemRemoved(long itemId) => Scheduler.Add(() =>
+        {
+            panels.RemoveAll(p => p.Item.ID == itemId, true);
+        });
+
+        protected override void Dispose(bool isDisposing)
+        {
+            base.Dispose(isDisposing);
+
+            if (client.IsNotNull())
+            {
+                client.ItemAdded -= onItemAdded;
+                client.ItemChanged -= onItemChanged;
+                client.ItemRemoved -= onItemRemoved;
             }
         }
     }
