@@ -155,7 +155,7 @@ namespace osu.Game.Online.Matchmaking
             if (state is not MatchmakingRoomState matchmakingState)
                 return;
 
-            if (matchmakingState.RoomStatus == MatchmakingRoomStatus.WaitForSelection)
+            if (matchmakingState.RoomStatus == MatchmakingRoomStatus.Selection)
                 this.Delay(MatchmakingSelectionCarousel.TOTAL_TRANSFORM_TIME).Schedule(updateGameplayState);
         });
 
@@ -171,6 +171,9 @@ namespace osu.Game.Online.Matchmaking
             Beatmap.Value = beatmapManager.GetWorkingBeatmap(localBeatmap);
             Ruleset.Value = ruleset;
             Mods.Value = item.RequiredMods.Select(m => m.ToMod(rulesetInstance)).ToArray();
+
+            // TODO: Very temporary!
+            client.ChangeBeatmapAvailability(BeatmapAvailability.LocallyAvailable()).FireAndForget();
         }
 
         private void onLoadRequested() => Scheduler.Add(() =>
@@ -189,6 +192,22 @@ namespace osu.Game.Online.Matchmaking
 
             client.LeaveRoom();
             return false;
+        }
+
+        public override void OnResuming(ScreenTransitionEvent e)
+        {
+            base.OnResuming(e);
+
+            if (e.Last is not MultiplayerPlayerLoader playerLoader)
+                return;
+
+            if (!playerLoader.GameplayPassed)
+            {
+                client.AbortGameplay().FireAndForget();
+                return;
+            }
+
+            client.ChangeState(MultiplayerUserState.Idle);
         }
 
         protected override void Dispose(bool isDisposing)

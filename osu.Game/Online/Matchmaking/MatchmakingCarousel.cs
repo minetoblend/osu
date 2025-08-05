@@ -91,16 +91,17 @@ namespace osu.Game.Online.Matchmaking
 
             switch (matchmakingState.RoomStatus)
             {
-                case MatchmakingRoomStatus.WaitForReturn:
-                case MatchmakingRoomStatus.WaitForNextRound:
+                case MatchmakingRoomStatus.Joining:
+                case MatchmakingRoomStatus.RoundStart:
+                case MatchmakingRoomStatus.Results:
                     scroll.ScrollTo(playerList);
                     break;
 
-                case MatchmakingRoomStatus.Pick:
+                case MatchmakingRoomStatus.PickBeatmap:
                     scroll.ScrollTo(beatmapList);
                     break;
 
-                case MatchmakingRoomStatus.WaitForSelection:
+                case MatchmakingRoomStatus.Selection:
                     scroll.ScrollTo(selectionCarousel);
                     selectionCarousel.BeginScroll(matchmakingState.CandidateItems.Select(item => client.Room!.Playlist.Single(i => i.ID == item)).ToArray(), client.Room!.CurrentPlaylistItem);
                     break;

@@ -6,35 +6,38 @@ namespace osu.Game.Online.Multiplayer.MatchTypes.Matchmaking
     public enum MatchmakingRoomStatus
     {
         /// <summary>
-        /// Waiting for all players to join the room.
+        /// Players are still joining the room.
         /// </summary>
-        WaitingForJoin,
+        Joining,
 
         /// <summary>
-        /// Waiting for all players to return from the results screen.
+        /// Next round is starting.
         /// </summary>
-        WaitForReturn,
-
-        /// <summary>
-        /// Waiting for the next round to begin.
-        /// </summary>
-        WaitForNextRound,
+        RoundStart,
 
         /// <summary>
         /// Players are selecting their beatmaps.
         /// </summary>
-        Pick,
+        PickBeatmap,
 
         /// <summary>
-        /// The beatmap to be played is being selected from the pick pool.
+        /// A beatmap from the pool is being selected by the server.
         /// </summary>
-        WaitForSelection,
+        Selection,
 
         /// <summary>
-        /// The next round is starting.
+        /// Gameplay is starting shortly.
         /// </summary>
-        WaitForStart,
+        PrepareGameplay,
 
-        InGameplay
+        /// <summary>
+        /// Gameplay is in progress.
+        /// </summary>
+        Gameplay,
+
+        /// <summary>
+        /// Some players are viewing results.
+        /// </summary>
+        Results
     }
 }

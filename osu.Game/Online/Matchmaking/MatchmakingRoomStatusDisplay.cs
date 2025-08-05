@@ -48,28 +48,32 @@ namespace osu.Game.Online.Matchmaking
 
             switch (matchmakingState.RoomStatus)
             {
-                case MatchmakingRoomStatus.WaitingForJoin:
+                case MatchmakingRoomStatus.Joining:
                     text.Text = "Players are joining the room...";
                     break;
 
-                case MatchmakingRoomStatus.WaitForReturn:
-                    text.Text = "Players are viewing the results...";
+                case MatchmakingRoomStatus.RoundStart:
+                    text.Text = "Next round starting shortly...";
                     break;
 
-                case MatchmakingRoomStatus.WaitForNextRound:
-                    text.Text = "Taking a short break before the next round...";
-                    break;
-
-                case MatchmakingRoomStatus.WaitForSelection:
-                    text.Text = "The next beatmap is being selected...";
-                    break;
-
-                case MatchmakingRoomStatus.WaitForStart:
-                    text.Text = "The next round is starting!";
-                    break;
-
-                case MatchmakingRoomStatus.Pick:
+                case MatchmakingRoomStatus.PickBeatmap:
                     text.Text = "Select your beatmap!";
+                    break;
+
+                case MatchmakingRoomStatus.Selection:
+                    text.Text = "And the next beatmap is...";
+                    break;
+
+                case MatchmakingRoomStatus.PrepareGameplay:
+                    text.Text = "Match is starting shortly...";
+                    break;
+
+                case MatchmakingRoomStatus.Gameplay:
+                    text.Text = "Match is in progress!";
+                    break;
+
+                case MatchmakingRoomStatus.Results:
+                    text.Text = "Players are viewing the results...";
                     break;
             }
         });
