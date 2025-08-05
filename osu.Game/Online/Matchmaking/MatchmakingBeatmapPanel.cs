@@ -30,10 +30,12 @@ namespace osu.Game.Online.Matchmaking
     {
         private const int panel_width = 300;
 
-        [Resolved]
-        private MultiplayerClient client { get; set; } = null!;
+        public bool AllowSelection { get; set; } = true;
 
         public readonly MultiplayerPlaylistItem Item;
+
+        [Resolved]
+        private MultiplayerClient client { get; set; } = null!;
 
         private Drawable background = null!;
         private FillFlowContainer<SelectionBadge> badges = null!;
@@ -126,18 +128,27 @@ namespace osu.Game.Online.Matchmaking
 
         protected override bool OnHover(HoverEvent e)
         {
+            if (!AllowSelection)
+                return false;
+
             background.FadeColour(Color4.SaddleBrown.Lighten(0.2f), 200);
             return true;
         }
 
         protected override void OnHoverLost(HoverLostEvent e)
         {
+            if (!AllowSelection)
+                return;
+
             background.FadeColour(Color4.SaddleBrown, 100);
             base.OnHoverLost(e);
         }
 
         protected override bool OnClick(ClickEvent e)
         {
+            if (!AllowSelection)
+                return false;
+
             background.FlashColour(Color4.SaddleBrown.Lighten(0.5f), 200, Easing.OutQuint);
             client.MatchmakingToggleSelection(Item.ID);
             return true;
