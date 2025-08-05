@@ -27,17 +27,9 @@ namespace osu.Game.Online.Matchmaking
         /// </summary>
         private const double duration = 5000;
 
-        private readonly MultiplayerPlaylistItem[] items;
-        private readonly int finalPosition;
-
         private readonly Bindable<float> currentPosition = new Bindable<float>();
         private Container<MatchmakingBeatmapPanel> panels = null!;
-
-        public MatchmakingSelectionCarousel(MultiplayerPlaylistItem[] items, MultiplayerPlaylistItem finalItem)
-        {
-            this.items = items;
-            finalPosition = cycles * items.Length + Array.FindIndex(items, i => i.Equals(finalItem));
-        }
+        private MultiplayerPlaylistItem[] items = [];
 
         [BackgroundDependencyLoader]
         private void load()
@@ -54,7 +46,19 @@ namespace osu.Game.Online.Matchmaking
             base.LoadComplete();
 
             currentPosition.BindValueChanged(updatePosition, true);
+        }
 
+        public void BeginScroll(MultiplayerPlaylistItem[] candidateItems, MultiplayerPlaylistItem item)
+        {
+            ClearTransforms();
+
+            items = candidateItems;
+            currentPosition.Value = 0;
+
+            if (candidateItems.Length == 0)
+                return;
+
+            int finalPosition = cycles * candidateItems.Length + Array.FindIndex(candidateItems, i => i.Equals(item));
             this.TransformBindableTo(currentPosition, finalPosition, duration, Easing.OutQuint);
         }
 
@@ -68,14 +72,13 @@ namespace osu.Game.Online.Matchmaking
 
             for (int i = firstVisibleIndex; i <= lastVisibleIndex; i++)
             {
-                int itemIndex;
+                int itemIndex = i;
 
-                if (i < 0)
-                    itemIndex = i + items.Length;
-                else if (i >= items.Length)
-                    itemIndex = i - items.Length;
-                else
-                    itemIndex = i;
+                while (itemIndex < 0)
+                    itemIndex += items.Length;
+
+                while (itemIndex >= items.Length)
+                    itemIndex -= items.Length;
 
                 panels.Add(new MatchmakingBeatmapPanel(items[itemIndex])
                 {
