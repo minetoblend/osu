@@ -320,22 +320,13 @@ namespace osu.Game.Online.Multiplayer
             connector?.Dispose();
         }
 
-        public override Task JoinMatchmakingQueue()
+        public override Task ToggleMatchmakingQueue()
         {
             if (!IsConnected.Value)
                 return Task.CompletedTask;
 
             Debug.Assert(connection != null);
-            return connection.InvokeAsync(nameof(IMultiplayerLoungeServer.JoinMatchmakingQueue));
-        }
-
-        public override Task LeaveMatchmakingQueue()
-        {
-            if (!IsConnected.Value)
-                return Task.CompletedTask;
-
-            Debug.Assert(connection != null);
-            return connection.InvokeAsync(nameof(IMultiplayerLoungeServer.LeaveMatchmakingQueue));
+            return connection.InvokeAsync(nameof(IMultiplayerLoungeServer.ToggleMatchmakingQueue));
         }
 
         public override Task MatchmakingToggleSelection(long playlistItemId)

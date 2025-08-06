@@ -486,13 +486,7 @@ namespace osu.Game.Screens.Menu
 
         private void loadSongSelect() => this.Push(new SoloSongSelect());
 
-        private void joinOrLeaveMatchmakingQueue()
-        {
-            if (multiplayerClient.IsInMatchmakingQueue)
-                multiplayerClient.LeaveMatchmakingQueue();
-            else
-                multiplayerClient.JoinMatchmakingQueue();
-        }
+        private void joinOrLeaveMatchmakingQueue() => multiplayerClient.ToggleMatchmakingQueue();
 
         private partial class MobileDisclaimerDialog : PopupDialog
         {
