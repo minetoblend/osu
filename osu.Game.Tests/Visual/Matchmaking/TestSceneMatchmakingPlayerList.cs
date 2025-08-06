@@ -4,11 +4,13 @@
 using System;
 using System.Linq;
 using NUnit.Framework;
+using osu.Framework.Extensions;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Game.Online.API.Requests.Responses;
 using osu.Game.Online.Matchmaking;
 using osu.Game.Online.Multiplayer;
+using osu.Game.Online.Multiplayer.MatchTypes.Matchmaking;
 using osu.Game.Tests.Visual.Multiplayer;
 using osuTK;
 
@@ -19,11 +21,13 @@ namespace osu.Game.Tests.Visual.Matchmaking
         private const int user_count = 8;
 
         private (MultiplayerRoomUser user, int score)[] userScores = null!;
-        private MatchmakingPlayerList list = null!;
 
         public override void SetUpSteps()
         {
             base.SetUpSteps();
+
+            AddStep("join room", () => JoinRoom(CreateDefaultRoom()));
+            WaitForJoined();
 
             AddStep("add list", () =>
             {
@@ -45,7 +49,7 @@ namespace osu.Game.Tests.Visual.Matchmaking
                     Anchor = Anchor.Centre,
                     Origin = Anchor.Centre,
                     Size = new Vector2(500, 500),
-                    Child = list = new MatchmakingPlayerList(userScores.Select(u => u.user).ToArray())
+                    Child = new MatchmakingPlayerList(userScores.Select(u => u.user).ToArray())
                     {
                         Anchor = Anchor.Centre,
                         Origin = Anchor.Centre,
@@ -60,8 +64,6 @@ namespace osu.Game.Tests.Visual.Matchmaking
         {
             AddStep("apply random changes", () =>
             {
-                MatchmakingScoreChange[] changes = new MatchmakingScoreChange[userScores.Length];
-
                 int[] deltas = Enumerable.Range(1, userScores.Length).ToArray();
                 new Random().Shuffle(deltas);
 
@@ -69,17 +71,17 @@ namespace osu.Game.Tests.Visual.Matchmaking
                     userScores[i] = (userScores[i].user, userScores[i].score + deltas[i]);
                 userScores = userScores.OrderByDescending(u => u.score).ToArray();
 
-                for (int i = 0; i < userScores.Length; i++)
+                MultiplayerClient.ChangeMatchRoomState(new MatchmakingRoomState
                 {
-                    changes[i] = new MatchmakingScoreChange
+                    UserScores =
                     {
-                        UserId = userScores[i].user.UserID,
-                        Rank = i + 1,
-                        Score = userScores[i].score
-                    };
-                }
-
-                list.ApplyScoreChanges(changes);
+                        Scores = userScores.Select((tuple, i) => new MatchmakingUserScore(tuple.user.UserID)
+                        {
+                            Points = tuple.score,
+                            Placement = i + 1
+                        }).ToDictionary(s => s.UserId)
+                    }
+                }).WaitSafely();
             });
         }
     }

@@ -7,14 +7,17 @@ using osu.Framework.Allocation;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Game.Online.Multiplayer;
+using osu.Game.Online.Multiplayer.MatchTypes.Matchmaking;
 using osuTK;
 
 namespace osu.Game.Online.Matchmaking
 {
     public class MatchmakingPlayerList : CompositeDrawable
     {
-        private readonly IList<MultiplayerRoomUser> users;
+        [Resolved]
+        private MultiplayerClient client { get; set; } = null!;
 
+        private readonly IList<MultiplayerRoomUser> users;
         private FillFlowContainer<MatchmakingPlayerPanel> panels = null!;
 
         public MatchmakingPlayerList(IList<MultiplayerRoomUser> users)
@@ -43,17 +46,24 @@ namespace osu.Game.Online.Matchmaking
             }
         }
 
-        public void ApplyScoreChanges(params MatchmakingScoreChange[] changes)
+        protected override void LoadComplete()
         {
-            foreach (var change in changes)
-            {
-                MatchmakingPlayerPanel panel = panels.Single(u => u.User.UserID == change.UserId);
+            base.LoadComplete();
 
-                panel.Score = change.Score;
-                panel.Rank = change.Rank;
-
-                panels.SetLayoutPosition(panel, panel.Rank);
-            }
+            client.MatchRoomStateChanged += onRoomStateChanged;
+            onRoomStateChanged(client.Room!.MatchState);
         }
+
+        private void onRoomStateChanged(MatchRoomState? state) => Scheduler.Add(() =>
+        {
+            if (state is not MatchmakingRoomState matchmakingState)
+                return;
+
+            foreach (var score in matchmakingState.UserScores.Scores.Values)
+            {
+                MatchmakingPlayerPanel panel = panels.Single(u => u.User.UserID == score.UserId);
+                panels.SetLayoutPosition(panel, score.Placement);
+            }
+        });
     }
 }

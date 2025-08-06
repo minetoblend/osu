@@ -154,8 +154,6 @@ namespace osu.Game.Tests.Visual.Matchmaking
 
             AddStep("add some scores", () =>
             {
-                MatchmakingScoreChange[] changes = new MatchmakingScoreChange[users.Length];
-
                 int[] deltas = Enumerable.Range(1, users.Length).ToArray();
                 new Random().Shuffle(deltas);
                 for (int i = 0; i < users.Length; i++)
@@ -163,17 +161,17 @@ namespace osu.Game.Tests.Visual.Matchmaking
 
                 MultiplayerRoomUser[] sortedUsers = users.Select((u, i) => (user: u, index: i)).OrderByDescending(item => scores[item.index]).Select(item => item.user).ToArray();
 
-                for (int i = 0; i < users.Length; i++)
+                MultiplayerClient.ChangeMatchRoomState(new MatchmakingRoomState
                 {
-                    changes[i] = new MatchmakingScoreChange
+                    UserScores =
                     {
-                        UserId = sortedUsers[i].UserID,
-                        Rank = i + 1,
-                        Score = scores[i]
-                    };
-                }
-
-                screen.ApplyScoreChanges(changes);
+                        Scores = sortedUsers.Select((tuple, i) => new MatchmakingUserScore(tuple.UserID)
+                        {
+                            Points = scores[i],
+                            Placement = i + 1
+                        }).ToDictionary(s => s.UserId)
+                    }
+                }).WaitSafely();
             });
         }
     }

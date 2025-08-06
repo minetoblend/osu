@@ -16,5 +16,8 @@ namespace osu.Game.Online.Multiplayer.MatchTypes.Matchmaking
         /// </summary>
         [Key(1)]
         public long[] CandidateItems { get; set; } = [];
+
+        [Key(2)]
+        public MatchmakingUserScoreList UserScores { get; set; } = new MatchmakingUserScoreList();
     }
 }

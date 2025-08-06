@@ -2,23 +2,26 @@
 // See the LICENCE file in the repository root for full licence text.
 
 using NUnit.Framework;
+using osu.Framework.Extensions;
 using osu.Framework.Graphics;
 using osu.Game.Online.API.Requests.Responses;
 using osu.Game.Online.Matchmaking;
 using osu.Game.Online.Multiplayer;
+using osu.Game.Online.Multiplayer.MatchTypes.Matchmaking;
 using osu.Game.Tests.Visual.Multiplayer;
 
 namespace osu.Game.Tests.Visual.Matchmaking
 {
     public class TestSceneMatchmakingPlayerPanel : MultiplayerTestScene
     {
-        private MatchmakingPlayerPanel panel = null!;
-
         public override void SetUpSteps()
         {
             base.SetUpSteps();
 
-            AddStep("add panel", () => Child = panel = new MatchmakingPlayerPanel(new MultiplayerRoomUser(1)
+            AddStep("join room", () => JoinRoom(CreateDefaultRoom()));
+            WaitForJoined();
+
+            AddStep("add panel", () => Child = new MatchmakingPlayerPanel(new MultiplayerRoomUser(1)
             {
                 User = new APIUser
                 {
@@ -32,15 +35,37 @@ namespace osu.Game.Tests.Visual.Matchmaking
         }
 
         [Test]
-        public void TestIncreaseRank()
+        public void TestIncreasePlacement()
         {
-            AddStep("increase rank", () => panel.Rank++);
+            int rank = 0;
+
+            AddStep("increase placement", () => MultiplayerClient.ChangeMatchRoomState(new MatchmakingRoomState
+            {
+                UserScores =
+                {
+                    Scores =
+                    {
+                        { 1, new MatchmakingUserScore(1) { Placement = ++rank } }
+                    }
+                }
+            }).WaitSafely());
         }
 
         [Test]
-        public void TestIncreaseScore()
+        public void TestIncreasePoints()
         {
-            AddStep("increase score", () => panel.Score++);
+            int points = 0;
+
+            AddStep("increase points", () => MultiplayerClient.ChangeMatchRoomState(new MatchmakingRoomState
+            {
+                UserScores =
+                {
+                    Scores =
+                    {
+                        { 1, new MatchmakingUserScore(1) { Placement = 1, Points = ++points } }
+                    }
+                }
+            }).WaitSafely());
         }
     }
 }

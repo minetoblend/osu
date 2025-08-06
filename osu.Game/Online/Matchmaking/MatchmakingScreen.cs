@@ -182,9 +182,6 @@ namespace osu.Game.Online.Matchmaking
             this.Push(new MultiplayerPlayerLoader(() => new MultiplayerPlayer(new Room(room), new PlaylistItem(client.Room!.CurrentPlaylistItem), room.Users.ToArray())));
         });
 
-        public void ApplyScoreChanges(params MatchmakingScoreChange[] changes)
-            => carousel.ApplyScoreChanges(changes);
-
         public override bool OnExiting(ScreenExitEvent e)
         {
             if (base.OnExiting(e))

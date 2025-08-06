@@ -105,9 +105,6 @@ namespace osu.Game.Online.Matchmaking
             }
         });
 
-        public void ApplyScoreChanges(params MatchmakingScoreChange[] changes)
-            => playerList.ApplyScoreChanges(changes);
-
         protected override void Dispose(bool isDisposing)
         {
             base.Dispose(isDisposing);

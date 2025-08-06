@@ -2,11 +2,13 @@
 // See the LICENCE file in the repository root for full licence text.
 
 using osu.Framework.Allocation;
+using osu.Framework.Extensions.ObjectExtensions;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Shapes;
 using osu.Game.Graphics.Sprites;
 using osu.Game.Online.Multiplayer;
+using osu.Game.Online.Multiplayer.MatchTypes.Matchmaking;
 using osuTK;
 using osuTK.Graphics;
 
@@ -16,10 +18,11 @@ namespace osu.Game.Online.Matchmaking
     {
         public readonly MultiplayerRoomUser User;
 
+        [Resolved]
+        private MultiplayerClient client { get; set; } = null!;
+
         private OsuSpriteText rankText = null!;
         private OsuSpriteText scoreText = null!;
-        private int rank;
-        private int score;
 
         public MatchmakingPlayerPanel(MultiplayerRoomUser user)
         {
@@ -59,7 +62,8 @@ namespace osu.Game.Online.Matchmaking
                                 rankText = new OsuSpriteText
                                 {
                                     Anchor = Anchor.CentreLeft,
-                                    Origin = Anchor.CentreLeft
+                                    Origin = Anchor.CentreLeft,
+                                    Text = "--"
                                 },
                                 new OsuSpriteText
                                 {
@@ -71,7 +75,8 @@ namespace osu.Game.Online.Matchmaking
                                 scoreText = new OsuSpriteText
                                 {
                                     Anchor = Anchor.CentreRight,
-                                    Origin = Anchor.CentreRight
+                                    Origin = Anchor.CentreRight,
+                                    Text = "0pts"
                                 }
                             ]
                         }
@@ -84,28 +89,28 @@ namespace osu.Game.Online.Matchmaking
         {
             base.LoadComplete();
 
-            Rank = 0;
-            Score = 0;
+            client.MatchRoomStateChanged += onRoomStateChanged;
+            onRoomStateChanged(client.Room!.MatchState);
         }
 
-        public int Rank
+        private void onRoomStateChanged(MatchRoomState? state) => Scheduler.Add(() =>
         {
-            get => rank;
-            set
-            {
-                rank = value;
-                rankText.Text = value == 0 ? "--" : $"#{value}";
-            }
-        }
+            if (state is not MatchmakingRoomState matchmakingState)
+                return;
 
-        public int Score
+            if (!matchmakingState.UserScores.Scores.TryGetValue(User.UserID, out MatchmakingUserScore? userScore))
+                return;
+
+            rankText.Text = $"{userScore.Placement}.";
+            scoreText.Text = $"{userScore.Points}pts";
+        });
+
+        protected override void Dispose(bool isDisposing)
         {
-            get => score;
-            set
-            {
-                score = value;
-                scoreText.Text = $"{value}pts";
-            }
+            base.Dispose(isDisposing);
+
+            if (client.IsNotNull())
+                client.MatchRoomStateChanged -= onRoomStateChanged;
         }
     }
 }
