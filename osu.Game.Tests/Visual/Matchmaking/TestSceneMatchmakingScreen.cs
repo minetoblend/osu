@@ -7,6 +7,7 @@ using NUnit.Framework;
 using osu.Framework.Extensions;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
+using osu.Framework.Graphics.Primitives;
 using osu.Framework.Screens;
 using osu.Framework.Testing;
 using osu.Game.Graphics.UserInterface;
@@ -16,6 +17,7 @@ using osu.Game.Online.Multiplayer;
 using osu.Game.Online.Multiplayer.MatchTypes.Matchmaking;
 using osu.Game.Online.Rooms;
 using osu.Game.Tests.Visual.Multiplayer;
+using osuTK;
 using osuTK.Input;
 
 namespace osu.Game.Tests.Visual.Matchmaking
@@ -43,7 +45,19 @@ namespace osu.Game.Tests.Visual.Matchmaking
         {
             base.SetUpSteps();
 
-            AddStep("join room", () => JoinRoom(CreateDefaultRoom()));
+            AddStep("join room", () =>
+            {
+                var room = CreateDefaultRoom();
+                room.Playlist = Enumerable.Range(1, 50).Select(i => new PlaylistItem(new MultiplayerPlaylistItem
+                {
+                    ID = i,
+                    BeatmapID = i,
+                    StarRating = i / 10.0,
+                })).ToArray();
+
+                JoinRoom(room);
+            });
+
             WaitForJoined();
 
             AddStep("load match", () =>
@@ -100,7 +114,9 @@ namespace osu.Game.Tests.Visual.Matchmaking
                 int j = i * 2;
                 AddStep("click a beatmap", () =>
                 {
-                    InputManager.MoveMouseTo(this.ChildrenOfType<MatchmakingBeatmapPanel>().ElementAt(j));
+                    Quad panelQuad = this.ChildrenOfType<MatchmakingBeatmapPanel>().ElementAt(j).ScreenSpaceDrawQuad;
+
+                    InputManager.MoveMouseTo(new Vector2(panelQuad.Centre.X, panelQuad.TopLeft.Y + 5));
                     InputManager.Click(MouseButton.Left);
                 });
 
@@ -121,7 +137,8 @@ namespace osu.Game.Tests.Visual.Matchmaking
                 MultiplayerClient.ChangeMatchRoomState(new MatchmakingRoomState
                 {
                     RoomStatus = MatchmakingRoomStatus.SelectBeatmap,
-                    CandidateItems = beatmaps.Select(b => b.ID).ToArray()
+                    CandidateItems = beatmaps.Select(b => b.ID).ToArray(),
+                    CandidateItem = beatmaps[0].ID
                 }).WaitSafely();
             });
 
