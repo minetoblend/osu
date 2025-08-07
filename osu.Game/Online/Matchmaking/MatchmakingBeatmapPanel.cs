@@ -9,14 +9,14 @@ using osu.Framework.Extensions.ObjectExtensions;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Shapes;
-using osu.Framework.Graphics.Sprites;
 using osu.Framework.Input.Events;
 using osu.Game.Beatmaps;
 using osu.Game.Beatmaps.Drawables;
 using osu.Game.Database;
 using osu.Game.Graphics;
-using osu.Game.Graphics.Sprites;
+using osu.Game.Graphics.Containers;
 using osu.Game.Online.API.Requests.Responses;
+using osu.Game.Online.Chat;
 using osu.Game.Online.Multiplayer;
 using osu.Game.Online.Rooms;
 using osu.Game.Overlays.Notifications;
@@ -49,7 +49,7 @@ namespace osu.Game.Online.Matchmaking
         [BackgroundDependencyLoader]
         private void load(OsuColour colours, BeatmapLookupCache beatmapLookupCache)
         {
-            SpriteText title;
+            LinkFlowContainer beatmapText;
 
             InternalChild = new Container
             {
@@ -79,11 +79,12 @@ namespace osu.Game.Online.Matchmaking
                             },
                         }
                     },
-                    title = new TruncatingSpriteText
+                    beatmapText = new LinkFlowContainer
                     {
                         Anchor = Anchor.Centre,
                         Origin = Anchor.Centre,
-                        MaxWidth = panel_width
+                        RelativeSizeAxes = Axes.X,
+                        AutoSizeAxes = Axes.Y
                     },
                     badges = new AlwaysUpdateFillFlowContainer<SelectionBadge>
                     {
@@ -99,7 +100,7 @@ namespace osu.Game.Online.Matchmaking
             beatmapLookupCache.GetBeatmapAsync(Item.BeatmapID).ContinueWith(b => Schedule(() =>
             {
                 APIBeatmap beatmap = b.GetResultSafely()!;
-                title.Text = beatmap.GetDisplayTitleRomanisable();
+                beatmapText.AddLink(beatmap.GetDisplayTitleRomanisable(includeCreator: false), LinkAction.OpenBeatmap, beatmap.OnlineID.ToString());
             }));
         }
 
