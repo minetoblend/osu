@@ -2,7 +2,6 @@
 // See the LICENCE file in the repository root for full licence text.
 
 using System.Collections.Generic;
-using System.Linq;
 using osu.Framework.Allocation;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
@@ -59,10 +58,12 @@ namespace osu.Game.Online.Matchmaking
             if (state is not MatchmakingRoomState matchmakingState)
                 return;
 
-            foreach (var score in matchmakingState.UserScores.Scores.Values)
+            foreach (var panel in panels)
             {
-                MatchmakingPlayerPanel panel = panels.Single(u => u.User.UserID == score.UserId);
-                panels.SetLayoutPosition(panel, score.Placement);
+                if (matchmakingState.UserScores.Scores.TryGetValue(panel.User.UserID, out MatchmakingUserScore? userScore))
+                    panels.SetLayoutPosition(panel, userScore.Placement);
+                else
+                    panels.SetLayoutPosition(panel, float.MaxValue);
             }
         });
     }

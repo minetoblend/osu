@@ -11,7 +11,7 @@ namespace osu.Game.Online.Multiplayer.MatchTypes.Matchmaking
     {
         // The user.
         [Key(0)]
-        public readonly int UserId;
+        public int UserId { get; set; }
 
         /// <summary>
         /// Aggregate room placement.
@@ -32,6 +32,10 @@ namespace osu.Game.Online.Multiplayer.MatchTypes.Matchmaking
         public IList<int> RoundPlacements { get; set; } = new List<int>();
 
         [SerializationConstructor]
+        public MatchmakingUserScore()
+        {
+        }
+
         public MatchmakingUserScore(int userId)
         {
             UserId = userId;
