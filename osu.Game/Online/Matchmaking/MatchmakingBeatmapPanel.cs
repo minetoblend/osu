@@ -4,7 +4,6 @@
 using System.Linq;
 using osu.Framework.Allocation;
 using osu.Framework.Extensions;
-using osu.Framework.Extensions.Color4Extensions;
 using osu.Framework.Extensions.ObjectExtensions;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
@@ -29,6 +28,9 @@ namespace osu.Game.Online.Matchmaking
     public class MatchmakingBeatmapPanel : CompositeDrawable
     {
         private const int panel_width = 300;
+        private readonly Color4 backgroundColour = OsuColour.Gray(0.3f);
+        private readonly Color4 hoverColour = OsuColour.Gray(0.4f);
+        private readonly Color4 clickColour = OsuColour.Gray(0.6f);
 
         public bool AllowSelection { get; set; } = true;
 
@@ -59,12 +61,12 @@ namespace osu.Game.Online.Matchmaking
                     background = new Box
                     {
                         RelativeSizeAxes = Axes.Both,
-                        Colour = Color4.SaddleBrown
+                        Colour = backgroundColour
                     },
                     new Container
                     {
                         RelativeSizeAxes = Axes.X,
-                        Height = 15,
+                        Height = 16,
                         Children = new Drawable[]
                         {
                             new Box
@@ -83,14 +85,14 @@ namespace osu.Game.Online.Matchmaking
                     {
                         Anchor = Anchor.Centre,
                         Origin = Anchor.Centre,
-                        RelativeSizeAxes = Axes.X,
-                        AutoSizeAxes = Axes.Y
+                        AutoSizeAxes = Axes.Both,
+                        MaximumSize = new Vector2(panel_width, 100)
                     },
                     badges = new AlwaysUpdateFillFlowContainer<SelectionBadge>
                     {
                         Anchor = Anchor.BottomRight,
                         Origin = Anchor.BottomRight,
-                        Margin = new MarginPadding(5),
+                        Margin = new MarginPadding(2),
                         AutoSizeAxes = Axes.Both,
                         Spacing = new Vector2(2),
                     }
@@ -132,7 +134,7 @@ namespace osu.Game.Online.Matchmaking
             if (!AllowSelection)
                 return false;
 
-            background.FadeColour(Color4.SaddleBrown.Lighten(0.2f), 200);
+            background.FadeColour(hoverColour, 200);
             return true;
         }
 
@@ -141,7 +143,7 @@ namespace osu.Game.Online.Matchmaking
             if (!AllowSelection)
                 return;
 
-            background.FadeColour(Color4.SaddleBrown, 100);
+            background.FadeColour(backgroundColour, 100);
             base.OnHoverLost(e);
         }
 
@@ -150,7 +152,7 @@ namespace osu.Game.Online.Matchmaking
             if (!AllowSelection)
                 return false;
 
-            background.FlashColour(Color4.SaddleBrown.Lighten(0.5f), 200, Easing.OutQuint);
+            background.FlashColour(clickColour, 200, Easing.OutQuint);
             client.MatchmakingToggleSelection(Item.ID);
             return true;
         }
