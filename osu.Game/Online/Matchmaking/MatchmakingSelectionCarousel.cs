@@ -15,8 +15,6 @@ namespace osu.Game.Online.Matchmaking
 {
     public class MatchmakingSelectionCarousel : CompositeDrawable
     {
-        public const double TOTAL_TRANSFORM_TIME = scroll_delay + scroll_duration + finish_delay + finish_duration;
-
         /// <summary>
         /// Number of items visible on either side of the current item in the carousel at any one time.
         /// </summary>
