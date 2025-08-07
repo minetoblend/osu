@@ -11,6 +11,7 @@ using osu.Framework.Input.Events;
 using osu.Game.Graphics.Containers;
 using osu.Game.Online.Multiplayer;
 using osu.Game.Online.Multiplayer.MatchTypes.Matchmaking;
+using osu.Game.Online.Rooms;
 
 namespace osu.Game.Online.Matchmaking
 {
@@ -100,7 +101,11 @@ namespace osu.Game.Online.Matchmaking
 
                 case MatchmakingRoomStatus.SelectBeatmap:
                     scroll.ScrollTo(selectionCarousel);
-                    selectionCarousel.BeginScroll(matchmakingState.CandidateItems.Select(item => client.Room!.Playlist.Single(i => i.ID == item)).ToArray(), client.Room!.CurrentPlaylistItem);
+
+                    MultiplayerPlaylistItem[] candidateItems = matchmakingState.CandidateItems.Select(item => client.Room!.Playlist.Single(i => i.ID == item)).ToArray();
+                    MultiplayerPlaylistItem candidateItem = client.Room!.Playlist.Single(i => i.ID == matchmakingState.CandidateItem);
+
+                    selectionCarousel.BeginScroll(candidateItems, candidateItem);
                     break;
             }
         });

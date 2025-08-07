@@ -80,7 +80,8 @@ namespace osu.Game.Tests.Visual.Matchmaking
                 MultiplayerClient.ChangeMatchRoomState(new MatchmakingRoomState
                 {
                     RoomStatus = MatchmakingRoomStatus.SelectBeatmap,
-                    CandidateItems = beatmaps.Select(b => b.ID).ToArray()
+                    CandidateItems = beatmaps.Select(b => b.ID).ToArray(),
+                    CandidateItem = beatmaps[0].ID
                 }).WaitSafely();
             });
 
