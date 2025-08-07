@@ -188,8 +188,6 @@ namespace osu.Game.Online.Matchmaking
                     updateGameplayState();
                     break;
             }
-
-            client.ChangeBeatmapAvailability(e.NewValue).FireAndForget();
         });
 
         private void updateGameplayState()
@@ -204,6 +202,8 @@ namespace osu.Game.Online.Matchmaking
             Beatmap.Value = beatmapManager.GetWorkingBeatmap(localBeatmap);
             Ruleset.Value = ruleset;
             Mods.Value = item.RequiredMods.Select(m => m.ToMod(rulesetInstance)).ToArray();
+
+            client.ChangeBeatmapAvailability(beatmapAvailabilityTracker.Availability.Value).FireAndForget();
         }
 
         private void onLoadRequested() => Scheduler.Add(() =>
