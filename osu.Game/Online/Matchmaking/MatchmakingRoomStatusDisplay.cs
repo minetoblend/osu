@@ -56,12 +56,16 @@ namespace osu.Game.Online.Matchmaking
                     text.Text = "Next round starting shortly...";
                     break;
 
-                case MatchmakingRoomStatus.PickBeatmap:
+                case MatchmakingRoomStatus.UserPicks:
                     text.Text = "Select your beatmap!";
                     break;
 
-                case MatchmakingRoomStatus.Selection:
+                case MatchmakingRoomStatus.SelectBeatmap:
                     text.Text = "And the next beatmap is...";
+                    break;
+
+                case MatchmakingRoomStatus.PrepareBeatmap:
+                    text.Text = "Waiting for players to download the beatmap...";
                     break;
 
                 case MatchmakingRoomStatus.PrepareGameplay:

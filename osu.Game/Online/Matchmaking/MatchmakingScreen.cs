@@ -155,7 +155,7 @@ namespace osu.Game.Online.Matchmaking
             if (state is not MatchmakingRoomState matchmakingState)
                 return;
 
-            if (matchmakingState.RoomStatus == MatchmakingRoomStatus.Selection)
+            if (matchmakingState.RoomStatus == MatchmakingRoomStatus.SelectBeatmap)
                 this.Delay(MatchmakingSelectionCarousel.TOTAL_TRANSFORM_TIME).Schedule(updateGameplayState);
         });
 

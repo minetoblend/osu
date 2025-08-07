@@ -89,7 +89,7 @@ namespace osu.Game.Tests.Visual.Matchmaking
 
             AddStep("pick", () => MultiplayerClient.ChangeMatchRoomState(new MatchmakingRoomState
             {
-                RoomStatus = MatchmakingRoomStatus.PickBeatmap
+                RoomStatus = MatchmakingRoomStatus.UserPicks
             }).WaitSafely());
 
             // Make some selections
@@ -120,7 +120,7 @@ namespace osu.Game.Tests.Visual.Matchmaking
 
                 MultiplayerClient.ChangeMatchRoomState(new MatchmakingRoomState
                 {
-                    RoomStatus = MatchmakingRoomStatus.Selection,
+                    RoomStatus = MatchmakingRoomStatus.SelectBeatmap,
                     CandidateItems = beatmaps.Select(b => b.ID).ToArray()
                 }).WaitSafely();
             });

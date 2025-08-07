@@ -28,8 +28,9 @@ namespace osu.Game.Tests.Visual.Matchmaking
 
         [TestCase(MatchmakingRoomStatus.Joining)]
         [TestCase(MatchmakingRoomStatus.RoundStart)]
-        [TestCase(MatchmakingRoomStatus.PickBeatmap)]
-        [TestCase(MatchmakingRoomStatus.Selection)]
+        [TestCase(MatchmakingRoomStatus.UserPicks)]
+        [TestCase(MatchmakingRoomStatus.SelectBeatmap)]
+        [TestCase(MatchmakingRoomStatus.PrepareBeatmap)]
         [TestCase(MatchmakingRoomStatus.PrepareGameplay)]
         [TestCase(MatchmakingRoomStatus.Gameplay)]
         [TestCase(MatchmakingRoomStatus.Results)]

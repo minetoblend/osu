@@ -18,12 +18,17 @@ namespace osu.Game.Online.Multiplayer.MatchTypes.Matchmaking
         /// <summary>
         /// Players are selecting their beatmaps.
         /// </summary>
-        PickBeatmap,
+        UserPicks,
 
         /// <summary>
         /// A beatmap from the pool is being selected by the server.
         /// </summary>
-        Selection,
+        SelectBeatmap,
+
+        /// <summary>
+        /// Waiting for players to download the beatmap.
+        /// </summary>
+        PrepareBeatmap,
 
         /// <summary>
         /// Gameplay is starting shortly.

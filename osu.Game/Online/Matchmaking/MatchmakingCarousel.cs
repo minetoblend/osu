@@ -94,11 +94,11 @@ namespace osu.Game.Online.Matchmaking
                     scroll.ScrollTo(playerList);
                     break;
 
-                case MatchmakingRoomStatus.PickBeatmap:
+                case MatchmakingRoomStatus.UserPicks:
                     scroll.ScrollTo(beatmapList);
                     break;
 
-                case MatchmakingRoomStatus.Selection:
+                case MatchmakingRoomStatus.SelectBeatmap:
                     scroll.ScrollTo(selectionCarousel);
                     selectionCarousel.BeginScroll(matchmakingState.CandidateItems.Select(item => client.Room!.Playlist.Single(i => i.ID == item)).ToArray(), client.Room!.CurrentPlaylistItem);
                     break;
