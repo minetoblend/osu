@@ -2,7 +2,10 @@
 // See the LICENCE file in the repository root for full licence text.
 
 using System.Linq;
+using System.Threading;
 using osu.Framework.Allocation;
+using osu.Framework.Bindables;
+using osu.Framework.Extensions;
 using osu.Framework.Extensions.Color4Extensions;
 using osu.Framework.Extensions.ObjectExtensions;
 using osu.Framework.Graphics;
@@ -11,6 +14,7 @@ using osu.Framework.Graphics.Cursor;
 using osu.Framework.Graphics.Shapes;
 using osu.Framework.Screens;
 using osu.Game.Beatmaps;
+using osu.Game.Database;
 using osu.Game.Graphics.Cursor;
 using osu.Game.Online.Multiplayer;
 using osu.Game.Online.Multiplayer.MatchTypes.Matchmaking;
@@ -48,8 +52,16 @@ namespace osu.Game.Online.Matchmaking
         [Resolved]
         private RulesetStore rulesets { get; set; } = null!;
 
+        [Resolved]
+        private BeatmapLookupCache beatmapLookupCache { get; set; } = null!;
+
+        [Resolved]
+        private BeatmapModelDownloader beatmapDownloader { get; set; } = null!;
+
         private readonly MultiplayerRoom room;
-        private MatchmakingCarousel carousel = null!;
+
+        private CancellationTokenSource? downloadCheckCancellation;
+        private int? lastDownloadCheckedBeatmapId;
 
         public MatchmakingScreen(MultiplayerRoom room)
         {
@@ -110,7 +122,7 @@ namespace osu.Game.Online.Matchmaking
                                                 RelativeSizeAxes = Axes.Both,
                                                 Colour = Color4Extensions.FromHex(@"3e3a44") // Temporary.
                                             },
-                                            carousel = new MatchmakingCarousel(room.Users.ToArray())
+                                            new MatchmakingCarousel(room.Users.ToArray())
                                             {
                                                 RelativeSizeAxes = Axes.Both
                                             }
@@ -147,6 +159,8 @@ namespace osu.Game.Online.Matchmaking
             client.MatchRoomStateChanged += onMatchRoomStateChanged;
             client.LoadRequested += onLoadRequested;
 
+            beatmapAvailabilityTracker.Availability.BindValueChanged(onBeatmapAvailabilityChanged, true);
+
             onMatchRoomStateChanged(client.Room!.MatchState);
         }
 
@@ -155,8 +169,27 @@ namespace osu.Game.Online.Matchmaking
             if (state is not MatchmakingRoomState matchmakingState)
                 return;
 
-            if (matchmakingState.RoomStatus == MatchmakingRoomStatus.SelectBeatmap)
-                this.Delay(MatchmakingSelectionCarousel.TOTAL_TRANSFORM_TIME).Schedule(updateGameplayState);
+            if (matchmakingState.RoomStatus == MatchmakingRoomStatus.PrepareBeatmap)
+            {
+                checkForAutomaticDownload();
+                updateGameplayState();
+            }
+        });
+
+        private void onBeatmapAvailabilityChanged(ValueChangedEvent<BeatmapAvailability> e) => Scheduler.Add(() =>
+        {
+            if (client.Room == null || client.LocalUser == null)
+                return;
+
+            switch (e.NewValue.State)
+            {
+                case DownloadState.NotDownloaded:
+                case DownloadState.LocallyAvailable:
+                    updateGameplayState();
+                    break;
+            }
+
+            client.ChangeBeatmapAvailability(e.NewValue).FireAndForget();
         });
 
         private void updateGameplayState()
@@ -171,9 +204,6 @@ namespace osu.Game.Online.Matchmaking
             Beatmap.Value = beatmapManager.GetWorkingBeatmap(localBeatmap);
             Ruleset.Value = ruleset;
             Mods.Value = item.RequiredMods.Select(m => m.ToMod(rulesetInstance)).ToArray();
-
-            // TODO: Very temporary!
-            client.ChangeBeatmapAvailability(BeatmapAvailability.LocallyAvailable()).FireAndForget();
         }
 
         private void onLoadRequested() => Scheduler.Add(() =>
@@ -181,6 +211,42 @@ namespace osu.Game.Online.Matchmaking
             updateGameplayState();
             this.Push(new MultiplayerPlayerLoader(() => new MultiplayerPlayer(new Room(room), new PlaylistItem(client.Room!.CurrentPlaylistItem), room.Users.ToArray())));
         });
+
+        private void checkForAutomaticDownload()
+        {
+            if (client.Room == null)
+                return;
+
+            MultiplayerPlaylistItem item = client.Room.CurrentPlaylistItem;
+
+            // This method is called every time anything changes in the room.
+            // This could result in download requests firing far too often, when we only expect them to fire once per beatmap.
+            //
+            // Without this check, we would see especially egregious behaviour when a user has hit the download rate limit.
+            if (lastDownloadCheckedBeatmapId == item.BeatmapID)
+                return;
+
+            lastDownloadCheckedBeatmapId = item.BeatmapID;
+
+            downloadCheckCancellation?.Cancel();
+
+            // In a perfect world we'd use BeatmapAvailability, but there's no event-driven flow for when a selection changes.
+            // ie. if selection changes from "not downloaded" to another "not downloaded" we wouldn't get a value changed raised.
+            beatmapLookupCache
+                .GetBeatmapAsync(item.BeatmapID, (downloadCheckCancellation = new CancellationTokenSource()).Token)
+                .ContinueWith(resolved => Schedule(() =>
+                {
+                    var beatmapSet = resolved.GetResultSafely()?.BeatmapSet;
+
+                    if (beatmapSet == null)
+                        return;
+
+                    if (beatmapManager.IsAvailableLocally(new BeatmapSetInfo { OnlineID = beatmapSet.OnlineID }))
+                        return;
+
+                    beatmapDownloader.Download(beatmapSet);
+                }));
+        }
 
         public override bool OnExiting(ScreenExitEvent e)
         {
