@@ -112,6 +112,8 @@ namespace osu.Game.Online.Multiplayer
         /// </summary>
         public event Action? Disconnecting;
 
+        public event Action<MultiplayerRoomUser, MultiplayerUserState>? UserStateChanged;
+
         public event Action<MatchmakingQueueStatus?>? MatchmakingQueueStatusChanged;
 
         public event Action<int, long>? MatchmakingSelectionToggled;
@@ -633,6 +635,7 @@ namespace osu.Game.Online.Multiplayer
                 user.State = state;
                 updateUserPlayingState(userId, state);
 
+                UserStateChanged?.Invoke(user, state);
                 RoomUpdated?.Invoke();
             }, false);
 

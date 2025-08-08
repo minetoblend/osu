@@ -156,10 +156,17 @@ namespace osu.Game.Online.Matchmaking
         {
             base.LoadComplete();
 
+            client.UserStateChanged += onUserStateChanged;
             client.SettingsChanged += onSettingsChanged;
             client.LoadRequested += onLoadRequested;
 
             beatmapAvailabilityTracker.Availability.BindValueChanged(onBeatmapAvailabilityChanged, true);
+        }
+
+        private void onUserStateChanged(MultiplayerRoomUser user, MultiplayerUserState state)
+        {
+            if (user.Equals(client.LocalUser) && state == MultiplayerUserState.Idle)
+                this.MakeCurrent();
         }
 
         private void onSettingsChanged(MultiplayerRoomSettings _) => Scheduler.Add(() =>
@@ -282,6 +289,7 @@ namespace osu.Game.Online.Matchmaking
 
             if (client.IsNotNull())
             {
+                client.UserStateChanged -= onUserStateChanged;
                 client.SettingsChanged -= onSettingsChanged;
                 client.LoadRequested -= onLoadRequested;
             }
