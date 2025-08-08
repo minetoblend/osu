@@ -157,12 +157,9 @@ namespace osu.Game.Online.Matchmaking
             base.LoadComplete();
 
             client.SettingsChanged += onSettingsChanged;
-            client.MatchRoomStateChanged += onMatchRoomStateChanged;
             client.LoadRequested += onLoadRequested;
 
             beatmapAvailabilityTracker.Availability.BindValueChanged(onBeatmapAvailabilityChanged, true);
-
-            onMatchRoomStateChanged(client.Room!.MatchState);
         }
 
         private void onSettingsChanged(MultiplayerRoomSettings _) => Scheduler.Add(() =>
@@ -170,8 +167,6 @@ namespace osu.Game.Online.Matchmaking
             checkForAutomaticDownload();
             updateGameplayState();
         });
-
-        private void onMatchRoomStateChanged(MatchRoomState? state) => Scheduler.Add(updateGameplayState);
 
         private void onBeatmapAvailabilityChanged(ValueChangedEvent<BeatmapAvailability> e) => Scheduler.Add(() =>
         {
@@ -288,7 +283,6 @@ namespace osu.Game.Online.Matchmaking
             if (client.IsNotNull())
             {
                 client.SettingsChanged -= onSettingsChanged;
-                client.MatchRoomStateChanged -= onMatchRoomStateChanged;
                 client.LoadRequested -= onLoadRequested;
             }
         }
