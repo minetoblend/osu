@@ -156,6 +156,7 @@ namespace osu.Game.Online.Matchmaking
         {
             base.LoadComplete();
 
+            client.SettingsChanged += onSettingsChanged;
             client.MatchRoomStateChanged += onMatchRoomStateChanged;
             client.LoadRequested += onLoadRequested;
 
@@ -164,22 +165,20 @@ namespace osu.Game.Online.Matchmaking
             onMatchRoomStateChanged(client.Room!.MatchState);
         }
 
-        private void onMatchRoomStateChanged(MatchRoomState? state) => Scheduler.Add(() =>
+        private void onSettingsChanged(MultiplayerRoomSettings _) => Scheduler.Add(() =>
         {
-            if (state is not MatchmakingRoomState matchmakingState)
-                return;
-
-            if (matchmakingState.RoomStatus == MatchmakingRoomStatus.PrepareBeatmap)
-            {
-                checkForAutomaticDownload();
-                updateGameplayState();
-            }
+            checkForAutomaticDownload();
+            updateGameplayState();
         });
+
+        private void onMatchRoomStateChanged(MatchRoomState? state) => Scheduler.Add(updateGameplayState);
 
         private void onBeatmapAvailabilityChanged(ValueChangedEvent<BeatmapAvailability> e) => Scheduler.Add(() =>
         {
             if (client.Room == null || client.LocalUser == null)
                 return;
+
+            client.ChangeBeatmapAvailability(e.NewValue).FireAndForget();
 
             switch (e.NewValue.State)
             {
@@ -192,6 +191,12 @@ namespace osu.Game.Online.Matchmaking
 
         private void updateGameplayState()
         {
+            if (client.Room?.MatchState is not MatchmakingRoomState matchmakingState)
+                return;
+
+            if (matchmakingState.RoomStatus != MatchmakingRoomStatus.PrepareBeatmap)
+                return;
+
             MultiplayerPlaylistItem item = client.Room!.CurrentPlaylistItem;
             RulesetInfo ruleset = rulesets.GetRuleset(item.RulesetID)!;
             Ruleset rulesetInstance = ruleset.CreateInstance();
@@ -203,7 +208,10 @@ namespace osu.Game.Online.Matchmaking
             Ruleset.Value = ruleset;
             Mods.Value = item.RequiredMods.Select(m => m.ToMod(rulesetInstance)).ToArray();
 
-            client.ChangeBeatmapAvailability(beatmapAvailabilityTracker.Availability.Value).FireAndForget();
+            if (Beatmap.Value is DummyWorkingBeatmap)
+                client.ChangeState(MultiplayerUserState.Idle).FireAndForget();
+            else
+                client.ChangeState(MultiplayerUserState.Ready).FireAndForget();
         }
 
         private void onLoadRequested() => Scheduler.Add(() =>
@@ -279,6 +287,7 @@ namespace osu.Game.Online.Matchmaking
 
             if (client.IsNotNull())
             {
+                client.SettingsChanged -= onSettingsChanged;
                 client.MatchRoomStateChanged -= onMatchRoomStateChanged;
                 client.LoadRequested -= onLoadRequested;
             }
