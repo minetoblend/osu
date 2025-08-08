@@ -159,8 +159,6 @@ namespace osu.Game
 
         private OnScreenDisplay onScreenDisplay;
 
-        private MatchmakingQueueBanner matchmakingQueueBanner;
-
         [Resolved]
         private FrameworkConfigManager frameworkConfig { get; set; }
 
@@ -1273,7 +1271,7 @@ namespace osu.Game
 
             loadComponentSingleFile(new BackgroundDataStoreProcessor(), Add);
             loadComponentSingleFile<BeatmapStore>(detachedBeatmapStore = new RealmDetachedBeatmapStore(), Add, true);
-            loadComponentSingleFile(matchmakingQueueBanner = new MatchmakingQueueBanner
+            loadComponentSingleFile(new MatchmakingQueueBanner
             {
                 Anchor = Anchor.TopCentre,
                 Origin = Anchor.TopCentre

@@ -86,7 +86,7 @@ namespace osu.Game.Tests.Visual.Matchmaking
         [UsedImplicitly]
         public class TestPerformerFromScreenRunner : IPerformFromScreenRunner
         {
-            public virtual void PerformFromScreen(Action<IScreen> action, IEnumerable<Type> validScreens = null)
+            public virtual void PerformFromScreen(Action<IScreen> action, IEnumerable<Type>? validScreens = null)
             {
             }
         }
