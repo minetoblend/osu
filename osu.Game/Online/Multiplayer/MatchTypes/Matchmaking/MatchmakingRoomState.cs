@@ -11,16 +11,19 @@ namespace osu.Game.Online.Multiplayer.MatchTypes.Matchmaking
         [Key(0)]
         public MatchmakingRoomStatus RoomStatus { get; set; }
 
+        [Key(1)]
+        public int Round { get; set; }
+
         /// <summary>
         /// The playlist items that were picked as gameplay candidates.
         /// </summary>
-        [Key(1)]
+        [Key(2)]
         public long[] CandidateItems { get; set; } = [];
 
-        [Key(2)]
+        [Key(3)]
         public long CandidateItem { get; set; }
 
-        [Key(3)]
+        [Key(4)]
         public MatchmakingUserScoreList UserScores { get; set; } = new MatchmakingUserScoreList();
     }
 }

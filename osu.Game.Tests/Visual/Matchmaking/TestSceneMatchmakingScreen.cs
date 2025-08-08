@@ -164,9 +164,9 @@ namespace osu.Game.Tests.Visual.Matchmaking
             // Finish gameplay.
             AddWaitStep("wait", 5);
 
-            AddStep("results", () => MultiplayerClient.ChangeMatchRoomState(new MatchmakingRoomState
+            AddStep("round end", () => MultiplayerClient.ChangeMatchRoomState(new MatchmakingRoomState
             {
-                RoomStatus = MatchmakingRoomStatus.Results
+                RoomStatus = MatchmakingRoomStatus.RoundEnd
             }).WaitSafely());
 
             AddStep("add some scores", () =>
@@ -190,6 +190,11 @@ namespace osu.Game.Tests.Visual.Matchmaking
                     }
                 }).WaitSafely();
             });
+
+            AddStep("room end", () => MultiplayerClient.ChangeMatchRoomState(new MatchmakingRoomState
+            {
+                RoomStatus = MatchmakingRoomStatus.RoomEnd
+            }).WaitSafely());
         }
     }
 }

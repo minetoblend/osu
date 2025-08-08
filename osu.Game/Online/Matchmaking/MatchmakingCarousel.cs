@@ -89,9 +89,10 @@ namespace osu.Game.Online.Matchmaking
 
             switch (matchmakingState.RoomStatus)
             {
-                case MatchmakingRoomStatus.Joining:
+                case MatchmakingRoomStatus.RoomStart:
                 case MatchmakingRoomStatus.RoundStart:
-                case MatchmakingRoomStatus.Results:
+                case MatchmakingRoomStatus.RoundEnd:
+                case MatchmakingRoomStatus.RoomEnd:
                     scroll.ScrollTo(playerList);
                     break;
 

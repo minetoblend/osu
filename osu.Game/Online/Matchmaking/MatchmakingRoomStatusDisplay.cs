@@ -48,7 +48,7 @@ namespace osu.Game.Online.Matchmaking
 
             switch (matchmakingState.RoomStatus)
             {
-                case MatchmakingRoomStatus.Joining:
+                case MatchmakingRoomStatus.RoomStart:
                     text.Text = "Players are joining the room...";
                     break;
 
@@ -76,8 +76,12 @@ namespace osu.Game.Online.Matchmaking
                     text.Text = "Match is in progress!";
                     break;
 
-                case MatchmakingRoomStatus.Results:
+                case MatchmakingRoomStatus.RoundEnd:
                     text.Text = "Players are viewing the results...";
+                    break;
+
+                case MatchmakingRoomStatus.RoomEnd:
+                    text.Text = "Thanks for playing! Room will close shortly.";
                     break;
             }
         });
