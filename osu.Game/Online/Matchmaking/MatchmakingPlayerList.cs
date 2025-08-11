@@ -1,7 +1,7 @@
 // Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
-using System.Collections.Generic;
+using System.Linq;
 using osu.Framework.Allocation;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
@@ -16,13 +16,7 @@ namespace osu.Game.Online.Matchmaking
         [Resolved]
         private MultiplayerClient client { get; set; } = null!;
 
-        private readonly IList<MultiplayerRoomUser> users;
         private FillFlowContainer<MatchmakingPlayerPanel> panels = null!;
-
-        public MatchmakingPlayerList(IList<MultiplayerRoomUser> users)
-        {
-            this.users = users;
-        }
 
         [BackgroundDependencyLoader]
         private void load()
@@ -34,15 +28,6 @@ namespace osu.Game.Online.Matchmaking
                 LayoutEasing = Easing.InOutQuint,
                 LayoutDuration = 500
             };
-
-            foreach (var user in users)
-            {
-                panels.Add(new MatchmakingPlayerPanel(user)
-                {
-                    Anchor = Anchor.Centre,
-                    Origin = Anchor.Centre,
-                });
-            }
         }
 
         protected override void LoadComplete()
@@ -50,8 +35,30 @@ namespace osu.Game.Online.Matchmaking
             base.LoadComplete();
 
             client.MatchRoomStateChanged += onRoomStateChanged;
-            onRoomStateChanged(client.Room!.MatchState);
+            client.UserJoined += onUserJoined;
+            client.UserLeft += onUserLeft;
+
+            if (client.Room != null)
+            {
+                onRoomStateChanged(client.Room.MatchState);
+                foreach (var user in client.Room.Users)
+                    onUserJoined(user);
+            }
         }
+
+        private void onUserJoined(MultiplayerRoomUser user) => Scheduler.Add(() =>
+        {
+            panels.Add(new MatchmakingPlayerPanel(user)
+            {
+                Anchor = Anchor.Centre,
+                Origin = Anchor.Centre,
+            });
+        });
+
+        private void onUserLeft(MultiplayerRoomUser user) => Scheduler.Add(() =>
+        {
+            panels.Single(p => p.User.Equals(user)).Expire();
+        });
 
         private void onRoomStateChanged(MatchRoomState? state) => Scheduler.Add(() =>
         {

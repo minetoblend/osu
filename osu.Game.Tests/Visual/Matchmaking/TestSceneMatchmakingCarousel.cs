@@ -40,6 +40,17 @@ namespace osu.Game.Tests.Visual.Matchmaking
 
             AddStep("add carousel", () =>
             {
+                Child = new MatchmakingCarousel
+                {
+                    Anchor = Anchor.Centre,
+                    Origin = Anchor.Centre,
+                    RelativeSizeAxes = Axes.Both,
+                    Size = new Vector2(0.7f)
+                };
+            });
+
+            AddStep("join users", () =>
+            {
                 var users = Enumerable.Range(1, user_count).Select(i => new MultiplayerRoomUser(i)
                 {
                     User = new APIUser
@@ -48,13 +59,8 @@ namespace osu.Game.Tests.Visual.Matchmaking
                     }
                 }).ToArray();
 
-                Child = new MatchmakingCarousel(users)
-                {
-                    Anchor = Anchor.Centre,
-                    Origin = Anchor.Centre,
-                    RelativeSizeAxes = Axes.Both,
-                    Size = new Vector2(0.7f)
-                };
+                foreach (var user in users)
+                    MultiplayerClient.AddUser(user);
             });
         }
 

@@ -49,13 +49,19 @@ namespace osu.Game.Tests.Visual.Matchmaking
                     Anchor = Anchor.Centre,
                     Origin = Anchor.Centre,
                     Size = new Vector2(500, 500),
-                    Child = new MatchmakingPlayerList(userScores.Select(u => u.user).ToArray())
+                    Child = new MatchmakingPlayerList
                     {
                         Anchor = Anchor.Centre,
                         Origin = Anchor.Centre,
                         RelativeSizeAxes = Axes.Both
                     }
                 };
+            });
+
+            AddStep("join users", () =>
+            {
+                foreach (var (user, _) in userScores)
+                    MultiplayerClient.AddUser(user);
             });
         }
 

@@ -20,17 +20,10 @@ namespace osu.Game.Online.Matchmaking
         [Resolved]
         private MultiplayerClient client { get; set; } = null!;
 
-        private readonly MultiplayerRoomUser[] users;
-
         private OsuScrollContainer scroll = null!;
         private MatchmakingPlayerList playerList = null!;
         private MatchmakingBeatmapList beatmapList = null!;
         private MatchmakingSelectionCarousel selectionCarousel = null!;
-
-        public MatchmakingCarousel(MultiplayerRoomUser[] users)
-        {
-            this.users = users;
-        }
 
         [BackgroundDependencyLoader]
         private void load()
@@ -48,7 +41,7 @@ namespace osu.Game.Online.Matchmaking
                         new WidthReferenceContainer(() => scroll)
                         {
                             RelativeSizeAxes = Axes.Y,
-                            Child = playerList = new MatchmakingPlayerList(users)
+                            Child = playerList = new MatchmakingPlayerList
                             {
                                 RelativeSizeAxes = Axes.Both
                             }

@@ -125,7 +125,7 @@ namespace osu.Game.Online.Matchmaking
                                                 Content = new Drawable[]?[]
                                                 {
                                                     [
-                                                        new MatchmakingCarousel(room.Users.ToArray())
+                                                        new MatchmakingCarousel
                                                         {
                                                             RelativeSizeAxes = Axes.Both,
                                                         }
