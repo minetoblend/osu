@@ -16,11 +16,11 @@ namespace osu.Game.Online.Matchmaking
     {
         public static readonly (MatchmakingRoomStatus status, LocalisableString text)[] DISPLAYED_STAGES =
         [
-            (MatchmakingRoomStatus.RoundStart, "Start"),
+            (MatchmakingRoomStatus.RoundStart, "Next Round"),
             (MatchmakingRoomStatus.UserPicks, "Pick"),
-            (MatchmakingRoomStatus.PrepareBeatmap, "GLHF!"),
+            (MatchmakingRoomStatus.PrepareGameplay, "GLHF!"),
             (MatchmakingRoomStatus.RoundEnd, "Results"),
-            (MatchmakingRoomStatus.RoomEnd, "End")
+            (MatchmakingRoomStatus.RoomEnd, "Match End")
         ];
 
         public MatchmakingStageDisplay()
