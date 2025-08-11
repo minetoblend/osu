@@ -19,7 +19,8 @@ namespace osu.Game.Online.Matchmaking
             (MatchmakingRoomStatus.RoundStart, "Start"),
             (MatchmakingRoomStatus.UserPicks, "Pick"),
             (MatchmakingRoomStatus.PrepareBeatmap, "GLHF!"),
-            (MatchmakingRoomStatus.RoundEnd, "Results")
+            (MatchmakingRoomStatus.RoundEnd, "Results"),
+            (MatchmakingRoomStatus.RoomEnd, "End")
         ];
 
         public MatchmakingStageDisplay()
