@@ -112,6 +112,10 @@ namespace osu.Game.Online.Multiplayer
         /// </summary>
         public event Action? Disconnecting;
 
+        public event Action<MultiplayerCountdown>? CountdownStarted;
+
+        public event Action<MultiplayerCountdown>? CountdownStopped;
+
         public event Action<MultiplayerRoomUser, MultiplayerUserState>? UserStateChanged;
 
         public event Action<MatchmakingQueueStatus?>? MatchmakingQueueStatusChanged;
@@ -685,6 +689,7 @@ namespace osu.Game.Online.Multiplayer
                 {
                     case CountdownStartedEvent countdownStartedEvent:
                         Room.ActiveCountdowns.Add(countdownStartedEvent.Countdown);
+                        CountdownStarted?.Invoke(countdownStartedEvent.Countdown);
 
                         switch (countdownStartedEvent.Countdown)
                         {
@@ -697,8 +702,13 @@ namespace osu.Game.Online.Multiplayer
 
                     case CountdownStoppedEvent countdownStoppedEvent:
                         MultiplayerCountdown? countdown = Room.ActiveCountdowns.FirstOrDefault(countdown => countdown.ID == countdownStoppedEvent.ID);
+
                         if (countdown != null)
+                        {
                             Room.ActiveCountdowns.Remove(countdown);
+                            CountdownStopped?.Invoke(countdown);
+                        }
+
                         break;
                 }
 

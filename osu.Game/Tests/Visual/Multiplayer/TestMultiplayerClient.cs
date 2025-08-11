@@ -409,20 +409,41 @@ namespace osu.Game.Tests.Visual.Multiplayer
                     break;
 
                 case StartMatchCountdownRequest startCountdown:
-                    ServerRoom.ActiveCountdowns.Add(new MatchStartCountdown
-                    {
-                        ID = ++lastCountdownId,
-                        TimeRemaining = startCountdown.Duration
-                    });
-
-                    await ((IMultiplayerClient)this).MatchEvent(clone(new CountdownStartedEvent(ServerRoom.ActiveCountdowns[^1]))).ConfigureAwait(false);
+                    await StartCountdown(new MatchStartCountdown { TimeRemaining = startCountdown.Duration }).ConfigureAwait(false);
                     break;
 
                 case StopCountdownRequest stopCountdown:
-                    ServerRoom.ActiveCountdowns.Remove(ServerRoom.ActiveCountdowns.First(c => c.ID == stopCountdown.ID));
-                    await ((IMultiplayerClient)this).MatchEvent(clone(new CountdownStoppedEvent(stopCountdown.ID))).ConfigureAwait(false);
+                    await StopCountdown(ServerRoom.ActiveCountdowns.First(c => c.ID == stopCountdown.ID)).ConfigureAwait(false);
                     break;
             }
+        }
+
+        public async Task StartCountdown(MultiplayerCountdown countdown)
+        {
+            countdown.ID = ++lastCountdownId;
+            countdown = clone(countdown);
+
+            Debug.Assert(ServerRoom != null);
+            Debug.Assert(LocalUser != null);
+
+            if (countdown.IsExclusive)
+            {
+                MultiplayerCountdown? existingCountdown = ServerRoom.ActiveCountdowns.FirstOrDefault(c => c.GetType() == countdown.GetType());
+                if (existingCountdown != null)
+                    await StopCountdown(existingCountdown).ConfigureAwait(false);
+            }
+
+            ServerRoom.ActiveCountdowns.Add(countdown);
+            await ((IMultiplayerClient)this).MatchEvent(clone(new CountdownStartedEvent(ServerRoom.ActiveCountdowns[^1]))).ConfigureAwait(false);
+        }
+
+        public async Task StopCountdown(MultiplayerCountdown countdown)
+        {
+            Debug.Assert(ServerRoom != null);
+            Debug.Assert(LocalUser != null);
+
+            ServerRoom.ActiveCountdowns.Remove(ServerRoom.ActiveCountdowns.First(c => c.ID == countdown.ID));
+            await ((IMultiplayerClient)this).MatchEvent(clone(new CountdownStoppedEvent(countdown.ID))).ConfigureAwait(false);
         }
 
         public override Task StartMatch()

@@ -122,9 +122,30 @@ namespace osu.Game.Online.Matchmaking
                                                 RelativeSizeAxes = Axes.Both,
                                                 Colour = Color4Extensions.FromHex(@"3e3a44") // Temporary.
                                             },
-                                            new MatchmakingCarousel(room.Users.ToArray())
+                                            new GridContainer
                                             {
-                                                RelativeSizeAxes = Axes.Both
+                                                RelativeSizeAxes = Axes.Both,
+                                                Padding = new MarginPadding(10),
+                                                RowDimensions =
+                                                [
+                                                    new Dimension(),
+                                                    new Dimension(GridSizeMode.AutoSize)
+                                                ],
+                                                Content = new Drawable[][]
+                                                {
+                                                    [
+                                                        new MatchmakingCarousel(room.Users.ToArray())
+                                                        {
+                                                            RelativeSizeAxes = Axes.Both,
+                                                        }
+                                                    ],
+                                                    [
+                                                        new MatchmakingStageDisplay
+                                                        {
+                                                            RelativeSizeAxes = Axes.X
+                                                        }
+                                                    ]
+                                                }
                                             }
                                         }
                                     }
