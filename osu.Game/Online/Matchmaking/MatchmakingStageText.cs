@@ -62,11 +62,8 @@ namespace osu.Game.Online.Matchmaking
                 case MatchmakingRoomStatus.PrepareBeatmap:
                     return "Players are downloading the beatmap...";
 
-                case MatchmakingRoomStatus.PrepareGameplay:
-                    return "Game will begin shortly...";
-
                 case MatchmakingRoomStatus.Gameplay:
-                    return "Game is in progress.";
+                    return "Game is in progress...";
 
                 case MatchmakingRoomStatus.RoomEnd:
                     return "Thanks for playing! The match will close shortly.";
