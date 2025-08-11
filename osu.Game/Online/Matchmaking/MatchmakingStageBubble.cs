@@ -92,7 +92,7 @@ namespace osu.Game.Online.Matchmaking
             TimeSpan duration = countdownEndTime - countdownStartTime;
 
             if (duration.TotalMilliseconds == 0)
-                progressBar.Width = 1;
+                progressBar.Width = 0;
             else
             {
                 TimeSpan elapsed = DateTimeOffset.Now - countdownStartTime;
@@ -106,10 +106,13 @@ namespace osu.Game.Online.Matchmaking
                 return;
 
             if (matchmakingState.RoomStatus == MatchmakingRoomStatus.RoundStart)
+            {
+                countdownStartTime = countdownEndTime = DateTimeOffset.Now;
                 activate();
+            }
         });
 
-        private void onCountdownStarted(MultiplayerCountdown countdown)
+        private void onCountdownStarted(MultiplayerCountdown countdown) => Scheduler.Add(() =>
         {
             if (countdown is not MatchmakingStatusCountdown matchmakingStatusCountdown || matchmakingStatusCountdown.Status != status)
                 return;
@@ -117,7 +120,7 @@ namespace osu.Game.Online.Matchmaking
             countdownStartTime = DateTimeOffset.Now;
             countdownEndTime = countdownStartTime + countdown.TimeRemaining;
             activate();
-        }
+        });
 
         private void onCountdownStopped(MultiplayerCountdown countdown) => Scheduler.Add(() =>
         {
