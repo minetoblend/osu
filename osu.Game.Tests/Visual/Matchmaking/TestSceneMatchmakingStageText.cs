@@ -10,7 +10,7 @@ using osu.Game.Tests.Visual.Multiplayer;
 
 namespace osu.Game.Tests.Visual.Matchmaking
 {
-    public class TestSceneMatchmakingStatusDisplay : MultiplayerTestScene
+    public class TestSceneMatchmakingStageText : MultiplayerTestScene
     {
         public override void SetUpSteps()
         {
@@ -19,7 +19,7 @@ namespace osu.Game.Tests.Visual.Matchmaking
             AddStep("join room", () => JoinRoom(CreateDefaultRoom()));
             WaitForJoined();
 
-            AddStep("create display", () => Child = new MatchmakingRoomStatusDisplay
+            AddStep("create display", () => Child = new MatchmakingStageText
             {
                 Anchor = Anchor.Centre,
                 Origin = Anchor.Centre

@@ -2,11 +2,11 @@
 // See the LICENCE file in the repository root for full licence text.
 
 using System;
-using System.Linq;
 using NUnit.Framework;
 using osu.Framework.Extensions;
 using osu.Framework.Graphics;
 using osu.Game.Online.Matchmaking;
+using osu.Game.Online.Multiplayer.MatchTypes.Matchmaking;
 using osu.Game.Tests.Visual.Multiplayer;
 
 namespace osu.Game.Tests.Visual.Matchmaking
@@ -32,13 +32,21 @@ namespace osu.Game.Tests.Visual.Matchmaking
         [Test]
         public void TestStartCountdown()
         {
-            foreach (var status in MatchmakingStageDisplay.DISPLAYED_STAGES.Select(s => s.status))
+            foreach (var status in Enum.GetValues<MatchmakingRoomStatus>())
             {
-                AddStep("start countdown", () => MultiplayerClient.StartCountdown(new MatchmakingStatusCountdown
+                AddStep($"{status}", () =>
                 {
-                    Status = status,
-                    TimeRemaining = TimeSpan.FromSeconds(5)
-                }).WaitSafely());
+                    MultiplayerClient.ChangeMatchRoomState(new MatchmakingRoomState
+                    {
+                        RoomStatus = status
+                    }).WaitSafely();
+
+                    MultiplayerClient.StartCountdown(new MatchmakingStatusCountdown
+                    {
+                        Status = status,
+                        TimeRemaining = TimeSpan.FromSeconds(5)
+                    }).WaitSafely();
+                });
 
                 AddWaitStep("wait a bit", 10);
             }

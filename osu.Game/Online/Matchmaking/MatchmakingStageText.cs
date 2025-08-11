@@ -5,6 +5,7 @@ using osu.Framework.Allocation;
 using osu.Framework.Extensions.ObjectExtensions;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
+using osu.Framework.Localisation;
 using osu.Game.Graphics;
 using osu.Game.Graphics.Sprites;
 using osu.Game.Online.Multiplayer;
@@ -12,14 +13,14 @@ using osu.Game.Online.Multiplayer.MatchTypes.Matchmaking;
 
 namespace osu.Game.Online.Matchmaking
 {
-    public class MatchmakingRoomStatusDisplay : CompositeDrawable
+    public class MatchmakingStageText : CompositeDrawable
     {
         [Resolved]
         private MultiplayerClient client { get; set; } = null!;
 
         private OsuSpriteText text = null!;
 
-        public MatchmakingRoomStatusDisplay()
+        public MatchmakingStageText()
         {
             AutoSizeAxes = Axes.Both;
         }
@@ -29,7 +30,9 @@ namespace osu.Game.Online.Matchmaking
         {
             InternalChild = text = new OsuSpriteText
             {
-                Font = OsuFont.Default.With(size: 24)
+                Height = 16,
+                Font = OsuFont.Default,
+                AlwaysPresent = true,
             };
         }
 
@@ -46,45 +49,32 @@ namespace osu.Game.Online.Matchmaking
             if (state is not MatchmakingRoomState matchmakingState)
                 return;
 
-            switch (matchmakingState.RoomStatus)
+            text.Text = getTextForStatus(matchmakingState.RoomStatus);
+        });
+
+        private LocalisableString getTextForStatus(MatchmakingRoomStatus status)
+        {
+            switch (status)
             {
                 case MatchmakingRoomStatus.RoomStart:
-                    text.Text = "Players are joining the room...";
-                    break;
-
-                case MatchmakingRoomStatus.RoundStart:
-                    text.Text = "Next round starting shortly...";
-                    break;
-
-                case MatchmakingRoomStatus.UserPicks:
-                    text.Text = "Select your beatmap!";
-                    break;
-
-                case MatchmakingRoomStatus.SelectBeatmap:
-                    text.Text = "And the next beatmap is...";
-                    break;
+                    return "Players are joining the match...";
 
                 case MatchmakingRoomStatus.PrepareBeatmap:
-                    text.Text = "Waiting for players to download the beatmap...";
-                    break;
+                    return "Players are downloading the beatmap...";
 
                 case MatchmakingRoomStatus.PrepareGameplay:
-                    text.Text = "Match is starting shortly...";
-                    break;
+                    return "Game will begin shortly...";
 
                 case MatchmakingRoomStatus.Gameplay:
-                    text.Text = "Match is in progress!";
-                    break;
-
-                case MatchmakingRoomStatus.RoundEnd:
-                    text.Text = "Players are viewing the results...";
-                    break;
+                    return "Game is in progress.";
 
                 case MatchmakingRoomStatus.RoomEnd:
-                    text.Text = "Thanks for playing! Room will close shortly.";
-                    break;
+                    return "Thanks for playing! The match will close shortly.";
+
+                default:
+                    return string.Empty;
             }
-        });
+        }
 
         protected override void Dispose(bool isDisposing)
         {

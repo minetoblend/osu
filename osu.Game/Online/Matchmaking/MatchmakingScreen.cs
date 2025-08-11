@@ -93,22 +93,12 @@ namespace osu.Game.Online.Matchmaking
                             },
                             RowDimensions = new[]
                             {
-                                new Dimension(GridSizeMode.AutoSize),
-                                new Dimension(GridSizeMode.Absolute, row_padding),
                                 new Dimension(),
                                 new Dimension(GridSizeMode.Absolute, row_padding),
                                 new Dimension(GridSizeMode.AutoSize),
                             },
                             Content = new Drawable[]?[]
                             {
-                                [
-                                    new MatchmakingRoomStatusDisplay
-                                    {
-                                        Anchor = Anchor.Centre,
-                                        Origin = Anchor.Centre,
-                                    }
-                                ],
-                                null,
                                 [
                                     new Container
                                     {
@@ -129,9 +119,10 @@ namespace osu.Game.Online.Matchmaking
                                                 RowDimensions =
                                                 [
                                                     new Dimension(),
+                                                    new Dimension(GridSizeMode.Absolute, row_padding),
                                                     new Dimension(GridSizeMode.AutoSize)
                                                 ],
-                                                Content = new Drawable[][]
+                                                Content = new Drawable[]?[]
                                                 {
                                                     [
                                                         new MatchmakingCarousel(room.Users.ToArray())
@@ -139,6 +130,7 @@ namespace osu.Game.Online.Matchmaking
                                                             RelativeSizeAxes = Axes.Both,
                                                         }
                                                     ],
+                                                    null,
                                                     [
                                                         new MatchmakingStageDisplay
                                                         {

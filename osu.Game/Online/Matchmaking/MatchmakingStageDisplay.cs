@@ -59,14 +59,30 @@ namespace osu.Game.Online.Matchmaking
             {
                 RelativeSizeAxes = Axes.X,
                 AutoSizeAxes = Axes.Y,
-                ColumnDimensions = columnDimensions.ToArray(),
                 RowDimensions =
                 [
+                    new Dimension(GridSizeMode.AutoSize),
                     new Dimension(GridSizeMode.AutoSize)
                 ],
-                Content = new[]
+                Content = new Drawable[][]
                 {
-                    columnContent.ToArray()
+                    [
+                        new GridContainer
+                        {
+                            RelativeSizeAxes = Axes.X,
+                            AutoSizeAxes = Axes.Y,
+                            ColumnDimensions = columnDimensions.ToArray(),
+                            RowDimensions = [new Dimension(GridSizeMode.AutoSize)],
+                            Content = new[] { columnContent.ToArray() }
+                        }
+                    ],
+                    [
+                        new MatchmakingStageText
+                        {
+                            Anchor = Anchor.TopCentre,
+                            Origin = Anchor.TopCentre
+                        }
+                    ]
                 }
             };
         }
