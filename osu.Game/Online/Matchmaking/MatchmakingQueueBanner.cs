@@ -2,6 +2,7 @@
 // See the LICENCE file in the repository root for full licence text.
 
 using osu.Framework.Allocation;
+using osu.Framework.Bindables;
 using osu.Framework.Extensions.Color4Extensions;
 using osu.Framework.Extensions.ObjectExtensions;
 using osu.Framework.Graphics;
@@ -26,13 +27,17 @@ namespace osu.Game.Online.Matchmaking
         [Resolved]
         private IPerformFromScreenRunner performer { get; set; } = null!;
 
+        private readonly Bindable<bool> isVisible = new Bindable<bool>();
+        private readonly IBindable<bool> isConnected = new Bindable<bool>();
         private SpriteText statusText = null!;
         private Drawable background = null!;
+
         private MatchmakingQueueStatus? currentStatus;
 
         public MatchmakingQueueBanner()
         {
             AutoSizeAxes = Axes.Both;
+            AlwaysPresent = true;
         }
 
         [BackgroundDependencyLoader]
@@ -40,7 +45,11 @@ namespace osu.Game.Online.Matchmaking
         {
             InternalChild = new Container
             {
-                AutoSizeAxes = Axes.Both,
+                AutoSizeAxes = Axes.X,
+                AutoSizeDuration = 200,
+                AutoSizeEasing = Easing.OutQuint,
+                Height = 36,
+                Masking = true,
                 Children = new[]
                 {
                     background = new Box
@@ -63,21 +72,43 @@ namespace osu.Game.Online.Matchmaking
         {
             base.LoadComplete();
 
+            isVisible.BindValueChanged(onIsVisibleChanged, true);
+
+            isConnected.BindTo(client.IsConnected);
+            isConnected.BindValueChanged(onIsConnectedChanged, true);
+
             client.MatchmakingQueueStatusChanged += onMatchmakingQueueStatusChanged;
             onMatchmakingQueueStatusChanged(null);
         }
+
+        private void onIsVisibleChanged(ValueChangedEvent<bool> e)
+        {
+            if (e.NewValue)
+                statusText.BypassAutoSizeAxes = Axes.None;
+            else
+                statusText.BypassAutoSizeAxes = Axes.X;
+        }
+
+        private void onIsConnectedChanged(ValueChangedEvent<bool> e) => Scheduler.Add(() =>
+        {
+            if (!e.NewValue)
+                currentStatus = null;
+        });
 
         private void onMatchmakingQueueStatusChanged(MatchmakingQueueStatus? status) => Scheduler.Add(() =>
         {
             currentStatus = status;
 
+            if (status == null)
+            {
+                Hide();
+                return;
+            }
+
+            Show();
+
             switch (status)
             {
-                case null:
-                    background.Colour = Color4.Yellow;
-                    statusText.Text = string.Empty;
-                    break;
-
                 case MatchmakingQueueStatus.InQueue inQueue:
                     background.Colour = Color4.Yellow;
                     statusText.Text = $"finding a match ({inQueue.PlayerCount} / {inQueue.RoomSize})...";
@@ -105,12 +136,16 @@ namespace osu.Game.Online.Matchmaking
 
                 // Immediately consume the status to ensure a secondary click doesn't attempt to re-join.
                 currentStatus = null;
-                onMatchmakingQueueStatusChanged(null);
+                Hide();
                 return true;
             }
 
             return false;
         }
+
+        public override void Show() => isVisible.Value = true;
+
+        public override void Hide() => isVisible.Value = false;
 
         protected override void Dispose(bool isDisposing)
         {
