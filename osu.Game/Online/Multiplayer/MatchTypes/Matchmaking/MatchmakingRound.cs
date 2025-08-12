@@ -49,6 +49,6 @@ namespace osu.Game.Online.Multiplayer.MatchTypes.Matchmaking
         /// The achieved score statistics.
         /// </summary>
         [Key(5)]
-        public Dictionary<HitResult, int> Statistics { get; set; } = new Dictionary<HitResult, int>();
+        public IDictionary<HitResult, int> Statistics { get; set; } = new Dictionary<HitResult, int>();
     }
 }
