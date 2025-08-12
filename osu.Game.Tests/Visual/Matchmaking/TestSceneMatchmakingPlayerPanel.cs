@@ -41,11 +41,17 @@ namespace osu.Game.Tests.Visual.Matchmaking
 
             AddStep("increase placement", () => MultiplayerClient.ChangeMatchRoomState(new MatchmakingRoomState
             {
-                UserScores =
+                Users =
                 {
-                    Scores =
+                    UserDictionary =
                     {
-                        { 1, new MatchmakingUserScore(1) { Placement = ++rank } }
+                        {
+                            1, new MatchmakingUser
+                            {
+                                UserId = 1,
+                                Placement = ++rank
+                            }
+                        }
                     }
                 }
             }).WaitSafely());
@@ -58,11 +64,18 @@ namespace osu.Game.Tests.Visual.Matchmaking
 
             AddStep("increase points", () => MultiplayerClient.ChangeMatchRoomState(new MatchmakingRoomState
             {
-                UserScores =
+                Users =
                 {
-                    Scores =
+                    UserDictionary =
                     {
-                        { 1, new MatchmakingUserScore(1) { Placement = 1, Points = ++points } }
+                        {
+                            1, new MatchmakingUser
+                            {
+                                UserId = 1,
+                                Placement = 1,
+                                Points = ++points
+                            }
+                        }
                     }
                 }
             }).WaitSafely());

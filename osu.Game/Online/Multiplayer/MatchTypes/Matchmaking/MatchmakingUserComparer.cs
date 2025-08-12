@@ -7,11 +7,11 @@ using System.Collections.Generic;
 namespace osu.Game.Online.Multiplayer.MatchTypes.Matchmaking
 {
     /// <summary>
-    /// Orders <see cref="MatchmakingUserScore"/> in order of placement.
+    /// Orders <see cref="MatchmakingUser"/> in order of placement.
     /// </summary>
-    public class MatchmakingUserScoreComparer : Comparer<MatchmakingUserScore>
+    public class MatchmakingUserComparer : Comparer<MatchmakingUser>
     {
-        public override int Compare(MatchmakingUserScore? x, MatchmakingUserScore? y)
+        public override int Compare(MatchmakingUser? x, MatchmakingUser? y)
         {
             ArgumentNullException.ThrowIfNull(x);
             ArgumentNullException.ThrowIfNull(y);
@@ -25,14 +25,16 @@ namespace osu.Game.Online.Multiplayer.MatchTypes.Matchmaking
                 return -1;
 
             // Tiebreaker 1 (likely): From each user's point-of-view, their earliest and best placement.
-            for (int i = 0;; i++)
+            for (int round = 1;; round++)
             {
-                if (i >= x.RoundPlacements.Count || i >= y.RoundPlacements.Count)
+                if (!x.Rounds.RoundsDictionary.TryGetValue(round, out MatchmakingRound? xRound))
+                    break;
+
+                if (!y.Rounds.RoundsDictionary.TryGetValue(round, out MatchmakingRound? yRound))
                     break;
 
                 // X appears earlier in the list if it has a better placement, or later in the list if it has a worse placement.
-                int compare = x.RoundPlacements[i].CompareTo(y.RoundPlacements[i]);
-
+                int compare = xRound.Placement.CompareTo(yRound.Placement);
                 if (compare != 0)
                     return compare;
             }

@@ -67,8 +67,8 @@ namespace osu.Game.Online.Matchmaking
 
             foreach (var panel in panels)
             {
-                if (matchmakingState.UserScores.Scores.TryGetValue(panel.User.UserID, out MatchmakingUserScore? userScore))
-                    panels.SetLayoutPosition(panel, userScore.Placement);
+                if (matchmakingState.Users.UserDictionary.TryGetValue(panel.User.UserID, out MatchmakingUser? user))
+                    panels.SetLayoutPosition(panel, user.Placement);
                 else
                     panels.SetLayoutPosition(panel, float.MaxValue);
             }

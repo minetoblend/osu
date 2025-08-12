@@ -98,7 +98,7 @@ namespace osu.Game.Online.Matchmaking
             if (state is not MatchmakingRoomState matchmakingState)
                 return;
 
-            if (!matchmakingState.UserScores.Scores.TryGetValue(User.UserID, out MatchmakingUserScore? userScore))
+            if (!matchmakingState.Users.UserDictionary.TryGetValue(User.UserID, out MatchmakingUser? userScore))
                 return;
 
             rankText.Text = $"{userScore.Placement}.";

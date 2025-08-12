@@ -180,10 +180,11 @@ namespace osu.Game.Tests.Visual.Matchmaking
 
                 MultiplayerClient.ChangeMatchRoomState(new MatchmakingRoomState
                 {
-                    UserScores =
+                    Users =
                     {
-                        Scores = sortedUsers.Select((tuple, i) => new MatchmakingUserScore(tuple.UserID)
+                        UserDictionary = sortedUsers.Select((tuple, i) => new MatchmakingUser
                         {
+                            UserId = tuple.UserID,
                             Points = scores[i],
                             Placement = i + 1
                         }).ToDictionary(s => s.UserId)
