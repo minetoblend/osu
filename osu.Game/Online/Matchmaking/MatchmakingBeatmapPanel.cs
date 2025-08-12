@@ -18,7 +18,6 @@ using osu.Game.Online.API.Requests.Responses;
 using osu.Game.Online.Chat;
 using osu.Game.Online.Multiplayer;
 using osu.Game.Online.Rooms;
-using osu.Game.Overlays.Notifications;
 using osu.Game.Users.Drawables;
 using osuTK;
 using osuTK.Graphics;
@@ -83,12 +82,13 @@ namespace osu.Game.Online.Matchmaking
                     },
                     beatmapText = new LinkFlowContainer
                     {
-                        Anchor = Anchor.Centre,
-                        Origin = Anchor.Centre,
+                        Anchor = Anchor.TopCentre,
+                        Origin = Anchor.TopCentre,
                         AutoSizeAxes = Axes.Both,
-                        MaximumSize = new Vector2(panel_width, 100)
+                        MaximumSize = new Vector2(panel_width, 100),
+                        Margin = new MarginPadding { Top = 18 }
                     },
-                    badges = new AlwaysUpdateFillFlowContainer<SelectionBadge>
+                    badges = new FillFlowContainer<SelectionBadge>
                     {
                         Anchor = Anchor.BottomRight,
                         Origin = Anchor.BottomRight,
