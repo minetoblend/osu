@@ -12,6 +12,7 @@ using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Cursor;
 using osu.Framework.Graphics.Shapes;
+using osu.Framework.Logging;
 using osu.Framework.Screens;
 using osu.Game.Beatmaps;
 using osu.Game.Database;
@@ -169,11 +170,21 @@ namespace osu.Game.Online.Matchmaking
         {
             base.LoadComplete();
 
+            client.RoomUpdated += onRoomUpdated;
             client.UserStateChanged += onUserStateChanged;
             client.SettingsChanged += onSettingsChanged;
             client.LoadRequested += onLoadRequested;
 
             beatmapAvailabilityTracker.Availability.BindValueChanged(onBeatmapAvailabilityChanged, true);
+        }
+
+        private void onRoomUpdated()
+        {
+            if (this.IsCurrentScreen() && client.Room == null)
+            {
+                Logger.Log($"{this} exiting due to loss of room or connection");
+                this.Exit();
+            }
         }
 
         private void onUserStateChanged(MultiplayerRoomUser user, MultiplayerUserState state)
@@ -276,7 +287,7 @@ namespace osu.Game.Online.Matchmaking
             if (base.OnExiting(e))
                 return true;
 
-            client.LeaveRoom();
+            client.LeaveRoom().FireAndForget();
             return false;
         }
 
@@ -302,6 +313,7 @@ namespace osu.Game.Online.Matchmaking
 
             if (client.IsNotNull())
             {
+                client.RoomUpdated -= onRoomUpdated;
                 client.UserStateChanged -= onUserStateChanged;
                 client.SettingsChanged -= onSettingsChanged;
                 client.LoadRequested -= onLoadRequested;
