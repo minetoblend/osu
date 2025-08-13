@@ -12,6 +12,7 @@ using osu.Game.Online.Multiplayer;
 using osu.Game.Online.Multiplayer.MatchTypes.Matchmaking;
 using osu.Game.Rulesets.Scoring;
 using osu.Game.Utils;
+using osuTK;
 
 namespace osu.Game.Online.Matchmaking
 {
@@ -43,11 +44,30 @@ namespace osu.Game.Online.Matchmaking
                 Content = new Drawable[]?[]
                 {
                     [
-                        placementText = new OsuSpriteText
+                        new FillFlowContainer
                         {
                             Anchor = Anchor.TopCentre,
                             Origin = Anchor.TopCentre,
-                            Font = OsuFont.Default.With(size: 72)
+                            AutoSizeAxes = Axes.Both,
+                            Direction = FillDirection.Vertical,
+                            Spacing = new Vector2(grid_spacing),
+                            Children = new[]
+                            {
+                                new OsuSpriteText
+                                {
+                                    Anchor = Anchor.TopCentre,
+                                    Origin = Anchor.TopCentre,
+                                    Text = "Placement",
+                                    Font = OsuFont.Default.With(size: 12)
+                                },
+                                placementText = new OsuSpriteText
+                                {
+                                    Anchor = Anchor.TopCentre,
+                                    Origin = Anchor.TopCentre,
+                                    Font = OsuFont.Default.With(size: 72),
+                                    UseFullGlyphHeight = false
+                                }
+                            }
                         }
                     ],
                     null,
@@ -70,13 +90,15 @@ namespace osu.Game.Online.Matchmaking
                                         Origin = Anchor.CentreLeft,
                                         AutoSizeAxes = Axes.Both,
                                         Direction = FillDirection.Vertical,
+                                        Spacing = new Vector2(grid_spacing),
                                         Children = new Drawable[]
                                         {
                                             new OsuSpriteText
                                             {
                                                 Anchor = Anchor.TopCentre,
                                                 Origin = Anchor.TopCentre,
-                                                Text = "Breakdown"
+                                                Text = "Breakdown",
+                                                Font = OsuFont.Default.With(size: 12)
                                             },
                                             userStatistics = new FillFlowContainer<MatchmakingBreakdownStatistic>
                                             {
@@ -84,6 +106,7 @@ namespace osu.Game.Online.Matchmaking
                                                 Origin = Anchor.TopCentre,
                                                 AutoSizeAxes = Axes.Both,
                                                 Direction = FillDirection.Vertical,
+                                                Spacing = new Vector2(grid_spacing)
                                             }
                                         }
                                     },
@@ -98,11 +121,29 @@ namespace osu.Game.Online.Matchmaking
                     ],
                     null,
                     [
-                        roomStatistics = new FillFlowContainer<MatchmakingRoomStatistic>
+                        new FillFlowContainer
                         {
                             RelativeSizeAxes = Axes.X,
-                            AutoSizeAxes = Axes.Y
-                        }
+                            AutoSizeAxes = Axes.Y,
+                            Direction = FillDirection.Vertical,
+                            Spacing = new Vector2(grid_spacing),
+                            Children = new Drawable[]
+                            {
+                                new OsuSpriteText
+                                {
+                                    Anchor = Anchor.TopCentre,
+                                    Origin = Anchor.TopCentre,
+                                    Text = "Statistics",
+                                    Font = OsuFont.Default.With(size: 12)
+                                },
+                                roomStatistics = new FillFlowContainer<MatchmakingRoomStatistic>
+                                {
+                                    RelativeSizeAxes = Axes.X,
+                                    AutoSizeAxes = Axes.Y,
+                                    Spacing = new Vector2(grid_spacing)
+                                }
+                            }
+                        },
                     ]
                 }
             };
