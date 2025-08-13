@@ -20,7 +20,7 @@ namespace osu.Game.Online.Matchmaking
         [Resolved]
         private MultiplayerClient client { get; set; } = null!;
 
-        private OsuScrollContainer scroll = null!;
+        private PanelScrollContainer scroll = null!;
         private MatchmakingPlayerList playerList = null!;
         private MatchmakingBeatmapList beatmapList = null!;
         private MatchmakingSelectionCarousel selectionCarousel = null!;
@@ -28,7 +28,7 @@ namespace osu.Game.Online.Matchmaking
         [BackgroundDependencyLoader]
         private void load()
         {
-            InternalChild = scroll = new NoUserScrollContainer(Direction.Horizontal)
+            InternalChild = scroll = new PanelScrollContainer(Direction.Horizontal)
             {
                 RelativeSizeAxes = Axes.Both,
                 ScrollbarVisible = false,
@@ -112,11 +112,27 @@ namespace osu.Game.Online.Matchmaking
                 client.MatchRoomStateChanged -= onMatchRoomStateChanged;
         }
 
-        private class NoUserScrollContainer : OsuScrollContainer
+        private class PanelScrollContainer : OsuScrollContainer
         {
-            public NoUserScrollContainer(Direction direction)
+            private Drawable? scrollTarget;
+
+            public PanelScrollContainer(Direction direction)
                 : base(direction)
             {
+            }
+
+            public new void ScrollTo(Drawable target, bool animated = true)
+            {
+                scrollTarget = target;
+                base.ScrollTo(target, animated);
+            }
+
+            protected override void Update()
+            {
+                base.Update();
+
+                if (scrollTarget != null)
+                    ScrollTo(scrollTarget);
             }
 
             protected override void OnUserScroll(double value, bool animated = true, double? distanceDecay = null)
