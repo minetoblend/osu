@@ -9,13 +9,13 @@ using osu.Game.Tests.Visual.Multiplayer;
 
 namespace osu.Game.Tests.Visual.Matchmaking
 {
-    public class TestSceneMatchmakingFunStatistic : MultiplayerTestScene
+    public class TestSceneMatchmakingRoomStatistic : MultiplayerTestScene
     {
         public override void SetUpSteps()
         {
             base.SetUpSteps();
 
-            AddStep("add statistic", () => Child = new MatchmakingFunStatistic("Statistic description", new MultiplayerRoomUser(1)
+            AddStep("add statistic", () => Child = new MatchmakingRoomStatistic("Statistic description", new MultiplayerRoomUser(1)
             {
                 User = new APIUser
                 {

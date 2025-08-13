@@ -1,10 +1,8 @@
 // Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
-using System.Linq;
 using NUnit.Framework;
 using osu.Framework.Extensions;
-using osu.Framework.Extensions.IEnumerableExtensions;
 using osu.Framework.Graphics;
 using osu.Game.Online.API.Requests.Responses;
 using osu.Game.Online.Matchmaking;
@@ -18,6 +16,8 @@ namespace osu.Game.Tests.Visual.Matchmaking
 {
     public class TestSceneMatchmakingResultsPanel : MultiplayerTestScene
     {
+        private const int invalid_user_id = 1;
+
         public override void SetUpSteps()
         {
             base.SetUpSteps();
@@ -33,25 +33,13 @@ namespace osu.Game.Tests.Visual.Matchmaking
                 Size = new Vector2(0.8f)
             });
 
-            AddStep("join users", () => Enumerable.Range(1, 8).ForEach(u =>
+            AddStep("join another user", () => MultiplayerClient.AddUser(new MultiplayerRoomUser(invalid_user_id)
             {
-                MultiplayerClient.AddUser(new MultiplayerRoomUser(u)
+                User = new APIUser
                 {
-                    User = new APIUser
-                    {
-                        Id = u,
-                        Username = $"User {u}"
-                    }
-                });
-
-                MultiplayerClient.AddUser(new MultiplayerRoomUser(1000)
-                {
-                    User = new APIUser
-                    {
-                        Id = 1000,
-                        Username = "Invalid user"
-                    }
-                });
+                    Id = invalid_user_id,
+                    Username = "Invalid user"
+                }
             }));
         }
 
@@ -66,29 +54,37 @@ namespace osu.Game.Tests.Visual.Matchmaking
                     RoomStatus = MatchmakingRoomStatus.RoomEnd
                 };
 
+                int localUserId = API.LocalUser.Value.OnlineID;
+
+                // Overall state.
+                state.Users[localUserId].Placement = 1;
+                state.Users[localUserId].Points = 8;
+                state.Users[invalid_user_id].Placement = 2;
+                state.Users[invalid_user_id].Points = 7;
+
                 // Highest score.
-                state.Users[1].Rounds[1].TotalScore = 1000;
-                state.Users[1000].Rounds[1].TotalScore = 990;
+                state.Users[localUserId].Rounds[1].TotalScore = 1000;
+                state.Users[invalid_user_id].Rounds[1].TotalScore = 990;
 
                 // Highest accuracy.
-                state.Users[2].Rounds[2].Accuracy = 0.9995;
-                state.Users[1000].Rounds[2].Accuracy = 0.5;
+                state.Users[localUserId].Rounds[2].Accuracy = 0.9995;
+                state.Users[invalid_user_id].Rounds[2].Accuracy = 0.5;
 
                 // Highest combo.
-                state.Users[3].Rounds[3].MaxCombo = 100;
-                state.Users[1000].Rounds[3].MaxCombo = 10;
+                state.Users[localUserId].Rounds[3].MaxCombo = 100;
+                state.Users[invalid_user_id].Rounds[3].MaxCombo = 10;
 
                 // Most bonus score.
-                state.Users[4].Rounds[4].Statistics[HitResult.LargeBonus] = 50;
-                state.Users[1000].Rounds[4].Statistics[HitResult.LargeBonus] = 25;
+                state.Users[localUserId].Rounds[4].Statistics[HitResult.LargeBonus] = 50;
+                state.Users[invalid_user_id].Rounds[4].Statistics[HitResult.LargeBonus] = 25;
 
                 // Smallest score difference.
-                state.Users[5].Rounds[5].TotalScore = 1000;
-                state.Users[1000].Rounds[5].TotalScore = 999;
+                state.Users[localUserId].Rounds[5].TotalScore = 1000;
+                state.Users[invalid_user_id].Rounds[5].TotalScore = 999;
 
                 // Largest score difference.
-                state.Users[6].Rounds[6].TotalScore = 1000;
-                state.Users[1000].Rounds[6].TotalScore = 0;
+                state.Users[localUserId].Rounds[6].TotalScore = 1000;
+                state.Users[invalid_user_id].Rounds[6].TotalScore = 0;
 
                 MultiplayerClient.ChangeMatchRoomState(state).WaitSafely();
             });

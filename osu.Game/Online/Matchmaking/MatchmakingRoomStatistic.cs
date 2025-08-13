@@ -11,14 +11,14 @@ using osuTK.Graphics;
 
 namespace osu.Game.Online.Matchmaking
 {
-    public class MatchmakingFunStatistic : CompositeDrawable
+    public class MatchmakingRoomStatistic : CompositeDrawable
     {
         private readonly Color4 backgroundColour = Color4.SaddleBrown;
 
         private readonly string text;
         private readonly MultiplayerRoomUser user;
 
-        public MatchmakingFunStatistic(string text, MultiplayerRoomUser user)
+        public MatchmakingRoomStatistic(string text, MultiplayerRoomUser user)
         {
             this.text = text;
             this.user = user;

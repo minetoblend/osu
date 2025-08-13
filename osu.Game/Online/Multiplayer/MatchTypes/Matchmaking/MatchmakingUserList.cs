@@ -2,6 +2,7 @@
 // See the LICENCE file in the repository root for full licence text.
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using MessagePack;
 
@@ -12,7 +13,7 @@ namespace osu.Game.Online.Multiplayer.MatchTypes.Matchmaking
     /// </summary>
     [Serializable]
     [MessagePackObject]
-    public class MatchmakingUserList
+    public class MatchmakingUserList : IEnumerable<MatchmakingUser>
     {
         /// <summary>
         /// A key-value-pair mapping of ids to users.
@@ -40,5 +41,9 @@ namespace osu.Game.Online.Multiplayer.MatchTypes.Matchmaking
         /// </summary>
         [IgnoreMember]
         public int Count => UserDictionary.Count;
+
+        public IEnumerator<MatchmakingUser> GetEnumerator() => UserDictionary.Values.GetEnumerator();
+
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }
 }
