@@ -127,12 +127,13 @@ namespace osu.Game.Online.Matchmaking
             {
                 background.FlashColour(Color4.LightBlue.Lighten(0.5f), 100, Easing.OutQuint);
 
-                client.JoinRoom(new Room { RoomID = found.RoomId })
-                      .FireAndForget(() => Schedule(() =>
-                      {
-                          MultiplayerRoom room = client.Room!;
-                          performer.PerformFromScreen(screen => screen.Push(new MatchmakingScreen(room)));
-                      }));
+                // Perform all actions from the menu, exiting any existing multiplayer/matchmaking screen.
+                performer.PerformFromScreen(_ =>
+                {
+                    // Now that we have a fresh slate, we can join the room.
+                    client.JoinRoom(new Room { RoomID = found.RoomId })
+                          .FireAndForget(() => Schedule(() => performer.PerformFromScreen(screen => screen.Push(new MatchmakingScreen(client.Room!)))));
+                });
 
                 // Immediately consume the status to ensure a secondary click doesn't attempt to re-join.
                 currentStatus = null;
