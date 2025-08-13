@@ -8,15 +8,15 @@ using osu.Framework.Extensions;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Game.Online.API.Requests.Responses;
-using osu.Game.Online.Matchmaking;
 using osu.Game.Online.Multiplayer;
 using osu.Game.Online.Multiplayer.MatchTypes.Matchmaking;
+using osu.Game.Screens.OnlinePlay.Matchmaking.Screens.Idle;
 using osu.Game.Tests.Visual.Multiplayer;
 using osuTK;
 
 namespace osu.Game.Tests.Visual.Matchmaking
 {
-    public class TestSceneMatchmakingPlayerList : MultiplayerTestScene
+    public class TestSceneIdleScreen : MultiplayerTestScene
     {
         private const int user_count = 8;
 
@@ -49,7 +49,7 @@ namespace osu.Game.Tests.Visual.Matchmaking
                     Anchor = Anchor.Centre,
                     Origin = Anchor.Centre,
                     Size = new Vector2(500, 500),
-                    Child = new MatchmakingPlayerList
+                    Child = new IdleScreen
                     {
                         Anchor = Anchor.Centre,
                         Origin = Anchor.Centre,

@@ -12,10 +12,11 @@ using osu.Framework.Screens;
 using osu.Framework.Testing;
 using osu.Game.Graphics.UserInterface;
 using osu.Game.Online.API.Requests.Responses;
-using osu.Game.Online.Matchmaking;
 using osu.Game.Online.Multiplayer;
 using osu.Game.Online.Multiplayer.MatchTypes.Matchmaking;
 using osu.Game.Online.Rooms;
+using osu.Game.Screens.OnlinePlay.Matchmaking;
+using osu.Game.Screens.OnlinePlay.Matchmaking.Screens.Pick;
 using osu.Game.Tests.Visual.Multiplayer;
 using osuTK;
 using osuTK.Input;
@@ -114,7 +115,7 @@ namespace osu.Game.Tests.Visual.Matchmaking
                 int j = i * 2;
                 AddStep("click a beatmap", () =>
                 {
-                    Quad panelQuad = this.ChildrenOfType<MatchmakingBeatmapPanel>().ElementAt(j).ScreenSpaceDrawQuad;
+                    Quad panelQuad = this.ChildrenOfType<BeatmapPanel>().ElementAt(j).ScreenSpaceDrawQuad;
 
                     InputManager.MoveMouseTo(new Vector2(panelQuad.Centre.X, panelQuad.TopLeft.Y + 5));
                     InputManager.Click(MouseButton.Left);

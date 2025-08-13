@@ -4,13 +4,13 @@
 using NUnit.Framework;
 using osu.Framework.Extensions;
 using osu.Framework.Graphics;
-using osu.Game.Online.Matchmaking;
 using osu.Game.Online.Rooms;
+using osu.Game.Screens.OnlinePlay.Matchmaking.Screens.Pick;
 using osu.Game.Tests.Visual.Multiplayer;
 
 namespace osu.Game.Tests.Visual.Matchmaking
 {
-    public class TestSceneMatchmakingBeatmapPanel : MultiplayerTestScene
+    public class TestSceneBeatmapPanel : MultiplayerTestScene
     {
         public override void SetUpSteps()
         {
@@ -18,7 +18,7 @@ namespace osu.Game.Tests.Visual.Matchmaking
 
             AddStep("add beatmap panel", () =>
             {
-                Child = new MatchmakingBeatmapPanel(new MultiplayerPlaylistItem { ID = 1, StarRating = 5.3 })
+                Child = new BeatmapPanel(new MultiplayerPlaylistItem { ID = 1, StarRating = 5.3 })
                 {
                     Anchor = Anchor.Centre,
                     Origin = Anchor.Centre,

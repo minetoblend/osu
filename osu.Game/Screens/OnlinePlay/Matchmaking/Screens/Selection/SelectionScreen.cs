@@ -8,12 +8,13 @@ using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Shapes;
 using osu.Game.Online.Rooms;
+using osu.Game.Screens.OnlinePlay.Matchmaking.Screens.Pick;
 using osuTK;
 using osuTK.Graphics;
 
-namespace osu.Game.Online.Matchmaking
+namespace osu.Game.Screens.OnlinePlay.Matchmaking.Screens.Selection
 {
-    public class MatchmakingSelectionCarousel : CompositeDrawable
+    public class SelectionScreen : CompositeDrawable
     {
         /// <summary>
         /// Number of items visible on either side of the current item in the carousel at any one time.
@@ -31,7 +32,7 @@ namespace osu.Game.Online.Matchmaking
         private const double finish_duration = 1000;
 
         private readonly Bindable<float> currentPosition = new Bindable<float>();
-        private Container<MatchmakingBeatmapPanel> panels = null!;
+        private Container<BeatmapPanel> panels = null!;
         private MultiplayerPlaylistItem[] items = [];
 
         [BackgroundDependencyLoader]
@@ -53,7 +54,7 @@ namespace osu.Game.Online.Matchmaking
                         Alpha = 0.3f,
                     }
                 },
-                panels = new FillFlowContainer<MatchmakingBeatmapPanel>
+                panels = new FillFlowContainer<BeatmapPanel>
                 {
                     RelativeSizeAxes = Axes.Both,
                     Direction = FillDirection.Vertical
@@ -114,7 +115,7 @@ namespace osu.Game.Online.Matchmaking
 
                 float distFromCentre = (i - centrePos) / visible_extent;
 
-                panels.Add(new MatchmakingBeatmapPanel(items[itemIndex])
+                panels.Add(new BeatmapPanel(items[itemIndex])
                 {
                     Anchor = Anchor.Centre,
                     Origin = Anchor.Centre,

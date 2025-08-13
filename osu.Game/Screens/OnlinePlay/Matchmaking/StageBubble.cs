@@ -10,13 +10,14 @@ using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Shapes;
 using osu.Framework.Localisation;
 using osu.Game.Graphics.Sprites;
+using osu.Game.Online.Matchmaking;
 using osu.Game.Online.Multiplayer;
 using osu.Game.Online.Multiplayer.MatchTypes.Matchmaking;
 using osuTK.Graphics;
 
-namespace osu.Game.Online.Matchmaking
+namespace osu.Game.Screens.OnlinePlay.Matchmaking
 {
-    internal class MatchmakingStageBubble : CompositeDrawable
+    internal class StageBubble : CompositeDrawable
     {
         private readonly Color4 backgroundColour = Color4.Salmon;
 
@@ -30,7 +31,7 @@ namespace osu.Game.Online.Matchmaking
         private DateTimeOffset countdownStartTime;
         private DateTimeOffset countdownEndTime;
 
-        public MatchmakingStageBubble(MatchmakingRoomStatus status, LocalisableString displayText)
+        public StageBubble(MatchmakingRoomStatus status, LocalisableString displayText)
         {
             this.status = status;
             this.displayText = displayText;

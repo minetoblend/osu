@@ -10,9 +10,9 @@ using osu.Framework.Localisation;
 using osu.Game.Online.Multiplayer.MatchTypes.Matchmaking;
 using osuTK;
 
-namespace osu.Game.Online.Matchmaking
+namespace osu.Game.Screens.OnlinePlay.Matchmaking
 {
-    public class MatchmakingStageDisplay : CompositeDrawable
+    public class StageDisplay : CompositeDrawable
     {
         public static readonly (MatchmakingRoomStatus status, LocalisableString text)[] DISPLAYED_STAGES =
         [
@@ -23,7 +23,7 @@ namespace osu.Game.Online.Matchmaking
             (MatchmakingRoomStatus.RoomEnd, "Match End")
         ];
 
-        public MatchmakingStageDisplay()
+        public StageDisplay()
         {
             AutoSizeAxes = Axes.Y;
         }
@@ -50,7 +50,7 @@ namespace osu.Game.Online.Matchmaking
                 }
 
                 columnDimensions.Add(new Dimension());
-                columnContent.Add(new MatchmakingStageBubble(DISPLAYED_STAGES[i].status, DISPLAYED_STAGES[i].text)
+                columnContent.Add(new StageBubble(DISPLAYED_STAGES[i].status, DISPLAYED_STAGES[i].text)
                 {
                     RelativeSizeAxes = Axes.X
                 });
@@ -78,7 +78,7 @@ namespace osu.Game.Online.Matchmaking
                         }
                     ],
                     [
-                        new MatchmakingStageText
+                        new StageText
                         {
                             Anchor = Anchor.TopCentre,
                             Origin = Anchor.TopCentre

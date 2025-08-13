@@ -12,19 +12,23 @@ using osu.Game.Graphics.Containers;
 using osu.Game.Online.Multiplayer;
 using osu.Game.Online.Multiplayer.MatchTypes.Matchmaking;
 using osu.Game.Online.Rooms;
+using osu.Game.Screens.OnlinePlay.Matchmaking.Screens.Idle;
+using osu.Game.Screens.OnlinePlay.Matchmaking.Screens.Pick;
+using osu.Game.Screens.OnlinePlay.Matchmaking.Screens.Results;
+using osu.Game.Screens.OnlinePlay.Matchmaking.Screens.Selection;
 
-namespace osu.Game.Online.Matchmaking
+namespace osu.Game.Screens.OnlinePlay.Matchmaking.Screens
 {
-    public class MatchmakingCarousel : CompositeDrawable
+    public class ScreenCarousel : CompositeDrawable
     {
         [Resolved]
         private MultiplayerClient client { get; set; } = null!;
 
         private PanelScrollContainer scroll = null!;
-        private MatchmakingPlayerList playerList = null!;
-        private MatchmakingBeatmapList beatmapList = null!;
-        private MatchmakingSelectionCarousel selectionCarousel = null!;
-        private MatchmakingResultsPanel resultsPanel = null!;
+        private IdleScreen idleScreen = null!;
+        private PickScreen pickScreen = null!;
+        private SelectionScreen selectionScreen = null!;
+        private ResultsScreen resultsScreen = null!;
 
         [BackgroundDependencyLoader]
         private void load()
@@ -42,7 +46,7 @@ namespace osu.Game.Online.Matchmaking
                         new WidthReferenceContainer(() => scroll)
                         {
                             RelativeSizeAxes = Axes.Y,
-                            Child = playerList = new MatchmakingPlayerList
+                            Child = idleScreen = new IdleScreen
                             {
                                 RelativeSizeAxes = Axes.Both
                             }
@@ -50,7 +54,7 @@ namespace osu.Game.Online.Matchmaking
                         new WidthReferenceContainer(() => scroll)
                         {
                             RelativeSizeAxes = Axes.Y,
-                            Child = beatmapList = new MatchmakingBeatmapList
+                            Child = pickScreen = new PickScreen
                             {
                                 RelativeSizeAxes = Axes.Both,
                             }
@@ -58,7 +62,7 @@ namespace osu.Game.Online.Matchmaking
                         new WidthReferenceContainer(() => scroll)
                         {
                             RelativeSizeAxes = Axes.Y,
-                            Child = selectionCarousel = new MatchmakingSelectionCarousel
+                            Child = selectionScreen = new SelectionScreen
                             {
                                 RelativeSizeAxes = Axes.Both
                             }
@@ -66,7 +70,7 @@ namespace osu.Game.Online.Matchmaking
                         new WidthReferenceContainer(() => scroll)
                         {
                             RelativeSizeAxes = Axes.Y,
-                            Child = resultsPanel = new MatchmakingResultsPanel
+                            Child = resultsScreen = new ResultsScreen
                             {
                                 RelativeSizeAxes = Axes.Both
                             }
@@ -94,24 +98,24 @@ namespace osu.Game.Online.Matchmaking
                 case MatchmakingRoomStatus.RoomStart:
                 case MatchmakingRoomStatus.RoundStart:
                 case MatchmakingRoomStatus.RoundEnd:
-                    scroll.ScrollTo(playerList);
+                    scroll.ScrollTo(idleScreen);
                     break;
 
                 case MatchmakingRoomStatus.UserPicks:
-                    scroll.ScrollTo(beatmapList);
+                    scroll.ScrollTo(pickScreen);
                     break;
 
                 case MatchmakingRoomStatus.SelectBeatmap:
-                    scroll.ScrollTo(selectionCarousel);
+                    scroll.ScrollTo(selectionScreen);
 
                     MultiplayerPlaylistItem[] candidateItems = matchmakingState.CandidateItems.Select(item => client.Room!.Playlist.Single(i => i.ID == item)).ToArray();
                     MultiplayerPlaylistItem candidateItem = client.Room!.Playlist.Single(i => i.ID == matchmakingState.CandidateItem);
 
-                    selectionCarousel.BeginScroll(candidateItems, candidateItem);
+                    selectionScreen.BeginScroll(candidateItems, candidateItem);
                     break;
 
                 case MatchmakingRoomStatus.RoomEnd:
-                    scroll.ScrollTo(resultsPanel);
+                    scroll.ScrollTo(resultsScreen);
                     break;
             }
         });

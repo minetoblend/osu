@@ -6,17 +6,17 @@ using NUnit.Framework;
 using osu.Framework.Extensions;
 using osu.Framework.Graphics;
 using osu.Game.Online.API.Requests.Responses;
-using osu.Game.Online.Matchmaking;
 using osu.Game.Online.Multiplayer;
 using osu.Game.Online.Multiplayer.MatchTypes.Matchmaking;
 using osu.Game.Online.Rooms;
 using osu.Game.Rulesets.Scoring;
+using osu.Game.Screens.OnlinePlay.Matchmaking.Screens;
 using osu.Game.Tests.Visual.Multiplayer;
 using osuTK;
 
 namespace osu.Game.Tests.Visual.Matchmaking
 {
-    public class TestSceneMatchmakingCarousel : MultiplayerTestScene
+    public class TestSceneScreenCarousel : MultiplayerTestScene
     {
         private const int user_count = 8;
 
@@ -41,7 +41,7 @@ namespace osu.Game.Tests.Visual.Matchmaking
 
             AddStep("add carousel", () =>
             {
-                Child = new MatchmakingCarousel
+                Child = new ScreenCarousel
                 {
                     Anchor = Anchor.Centre,
                     Origin = Anchor.Centre,

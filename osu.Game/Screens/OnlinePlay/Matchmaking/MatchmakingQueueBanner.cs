@@ -12,12 +12,12 @@ using osu.Framework.Graphics.Sprites;
 using osu.Framework.Input.Events;
 using osu.Framework.Screens;
 using osu.Game.Graphics.Sprites;
+using osu.Game.Online.Matchmaking;
 using osu.Game.Online.Multiplayer;
 using osu.Game.Online.Rooms;
-using osu.Game.Screens;
 using osuTK.Graphics;
 
-namespace osu.Game.Online.Matchmaking
+namespace osu.Game.Screens.OnlinePlay.Matchmaking
 {
     public class MatchmakingQueueBanner : CompositeDrawable
     {

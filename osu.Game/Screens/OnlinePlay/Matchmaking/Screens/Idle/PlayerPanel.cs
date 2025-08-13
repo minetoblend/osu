@@ -12,9 +12,9 @@ using osu.Game.Online.Multiplayer.MatchTypes.Matchmaking;
 using osuTK;
 using osuTK.Graphics;
 
-namespace osu.Game.Online.Matchmaking
+namespace osu.Game.Screens.OnlinePlay.Matchmaking.Screens.Idle
 {
-    public class MatchmakingPlayerPanel : CompositeDrawable
+    public class PlayerPanel : CompositeDrawable
     {
         public readonly MultiplayerRoomUser User;
 
@@ -24,7 +24,7 @@ namespace osu.Game.Online.Matchmaking
         private OsuSpriteText rankText = null!;
         private OsuSpriteText scoreText = null!;
 
-        public MatchmakingPlayerPanel(MultiplayerRoomUser user)
+        public PlayerPanel(MultiplayerRoomUser user)
         {
             User = user;
             Size = new Vector2(200, 50);

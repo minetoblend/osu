@@ -10,15 +10,17 @@ using osu.Framework.Graphics.Containers;
 using osu.Game.Graphics;
 using osu.Game.Graphics.Sprites;
 using osu.Game.Graphics.UserInterfaceV2;
+using osu.Game.Online.Matchmaking;
 using osu.Game.Online.Multiplayer;
 using osu.Game.Online.Multiplayer.MatchTypes.Matchmaking;
 using osu.Game.Rulesets.Scoring;
+using osu.Game.Screens.OnlinePlay.Matchmaking.Screens.Idle;
 using osu.Game.Utils;
 using osuTK;
 
-namespace osu.Game.Online.Matchmaking
+namespace osu.Game.Screens.OnlinePlay.Matchmaking.Screens.Results
 {
-    public class MatchmakingResultsPanel : CompositeDrawable
+    public class ResultsScreen : CompositeDrawable
     {
         private const float grid_spacing = 5;
 
@@ -26,8 +28,8 @@ namespace osu.Game.Online.Matchmaking
         private MultiplayerClient client { get; set; } = null!;
 
         private OsuSpriteText placementText = null!;
-        private FillFlowContainer<MatchmakingBreakdownStatistic> userStatistics = null!;
-        private FillFlowContainer<MatchmakingRoomStatistic> roomStatistics = null!;
+        private FillFlowContainer<UserStatisticPanel> userStatistics = null!;
+        private FillFlowContainer<RoomStatisticPanel> roomStatistics = null!;
         private RoundedButton queueButton = null!;
 
         [BackgroundDependencyLoader]
@@ -104,7 +106,7 @@ namespace osu.Game.Online.Matchmaking
                                                 Text = "Breakdown",
                                                 Font = OsuFont.Default.With(size: 12)
                                             },
-                                            userStatistics = new FillFlowContainer<MatchmakingBreakdownStatistic>
+                                            userStatistics = new FillFlowContainer<UserStatisticPanel>
                                             {
                                                 Anchor = Anchor.TopCentre,
                                                 Origin = Anchor.TopCentre,
@@ -115,7 +117,7 @@ namespace osu.Game.Online.Matchmaking
                                         }
                                     },
                                     null,
-                                    new MatchmakingPlayerList
+                                    new IdleScreen
                                     {
                                         RelativeSizeAxes = Axes.Both
                                     }
@@ -140,7 +142,7 @@ namespace osu.Game.Online.Matchmaking
                                     Text = "Statistics",
                                     Font = OsuFont.Default.With(size: 12)
                                 },
-                                roomStatistics = new FillFlowContainer<MatchmakingRoomStatistic>
+                                roomStatistics = new FillFlowContainer<RoomStatisticPanel>
                                 {
                                     RelativeSizeAxes = Axes.X,
                                     AutoSizeAxes = Axes.Y,
@@ -208,7 +210,7 @@ namespace osu.Game.Online.Matchmaking
 
             void addStatistic(string text)
             {
-                userStatistics.Add(new MatchmakingBreakdownStatistic(text)
+                userStatistics.Add(new UserStatisticPanel(text)
                 {
                     Anchor = Anchor.TopCentre,
                     Origin = Anchor.TopCentre
@@ -338,7 +340,7 @@ namespace osu.Game.Online.Matchmaking
                 if (user == null)
                     throw new InvalidOperationException($"User not found in room: {userId}");
 
-                roomStatistics.Add(new MatchmakingRoomStatistic(text, user)
+                roomStatistics.Add(new RoomStatisticPanel(text, user)
                 {
                     Anchor = Anchor.TopCentre,
                     Origin = Anchor.TopCentre

@@ -9,19 +9,19 @@ using osu.Game.Online.Multiplayer;
 using osu.Game.Online.Multiplayer.MatchTypes.Matchmaking;
 using osuTK;
 
-namespace osu.Game.Online.Matchmaking
+namespace osu.Game.Screens.OnlinePlay.Matchmaking.Screens.Idle
 {
-    public class MatchmakingPlayerList : CompositeDrawable
+    public class IdleScreen : CompositeDrawable
     {
         [Resolved]
         private MultiplayerClient client { get; set; } = null!;
 
-        private FillFlowContainer<MatchmakingPlayerPanel> panels = null!;
+        private FillFlowContainer<PlayerPanel> panels = null!;
 
         [BackgroundDependencyLoader]
         private void load()
         {
-            InternalChild = panels = new FillFlowContainer<MatchmakingPlayerPanel>
+            InternalChild = panels = new FillFlowContainer<PlayerPanel>
             {
                 RelativeSizeAxes = Axes.Both,
                 Spacing = new Vector2(20, 5),
@@ -48,7 +48,7 @@ namespace osu.Game.Online.Matchmaking
 
         private void onUserJoined(MultiplayerRoomUser user) => Scheduler.Add(() =>
         {
-            panels.Add(new MatchmakingPlayerPanel(user)
+            panels.Add(new PlayerPanel(user)
             {
                 Anchor = Anchor.Centre,
                 Origin = Anchor.Centre,

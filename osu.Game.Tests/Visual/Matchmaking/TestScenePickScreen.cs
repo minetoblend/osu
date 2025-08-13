@@ -4,14 +4,14 @@
 using System.Linq;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
-using osu.Game.Online.Matchmaking;
 using osu.Game.Online.Rooms;
+using osu.Game.Screens.OnlinePlay.Matchmaking.Screens.Pick;
 using osu.Game.Tests.Visual.Multiplayer;
 using osuTK;
 
 namespace osu.Game.Tests.Visual.Matchmaking
 {
-    public class TestSceneMatchmakingBeatmapList : MultiplayerTestScene
+    public class TestScenePickScreen : MultiplayerTestScene
     {
         public override void SetUpSteps()
         {
@@ -39,7 +39,7 @@ namespace osu.Game.Tests.Visual.Matchmaking
                     Anchor = Anchor.Centre,
                     Origin = Anchor.Centre,
                     Size = new Vector2(700, 500),
-                    Child = new MatchmakingBeatmapList
+                    Child = new PickScreen
                     {
                         Anchor = Anchor.Centre,
                         Origin = Anchor.Centre,

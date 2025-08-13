@@ -5,27 +5,27 @@ using System.Linq;
 using NUnit.Framework;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
-using osu.Game.Online.Matchmaking;
 using osu.Game.Online.Rooms;
+using osu.Game.Screens.OnlinePlay.Matchmaking.Screens.Selection;
 using osu.Game.Tests.Visual.Multiplayer;
 using osuTK;
 
 namespace osu.Game.Tests.Visual.Matchmaking
 {
-    public class TestSceneMatchmakingSelectionCarousel : MultiplayerTestScene
+    public class TestSceneSelectionScreen : MultiplayerTestScene
     {
-        private MatchmakingSelectionCarousel carousel = null!;
+        private SelectionScreen screen = null!;
 
         public override void SetUpSteps()
         {
             base.SetUpSteps();
 
-            AddStep("add carousel", () => Child = new Container
+            AddStep("add screen", () => Child = new Container
             {
                 Anchor = Anchor.Centre,
                 Origin = Anchor.Centre,
                 Size = new Vector2(700, 500),
-                Child = carousel = new MatchmakingSelectionCarousel
+                Child = screen = new SelectionScreen
                 {
                     Anchor = Anchor.Centre,
                     Origin = Anchor.Centre,
@@ -46,7 +46,7 @@ namespace osu.Game.Tests.Visual.Matchmaking
                     StarRating = i / 10.0,
                 }).ToArray();
 
-                carousel.BeginScroll(beatmaps, beatmaps[0]);
+                screen.BeginScroll(beatmaps, beatmaps[0]);
             });
         }
 
@@ -62,7 +62,7 @@ namespace osu.Game.Tests.Visual.Matchmaking
                     StarRating = i / 10.0,
                 }).ToArray();
 
-                carousel.BeginScroll(beatmaps, beatmaps[0]);
+                screen.BeginScroll(beatmaps, beatmaps[0]);
             });
         }
 
@@ -78,7 +78,7 @@ namespace osu.Game.Tests.Visual.Matchmaking
                     StarRating = i / 10.0,
                 }).ToArray();
 
-                carousel.BeginScroll(beatmaps, beatmaps[0]);
+                screen.BeginScroll(beatmaps, beatmaps[0]);
             });
         }
     }

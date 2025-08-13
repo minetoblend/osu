@@ -17,18 +17,18 @@ using osu.Framework.Screens;
 using osu.Game.Beatmaps;
 using osu.Game.Database;
 using osu.Game.Graphics.Cursor;
+using osu.Game.Online;
 using osu.Game.Online.Multiplayer;
 using osu.Game.Online.Multiplayer.MatchTypes.Matchmaking;
 using osu.Game.Online.Rooms;
 using osu.Game.Overlays;
 using osu.Game.Rulesets;
-using osu.Game.Screens;
-using osu.Game.Screens.OnlinePlay;
 using osu.Game.Screens.OnlinePlay.Match.Components;
+using osu.Game.Screens.OnlinePlay.Matchmaking.Screens;
 using osu.Game.Screens.OnlinePlay.Multiplayer;
 using osu.Game.Users;
 
-namespace osu.Game.Online.Matchmaking
+namespace osu.Game.Screens.OnlinePlay.Matchmaking
 {
     public class MatchmakingScreen : OsuScreen
     {
@@ -126,14 +126,14 @@ namespace osu.Game.Online.Matchmaking
                                                 Content = new Drawable[]?[]
                                                 {
                                                     [
-                                                        new MatchmakingCarousel
+                                                        new ScreenCarousel
                                                         {
                                                             RelativeSizeAxes = Axes.Both,
                                                         }
                                                     ],
                                                     null,
                                                     [
-                                                        new MatchmakingStageDisplay
+                                                        new StageDisplay
                                                         {
                                                             RelativeSizeAxes = Axes.X
                                                         }

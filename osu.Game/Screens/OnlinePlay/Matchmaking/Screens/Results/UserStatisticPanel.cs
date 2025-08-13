@@ -6,22 +6,19 @@ using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Shapes;
 using osu.Game.Graphics.Sprites;
-using osu.Game.Online.Multiplayer;
 using osuTK.Graphics;
 
-namespace osu.Game.Online.Matchmaking
+namespace osu.Game.Screens.OnlinePlay.Matchmaking.Screens.Results
 {
-    public class MatchmakingRoomStatistic : CompositeDrawable
+    public class UserStatisticPanel : CompositeDrawable
     {
         private readonly Color4 backgroundColour = Color4.SaddleBrown;
 
         private readonly string text;
-        private readonly MultiplayerRoomUser user;
 
-        public MatchmakingRoomStatistic(string text, MultiplayerRoomUser user)
+        public UserStatisticPanel(string text)
         {
             this.text = text;
-            this.user = user;
 
             AutoSizeAxes = Axes.Both;
         }
@@ -43,7 +40,7 @@ namespace osu.Game.Online.Matchmaking
                     new OsuSpriteText
                     {
                         Margin = new MarginPadding(10),
-                        Text = $"{text}: {user.User?.Username}"
+                        Text = text
                     }
                 }
             };

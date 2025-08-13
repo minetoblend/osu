@@ -22,9 +22,9 @@ using osu.Game.Users.Drawables;
 using osuTK;
 using osuTK.Graphics;
 
-namespace osu.Game.Online.Matchmaking
+namespace osu.Game.Screens.OnlinePlay.Matchmaking.Screens.Pick
 {
-    public class MatchmakingBeatmapPanel : CompositeDrawable
+    public class BeatmapPanel : CompositeDrawable
     {
         private const int panel_width = 300;
         private readonly Color4 backgroundColour = OsuColour.Gray(0.3f);
@@ -41,7 +41,7 @@ namespace osu.Game.Online.Matchmaking
         private Drawable background = null!;
         private FillFlowContainer<SelectionBadge> badges = null!;
 
-        public MatchmakingBeatmapPanel(MultiplayerPlaylistItem item)
+        public BeatmapPanel(MultiplayerPlaylistItem item)
         {
             Item = item;
             Size = new Vector2(panel_width, 50);

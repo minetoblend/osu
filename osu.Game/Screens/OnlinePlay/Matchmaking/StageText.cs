@@ -11,16 +11,16 @@ using osu.Game.Graphics.Sprites;
 using osu.Game.Online.Multiplayer;
 using osu.Game.Online.Multiplayer.MatchTypes.Matchmaking;
 
-namespace osu.Game.Online.Matchmaking
+namespace osu.Game.Screens.OnlinePlay.Matchmaking
 {
-    public class MatchmakingStageText : CompositeDrawable
+    public class StageText : CompositeDrawable
     {
         [Resolved]
         private MultiplayerClient client { get; set; } = null!;
 
         private OsuSpriteText text = null!;
 
-        public MatchmakingStageText()
+        public StageText()
         {
             AutoSizeAxes = Axes.Both;
         }

@@ -4,13 +4,13 @@
 using NUnit.Framework;
 using osu.Framework.Extensions;
 using osu.Framework.Graphics;
-using osu.Game.Online.Matchmaking;
 using osu.Game.Online.Multiplayer.MatchTypes.Matchmaking;
+using osu.Game.Screens.OnlinePlay.Matchmaking;
 using osu.Game.Tests.Visual.Multiplayer;
 
 namespace osu.Game.Tests.Visual.Matchmaking
 {
-    public class TestSceneMatchmakingStageText : MultiplayerTestScene
+    public class TestSceneStageText : MultiplayerTestScene
     {
         public override void SetUpSteps()
         {
@@ -19,7 +19,7 @@ namespace osu.Game.Tests.Visual.Matchmaking
             AddStep("join room", () => JoinRoom(CreateDefaultRoom()));
             WaitForJoined();
 
-            AddStep("create display", () => Child = new MatchmakingStageText
+            AddStep("create display", () => Child = new StageText
             {
                 Anchor = Anchor.Centre,
                 Origin = Anchor.Centre

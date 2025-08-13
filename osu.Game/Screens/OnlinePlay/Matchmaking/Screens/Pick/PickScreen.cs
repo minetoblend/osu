@@ -10,14 +10,14 @@ using osu.Game.Online.Multiplayer;
 using osu.Game.Online.Rooms;
 using osuTK;
 
-namespace osu.Game.Online.Matchmaking
+namespace osu.Game.Screens.OnlinePlay.Matchmaking.Screens.Pick
 {
-    public class MatchmakingBeatmapList : CompositeDrawable
+    public class PickScreen : CompositeDrawable
     {
         [Resolved]
         private MultiplayerClient client { get; set; } = null!;
 
-        private FillFlowContainer<MatchmakingBeatmapPanel> panels = null!;
+        private FillFlowContainer<BeatmapPanel> panels = null!;
 
         [BackgroundDependencyLoader]
         private void load()
@@ -25,7 +25,7 @@ namespace osu.Game.Online.Matchmaking
             InternalChild = new OsuScrollContainer
             {
                 RelativeSizeAxes = Axes.Both,
-                Child = panels = new FillFlowContainer<MatchmakingBeatmapPanel>
+                Child = panels = new FillFlowContainer<BeatmapPanel>
                 {
                     RelativeSizeAxes = Axes.X,
                     AutoSizeAxes = Axes.Y,
@@ -48,7 +48,7 @@ namespace osu.Game.Online.Matchmaking
 
         private void onItemAdded(MultiplayerPlaylistItem item) => Scheduler.Add(() =>
         {
-            var panel = new MatchmakingBeatmapPanel(item)
+            var panel = new BeatmapPanel(item)
             {
                 Anchor = Anchor.TopCentre,
                 Origin = Anchor.TopCentre
