@@ -14,6 +14,7 @@ using osu.Game.Beatmaps;
 using osu.Game.Online;
 using osu.Game.Online.API;
 using osu.Game.Online.API.Requests.Responses;
+using osu.Game.Online.Matchmaking;
 using osu.Game.Online.Multiplayer;
 using osu.Game.Online.Multiplayer.Countdown;
 using osu.Game.Online.Multiplayer.MatchTypes.TeamVersus;
@@ -72,6 +73,7 @@ namespace osu.Game.Tests.Visual.Multiplayer
         private int currentIndex;
         private long lastPlaylistItemId;
         private int lastCountdownId;
+        private bool inMatchmakingQueue;
 
         private readonly TestRoomRequestsHandler apiRequestHandler;
 
@@ -747,9 +749,20 @@ namespace osu.Game.Tests.Visual.Multiplayer
             await ((IMultiplayerClient)this).MatchRoomStateChanged(clone(ServerRoom.MatchState)).ConfigureAwait(false);
         }
 
-        public override Task ToggleMatchmakingQueue()
+        public override async Task ToggleMatchmakingQueue()
         {
-            return Task.CompletedTask;
+            if (inMatchmakingQueue)
+                await ((IMultiplayerClient)this).MatchmakingQueueStatusChanged(null);
+            else
+            {
+                await ((IMultiplayerClient)this).MatchmakingQueueStatusChanged(new MatchmakingQueueStatus.InQueue
+                {
+                    RoomSize = 8,
+                    PlayerCount = 1
+                });
+            }
+
+            inMatchmakingQueue = !inMatchmakingQueue;
         }
 
         public override Task MatchmakingToggleSelection(long playlistItemId)

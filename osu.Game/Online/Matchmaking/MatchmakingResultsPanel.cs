@@ -8,6 +8,7 @@ using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Game.Graphics;
 using osu.Game.Graphics.Sprites;
+using osu.Game.Graphics.UserInterfaceV2;
 using osu.Game.Online.Multiplayer;
 using osu.Game.Online.Multiplayer.MatchTypes.Matchmaking;
 using osu.Game.Rulesets.Scoring;
@@ -26,6 +27,7 @@ namespace osu.Game.Online.Matchmaking
         private OsuSpriteText placementText = null!;
         private FillFlowContainer<MatchmakingBreakdownStatistic> userStatistics = null!;
         private FillFlowContainer<MatchmakingRoomStatistic> roomStatistics = null!;
+        private RoundedButton queueButton = null!;
 
         [BackgroundDependencyLoader]
         private void load()
@@ -39,7 +41,8 @@ namespace osu.Game.Online.Matchmaking
                     new Dimension(GridSizeMode.Absolute, grid_spacing),
                     new Dimension(),
                     new Dimension(GridSizeMode.Absolute, grid_spacing),
-                    new Dimension(GridSizeMode.AutoSize)
+                    new Dimension(GridSizeMode.AutoSize),
+                    new Dimension(GridSizeMode.Absolute, 75)
                 ],
                 Content = new Drawable[]?[]
                 {
@@ -144,6 +147,16 @@ namespace osu.Game.Online.Matchmaking
                                 }
                             }
                         },
+                    ],
+                    [
+                        queueButton = new RoundedButton
+                        {
+                            Anchor = Anchor.BottomCentre,
+                            Origin = Anchor.BottomCentre,
+                            Size = new Vector2(200, 50),
+                            Text = "Requeue",
+                            Action = () => client.ToggleMatchmakingQueue()
+                        }
                     ]
                 }
             };
@@ -153,9 +166,17 @@ namespace osu.Game.Online.Matchmaking
         {
             base.LoadComplete();
 
+            client.MatchmakingQueueStatusChanged += onMatchmakingQueueStateChanged;
             client.MatchRoomStateChanged += onRoomStateChanged;
+
+            onMatchmakingQueueStateChanged(null);
             onRoomStateChanged(client.Room?.MatchState);
         }
+
+        private void onMatchmakingQueueStateChanged(MatchmakingQueueStatus? state) => Scheduler.Add(() =>
+        {
+            queueButton.Enabled.Value = state == null;
+        });
 
         private void onRoomStateChanged(MatchRoomState? state) => Scheduler.Add(() =>
         {
