@@ -294,20 +294,20 @@ namespace osu.Game.Online.Matchmaking
             // Most accurate - highest accuracy across all rounds.
             addStatistic(maxAccuracyUserId, "Most accurate");
 
-            // Most persistent - highest combo across all rounds.
-            addStatistic(maxComboUserId, "Most persistent");
+            // Most combo - highest combo across all rounds.
+            addStatistic(maxComboUserId, "Most combo");
 
-            // Hardest worker - most bonus score across all rounds.
+            // Most bonus - most bonus score across all rounds.
             if (maxBonusScoreUserId > 0)
-                addStatistic(maxBonusScoreUserId, "Hardest worker");
+                addStatistic(maxBonusScoreUserId, "Most bonus");
 
-            // Clutcher - smallest victory in any round.
+            // Most clutch - smallest victory in any round.
             if (smallestScoreDifferenceUserId > 0)
-                addStatistic(smallestScoreDifferenceUserId, "Clutcher");
+                addStatistic(smallestScoreDifferenceUserId, "Most clutch");
 
-            // Finisher - largest victory in any round.
+            // Best finish - largest victory in any round.
             if (largestScoreDifferenceUserId > 0)
-                addStatistic(largestScoreDifferenceUserId, "Finisher");
+                addStatistic(largestScoreDifferenceUserId, "Best finish");
 
             void addStatistic(int userId, string text)
             {
