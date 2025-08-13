@@ -10,6 +10,7 @@ using osu.Game.Online.Matchmaking;
 using osu.Game.Online.Multiplayer;
 using osu.Game.Online.Multiplayer.MatchTypes.Matchmaking;
 using osu.Game.Online.Rooms;
+using osu.Game.Rulesets.Scoring;
 using osu.Game.Tests.Visual.Multiplayer;
 using osuTK;
 
@@ -92,10 +93,26 @@ namespace osu.Game.Tests.Visual.Matchmaking
             });
 
             AddWaitStep("wait for scroll", 25);
-            AddStep("round start", () => MultiplayerClient.ChangeMatchRoomState(new MatchmakingRoomState
+            AddStep("room end", () =>
             {
-                RoomStatus = MatchmakingRoomStatus.RoundStart
-            }).WaitSafely());
+                var state = new MatchmakingRoomState
+                {
+                    Round = 1,
+                    RoomStatus = MatchmakingRoomStatus.RoomEnd
+                };
+
+                int localUserId = API.LocalUser.Value.OnlineID;
+
+                state.Users[localUserId].Placement = 1;
+                state.Users[localUserId].Rounds[1].Placement = 1;
+                state.Users[localUserId].Rounds[1].TotalScore = 1;
+                state.Users[localUserId].Rounds[1].Statistics[HitResult.LargeBonus] = 1;
+
+                state.Users[1].Placement = 2;
+                state.Users[1].Rounds[1].Placement = 2;
+
+                MultiplayerClient.ChangeMatchRoomState(state).WaitSafely();
+            });
         }
     }
 }

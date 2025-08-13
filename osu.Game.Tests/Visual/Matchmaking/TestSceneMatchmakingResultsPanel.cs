@@ -61,6 +61,8 @@ namespace osu.Game.Tests.Visual.Matchmaking
                 state.Users[localUserId].Points = 8;
                 state.Users[invalid_user_id].Placement = 2;
                 state.Users[invalid_user_id].Points = 7;
+                for (int round = 1; round <= state.Round; round++)
+                    state.Users[localUserId].Rounds[round].Placement = round;
 
                 // Highest score.
                 state.Users[localUserId].Rounds[1].TotalScore = 1000;

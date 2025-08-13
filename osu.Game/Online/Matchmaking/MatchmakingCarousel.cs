@@ -24,6 +24,7 @@ namespace osu.Game.Online.Matchmaking
         private MatchmakingPlayerList playerList = null!;
         private MatchmakingBeatmapList beatmapList = null!;
         private MatchmakingSelectionCarousel selectionCarousel = null!;
+        private MatchmakingResultsPanel resultsPanel = null!;
 
         [BackgroundDependencyLoader]
         private void load()
@@ -61,6 +62,14 @@ namespace osu.Game.Online.Matchmaking
                             {
                                 RelativeSizeAxes = Axes.Both
                             }
+                        },
+                        new WidthReferenceContainer(() => scroll)
+                        {
+                            RelativeSizeAxes = Axes.Y,
+                            Child = resultsPanel = new MatchmakingResultsPanel
+                            {
+                                RelativeSizeAxes = Axes.Both
+                            }
                         }
                     }
                 }
@@ -85,7 +94,6 @@ namespace osu.Game.Online.Matchmaking
                 case MatchmakingRoomStatus.RoomStart:
                 case MatchmakingRoomStatus.RoundStart:
                 case MatchmakingRoomStatus.RoundEnd:
-                case MatchmakingRoomStatus.RoomEnd:
                     scroll.ScrollTo(playerList);
                     break;
 
@@ -100,6 +108,10 @@ namespace osu.Game.Online.Matchmaking
                     MultiplayerPlaylistItem candidateItem = client.Room!.Playlist.Single(i => i.ID == matchmakingState.CandidateItem);
 
                     selectionCarousel.BeginScroll(candidateItems, candidateItem);
+                    break;
+
+                case MatchmakingRoomStatus.RoomEnd:
+                    scroll.ScrollTo(resultsPanel);
                     break;
             }
         });

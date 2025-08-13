@@ -1,6 +1,7 @@
 // Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
+using System;
 using System.Linq;
 using osu.Framework.Allocation;
 using osu.Framework.Graphics;
@@ -99,7 +100,8 @@ namespace osu.Game.Online.Matchmaking
                     [
                         roomStatistics = new FillFlowContainer<MatchmakingRoomStatistic>
                         {
-                            RelativeSizeAxes = Axes.Both
+                            RelativeSizeAxes = Axes.X,
+                            AutoSizeAxes = Axes.Y
                         }
                     ]
                 }
@@ -127,9 +129,11 @@ namespace osu.Game.Online.Matchmaking
 
         private void populateUserStatistics(MatchmakingRoomState state)
         {
+            userStatistics.Clear();
+
             int overallPlacement = state.Users[client.LocalUser!.UserID].Placement;
             int overallPoints = state.Users[client.LocalUser!.UserID].Points;
-            int bestPlacement = state.Users[client.LocalUser!.UserID].Rounds.Select(r => r.Placement).DefaultIfEmpty(1).Min();
+            int bestPlacement = state.Users[client.LocalUser!.UserID].Rounds.Min(r => r.Placement);
             var accuracyPlacement = state.Users.Select(u => (user: u, avgAcc: u.Rounds.Average(r => r.Accuracy)))
                                          .OrderByDescending(t => t.avgAcc)
                                          .Select((t, i) => (info: t, index: i))
@@ -253,20 +257,23 @@ namespace osu.Game.Online.Matchmaking
             addStatistic(maxComboUserId, "Most persistent");
 
             // Hardest worker - most bonus score across all rounds.
-            addStatistic(maxBonusScoreUserId, "Hardest worker");
+            if (maxBonusScoreUserId > 0)
+                addStatistic(maxBonusScoreUserId, "Hardest worker");
 
             // Clutcher - smallest victory in any round.
-            addStatistic(smallestScoreDifferenceUserId, "Clutcher");
+            if (smallestScoreDifferenceUserId > 0)
+                addStatistic(smallestScoreDifferenceUserId, "Clutcher");
 
             // Finisher - largest victory in any round.
-            addStatistic(largestScoreDifferenceUserId, "Finisher");
+            if (largestScoreDifferenceUserId > 0)
+                addStatistic(largestScoreDifferenceUserId, "Finisher");
 
             void addStatistic(int userId, string text)
             {
                 MultiplayerRoomUser? user = client.Room?.Users.FirstOrDefault(u => u.UserID == userId);
 
                 if (user == null)
-                    return;
+                    throw new InvalidOperationException($"User not found in room: {userId}");
 
                 roomStatistics.Add(new MatchmakingRoomStatistic(text, user)
                 {
