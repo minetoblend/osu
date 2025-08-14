@@ -3,7 +3,7 @@
 
 using System.Linq;
 using osu.Framework.Graphics;
-using osu.Framework.Graphics.Containers;
+using osu.Framework.Screens;
 using osu.Game.Online.Rooms;
 using osu.Game.Screens.OnlinePlay.Matchmaking.Screens.Pick;
 using osu.Game.Tests.Visual.Multiplayer;
@@ -34,17 +34,11 @@ namespace osu.Game.Tests.Visual.Matchmaking
 
             AddStep("add list", () =>
             {
-                Child = new Container
+                Child = new ScreenStack(new PickScreen())
                 {
                     Anchor = Anchor.Centre,
                     Origin = Anchor.Centre,
-                    Size = new Vector2(700, 500),
-                    Child = new PickScreen
-                    {
-                        Anchor = Anchor.Centre,
-                        Origin = Anchor.Centre,
-                        RelativeSizeAxes = Axes.Both
-                    }
+                    Size = new Vector2(0.8f)
                 };
             });
         }

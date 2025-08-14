@@ -12,7 +12,7 @@ using osuTK;
 
 namespace osu.Game.Screens.OnlinePlay.Matchmaking.Screens.Pick
 {
-    public class PickScreen : CompositeDrawable
+    public class PickScreen : MatchmakingSubScreen
     {
         [Resolved]
         private MultiplayerClient client { get; set; } = null!;

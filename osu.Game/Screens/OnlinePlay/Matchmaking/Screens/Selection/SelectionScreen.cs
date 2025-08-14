@@ -7,6 +7,7 @@ using osu.Framework.Bindables;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Shapes;
+using osu.Framework.Screens;
 using osu.Game.Online.Rooms;
 using osu.Game.Screens.OnlinePlay.Matchmaking.Screens.Pick;
 using osuTK;
@@ -14,7 +15,7 @@ using osuTK.Graphics;
 
 namespace osu.Game.Screens.OnlinePlay.Matchmaking.Screens.Selection
 {
-    public class SelectionScreen : CompositeDrawable
+    public class SelectionScreen : MatchmakingSubScreen
     {
         /// <summary>
         /// Number of items visible on either side of the current item in the carousel at any one time.
@@ -31,9 +32,17 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.Screens.Selection
         private const double finish_delay = 250;
         private const double finish_duration = 1000;
 
+        private readonly MultiplayerPlaylistItem[] candidateItems;
+        private readonly MultiplayerPlaylistItem finalItem;
+
         private readonly Bindable<float> currentPosition = new Bindable<float>();
         private Container<BeatmapPanel> panels = null!;
-        private MultiplayerPlaylistItem[] items = [];
+
+        public SelectionScreen(MultiplayerPlaylistItem[] candidateItems, MultiplayerPlaylistItem finalItem)
+        {
+            this.candidateItems = candidateItems;
+            this.finalItem = finalItem;
+        }
 
         [BackgroundDependencyLoader]
         private void load()
@@ -69,18 +78,14 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.Screens.Selection
             currentPosition.BindValueChanged(updatePosition, true);
         }
 
-        public void BeginScroll(MultiplayerPlaylistItem[] candidateItems, MultiplayerPlaylistItem item)
+        public override void OnEntering(ScreenTransitionEvent e)
         {
-            ClearTransforms();
-
-            items = candidateItems;
-            currentPosition.Value = 0;
-            currentPosition.TriggerChange();
+            base.OnEntering(e);
 
             if (candidateItems.Length == 0)
                 return;
 
-            int finalPosition = cycles * candidateItems.Length + Array.FindIndex(candidateItems, i => i.Equals(item));
+            int finalPosition = cycles * candidateItems.Length + Array.FindIndex(candidateItems, i => i.Equals(finalItem));
 
             this.Delay(scroll_delay)
                 .TransformBindableTo(currentPosition, finalPosition, scroll_duration, Easing.OutQuint)
@@ -96,10 +101,10 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.Screens.Selection
         {
             panels.Clear();
 
-            if (items.Length == 0)
+            if (candidateItems.Length == 0)
                 return;
 
-            float centrePos = pos.NewValue % items.Length;
+            float centrePos = pos.NewValue % candidateItems.Length;
             int firstVisibleIndex = (int)centrePos - visible_extent;
             int lastVisibleIndex = (int)centrePos + visible_extent;
 
@@ -108,14 +113,14 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.Screens.Selection
                 int itemIndex = i;
 
                 while (itemIndex < 0)
-                    itemIndex += items.Length;
+                    itemIndex += candidateItems.Length;
 
-                while (itemIndex >= items.Length)
-                    itemIndex -= items.Length;
+                while (itemIndex >= candidateItems.Length)
+                    itemIndex -= candidateItems.Length;
 
                 float distFromCentre = (i - centrePos) / visible_extent;
 
-                panels.Add(new BeatmapPanel(items[itemIndex])
+                panels.Add(new BeatmapPanel(candidateItems[itemIndex])
                 {
                     Anchor = Anchor.Centre,
                     Origin = Anchor.Centre,

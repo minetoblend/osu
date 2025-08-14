@@ -1,7 +1,6 @@
 // Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
-using System;
 using System.Linq;
 using NUnit.Framework;
 using osu.Framework.Extensions;
@@ -15,6 +14,7 @@ using osu.Game.Online.API.Requests.Responses;
 using osu.Game.Online.Multiplayer;
 using osu.Game.Online.Multiplayer.MatchTypes.Matchmaking;
 using osu.Game.Online.Rooms;
+using osu.Game.Rulesets.Scoring;
 using osu.Game.Screens.OnlinePlay.Matchmaking;
 using osu.Game.Screens.OnlinePlay.Matchmaking.Screens.Pick;
 using osu.Game.Tests.Visual.Multiplayer;
@@ -29,7 +29,6 @@ namespace osu.Game.Tests.Visual.Matchmaking
         private const int beatmap_count = 50;
 
         private MultiplayerRoomUser[] users = null!;
-        private int[] scores = null!;
         private MatchmakingScreen screen = null!;
 
         public TestSceneMatchmakingScreen()
@@ -70,8 +69,6 @@ namespace osu.Game.Tests.Visual.Matchmaking
                         Username = $"Player {i}"
                     }
                 }).ToArray();
-
-                scores = new int[users.Length];
 
                 var beatmaps = Enumerable.Range(1, beatmap_count).Select(i => new MultiplayerPlaylistItem
                 {
@@ -165,38 +162,23 @@ namespace osu.Game.Tests.Visual.Matchmaking
             // Finish gameplay.
             AddWaitStep("wait", 5);
 
-            AddStep("round end", () => MultiplayerClient.ChangeMatchRoomState(new MatchmakingRoomState
+            AddStep("room end", () =>
             {
-                RoomStatus = MatchmakingRoomStatus.RoundEnd
-            }).WaitSafely());
-
-            AddStep("add some scores", () =>
-            {
-                int[] deltas = Enumerable.Range(1, users.Length).ToArray();
-                new Random().Shuffle(deltas);
-                for (int i = 0; i < users.Length; i++)
-                    scores[i] += deltas[i];
-
-                MultiplayerRoomUser[] sortedUsers = users.Select((u, i) => (user: u, index: i)).OrderByDescending(item => scores[item.index]).Select(item => item.user).ToArray();
-
-                MultiplayerClient.ChangeMatchRoomState(new MatchmakingRoomState
+                MatchmakingRoomState state = new MatchmakingRoomState
                 {
-                    Users =
-                    {
-                        UserDictionary = sortedUsers.Select((tuple, i) => new MatchmakingUser
-                        {
-                            UserId = tuple.UserID,
-                            Points = scores[i],
-                            Placement = i + 1
-                        }).ToDictionary(s => s.UserId)
-                    }
-                }).WaitSafely();
-            });
+                    Round = 1,
+                    RoomStatus = MatchmakingRoomStatus.RoomEnd
+                };
 
-            AddStep("room end", () => MultiplayerClient.ChangeMatchRoomState(new MatchmakingRoomState
-            {
-                RoomStatus = MatchmakingRoomStatus.RoomEnd
-            }).WaitSafely());
+                int localUserId = API.LocalUser.Value.OnlineID;
+
+                state.Users[localUserId].Placement = 1;
+                state.Users[localUserId].Rounds[1].Placement = 1;
+                state.Users[localUserId].Rounds[1].TotalScore = 1;
+                state.Users[localUserId].Rounds[1].Statistics[HitResult.LargeBonus] = 1;
+
+                MultiplayerClient.ChangeMatchRoomState(state).WaitSafely();
+            });
         }
     }
 }

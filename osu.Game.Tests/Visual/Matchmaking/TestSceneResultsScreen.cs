@@ -4,6 +4,7 @@
 using NUnit.Framework;
 using osu.Framework.Extensions;
 using osu.Framework.Graphics;
+using osu.Framework.Screens;
 using osu.Game.Online.API.Requests.Responses;
 using osu.Game.Online.Multiplayer;
 using osu.Game.Online.Multiplayer.MatchTypes.Matchmaking;
@@ -25,12 +26,14 @@ namespace osu.Game.Tests.Visual.Matchmaking
             AddStep("join room", () => JoinRoom(CreateDefaultRoom()));
             WaitForJoined();
 
-            AddStep("add results screen", () => Child = new ResultsScreen
+            AddStep("add results screen", () =>
             {
-                Anchor = Anchor.Centre,
-                Origin = Anchor.Centre,
-                RelativeSizeAxes = Axes.Both,
-                Size = new Vector2(0.8f)
+                Child = new ScreenStack(new ResultsScreen())
+                {
+                    Anchor = Anchor.Centre,
+                    Origin = Anchor.Centre,
+                    Size = new Vector2(0.8f)
+                };
             });
 
             AddStep("join another user", () => MultiplayerClient.AddUser(new MultiplayerRoomUser(invalid_user_id)

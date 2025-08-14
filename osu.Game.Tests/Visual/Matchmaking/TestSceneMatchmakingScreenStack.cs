@@ -16,7 +16,7 @@ using osuTK;
 
 namespace osu.Game.Tests.Visual.Matchmaking
 {
-    public class TestSceneScreenCarousel : MultiplayerTestScene
+    public class TestSceneMatchmakingScreenStack : MultiplayerTestScene
     {
         private const int user_count = 8;
 
@@ -41,7 +41,7 @@ namespace osu.Game.Tests.Visual.Matchmaking
 
             AddStep("add carousel", () =>
             {
-                Child = new ScreenCarousel
+                Child = new MatchmakingScreenStack
                 {
                     Anchor = Anchor.Centre,
                     Origin = Anchor.Centre,

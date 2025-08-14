@@ -128,10 +128,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking
                                                 Content = new Drawable[]?[]
                                                 {
                                                     [
-                                                        new ScreenCarousel
-                                                        {
-                                                            RelativeSizeAxes = Axes.Both,
-                                                        }
+                                                        new MatchmakingScreenStack()
                                                     ],
                                                     null,
                                                     [

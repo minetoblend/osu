@@ -4,7 +4,7 @@
 using System.Linq;
 using NUnit.Framework;
 using osu.Framework.Graphics;
-using osu.Framework.Graphics.Containers;
+using osu.Framework.Screens;
 using osu.Game.Online.Rooms;
 using osu.Game.Screens.OnlinePlay.Matchmaking.Screens.Selection;
 using osu.Game.Tests.Visual.Multiplayer;
@@ -14,26 +14,6 @@ namespace osu.Game.Tests.Visual.Matchmaking
 {
     public class TestSceneSelectionScreen : MultiplayerTestScene
     {
-        private SelectionScreen screen = null!;
-
-        public override void SetUpSteps()
-        {
-            base.SetUpSteps();
-
-            AddStep("add screen", () => Child = new Container
-            {
-                Anchor = Anchor.Centre,
-                Origin = Anchor.Centre,
-                Size = new Vector2(700, 500),
-                Child = screen = new SelectionScreen
-                {
-                    Anchor = Anchor.Centre,
-                    Origin = Anchor.Centre,
-                    RelativeSizeAxes = Axes.Both
-                }
-            });
-        }
-
         [Test]
         public void TestScrollManyItems()
         {
@@ -46,7 +26,12 @@ namespace osu.Game.Tests.Visual.Matchmaking
                     StarRating = i / 10.0,
                 }).ToArray();
 
-                screen.BeginScroll(beatmaps, beatmaps[0]);
+                Child = new ScreenStack(new SelectionScreen(beatmaps, beatmaps[0]))
+                {
+                    Anchor = Anchor.Centre,
+                    Origin = Anchor.Centre,
+                    Size = new Vector2(0.8f),
+                };
             });
         }
 
@@ -62,7 +47,12 @@ namespace osu.Game.Tests.Visual.Matchmaking
                     StarRating = i / 10.0,
                 }).ToArray();
 
-                screen.BeginScroll(beatmaps, beatmaps[0]);
+                Child = new ScreenStack(new SelectionScreen(beatmaps, beatmaps[0]))
+                {
+                    Anchor = Anchor.Centre,
+                    Origin = Anchor.Centre,
+                    Size = new Vector2(0.8f),
+                };
             });
         }
 
@@ -78,7 +68,12 @@ namespace osu.Game.Tests.Visual.Matchmaking
                     StarRating = i / 10.0,
                 }).ToArray();
 
-                screen.BeginScroll(beatmaps, beatmaps[0]);
+                Child = new ScreenStack(new SelectionScreen(beatmaps, beatmaps[0]))
+                {
+                    Anchor = Anchor.Centre,
+                    Origin = Anchor.Centre,
+                    Size = new Vector2(0.8f),
+                };
             });
         }
     }

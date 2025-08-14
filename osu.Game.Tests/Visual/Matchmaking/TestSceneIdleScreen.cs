@@ -6,7 +6,7 @@ using System.Linq;
 using NUnit.Framework;
 using osu.Framework.Extensions;
 using osu.Framework.Graphics;
-using osu.Framework.Graphics.Containers;
+using osu.Framework.Screens;
 using osu.Game.Online.API.Requests.Responses;
 using osu.Game.Online.Multiplayer;
 using osu.Game.Online.Multiplayer.MatchTypes.Matchmaking;
@@ -44,17 +44,11 @@ namespace osu.Game.Tests.Visual.Matchmaking
                     return (user, 0);
                 }).ToArray();
 
-                Child = new Container
+                Child = new ScreenStack(new IdleScreen())
                 {
                     Anchor = Anchor.Centre,
                     Origin = Anchor.Centre,
-                    Size = new Vector2(500, 500),
-                    Child = new IdleScreen
-                    {
-                        Anchor = Anchor.Centre,
-                        Origin = Anchor.Centre,
-                        RelativeSizeAxes = Axes.Both
-                    }
+                    Size = new Vector2(0.8f)
                 };
             });
 
