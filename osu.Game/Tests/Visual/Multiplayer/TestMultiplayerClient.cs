@@ -768,6 +768,9 @@ namespace osu.Game.Tests.Visual.Multiplayer
         public override Task MatchmakingToggleSelection(long playlistItemId)
             => MatchmakingToggleUserSelection(api.LocalUser.Value.OnlineID, playlistItemId);
 
+        public override Task MatchmakingSkipToNextStage()
+            => Task.CompletedTask;
+
         public async Task MatchmakingToggleUserSelection(int userId, long playlistItemId)
             => await ((IMultiplayerClient)this).MatchmakingSelectionToggled(clone(userId), clone(playlistItemId)).ConfigureAwait(false);
 

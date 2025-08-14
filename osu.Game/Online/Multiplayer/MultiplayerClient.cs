@@ -1024,5 +1024,7 @@ namespace osu.Game.Online.Multiplayer
         }
 
         public abstract Task MatchmakingToggleSelection(long playlistItemId);
+
+        public abstract Task MatchmakingSkipToNextStage();
     }
 }

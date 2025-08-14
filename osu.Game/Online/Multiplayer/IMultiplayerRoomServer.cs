@@ -121,5 +121,7 @@ namespace osu.Game.Online.Multiplayer
         Task InvitePlayer(int userId);
 
         Task MatchmakingToggleSelection(long playlistItemId);
+
+        Task MatchmakingSkipToNextStage();
     }
 }

@@ -17,6 +17,7 @@ using osu.Framework.Screens;
 using osu.Game.Beatmaps;
 using osu.Game.Database;
 using osu.Game.Graphics.Cursor;
+using osu.Game.Graphics.UserInterfaceV2;
 using osu.Game.Online;
 using osu.Game.Online.Multiplayer;
 using osu.Game.Online.Multiplayer.MatchTypes.Matchmaking;
@@ -27,6 +28,7 @@ using osu.Game.Screens.OnlinePlay.Match.Components;
 using osu.Game.Screens.OnlinePlay.Matchmaking.Screens;
 using osu.Game.Screens.OnlinePlay.Multiplayer;
 using osu.Game.Users;
+using osuTK;
 
 namespace osu.Game.Screens.OnlinePlay.Matchmaking
 {
@@ -148,14 +150,30 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking
                                     new Container
                                     {
                                         RelativeSizeAxes = Axes.X,
-                                        Height = 100,
-                                        Padding = new MarginPadding
+                                        AutoSizeAxes = Axes.Y,
+                                        Children = new Drawable[]
                                         {
-                                            Horizontal = 200,
-                                        },
-                                        Child = new MatchChatDisplay(new Room(room))
-                                        {
-                                            RelativeSizeAxes = Axes.Both
+                                            new Container
+                                            {
+                                                RelativeSizeAxes = Axes.X,
+                                                Height = 100,
+                                                Padding = new MarginPadding
+                                                {
+                                                    Horizontal = 200,
+                                                },
+                                                Child = new MatchChatDisplay(new Room(room))
+                                                {
+                                                    RelativeSizeAxes = Axes.Both,
+                                                }
+                                            },
+                                            new RoundedButton
+                                            {
+                                                Anchor = Anchor.BottomRight,
+                                                Origin = Anchor.BottomRight,
+                                                Text = "Don't click me",
+                                                Size = new Vector2(100, 30),
+                                                Action = () => client.MatchmakingSkipToNextStage()
+                                            }
                                         }
                                     }
                                 ]

@@ -337,5 +337,14 @@ namespace osu.Game.Online.Multiplayer
             Debug.Assert(connection != null);
             return connection.InvokeAsync(nameof(IMultiplayerServer.MatchmakingToggleSelection), playlistItemId);
         }
+
+        public override Task MatchmakingSkipToNextStage()
+        {
+            if (!IsConnected.Value)
+                return Task.CompletedTask;
+
+            Debug.Assert(connection != null);
+            return connection.InvokeAsync(nameof(IMultiplayerServer.MatchmakingSkipToNextStage));
+        }
     }
 }
