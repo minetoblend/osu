@@ -3,10 +3,12 @@
 
 using System;
 using System.Collections.Generic;
+using osu.Framework.Allocation;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Shapes;
 using osu.Framework.Input.Events;
+using osu.Game.Graphics;
 using osu.Game.Graphics.UserInterface;
 using osu.Game.Online.API.Requests.Responses;
 using osu.Game.Users.Drawables;
@@ -42,11 +44,11 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking
                     {
                         RelativeSizeAxes = Axes.Both,
                     },
-
                     new Container
                     {
                         RelativeSizeAxes = Axes.Both,
                         Masking = true,
+                        // TODO: corner radius should absolutely not be done here
                         CornerRadius = 6,
                         Child = flash = new Box
                         {
@@ -66,12 +68,12 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking
             };
         }
 
-        public bool AddUser(APIUser user)
+        public bool AddUser(APIUser user, bool self = false)
         {
             if (pills.ContainsKey(user.Id))
                 return false;
 
-            var avatar = new SelectionAvatar(user)
+            var avatar = new SelectionAvatar(user, self)
             {
                 Anchor = Anchor.CentreRight,
                 Origin = Anchor.CentreRight,
@@ -172,34 +174,61 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking
         {
             public bool Expired { get; private set; }
 
-            private readonly CircularContainer content;
+            private readonly Container content;
 
-            public SelectionAvatar(APIUser user)
+            private bool self;
+
+            public SelectionAvatar(APIUser user, bool self)
             {
+                this.self = self;
+
                 Size = new Vector2(30);
 
                 InternalChildren = new Drawable[]
                 {
-                    content = new CircularContainer
+                    content = new Container
                     {
                         RelativeSizeAxes = Axes.Both,
                         Anchor = Anchor.Centre,
                         Origin = Anchor.Centre,
-                        Masking = true,
-                        Children = new Drawable[]
+                        Child = new CircularContainer
                         {
-                            new Box
+                            RelativeSizeAxes = Axes.Both,
+                            Masking = true,
+                            Children = new Drawable[]
                             {
-                                RelativeSizeAxes = Axes.Both,
-                                Colour = Color4.LightSlateGray,
-                            },
-                            new ClickableAvatar(user, true)
-                            {
-                                RelativeSizeAxes = Axes.Both,
+                                new Box
+                                {
+                                    RelativeSizeAxes = Axes.Both,
+                                    Colour = Color4.LightSlateGray,
+                                },
+                                new ClickableAvatar(user, true)
+                                {
+                                    RelativeSizeAxes = Axes.Both,
+                                }
                             }
-                        }
-                    },
+                        },
+                    }
                 };
+            }
+
+            [BackgroundDependencyLoader]
+            private void load(OsuColour colour)
+            {
+                if (self)
+                {
+                    content.Add(new Container
+                    {
+                        RelativeSizeAxes = Axes.Both,
+                        Depth = 1,
+                        Padding = new MarginPadding(-2),
+                        Child = new Circle
+                        {
+                            RelativeSizeAxes = Axes.Both,
+                            Colour = colour.Yellow,
+                        }
+                    });
+                }
             }
 
             protected override void LoadComplete()

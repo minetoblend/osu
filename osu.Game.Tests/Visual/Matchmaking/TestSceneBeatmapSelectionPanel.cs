@@ -1,6 +1,8 @@
 // Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
+using System;
+using System.Linq;
 using NUnit.Framework;
 using osu.Framework.Allocation;
 using osu.Framework.Graphics;
@@ -68,54 +70,88 @@ namespace osu.Game.Tests.Visual.Matchmaking
         [Test]
         public void TestPanelGrid()
         {
+            APIBeatmap[] beatmaps = new APIBeatmap[10];
+            for (int i = 0; i < beatmaps.Length; i++)
+                beatmaps[i] = CreateAPIBeatmap();
+
+            APIUser[] users = new[]
+            {
+                new APIUser
+                {
+                    Id = 2,
+                    Username = "peppy",
+                },
+                new APIUser
+                {
+                    Id = 1040328,
+                    Username = "smoogipoo",
+                },
+                new APIUser
+                {
+                    Id = 6573093,
+                    Username = "OliBomby",
+                },
+                new APIUser
+                {
+                    Id = 7782553,
+                    Username = "aesth",
+                }
+            };
+
+            BeatmapSelectionGrid grid = null!;
+            RandomUserSelection randomSelection = null!;
+
             AddStep("add panels", () =>
             {
-                BeatmapSelectionPanel? activePanel = null;
-                var user = new APIUser
-                {
-                    Id = 6411631,
-                    Username = "Maarvin",
-                };
-                var grid = new FillFlowContainer
+                var selectionGrid = new BeatmapSelectionGrid(beatmaps)
                 {
                     Width = 700,
                     AutoSizeAxes = Axes.Y,
                     Anchor = Anchor.Centre,
                     Origin = Anchor.Centre,
-                    Spacing = new Vector2(20)
                 };
-                Child = grid;
 
-                for (int i = 0; i < 10; i++)
+                var maarvin = new APIUser
                 {
-                    var panel = new BeatmapSelectionPanel(300, 70)
-                    {
-                        Child = new Container
-                        {
-                            RelativeSizeAxes = Axes.Both,
-                            Masking = true,
-                            CornerRadius = 6,
-                            Child = new Box
-                            {
-                                RelativeSizeAxes = Axes.Both,
-                                Colour = Color4.LightSlateGray,
-                            }
-                        },
-                    };
+                    Id = 6411631,
+                    Username = "Maarvin",
+                };
 
-                    panel.Clicked = () =>
-                    {
-                        if (activePanel == panel)
-                            return;
+                selectionGrid.BeatmapClicked += beatmap => selectionGrid.SetUserSelection(maarvin, beatmap, true);
 
-                        activePanel?.RemoveUser(user);
-                        panel.AddUser(user);
-                        activePanel = panel;
-                    };
-
-                    grid.Add(panel);
-                }
+                Children = new Drawable[]
+                {
+                    selectionGrid,
+                    randomSelection = new RandomUserSelection(selectionGrid, users, beatmaps)
+                };
             });
+
+            AddToggleStep("random selection", enabled => randomSelection.Enabled = enabled);
+        }
+
+        private partial class RandomUserSelection(
+            BeatmapSelectionGrid selection,
+            APIUser[] users,
+            APIBeatmap[] beatmaps
+        ) : Component
+        {
+            public bool Enabled;
+
+            protected override void LoadComplete()
+            {
+                base.LoadComplete();
+
+                Scheduler.AddDelayed(() =>
+                {
+                    if (!Enabled)
+                        return;
+
+                    var user = Random.Shared.GetItems(users, 1).First();
+                    var beatmap = Random.Shared.GetItems(beatmaps, 1).First();
+
+                    selection.SetUserSelection(user, beatmap);
+                }, 1000, true);
+            }
         }
     }
 }
