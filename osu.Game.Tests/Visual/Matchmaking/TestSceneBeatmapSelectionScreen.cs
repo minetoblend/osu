@@ -47,6 +47,7 @@ namespace osu.Game.Tests.Visual.Matchmaking
             AddStep("push screen", () => LoadScreen(screen = new BeatmapSelectionScreen()));
             AddStep("add user selections", () => screen.DistributeUsers(users));
             AddStep("hide panels", () => screen.HidePanels(4));
+            AddStep("show final beatmap", () => screen.SelectFinalBeatmap());
         }
 
         [TestCase(1)]

@@ -18,7 +18,8 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking
     public partial class BeatmapSelectionScreen : OsuScreen
     {
         private OsuScrollContainer scroll = null!;
-        private Container<Panel> panelFlow = null!;
+        private FillFlowContainer<Panel> panelFlow = null!;
+        private Container<Panel> remainingPanelContainer = null!;
 
         [BackgroundDependencyLoader]
         private void load()
@@ -28,13 +29,17 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking
                 scroll = new OsuScrollContainer
                 {
                     RelativeSizeAxes = Axes.Both,
-                    Child = panelFlow = new Container<Panel>
+                    Child = panelFlow = new FillFlowContainer<Panel>
                     {
                         RelativeSizeAxes = Axes.X,
                         AutoSizeAxes = Axes.Y,
-                        Anchor = Anchor.TopCentre,
-                        Origin = Anchor.TopCentre
+                        Padding = new MarginPadding(20),
+                        Spacing = new Vector2(20),
                     }
+                },
+                remainingPanelContainer = new Container<Panel>
+                {
+                    RelativeSizeAxes = Axes.Both,
                 }
             };
 
@@ -43,16 +48,10 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking
                 panelFlow.Add(new Panel
                 {
                     Size = new Vector2(300, 70),
+                    Anchor = Anchor.TopCentre,
+                    Origin = Anchor.TopCentre,
                 });
             }
-        }
-
-        protected override void LoadComplete()
-        {
-            base.LoadComplete();
-
-            updateLayout(panelFlow, new Vector2(300, 70));
-            panelFlow.FinishTransforms(true);
         }
 
         private Panel[]? panelsToKeep;
@@ -65,6 +64,51 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking
             {
                 panelsToKeep[i].Selection.AddUser(users[i]);
             }
+        }
+
+        public void SelectFinalBeatmap()
+        {
+            const int num_steps = 25;
+            const double duration = 4000;
+
+            Panel? lastPanel = null;
+
+            for (int i = 0; i < num_steps; i++)
+            {
+                float progress = ((float)i) / (num_steps - 1);
+
+                double delay = Math.Pow(progress, 2.5) * duration;
+
+                int index = i;
+
+                Scheduler.AddDelayed(() =>
+                {
+                    var panel = remainingPanelContainer.Children[index % remainingPanelContainer.Children.Count];
+
+                    lastPanel?.HideBorder();
+                    panel.ShowBorder();
+
+                    lastPanel = panel;
+                }, delay);
+            }
+
+            Scheduler.AddDelayed(() =>
+            {
+                var finalPanel = lastPanel!;
+
+                foreach (var panel in remainingPanelContainer)
+                {
+                    if (panel == finalPanel)
+                    {
+                        panel.PresentAsFinalBeatmap();
+                    }
+                    else
+                    {
+                        panel.FadeOut(200);
+                        panel.PopOut(easing: Easing.InOutQuad);
+                    }
+                }
+            }, duration + 1000);
         }
 
         private void updateLayout(Container<Panel> container, Vector2 panelSize, int? maxItemsPerRow = null, bool centerVertically = false, float stagger = 5)
@@ -136,10 +180,6 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking
         {
             panelsToKeep ??= Random.Shared.GetItems(panelFlow.Children.ToArray(), remainingCount);
 
-            var remainingPanelContainer = new Container<Panel> { RelativeSizeAxes = Axes.Both };
-
-            AddInternal(remainingPanelContainer);
-
             scroll.ScrollbarVisible = false;
             panelFlow.AutoSizeAxes = Axes.None;
 
@@ -155,6 +195,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking
 
                     panelFlow.Remove(panel, false);
 
+                    panel.Anchor = panel.Origin = Anchor.TopLeft;
                     panel.Position = remainingPanelContainer.ToLocalSpace(position);
 
                     remainingPanelContainer.Add(panel);
@@ -172,34 +213,66 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking
         private partial class Panel : CompositeDrawable
         {
             public readonly BeatmapSelectionPanel Selection;
+            private readonly Drawable border;
 
             public Panel()
             {
-                InternalChild = Selection = new BeatmapSelectionPanel(300, 70)
+                InternalChildren = new[]
                 {
-                    Anchor = Anchor.Centre,
-                    Origin = Anchor.Centre,
-                    Child = new Container
+                    border = new Container
                     {
                         RelativeSizeAxes = Axes.Both,
-                        Masking = true,
-                        CornerRadius = 6,
-                        Child = new Box
+                        Anchor = Anchor.Centre,
+                        Origin = Anchor.Centre,
+                        Padding = new MarginPadding(-4),
+                        Alpha = 0,
+                        Child = new Container
                         {
                             RelativeSizeAxes = Axes.Both,
-                            Colour = Color4.LightSlateGray,
+                            Masking = true,
+                            CornerRadius = 10,
+                            Child = new Box
+                            {
+                                RelativeSizeAxes = Axes.Both
+                            },
+                        },
+                    },
+                    Selection = new BeatmapSelectionPanel(300, 70)
+                    {
+                        Anchor = Anchor.Centre,
+                        Origin = Anchor.Centre,
+                        Child = new Container
+                        {
+                            RelativeSizeAxes = Axes.Both,
+                            Masking = true,
+                            CornerRadius = 6,
+                            Child = new Box
+                            {
+                                RelativeSizeAxes = Axes.Both,
+                                Colour = Color4.LightSlateGray,
+                            }
                         }
                     }
                 };
             }
 
-            public void PopOut(double delay = 0)
+            public void PopOut(double delay = 0, Easing easing = Easing.InCubic)
             {
-                InternalChild.Delay(delay)
-                             .ScaleTo(0, 400, Easing.InCubic)
-                             .FadeOut(400);
+                Selection.Delay(delay)
+                         .ScaleTo(0, 400, easing)
+                         .FadeOut(400);
+            }
 
-                this.Delay(delay + 500).Expire();
+            public void ShowBorder() => border.Show();
+
+            public void HideBorder() => border.Hide();
+
+            public void PresentAsFinalBeatmap()
+            {
+                Selection.ScaleTo(1.5f, 800, Easing.OutElasticHalf);
+                border.ScaleTo(1.5f, 800, Easing.OutElasticHalf);
+
+                this.MoveTo((Parent!.ChildSize - LayoutSize) / 2, 1200, Easing.OutExpo);
             }
         }
     }
