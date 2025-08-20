@@ -24,8 +24,6 @@ namespace osu.Game.Tests.Visual.Matchmaking
         [Test]
         public void TestBeatmapPanel()
         {
-            var beatmap = CreateAPIBeatmap();
-
             BeatmapSelectionPanel panel = null!;
 
             AddStep("add panel", () => Child = panel = new BeatmapSelectionPanel(300, 70)
