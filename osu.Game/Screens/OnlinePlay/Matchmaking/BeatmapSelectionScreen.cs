@@ -2,12 +2,14 @@
 // See the LICENCE file in the repository root for full licence text.
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using osu.Framework.Allocation;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Shapes;
 using osu.Game.Graphics.Containers;
+using osu.Game.Online.API.Requests.Responses;
 using osuTK;
 using osuTK.Graphics;
 
@@ -36,7 +38,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking
                 }
             };
 
-            for (int i = 0; i < 150; i++)
+            for (int i = 0; i < 50; i++)
             {
                 panelFlow.Add(new Panel
                 {
@@ -53,23 +55,38 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking
             panelFlow.FinishTransforms(true);
         }
 
-        private void updateLayout(Container<Panel> container, Vector2 panelSize, int? maxItemsPerRow = null, bool centerVertically = false)
+        private Panel[]? panelsToKeep;
+
+        public void DistributeUsers(IReadOnlyList<APIUser> users)
+        {
+            panelsToKeep = Random.Shared.GetItems(panelFlow.Children.ToArray(), users.Count);
+
+            for (int i = 0; i < users.Count; i++)
+            {
+                panelsToKeep[i].Selection.AddUser(users[i]);
+            }
+        }
+
+        private void updateLayout(Container<Panel> container, Vector2 panelSize, int? maxItemsPerRow = null, bool centerVertically = false, float stagger = 5)
         {
             const float spacing = 20f;
-            const float duration = 600;
-            const float stagger = 5;
+            const float duration = 1000;
 
             int numPanelsPerRow = (int)((container.ChildSize.X + spacing) / (panelSize.X + spacing));
             if (numPanelsPerRow > maxItemsPerRow)
                 numPanelsPerRow = maxItemsPerRow.Value;
 
+            int lastRowPanelCount = container.Children.Count % numPanelsPerRow;
+            int outerPanelsWithOffsetCount = (numPanelsPerRow - lastRowPanelCount) % 2 == 0 ? (numPanelsPerRow - lastRowPanelCount) / 2 : 0;
+
             var children = container.Children.ToArray();
 
             var position = new Vector2(calculateNextRowStart(0), 0);
 
+            int numRows = (children.Length + numPanelsPerRow - 1) / numPanelsPerRow;
+
             if (centerVertically)
             {
-                int numRows = (children.Length + numPanelsPerRow - 1) / numPanelsPerRow;
                 float totalHeight = (numRows * (panelSize.Y + spacing)) - spacing;
 
                 position.Y = (ChildSize.Y - totalHeight) / 2;
@@ -80,6 +97,8 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking
             for (int i = 0; i < children.Length; i++)
             {
                 var panel = children[i];
+                int rowIndex = i / numPanelsPerRow;
+                int positionInRow = i % numPanelsPerRow;
 
                 if (position.X + panelSize.X > panelFlow.ChildSize.X)
                 {
@@ -87,10 +106,17 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking
                     position.Y += panelSize.Y + spacing;
                 }
 
+                var panelPosition = position;
+
+                if (centerVertically && rowIndex < numRows - 1 && (positionInRow < outerPanelsWithOffsetCount || positionInRow >= numPanelsPerRow - outerPanelsWithOffsetCount))
+                {
+                    panelPosition.Y += (panelSize.Y + spacing) / 2;
+                }
+
                 panel
                     .Delay(delay)
-                    .MoveTo(position, duration, Easing.OutExpo)
-                    .ResizeTo(panelSize, duration, Easing.OutExpo);
+                    .MoveTo(panelPosition, duration, Easing.InOutQuint)
+                    .ResizeTo(panelSize, duration, Easing.InOutQuint);
 
                 position.X += panelSize.X + spacing;
 
@@ -106,23 +132,20 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking
             }
         }
 
-        public void SelectionLayout()
+        public void HidePanels(int remainingCount)
         {
-        }
-
-        public void HidePanels(int count)
-        {
-            var exceptions = Random.Shared.GetItems(panelFlow.Children.ToArray(), count);
+            panelsToKeep ??= Random.Shared.GetItems(panelFlow.Children.ToArray(), remainingCount);
 
             var remainingPanelContainer = new Container<Panel> { RelativeSizeAxes = Axes.Both };
 
             AddInternal(remainingPanelContainer);
 
             scroll.ScrollbarVisible = false;
+            panelFlow.AutoSizeAxes = Axes.None;
 
             foreach (var panel in panelFlow.Children.ToArray())
             {
-                if (!exceptions.Contains(panel))
+                if (!panelsToKeep.Contains(panel))
                 {
                     panel.PopOut(Random.Shared.NextSingle() * 500);
                 }
@@ -140,25 +163,32 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking
 
             Scheduler.AddDelayed(() =>
             {
-                updateLayout(remainingPanelContainer, new Vector2(300, 70), 3, true);
-            }, 600);
+                int maxItemsPerRow = remainingCount == 3 ? 2 : 3;
+
+                updateLayout(remainingPanelContainer, new Vector2(300, 70), maxItemsPerRow, true, stagger: 20);
+            }, 200);
         }
 
         private partial class Panel : CompositeDrawable
         {
+            public readonly BeatmapSelectionPanel Selection;
+
             public Panel()
             {
-                InternalChild = new Container
+                InternalChild = Selection = new BeatmapSelectionPanel(300, 70)
                 {
-                    RelativeSizeAxes = Axes.Both,
-                    Masking = true,
-                    CornerRadius = 6,
                     Anchor = Anchor.Centre,
                     Origin = Anchor.Centre,
-                    Child = new Box
+                    Child = new Container
                     {
                         RelativeSizeAxes = Axes.Both,
-                        Colour = Color4.LightSlateGray,
+                        Masking = true,
+                        CornerRadius = 6,
+                        Child = new Box
+                        {
+                            RelativeSizeAxes = Axes.Both,
+                            Colour = Color4.LightSlateGray,
+                        }
                     }
                 };
             }
@@ -166,8 +196,8 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking
             public void PopOut(double delay = 0)
             {
                 InternalChild.Delay(delay)
-                             .ScaleTo(0, 500, Easing.InCubic)
-                             .FadeOut(500, Easing.In);
+                             .ScaleTo(0, 400, Easing.InCubic)
+                             .FadeOut(400);
 
                 this.Delay(delay + 500).Expire();
             }
