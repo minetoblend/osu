@@ -6,10 +6,16 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
+using osu.Framework.Allocation;
+using osu.Framework.Extensions;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Shapes;
+using osu.Game.Beatmaps.Drawables;
+using osu.Game.Database;
+using osu.Game.Graphics;
 using osu.Game.Graphics.Containers;
+using osu.Game.Graphics.Sprites;
 using osu.Game.Online.API.Requests.Responses;
 using osu.Game.Online.Rooms;
 using osuTK;
@@ -31,6 +37,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking
         private readonly PanelContainer panelContainer;
         private readonly Container<BeatmapSelectionPanel> finalPanelContainer;
         private readonly OsuScrollContainer scroll;
+        private readonly Box background;
 
         private bool allowSelection = true;
 
@@ -38,6 +45,12 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking
         {
             InternalChildren = new Drawable[]
             {
+                background = new Box
+                {
+                    RelativeSizeAxes = Axes.Both,
+                    Depth = float.MaxValue,
+                    Colour = Color4.Black,
+                },
                 scroll = new OsuScrollContainer
                 {
                     RelativeSizeAxes = Axes.Both,
@@ -140,6 +153,9 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking
                 .Schedule(() => displayFinalBeatmap(finalItem));
         }
 
+        [Resolved]
+        private BeatmapLookupCache beatmapLookupCache { get; set; } = null!;
+
         private void arrangeItemsForRollAnimation()
         {
             const float spacing = 20f;
@@ -193,7 +209,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking
 
         private void playRollAnimation(long finalItem)
         {
-            const int minimum_steps = 20;
+            const int minimum_steps = 15;
 
             int finalItemIndex = finalPanelContainer.Children
                                                     .Select(it => it.Item.ID)
@@ -241,9 +257,97 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking
                     continue;
                 }
 
-                panel
-                    .MoveTo(Vector2.Zero, 1000, Easing.OutExpo)
-                    .ScaleTo(1.5f, 1000, Easing.OutExpo);
+                var drawQuad = panel.ScreenSpaceDrawQuad.AABBFloat;
+
+                var position = new Vector2(drawQuad.Right, drawQuad.Centre.Y);
+
+                panel.Origin = Anchor.CentreRight;
+
+                panel.Position = finalPanelContainer.ToLocalSpace(position) - finalPanelContainer.ChildSize / 2;
+
+                panel.MoveTo(new Vector2(-20, 0), 1000, Easing.OutPow10)
+                     .ScaleTo(1.5f, 1000, Easing.OutExpo);
+
+                var ornament = new SelectionOrnament(panel.Item)
+                {
+                    Anchor = Anchor.Centre,
+                    Origin = Anchor.CentreLeft,
+                    Position = ToLocalSpace(new Vector2(drawQuad.Left, drawQuad.Centre.Y)) - finalPanelContainer.ChildSize / 2,
+                    Alpha = 0,
+                    Depth = 1,
+                };
+
+                AddInternal(ornament);
+
+                ornament.MoveTo(new Vector2(20, 0), 1000, Easing.OutPow10)
+                        .FadeIn(400);
+
+                beatmapLookupCache.GetBeatmapAsync(panel.Item.BeatmapID).ContinueWith(b => Schedule(() =>
+                {
+                    var beatmap = b.GetResultSafely();
+
+                    Box box1, box2;
+                    Drawable cover;
+                    Container container;
+
+                    AddInternal(new Container
+                    {
+                        RelativeSizeAxes = Axes.Both,
+                        Depth = 2,
+                        Children = new Drawable[]
+                        {
+                            cover = new UpdateableOnlineBeatmapSetCover(timeBeforeLoad: 0)
+                            {
+                                RelativeSizeAxes = Axes.Both,
+                                OnlineInfo = beatmap?.BeatmapSet,
+                                Alpha = 0.25f,
+                                Anchor = Anchor.Centre,
+                                Origin = Anchor.Centre,
+                            },
+                            container = new Container
+                            {
+                                RelativeSizeAxes = Axes.Both,
+                                Anchor = Anchor.Centre,
+                                Origin = Anchor.Centre,
+                                Position = panel.Position,
+                                Children = new Drawable[]
+                                {
+                                    box1 = new Box
+                                    {
+                                        RelativeSizeAxes = Axes.Both,
+                                        RelativePositionAxes = Axes.X,
+                                        Size = new Vector2(3),
+                                        Anchor = Anchor.Centre,
+                                        Origin = Anchor.CentreRight,
+                                        Colour = Color4.Black,
+                                    },
+                                    box2 = new Box
+                                    {
+                                        RelativeSizeAxes = Axes.Both,
+                                        RelativePositionAxes = Axes.X,
+                                        Size = new Vector2(3),
+                                        Anchor = Anchor.Centre,
+                                        Origin = Anchor.CentreLeft,
+                                        Colour = Color4.Black,
+                                    },
+                                }
+                            }
+                        }
+                    });
+
+                    box1.MoveToX(-0.46f, 2000, Easing.OutPow10);
+                    box2.MoveToX(0.46f, 2000, Easing.OutPow10);
+                    cover.FadeTo(0).FadeTo(0.25f, 500)
+                         .ScaleTo(2f)
+                         .ScaleTo(1f, 3000, Easing.OutPow10);
+
+                    background.FadeColour(Color4.Black, 1000);
+
+                    container
+                        .MoveTo(Vector2.Zero, 1000, Easing.OutPow10)
+                        .RotateTo(-10)
+                        .RotateTo(15, 3000, Easing.OutPow10);
+                }));
             }
         }
 
@@ -257,6 +361,84 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking
                     return FlowingChildren.Select(c => c.Position);
 
                 return base.ComputeLayoutPositions();
+            }
+        }
+
+        private partial class SelectionOrnament : CompositeDrawable
+        {
+            private readonly MultiplayerPlaylistItem item;
+
+            [Resolved]
+            private BeatmapLookupCache beatmapLookupCache { get; set; } = null!;
+
+            public SelectionOrnament(MultiplayerPlaylistItem item)
+            {
+                this.item = item;
+            }
+
+            [BackgroundDependencyLoader]
+            private void load(BeatmapLookupCache beatmapLookupCache)
+            {
+                FillFlowContainer content;
+
+                AutoSizeAxes = Axes.Both;
+
+                InternalChild = content = new FillFlowContainer
+                {
+                    AutoSizeAxes = Axes.Both,
+                    Direction = FillDirection.Vertical,
+                    Spacing = new Vector2(5),
+                    Children = new Drawable[]
+                    {
+                        new OsuSpriteText
+                        {
+                            Text = "Selected Beatmap",
+                            Font = OsuFont.TorusAlternate.With(size: 50),
+                        },
+                    }
+                };
+
+                beatmapLookupCache.GetBeatmapAsync(item.BeatmapID).ContinueWith(b => Schedule(() =>
+                {
+                    APIBeatmap beatmap = b.GetResultSafely()!;
+
+                    AutoSizeDuration = 400;
+                    AutoSizeEasing = Easing.OutExpo;
+
+                    OsuSpriteText title, artist, extras;
+
+                    content.AddRange(new Drawable[]
+                    {
+                        title = new OsuSpriteText
+                        {
+                            Text = beatmap.BeatmapSet!.Title,
+                            Font = OsuFont.Style.Heading1,
+                            Margin = new MarginPadding { Top = 5 },
+                        },
+                        artist = new OsuSpriteText
+                        {
+                            Text = $"by {beatmap.BeatmapSet!.Artist}",
+                            Font = OsuFont.Style.Heading2,
+                        },
+                        extras = new OsuSpriteText
+                        {
+                            Text = "TODO: add more stuff here",
+                            Font = OsuFont.Style.Heading2,
+                        },
+                    });
+
+                    title.FadeOut()
+                         .Delay(1000)
+                         .FadeIn();
+
+                    artist.FadeOut()
+                          .Delay(1080)
+                          .FadeIn();
+
+                    extras.FadeOut()
+                          .Delay(1160)
+                          .FadeIn();
+                }));
             }
         }
     }
