@@ -2,37 +2,42 @@
 // See the LICENCE file in the repository root for full licence text.
 
 using System;
-using System.Collections.Generic;
-using osu.Framework.Allocation;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Shapes;
 using osu.Framework.Input.Events;
-using osu.Game.Graphics;
 using osu.Game.Graphics.UserInterface;
 using osu.Game.Online.API.Requests.Responses;
-using osu.Game.Users.Drawables;
+using osu.Game.Online.Rooms;
 using osuTK;
-using osuTK.Graphics;
 using osuTK.Input;
 
 namespace osu.Game.Screens.OnlinePlay.Matchmaking
 {
     public partial class BeatmapSelectionPanel : Container
     {
+        public static readonly Vector2 SIZE = new Vector2(300, 70);
+
+        private const float corner_radius = 6;
+        private const float border_width = 3;
+
         public Action? Clicked;
+
+        public readonly MultiplayerPlaylistItem Item;
 
         protected override Container<Drawable> Content { get; }
 
         private readonly Container scaleContainer;
-        private readonly Container<SelectionAvatar> avatarContainer;
+        private readonly BeatmapSelectionOverlay selectionOverlay;
         private readonly Box flash;
+        private readonly Container border;
 
-        private readonly Dictionary<int, SelectionAvatar> pills = new Dictionary<int, SelectionAvatar>();
+        public bool AllowSelection = true;
 
-        public BeatmapSelectionPanel(float width, float height)
+        public BeatmapSelectionPanel(MultiplayerPlaylistItem item)
         {
-            Size = new Vector2(width, height);
+            Item = item;
+            Size = SIZE;
             InternalChild = scaleContainer = new Container
             {
                 RelativeSizeAxes = Axes.Both,
@@ -40,27 +45,42 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking
                 Origin = Anchor.Centre,
                 Children = new Drawable[]
                 {
-                    Content = new Container
+                    new Container
                     {
                         RelativeSizeAxes = Axes.Both,
+                        Padding = new MarginPadding(-border_width),
+                        Child = border = new Container
+                        {
+                            RelativeSizeAxes = Axes.Both,
+                            Masking = true,
+                            CornerRadius = corner_radius + border_width,
+                            Alpha = 0,
+                            Child = new Box { RelativeSizeAxes = Axes.Both },
+                        }
                     },
                     new Container
                     {
                         RelativeSizeAxes = Axes.Both,
                         Masking = true,
-                        // TODO: corner radius should absolutely not be done here
-                        CornerRadius = 6,
-                        Child = flash = new Box
+                        CornerRadius = corner_radius,
+                        Children = new Drawable[]
                         {
-                            RelativeSizeAxes = Axes.Both,
-                            Alpha = 0,
-                        },
+                            Content = new Container
+                            {
+                                RelativeSizeAxes = Axes.Both,
+                            },
+                            flash = new Box
+                            {
+                                RelativeSizeAxes = Axes.Both,
+                                Alpha = 0,
+                            },
+                        }
                     },
-                    avatarContainer = new Container<SelectionAvatar>
+                    selectionOverlay = new BeatmapSelectionOverlay
                     {
                         RelativeSizeAxes = Axes.X,
-                        Padding = new MarginPadding { Horizontal = 10 },
                         AutoSizeAxes = Axes.Y,
+                        Padding = new MarginPadding { Horizontal = 10 },
                         Origin = Anchor.CentreLeft,
                     },
                     new HoverClickSounds()
@@ -68,64 +88,34 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking
             };
         }
 
-        public bool AddUser(APIUser user, bool self = false)
+        public bool AddUser(APIUser user, bool isOwnUser) => selectionOverlay.AddUser(user, isOwnUser);
+
+        public bool RemoveUser(int userId) => selectionOverlay.RemoveUser(userId);
+
+        protected override bool OnHover(HoverEvent e)
         {
-            if (pills.ContainsKey(user.Id))
+            if (!AllowSelection)
                 return false;
 
-            var avatar = new SelectionAvatar(user, self)
-            {
-                Anchor = Anchor.CentreRight,
-                Origin = Anchor.CentreRight,
-            };
-
-            avatarContainer.Add(pills[user.Id] = avatar);
-
-            updateLayout();
-
-            avatar.FinishTransforms();
+            flash.FadeTo(0.3f, 50)
+                 .Then()
+                 .FadeTo(0.15f, 300);
 
             return true;
         }
 
-        public bool RemoveUser(APIUser user)
+        protected override void OnHoverLost(HoverLostEvent e)
         {
-            if (!pills.Remove(user.Id, out var pill))
-                return false;
+            base.OnHoverLost(e);
 
-            pill.PopOutAndExpire();
-            avatarContainer.ChangeChildDepth(pill, float.MaxValue);
-
-            updateLayout();
-
-            return true;
-        }
-
-        private void updateLayout()
-        {
-            const double stagger = 30;
-            const float spacing = 4;
-
-            double delay = 0;
-            float x = 0;
-
-            for (int i = avatarContainer.Count - 1; i >= 0; i--)
-            {
-                var avatar = avatarContainer[i];
-
-                if (avatar.Expired)
-                    continue;
-
-                avatar.Delay(delay).MoveToX(x, 500, Easing.OutElasticQuarter);
-
-                x -= avatar.LayoutSize.X + spacing;
-
-                delay += stagger;
-            }
+            flash.FadeOut(200);
         }
 
         protected override bool OnMouseDown(MouseDownEvent e)
         {
+            if (!AllowSelection)
+                return false;
+
             if (e.Button == MouseButton.Left)
             {
                 scaleContainer.ScaleTo(0.9f, 400, Easing.OutExpo);
@@ -143,24 +133,11 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking
                 scaleContainer.ScaleTo(1f, 500, Easing.OutElasticHalf);
         }
 
-        protected override bool OnHover(HoverEvent e)
-        {
-            flash.FadeTo(0.3f, 50)
-                 .Then()
-                 .FadeTo(0.15f, 300);
-
-            return true;
-        }
-
-        protected override void OnHoverLost(HoverLostEvent e)
-        {
-            base.OnHoverLost(e);
-
-            flash.FadeOut(200);
-        }
-
         protected override bool OnClick(ClickEvent e)
         {
+            if (!AllowSelection)
+                return false;
+
             Clicked?.Invoke();
 
             flash.FadeTo(0.6f, 50)
@@ -170,83 +147,21 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking
             return true;
         }
 
-        private partial class SelectionAvatar : CompositeDrawable
+        public void ShowBorder() => border.Show();
+
+        public void HideBorder() => border.Hide();
+
+        public void PopOutAndExpire(double delay = 0, Easing easing = Easing.InCubic)
         {
-            public bool Expired { get; private set; }
+            AllowSelection = false;
 
-            private readonly Container content;
+            const double duration = 400;
 
-            private bool self;
+            scaleContainer.Delay(delay)
+                          .ScaleTo(0, duration, easing)
+                          .FadeOut(duration);
 
-            public SelectionAvatar(APIUser user, bool self)
-            {
-                this.self = self;
-
-                Size = new Vector2(30);
-
-                InternalChildren = new Drawable[]
-                {
-                    content = new Container
-                    {
-                        RelativeSizeAxes = Axes.Both,
-                        Anchor = Anchor.Centre,
-                        Origin = Anchor.Centre,
-                        Child = new CircularContainer
-                        {
-                            RelativeSizeAxes = Axes.Both,
-                            Masking = true,
-                            Children = new Drawable[]
-                            {
-                                new Box
-                                {
-                                    RelativeSizeAxes = Axes.Both,
-                                    Colour = Color4.LightSlateGray,
-                                },
-                                new ClickableAvatar(user, true)
-                                {
-                                    RelativeSizeAxes = Axes.Both,
-                                }
-                            }
-                        },
-                    }
-                };
-            }
-
-            [BackgroundDependencyLoader]
-            private void load(OsuColour colour)
-            {
-                if (self)
-                {
-                    content.Add(new Container
-                    {
-                        RelativeSizeAxes = Axes.Both,
-                        Depth = 1,
-                        Padding = new MarginPadding(-2),
-                        Child = new Circle
-                        {
-                            RelativeSizeAxes = Axes.Both,
-                            Colour = colour.Yellow,
-                        }
-                    });
-                }
-            }
-
-            protected override void LoadComplete()
-            {
-                base.LoadComplete();
-
-                content.ScaleTo(0)
-                       .ScaleTo(1, 500, Easing.OutElasticHalf)
-                       .FadeIn(200);
-            }
-
-            public void PopOutAndExpire()
-            {
-                content.ScaleTo(0, 300, Easing.OutExpo);
-
-                this.Delay(300).FadeOut().Expire();
-                Expired = true;
-            }
+            this.Delay(delay + duration).FadeOut().Expire();
         }
     }
 }

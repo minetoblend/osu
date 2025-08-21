@@ -302,6 +302,8 @@ namespace osu.Game.Online.Multiplayer
             return connection.InvokeAsync(nameof(IMultiplayerServer.RemovePlaylistItem), playlistItemId);
         }
 
+        public override Task MatchmakingToggleSelection(long playlistItemId) => Task.CompletedTask;
+
         public override Task DisconnectInternal()
         {
             if (connector == null)

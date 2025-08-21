@@ -112,6 +112,8 @@ namespace osu.Game.Online.Multiplayer
         /// </summary>
         public event Action? Disconnecting;
 
+        public event Action<int, long>? MatchmakingSelectionToggled;
+
         /// <summary>
         /// Whether the <see cref="MultiplayerClient"/> is currently connected.
         /// This is NOT thread safe and usage should be scheduled.
@@ -981,6 +983,19 @@ namespace osu.Game.Online.Multiplayer
             });
             return Task.CompletedTask;
         }
+
+        Task IMultiplayerClient.MatchmakingSelectionToggled(int userId, long playlistItemId)
+        {
+            Scheduler.Add(() =>
+            {
+                MatchmakingSelectionToggled?.Invoke(userId, playlistItemId);
+                RoomUpdated?.Invoke();
+            });
+
+            return Task.CompletedTask;
+        }
+
+        public abstract Task MatchmakingToggleSelection(long playlistItemId);
 
         private partial class MultiplayerInvitationNotification : UserAvatarNotification
         {

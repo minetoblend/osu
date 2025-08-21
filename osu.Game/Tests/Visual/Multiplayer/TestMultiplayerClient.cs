@@ -527,6 +527,12 @@ namespace osu.Game.Tests.Visual.Multiplayer
 
         public override Task RemovePlaylistItem(long playlistItemId) => RemoveUserPlaylistItem(api.LocalUser.Value.OnlineID, clone(playlistItemId));
 
+        public override Task MatchmakingToggleSelection(long playlistItemId)
+            => MatchmakingToggleUserSelection(api.LocalUser.Value.OnlineID, playlistItemId);
+
+        public async Task MatchmakingToggleUserSelection(int userId, long playlistItemId)
+            => await ((IMultiplayerClient)this).MatchmakingSelectionToggled(clone(userId), clone(playlistItemId)).ConfigureAwait(false);
+
         protected override Task<MultiplayerRoom> CreateRoomInternal(MultiplayerRoom room)
         {
             Room apiRoom = new Room(room)
