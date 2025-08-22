@@ -23,7 +23,7 @@ using osuTK.Input;
 
 namespace osu.Game.Tests.Visual.Matchmaking
 {
-    public class TestSceneMatchmakingScreen : MultiplayerTestScene
+    public partial class TestSceneMatchmakingScreen : MultiplayerTestScene
     {
         private const int user_count = 8;
         private const int beatmap_count = 50;
@@ -62,6 +62,24 @@ namespace osu.Game.Tests.Visual.Matchmaking
 
             AddStep("load match", () =>
             {
+                var beatmaps = Enumerable.Range(1, beatmap_count).Select(i => new PlaylistItem(new MultiplayerPlaylistItem
+                {
+                    BeatmapID = i,
+                    StarRating = i / 10.0
+                })).ToArray();
+
+                var room = new Room
+                {
+                    Playlist = beatmaps
+                };
+
+                JoinRoom(room);
+            });
+
+            WaitForJoined();
+
+            AddStep("add users", () =>
+            {
                 users = Enumerable.Range(1, user_count).Select(i => new MultiplayerRoomUser(i)
                 {
                     User = new APIUser
@@ -70,18 +88,12 @@ namespace osu.Game.Tests.Visual.Matchmaking
                     }
                 }).ToArray();
 
-                var beatmaps = Enumerable.Range(1, beatmap_count).Select(i => new MultiplayerPlaylistItem
-                {
-                    BeatmapID = i,
-                    StarRating = i / 10.0
-                }).ToArray();
-
-                LoadScreen(screen = new MatchmakingScreen(new MultiplayerRoom(0)
-                {
-                    Users = users,
-                    Playlist = beatmaps
-                }));
+                foreach (var user in users)
+                    MultiplayerClient.AddUser(user);
             });
+
+            AddStep("load room", () => LoadScreen(screen = new MatchmakingScreen(MultiplayerClient.ClientRoom!)));
+
             AddUntilStep("wait for load", () => screen.IsCurrentScreen());
         }
 
@@ -125,7 +137,7 @@ namespace osu.Game.Tests.Visual.Matchmaking
 
             AddStep("selection", () =>
             {
-                MultiplayerPlaylistItem[] beatmaps = Enumerable.Range(1, 50).Select(i => new MultiplayerPlaylistItem
+                MultiplayerPlaylistItem[] beatmaps = Enumerable.Range(1, 5).Select(i => new MultiplayerPlaylistItem
                 {
                     ID = i,
                     BeatmapID = i,
@@ -141,7 +153,7 @@ namespace osu.Game.Tests.Visual.Matchmaking
             });
 
             // Prepare gameplay.
-            AddWaitStep("wait", 25);
+            AddWaitStep("wait", 35);
 
             AddStep("prepare gameplay", () => MultiplayerClient.ChangeMatchRoomState(new MatchmakingRoomState
             {

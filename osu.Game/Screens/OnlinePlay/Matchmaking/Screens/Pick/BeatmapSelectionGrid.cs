@@ -9,7 +9,7 @@ using System.Linq;
 using Microsoft.Toolkit.HighPerformance;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
-using osu.Framework.Graphics.Transforms;
+using osu.Game.Graphics;
 using osu.Game.Graphics.Containers;
 using osu.Game.Online.API.Requests.Responses;
 using osu.Game.Online.Rooms;
@@ -155,6 +155,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.Screens.Pick
         {
             scroll.ScrollbarVisible = false;
             panelGridContainer.LayoutDisabled = true;
+            panelGridContainer.AutoSizeAxes = Axes.None;
 
             var rng = new Random();
 
@@ -319,22 +320,6 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.Screens.Pick
                     return FlowingChildren.Select(c => c.Position);
 
                 return base.ComputeLayoutPositions();
-            }
-        }
-
-        private readonly struct SplitEasingFunction(DefaultEasingFunction easeIn, DefaultEasingFunction easeOut, float ratio) : IEasingFunction
-        {
-            public SplitEasingFunction(Easing easeIn, Easing easeOut, float ratio = 0.5f)
-                : this(new DefaultEasingFunction(easeIn), new DefaultEasingFunction(easeOut), ratio)
-            {
-            }
-
-            public double ApplyEasing(double time)
-            {
-                if (time < ratio)
-                    return easeIn.ApplyEasing(time / ratio) * ratio;
-
-                return double.Lerp(ratio, 1, easeOut.ApplyEasing((time - ratio) / (1 - ratio)));
             }
         }
     }

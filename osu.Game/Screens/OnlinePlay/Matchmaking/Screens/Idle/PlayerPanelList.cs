@@ -11,7 +11,7 @@ using osuTK;
 
 namespace osu.Game.Screens.OnlinePlay.Matchmaking.Screens.Idle
 {
-    public class PlayerPanelList : CompositeDrawable
+    public partial class PlayerPanelList : CompositeDrawable
     {
         [Resolved]
         private MultiplayerClient client { get; set; } = null!;
@@ -25,7 +25,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.Screens.Idle
             {
                 RelativeSizeAxes = Axes.Both,
                 Spacing = new Vector2(20, 5),
-                LayoutEasing = Easing.InOutQuint,
+                LayoutEasing = Easing.OutExpo,
                 LayoutDuration = 500
             };
         }

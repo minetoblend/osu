@@ -6,7 +6,6 @@ using System.Threading;
 using osu.Framework.Allocation;
 using osu.Framework.Bindables;
 using osu.Framework.Extensions;
-using osu.Framework.Extensions.Color4Extensions;
 using osu.Framework.Extensions.ObjectExtensions;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
@@ -32,7 +31,7 @@ using osuTK;
 
 namespace osu.Game.Screens.OnlinePlay.Matchmaking
 {
-    public class MatchmakingScreen : OsuScreen
+    public partial class MatchmakingScreen : OsuScreen
     {
         /// <summary>
         /// Padding between rows of the content.
@@ -66,6 +65,11 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking
         private CancellationTokenSource? downloadCheckCancellation;
         private int? lastDownloadCheckedBeatmapId;
 
+        private MatchmakingScreenStack screenStack = null!;
+
+        [Cached]
+        private readonly ParticipantList participantList = new ParticipantList();
+
         public MatchmakingScreen(MultiplayerRoom room)
         {
             this.room = room;
@@ -75,7 +79,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking
         }
 
         [BackgroundDependencyLoader]
-        private void load()
+        private void load(OverlayColourProvider colourProvider)
         {
             InternalChild = new OsuContextMenuContainer
             {
@@ -113,7 +117,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking
                                             new Box
                                             {
                                                 RelativeSizeAxes = Axes.Both,
-                                                Colour = Color4Extensions.FromHex(@"3e3a44") // Temporary.
+                                                Colour = colourProvider.Background4,
                                             },
                                             new GridContainer
                                             {
@@ -128,7 +132,26 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking
                                                 Content = new Drawable[]?[]
                                                 {
                                                     [
-                                                        new MatchmakingScreenStack()
+                                                        new Container
+                                                        {
+                                                            RelativeSizeAxes = Axes.Both,
+                                                            Children = new Drawable[]
+                                                            {
+                                                                new Container
+                                                                {
+                                                                    RelativeSizeAxes = Axes.Both,
+                                                                    Padding = new MarginPadding { Right = 250 },
+                                                                    Child = screenStack = new MatchmakingScreenStack(),
+                                                                },
+                                                                participantList.With(d =>
+                                                                {
+                                                                    d.RelativeSizeAxes = Axes.Y;
+                                                                    d.Width = 230;
+                                                                    d.Anchor = Anchor.TopRight;
+                                                                    d.Origin = Anchor.TopRight;
+                                                                })
+                                                            }
+                                                        }
                                                     ],
                                                     null,
                                                     [
@@ -191,6 +214,9 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking
             client.LoadRequested += onLoadRequested;
 
             beatmapAvailabilityTracker.Availability.BindValueChanged(onBeatmapAvailabilityChanged, true);
+
+            screenStack.ScreenPushed += (_, _) => participantList.SetTarget(null);
+            screenStack.ScreenExited += (_, _) => participantList.SetTarget(null);
         }
 
         private void onRoomUpdated()

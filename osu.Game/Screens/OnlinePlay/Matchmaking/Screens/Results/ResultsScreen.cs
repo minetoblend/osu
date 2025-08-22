@@ -18,7 +18,7 @@ using osuTK;
 
 namespace osu.Game.Screens.OnlinePlay.Matchmaking.Screens.Results
 {
-    public class ResultsScreen : MatchmakingSubScreen
+    public partial class ResultsScreen : MatchmakingSubScreen
     {
         private const float grid_spacing = 5;
 
@@ -114,7 +114,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.Screens.Results
                                         }
                                     },
                                     null,
-                                    new PlayerPanelList
+                                    new ProxiedParticipantList
                                     {
                                         RelativeSizeAxes = Axes.Both
                                     }
