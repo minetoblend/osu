@@ -1271,11 +1271,7 @@ namespace osu.Game
 
             loadComponentSingleFile(new BackgroundDataStoreProcessor(), Add);
             loadComponentSingleFile<BeatmapStore>(detachedBeatmapStore = new RealmDetachedBeatmapStore(), Add, true);
-            loadComponentSingleFile(new MatchmakingQueueBanner
-            {
-                Anchor = Anchor.TopCentre,
-                Origin = Anchor.TopCentre
-            }, topMostOverlayContent.Add, true);
+            loadComponentSingleFile(new MatchmakingController(), Add, true);
 
             Add(externalLinkOpener = new ExternalLinkOpener());
             Add(new MusicKeyBindingHandler());

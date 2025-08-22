@@ -749,17 +749,25 @@ namespace osu.Game.Tests.Visual.Multiplayer
             await ((IMultiplayerClient)this).MatchRoomStateChanged(clone(ServerRoom.MatchState)).ConfigureAwait(false);
         }
 
-        public override async Task ToggleMatchmakingQueue()
+        public override Task JoinMatchmakingLobby()
         {
-            if (inMatchmakingQueue)
-                await ((IMultiplayerClient)this).MatchmakingQueueLeft();
-            else
-            {
-                await ((IMultiplayerClient)this).MatchmakingQueueJoined();
-                await ((IMultiplayerClient)this).MatchmakingQueueStatusChanged(new MatchmakingQueueStatus.Searching());
-            }
+            return Task.CompletedTask;
+        }
 
-            inMatchmakingQueue = !inMatchmakingQueue;
+        public override Task LeaveMatchmakingLobby()
+        {
+            return Task.CompletedTask;
+        }
+
+        public override async Task JoinMatchmakingQueue()
+        {
+            await ((IMultiplayerClient)this).MatchmakingQueueJoined();
+            await ((IMultiplayerClient)this).MatchmakingQueueStatusChanged(new MatchmakingQueueStatus.Searching());
+        }
+
+        public override async Task LeaveMatchmakingQueue()
+        {
+            await ((IMultiplayerClient)this).MatchmakingQueueLeft();
         }
 
         public override Task MatchmakingAcceptInvitation()
