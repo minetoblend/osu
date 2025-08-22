@@ -12,7 +12,7 @@ using osuTK;
 
 namespace osu.Game.Screens.OnlinePlay.Matchmaking
 {
-    public class MatchmakingCloud : CompositeDrawable
+    public partial class MatchmakingCloud : CompositeDrawable
     {
         private APIUser[] users = [];
         private Container usersContainer = null!;
@@ -55,7 +55,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking
             };
         }
 
-        public class MovingAvatar : BeatmapSelectionPanel.SelectionAvatar
+        public class MovingAvatar : MatchMakingAvatar
         {
             private float angle;
             private float angularSpeed;
@@ -65,7 +65,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking
             private float targetAlpha;
 
             public MovingAvatar(APIUser apiUser)
-                : base(apiUser, false)
+                : base(apiUser)
             {
                 RelativePositionAxes = Axes.Both;
                 Scale = new Vector2(2);

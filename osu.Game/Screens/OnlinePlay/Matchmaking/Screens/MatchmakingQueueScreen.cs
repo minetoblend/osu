@@ -74,7 +74,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.Screens
                     RelativeSizeAxes = Axes.Both,
                     Size = new Vector2(0.6f)
                 },
-                new BeatmapSelectionPanel.SelectionAvatar(api.LocalUser.Value, true)
+                new MatchMakingAvatar(api.LocalUser.Value, true)
                 {
                     Y = -100,
                     Scale = new Vector2(3),

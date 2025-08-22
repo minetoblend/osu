@@ -1,187 +1,190 @@
 // Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
-using System.Linq;
 using osu.Framework.Allocation;
-using osu.Framework.Extensions;
-using osu.Framework.Extensions.ObjectExtensions;
+using osu.Framework.Extensions.Color4Extensions;
 using osu.Framework.Graphics;
+using osu.Framework.Graphics.Colour;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Shapes;
-using osu.Framework.Input.Events;
+using osu.Framework.Localisation;
 using osu.Game.Beatmaps;
 using osu.Game.Beatmaps.Drawables;
-using osu.Game.Database;
 using osu.Game.Graphics;
-using osu.Game.Graphics.Containers;
+using osu.Game.Graphics.Sprites;
 using osu.Game.Online.API.Requests.Responses;
-using osu.Game.Online.Chat;
-using osu.Game.Online.Multiplayer;
-using osu.Game.Online.Rooms;
-using osu.Game.Users.Drawables;
+using osu.Game.Overlays;
 using osuTK;
 using osuTK.Graphics;
 
 namespace osu.Game.Screens.OnlinePlay.Matchmaking.Screens.Pick
 {
-    public class BeatmapPanel : CompositeDrawable
+    public partial class BeatmapPanel : CompositeDrawable
     {
-        private const int panel_width = 300;
-        private readonly Color4 backgroundColour = OsuColour.Gray(0.3f);
-        private readonly Color4 hoverColour = OsuColour.Gray(0.4f);
-        private readonly Color4 clickColour = OsuColour.Gray(0.6f);
+        public static readonly Vector2 SIZE = new Vector2(300, 70);
 
-        public bool AllowSelection { get; set; } = true;
+        public readonly Container OverlayLayer = new Container { RelativeSizeAxes = Axes.Both };
 
-        public readonly MultiplayerPlaylistItem Item;
-
-        [Resolved]
-        private MultiplayerClient client { get; set; } = null!;
-
-        private Drawable background = null!;
-        private FillFlowContainer<SelectionBadge> badges = null!;
-
-        public BeatmapPanel(MultiplayerPlaylistItem item)
+        public APIBeatmap? Beatmap
         {
-            Item = item;
-            Size = new Vector2(panel_width, 50);
+            get => beatmap;
+            set
+            {
+                if (beatmap?.OnlineID == value?.OnlineID)
+                    return;
+
+                beatmap = value;
+
+                if (IsLoaded)
+                    updateContent();
+            }
+        }
+
+        private APIBeatmap? beatmap;
+
+        private Container content = null!;
+        private UpdateableOnlineBeatmapSetCover cover = null!;
+
+        public BeatmapPanel(APIBeatmap? beatmap = null)
+        {
+            this.beatmap = beatmap;
         }
 
         [BackgroundDependencyLoader]
-        private void load(OsuColour colours, BeatmapLookupCache beatmapLookupCache)
+        private void load(OverlayColourProvider colourProvider)
         {
-            LinkFlowContainer beatmapText;
+            Masking = true;
+            CornerRadius = 6;
 
-            InternalChild = new Container
+            InternalChildren = new Drawable[]
             {
-                RelativeSizeAxes = Axes.Both,
-                Children = new[]
+                new Box
                 {
-                    background = new Box
+                    RelativeSizeAxes = Axes.Both,
+                    Colour = colourProvider.Background3
+                },
+                cover = new UpdateableOnlineBeatmapSetCover(BeatmapSetCoverType.Card, timeBeforeLoad: 0)
+                {
+                    RelativeSizeAxes = Axes.Both,
+                    Anchor = Anchor.Centre,
+                    Origin = Anchor.Centre,
+                    Colour = ColourInfo.GradientVertical(Color4.White.Opacity(0.1f), Color4.White.Opacity(0.3f))
+                },
+                content = new Container
+                {
+                    RelativeSizeAxes = Axes.Both,
+                },
+                new Container
+                {
+                    RelativeSizeAxes = Axes.Both,
+                    Masking = true,
+                    CornerRadius = 6,
+                    BorderThickness = 2,
+                    BorderColour = ColourInfo.GradientVertical(colourProvider.Background1, colourProvider.Background1.Opacity(0)),
+                    Child = new Box
                     {
                         RelativeSizeAxes = Axes.Both,
-                        Colour = backgroundColour
+                        Alpha = 0,
+                        AlwaysPresent = true,
                     },
-                    new Container
-                    {
-                        RelativeSizeAxes = Axes.X,
-                        Height = 16,
-                        Children = new Drawable[]
-                        {
-                            new Box
-                            {
-                                RelativeSizeAxes = Axes.Both,
-                                Colour = colours.ForStarDifficulty(Item.StarRating)
-                            },
-                            new StarRatingDisplay(new StarDifficulty(Item.StarRating, 0), StarRatingDisplaySize.Small)
-                            {
-                                Anchor = Anchor.Centre,
-                                Origin = Anchor.Centre
-                            },
-                        }
-                    },
-                    beatmapText = new LinkFlowContainer
-                    {
-                        Anchor = Anchor.TopCentre,
-                        Origin = Anchor.TopCentre,
-                        AutoSizeAxes = Axes.Both,
-                        MaximumSize = new Vector2(panel_width, 100),
-                        Margin = new MarginPadding { Top = 18 }
-                    },
-                    badges = new FillFlowContainer<SelectionBadge>
-                    {
-                        Anchor = Anchor.BottomRight,
-                        Origin = Anchor.BottomRight,
-                        Margin = new MarginPadding(2),
-                        AutoSizeAxes = Axes.Both,
-                        Spacing = new Vector2(2),
-                    }
-                }
+                },
+                OverlayLayer,
             };
-
-            beatmapLookupCache.GetBeatmapAsync(Item.BeatmapID).ContinueWith(b => Schedule(() =>
-            {
-                APIBeatmap beatmap = b.GetResultSafely()!;
-                beatmapText.AddLink(beatmap.GetDisplayTitleRomanisable(includeCreator: false), LinkAction.OpenBeatmap, beatmap.OnlineID.ToString());
-            }));
         }
 
         protected override void LoadComplete()
         {
             base.LoadComplete();
 
-            client.MatchmakingSelectionToggled += onSelectionToggled;
+            updateContent();
+            FinishTransforms(true);
         }
 
-        private void onSelectionToggled(int userId, long playlistItemId)
+        private void updateContent()
         {
-            if (Item.ID != playlistItemId)
-                return;
+            foreach (var child in content.Children)
+                child.FadeOut(300).Expire();
 
-            Scheduler.Add(() =>
+            cover.OnlineInfo = beatmap?.BeatmapSet;
+
+            if (beatmap != null)
             {
-                SelectionBadge? existing = badges.SingleOrDefault(b => b.UserId == userId);
-
-                if (existing != null)
-                    existing.Expire();
-                else
-                    badges.Add(new SelectionBadge(userId));
-            });
-        }
-
-        protected override bool OnHover(HoverEvent e)
-        {
-            if (!AllowSelection)
-                return false;
-
-            background.FadeColour(hoverColour, 200);
-            return true;
-        }
-
-        protected override void OnHoverLost(HoverLostEvent e)
-        {
-            if (!AllowSelection)
-                return;
-
-            background.FadeColour(backgroundColour, 100);
-            base.OnHoverLost(e);
-        }
-
-        protected override bool OnClick(ClickEvent e)
-        {
-            if (!AllowSelection)
-                return false;
-
-            background.FlashColour(clickColour, 200, Easing.OutQuint);
-            client.MatchmakingToggleSelection(Item.ID);
-            return true;
-        }
-
-        protected override void Dispose(bool isDisposing)
-        {
-            base.Dispose(isDisposing);
-
-            if (client.IsNotNull())
-                client.MatchmakingSelectionToggled -= onSelectionToggled;
-        }
-
-        private class SelectionBadge : CompositeDrawable
-        {
-            public readonly int UserId;
-
-            public SelectionBadge(int userId)
-            {
-                UserId = userId;
-                Size = new Vector2(10);
-
-                InternalChild = new CircularContainer
+                var panelContent = new BeatmapPanelContent(beatmap)
                 {
                     RelativeSizeAxes = Axes.Both,
-                    Masking = true,
-                    Child = new UpdateableAvatar(new APIUser { Id = userId })
+                };
+
+                content.Add(panelContent);
+
+                panelContent.FadeInFromZero(300);
+            }
+        }
+
+        private partial class BeatmapPanelContent : CompositeDrawable
+        {
+            private readonly APIBeatmap beatmap;
+
+            public BeatmapPanelContent(APIBeatmap beatmap)
+            {
+                this.beatmap = beatmap;
+            }
+
+            [BackgroundDependencyLoader]
+            private void load()
+            {
+                InternalChild = new FillFlowContainer
+                {
+                    Direction = FillDirection.Vertical,
+                    RelativeSizeAxes = Axes.X,
+                    AutoSizeAxes = Axes.Y,
+                    Anchor = Anchor.Centre,
+                    Origin = Anchor.Centre,
+                    Padding = new MarginPadding { Horizontal = 12 },
+                    Children = new Drawable[]
                     {
-                        RelativeSizeAxes = Axes.Both
-                    }
+                        new TruncatingSpriteText
+                        {
+                            Text = new RomanisableString(beatmap.Metadata.TitleUnicode, beatmap.Metadata.TitleUnicode),
+                            Font = OsuFont.Default.With(size: 19, weight: FontWeight.SemiBold),
+                            Shadow = false,
+                            RelativeSizeAxes = Axes.X,
+                        },
+                        new TextFlowContainer(s =>
+                        {
+                            s.Shadow = false;
+                            s.Font = OsuFont.GetFont(size: 16, weight: FontWeight.SemiBold);
+                        }).With(d =>
+                        {
+                            d.RelativeSizeAxes = Axes.X;
+                            d.AutoSizeAxes = Axes.Y;
+                            d.AddText("by ");
+                            d.AddText(new RomanisableString(beatmap.Metadata.ArtistUnicode, beatmap.Metadata.Artist));
+                        }),
+                        new FillFlowContainer
+                        {
+                            RelativeSizeAxes = Axes.X,
+                            AutoSizeAxes = Axes.Y,
+                            Direction = FillDirection.Horizontal,
+                            Margin = new MarginPadding { Top = 6 },
+                            Spacing = new Vector2(4),
+                            Children = new Drawable[]
+                            {
+                                new StarRatingDisplay(new StarDifficulty(beatmap.StarRating, 0), StarRatingDisplaySize.Small)
+                                {
+                                    Anchor = Anchor.CentreLeft,
+                                    Origin = Anchor.CentreLeft,
+                                },
+                                new TruncatingSpriteText
+                                {
+                                    Text = beatmap.DifficultyName,
+                                    Font = OsuFont.Default.With(size: 16, weight: FontWeight.SemiBold),
+                                    Shadow = false,
+                                    Anchor = Anchor.CentreLeft,
+                                    Origin = Anchor.CentreLeft,
+                                },
+                            }
+                        },
+                    },
                 };
             }
         }
