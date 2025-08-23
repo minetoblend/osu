@@ -13,7 +13,7 @@ using osuTK.Graphics;
 
 namespace osu.Game.Screens.OnlinePlay.Matchmaking
 {
-    public partial class MatchMakingAvatar : CompositeDrawable
+    public partial class MatchmakingAvatar : CompositeDrawable
     {
         public static readonly Vector2 SIZE = new Vector2(30);
 
@@ -22,7 +22,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking
         private readonly APIUser user;
         private readonly bool isOwnUser;
 
-        public MatchMakingAvatar(APIUser user, bool isOwnUser = false)
+        public MatchmakingAvatar(APIUser user, bool isOwnUser = false)
         {
             this.user = user;
             this.isOwnUser = isOwnUser;

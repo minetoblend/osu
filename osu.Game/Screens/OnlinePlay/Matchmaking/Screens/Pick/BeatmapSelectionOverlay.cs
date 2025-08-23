@@ -113,7 +113,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.Screens.Pick
                         RelativeSizeAxes = Axes.Both,
                         Anchor = Anchor.Centre,
                         Origin = Anchor.Centre,
-                        Child = new MatchMakingAvatar(user, isOwnUser)
+                        Child = new MatchmakingAvatar(user, isOwnUser)
                     }
                 };
             }
