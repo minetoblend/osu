@@ -1,6 +1,7 @@
 // Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
+using System;
 using System.Linq;
 using NUnit.Framework;
 using osu.Framework.Extensions;
@@ -16,7 +17,7 @@ using osuTK;
 
 namespace osu.Game.Tests.Visual.Matchmaking
 {
-    public class TestSceneMatchmakingScreenStack : MultiplayerTestScene
+    public partial class TestSceneMatchmakingScreenStack : MultiplayerTestScene
     {
         private const int user_count = 8;
 
@@ -84,6 +85,8 @@ namespace osu.Game.Tests.Visual.Matchmaking
                     StarRating = i / 10.0,
                 }).ToArray();
 
+                beatmaps = Random.Shared.GetItems(beatmaps, 8);
+
                 MultiplayerClient.ChangeMatchRoomState(new MatchmakingRoomState
                 {
                     RoomStatus = MatchmakingRoomStatus.SelectBeatmap,
@@ -92,7 +95,7 @@ namespace osu.Game.Tests.Visual.Matchmaking
                 }).WaitSafely();
             });
 
-            AddWaitStep("wait for scroll", 25);
+            AddWaitStep("wait for scroll", 35);
             AddStep("room end", () =>
             {
                 var state = new MatchmakingRoomState
