@@ -6,27 +6,30 @@ using osu.Framework.Allocation;
 using osu.Framework.Extensions.Color4Extensions;
 using osu.Framework.Extensions.ObjectExtensions;
 using osu.Framework.Graphics;
+using osu.Framework.Graphics.Colour;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Shapes;
 using osu.Framework.Localisation;
+using osu.Game.Graphics;
+using osu.Game.Graphics.Backgrounds;
 using osu.Game.Graphics.Sprites;
 using osu.Game.Online.Matchmaking;
 using osu.Game.Online.Multiplayer;
 using osu.Game.Online.Multiplayer.MatchTypes.Matchmaking;
+using osu.Game.Overlays;
 using osuTK.Graphics;
 
 namespace osu.Game.Screens.OnlinePlay.Matchmaking
 {
-    internal class StageBubble : CompositeDrawable
+    internal partial class StageBubble : CompositeDrawable
     {
-        private readonly Color4 backgroundColour = Color4.Salmon;
-
         [Resolved]
         private MultiplayerClient client { get; set; } = null!;
 
         private readonly MatchmakingRoomStatus status;
         private readonly LocalisableString displayText;
         private Drawable progressBar = null!;
+        private OutsideBorder border;
 
         private DateTimeOffset countdownStartTime;
         private DateTimeOffset countdownEndTime;
@@ -40,31 +43,64 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking
         }
 
         [BackgroundDependencyLoader]
-        private void load()
+        private void load(OverlayColourProvider? colourProvider)
         {
-            InternalChild = new CircularContainer
+            var colourDark = colourProvider?.Colour4 ?? Color4.Salmon.Darken(0.3f);
+            var colourLight = colourProvider?.Colour3 ?? Color4.Salmon;
+
+            InternalChildren = new Drawable[]
             {
-                RelativeSizeAxes = Axes.X,
-                AutoSizeAxes = Axes.Y,
-                Masking = true,
-                Children = new[]
+                border = new OutsideBorder
                 {
-                    new Box
+                    RelativeSizeAxes = Axes.Both,
+                    Shear = OsuGame.SHEAR,
+                    CornerRadius = 4,
+                    Colour = colourProvider?.Light1 ?? Color4.White,
+                    Alpha = 0.5f,
+                },
+                new Container
+                {
+                    RelativeSizeAxes = Axes.X,
+                    AutoSizeAxes = Axes.Y,
+                    Shear = OsuGame.SHEAR,
+                    Masking = true,
+                    CornerRadius = 4,
+                    Children = new[]
                     {
-                        RelativeSizeAxes = Axes.Both,
-                        Colour = backgroundColour.Darken(0.2f)
-                    },
-                    progressBar = new Box
-                    {
-                        RelativeSizeAxes = Axes.Both,
-                        Colour = backgroundColour
-                    },
-                    new OsuSpriteText
-                    {
-                        Anchor = Anchor.Centre,
-                        Origin = Anchor.Centre,
-                        Text = displayText,
-                        Padding = new MarginPadding(10)
+                        new Box
+                        {
+                            RelativeSizeAxes = Axes.Both,
+                            Colour = colourDark
+                        },
+                        progressBar = new Container
+                        {
+                            RelativeSizeAxes = Axes.Both,
+                            RelativePositionAxes = Axes.X,
+                            Alpha = 0,
+                            Children = new Drawable[]
+                            {
+                                new Box
+                                {
+                                    RelativeSizeAxes = Axes.Both,
+                                    Colour = ColourInfo.GradientHorizontal(colourLight, colourLight.Lighten(0.2f)),
+                                },
+                                new TrianglesV2
+                                {
+                                    RelativeSizeAxes = Axes.Both,
+                                    RelativePositionAxes = Axes.X,
+                                    ScaleAdjust = 0.4f,
+                                    Alpha = 0.3f,
+                                },
+                            }
+                        },
+                        new OsuSpriteText
+                        {
+                            Anchor = Anchor.Centre,
+                            Origin = Anchor.Centre,
+                            Text = displayText,
+                            Padding = new MarginPadding(10),
+                            Shear = -OsuGame.SHEAR,
+                        }
                     }
                 }
             };
@@ -90,14 +126,19 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking
         {
             base.Update();
 
+            Padding = new MarginPadding { Left = DrawHeight * OsuGame.SHEAR.X };
+
             TimeSpan duration = countdownEndTime - countdownStartTime;
 
             if (duration.TotalMilliseconds == 0)
+            {
                 progressBar.Width = 0;
+            }
             else
             {
                 TimeSpan elapsed = DateTimeOffset.Now - countdownStartTime;
-                progressBar.Width = (float)(elapsed.TotalMilliseconds / duration.TotalMilliseconds);
+                float offset = float.Clamp((float)(elapsed.TotalMilliseconds / duration.TotalMilliseconds), 0, 1);
+                progressBar.Width = offset;
             }
         }
 
@@ -121,6 +162,9 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking
             countdownStartTime = DateTimeOffset.Now;
             countdownEndTime = countdownStartTime + countdown.TimeRemaining;
             activate();
+
+            progressBar.FadeIn();
+            border.TransformBorderThicknessTo(3, 200, Easing.OutExpo);
         });
 
         private void onCountdownStopped(MultiplayerCountdown countdown) => Scheduler.Add(() =>
@@ -130,6 +174,9 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking
 
             countdownEndTime = DateTimeOffset.Now;
             deactivate();
+
+            progressBar.FadeOut(200);
+            border.TransformBorderThicknessTo(0, 200, Easing.OutExpo);
         });
 
         private void activate()

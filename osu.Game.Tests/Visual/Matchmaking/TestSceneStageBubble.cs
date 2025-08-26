@@ -13,7 +13,7 @@ using osu.Game.Tests.Visual.Multiplayer;
 
 namespace osu.Game.Tests.Visual.Matchmaking
 {
-    public class TestSceneStageBubble : MultiplayerTestScene
+    public partial class TestSceneStageBubble : MultiplayerTestScene
     {
         public override void SetUpSteps()
         {
@@ -26,7 +26,7 @@ namespace osu.Game.Tests.Visual.Matchmaking
             {
                 Anchor = Anchor.Centre,
                 Origin = Anchor.Centre,
-                Width = 100
+                Width = 100,
             });
         }
 

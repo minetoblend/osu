@@ -3,17 +3,22 @@
 
 using System;
 using NUnit.Framework;
+using osu.Framework.Allocation;
 using osu.Framework.Extensions;
 using osu.Framework.Graphics;
 using osu.Game.Online.Matchmaking;
 using osu.Game.Online.Multiplayer.MatchTypes.Matchmaking;
+using osu.Game.Overlays;
 using osu.Game.Screens.OnlinePlay.Matchmaking;
 using osu.Game.Tests.Visual.Multiplayer;
 
 namespace osu.Game.Tests.Visual.Matchmaking
 {
-    public class TestSceneStageDisplay : MultiplayerTestScene
+    public partial class TestSceneStageDisplay : MultiplayerTestScene
     {
+        [Cached]
+        private readonly OverlayColourProvider colourProvider = new OverlayColourProvider(OverlayColourScheme.Plum);
+
         public override void SetUpSteps()
         {
             base.SetUpSteps();
@@ -26,7 +31,7 @@ namespace osu.Game.Tests.Visual.Matchmaking
                 Anchor = Anchor.Centre,
                 Origin = Anchor.Centre,
                 RelativeSizeAxes = Axes.X,
-                Width = 0.5f,
+                Width = 0.75f,
             });
         }
 

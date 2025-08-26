@@ -8,11 +8,13 @@ using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Sprites;
 using osu.Framework.Localisation;
 using osu.Game.Online.Multiplayer.MatchTypes.Matchmaking;
+using osu.Game.Overlays;
 using osuTK;
+using osuTK.Graphics;
 
 namespace osu.Game.Screens.OnlinePlay.Matchmaking
 {
-    public class StageDisplay : CompositeDrawable
+    public partial class StageDisplay : CompositeDrawable
     {
         public static readonly (MatchmakingRoomStatus status, LocalisableString text)[] DISPLAYED_STAGES =
         [
@@ -29,7 +31,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking
         }
 
         [BackgroundDependencyLoader]
-        private void load()
+        private void load(OverlayColourProvider? colourProvider)
         {
             List<Dimension> columnDimensions = new List<Dimension>();
             List<Drawable> columnContent = new List<Drawable>();
@@ -44,8 +46,9 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking
                         Anchor = Anchor.Centre,
                         Origin = Anchor.Centre,
                         Size = new Vector2(16),
-                        Icon = FontAwesome.Solid.ArrowRight,
-                        Margin = new MarginPadding { Horizontal = 10 }
+                        Icon = FontAwesome.Solid.ChevronRight,
+                        Margin = new MarginPadding { Horizontal = 10 },
+                        Colour = colourProvider?.Content2 ?? Color4.White
                     });
                 }
 
