@@ -120,7 +120,7 @@ namespace osu.Game.Tests.Visual.Matchmaking
         {
             AddStep("present beatmap", () =>
             {
-                var (candidateItems, finalItem) = pickRandomItems(5);
+                var (candidateItems, finalItem) = pickRandomItems(1);
 
                 grid.TransferCandidatePanelsToRollContainer(candidateItems, duration: 0);
                 grid.ArrangeItemsForRollAnimation(duration: 0, stagger: 0);
