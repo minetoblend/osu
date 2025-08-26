@@ -8,14 +8,23 @@ using System.Diagnostics;
 using System.Linq;
 using Microsoft.Toolkit.HighPerformance;
 using osu.Framework.Allocation;
+using osu.Framework.Audio;
+using osu.Framework.Audio.Sample;
+using osu.Framework.Extensions.Color4Extensions;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
+using osu.Framework.Graphics.Effects;
+using osu.Framework.Graphics.Shapes;
 using osu.Framework.Graphics.Transforms;
+using osu.Game.Graphics;
 using osu.Game.Graphics.Containers;
+using osu.Game.Graphics.Sprites;
 using osu.Game.Online.API;
 using osu.Game.Online.API.Requests.Responses;
 using osu.Game.Online.Rooms;
+using osu.Game.Overlays;
 using osuTK;
+using osuTK.Graphics;
 
 namespace osu.Game.Screens.OnlinePlay.Matchmaking.Screens.Pick
 {
@@ -33,6 +42,9 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.Screens.Pick
 
         [Resolved]
         private IAPIProvider api { get; set; } = null!;
+
+        [Resolved]
+        private OverlayColourProvider? colourProvider { get; set; }
 
         private readonly Dictionary<long, BeatmapSelectionPanel> panelLookup = new Dictionary<long, BeatmapSelectionPanel>();
 
@@ -64,6 +76,18 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.Screens.Pick
                     Masking = true,
                 },
             };
+        }
+
+        private Sample? tickSample;
+        private Sample? presentSample;
+        private Sample? windupSample;
+
+        [BackgroundDependencyLoader]
+        private void load(AudioManager audio)
+        {
+            tickSample = audio.Samples.Get("UI/notch-tick");
+            windupSample = audio.Samples.Get("Results/swoosh-up");
+            presentSample = audio.Samples.Get("SongSelect/confirm-selection");
         }
 
         protected override void LoadComplete()
@@ -136,7 +160,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.Screens.Pick
             {
                 this.Delay(ARRANGE_DELAY)
                     .Schedule(() => ArrangeItemsForRollAnimation())
-                    .Delay(arrange_duration + present_beatmap_delay)
+                    .Delay(arrange_duration)
                     .Schedule(() => PresentUnanimouslyChosenBeatmap(finalItemId));
             }
             else
@@ -145,7 +169,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.Screens.Pick
                     .Schedule(() => ArrangeItemsForRollAnimation())
                     .Delay(arrange_duration)
                     .Schedule(() => PlayRollAnimation(finalItemId, roll_duration))
-                    .Delay(roll_duration + present_beatmap_delay)
+                    .Delay(roll_duration)
                     .Schedule(() => PresentRolledBeatmap(finalItemId));
             }
         }
@@ -264,12 +288,18 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.Screens.Pick
                 float progress = ((float)i) / (numSteps - 1);
 
                 double delay = Math.Pow(progress, 2.5) * duration;
+                double frequency = 1.1 - progress * 0.1;
                 var panel = rollContainer.Children[i % rollContainer.Children.Count];
 
                 Scheduler.AddDelayed(() =>
                 {
                     lastPanel?.HideBorder();
                     panel.ShowBorder();
+
+                    var channel = tickSample?.Play();
+
+                    if (channel != null)
+                        channel.Frequency.Value = frequency;
 
                     lastPanel = panel;
                 }, delay);
@@ -284,20 +314,101 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.Screens.Pick
             {
                 if (panel.Item.ID != finalItem)
                 {
-                    panel.FadeOut(200);
-                    panel.PopOutAndExpire(easing: Easing.InQuad);
+                    panel.PopOutAndExpire(
+                        delay: Random.Shared.NextDouble() * 600,
+                        duration: 700,
+                        easing: Easing.InQuad
+                    );
                     continue;
                 }
 
                 // if we changed child depth without scheduling we'd change the order of the panels while iterating
-                Schedule(() =>
-                {
-                    rollContainer.ChangeChildDepth(panel, float.MinValue);
+                Schedule(() => rollContainer.ChangeChildDepth(panel, float.MinValue));
 
-                    panel.ShowBorder();
-                    panel.MoveTo(Vector2.Zero, 1000, Easing.OutExpo)
-                         .ScaleTo(1.5f, 1000, Easing.OutExpo);
+                windupSample?.Play();
+
+                double windupDuration = windupSample?.Length ?? 1000;
+
+                panel.ShowBorder();
+                panel.MoveTo(Vector2.Zero, windupDuration, Easing.InCubic)
+                     .ScaleTo(1.75f, windupDuration, Easing.InExpo);
+
+                var flash = new Container
+                {
+                    RelativeSizeAxes = Axes.Both,
+                    Anchor = Anchor.Centre,
+                    Origin = Anchor.Centre,
+                    Masking = true,
+                    CornerRadius = 6,
+                    Alpha = 0,
+                    EdgeEffect = new EdgeEffectParameters
+                    {
+                        Type = EdgeEffectType.Glow,
+                        Radius = 100,
+                        Colour = (colourProvider?.Light2 ?? Color4.White).Opacity(0),
+                        Roundness = 50
+                    },
+                    Child = new Box
+                    {
+                        RelativeSizeAxes = Axes.Both
+                    }
+                };
+
+                panel.Add(flash);
+                panel.Add(new WindupAnimation
+                {
+                    RelativeSizeAxes = Axes.Both,
+                    Duration = windupDuration,
+                    Depth = float.MaxValue,
+                    Blending = BlendingParameters.Additive,
                 });
+
+                flash.FadeIn(windupDuration, Easing.InCubic)
+                     .FadeEdgeEffectTo(0.25f, windupDuration, Easing.In)
+                     .Then()
+                     .ScaleTo(1.5f, 400, Easing.OutCubic)
+                     .FadeOut();
+
+                Scheduler.AddDelayed(() =>
+                {
+                    presentSample?.Play();
+
+                    panel.MoveToX(-250, 1000, Easing.OutExpo);
+                    panel.ScaleTo(1.5f, 1000, Easing.OutElasticHalf);
+
+                    var ripple = new Circle
+                    {
+                        RelativeSizeAxes = Axes.Both,
+                        FillMode = FillMode.Fill,
+                        Anchor = Anchor.Centre,
+                        Origin = Anchor.Centre,
+                        Alpha = 0,
+                    };
+
+                    AddInternal(ripple);
+
+                    // Final scale must be kept above 1.41x (sqrt 2) to cover the entire grid
+                    ripple
+                        .FadeTo(0.5f)
+                        .FadeOut(1000, Easing.Out)
+                        .ScaleTo(0)
+                        .ScaleTo(1.5f, 1500, Easing.OutExpo);
+
+                    var text = new OsuSpriteText
+                    {
+                        Text = "Selected beatmap",
+                        Font = OsuFont.TorusAlternate.With(size: 50),
+                        Anchor = Anchor.Centre,
+                        Origin = Anchor.Centre,
+                        Depth = float.MaxValue,
+                    };
+
+                    AddInternal(text);
+
+                    text
+                        .MoveToX(220, 1000, Easing.OutExpo)
+                        .FadeInFromZero(200);
+                }, windupSample?.Length ?? 1000);
             }
         }
 
