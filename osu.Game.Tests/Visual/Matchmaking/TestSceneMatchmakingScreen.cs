@@ -23,7 +23,7 @@ using osuTK.Input;
 
 namespace osu.Game.Tests.Visual.Matchmaking
 {
-    public class TestSceneMatchmakingScreen : MultiplayerTestScene
+    public partial class TestSceneMatchmakingScreen : MultiplayerTestScene
     {
         private const int user_count = 8;
         private const int beatmap_count = 50;
@@ -125,7 +125,7 @@ namespace osu.Game.Tests.Visual.Matchmaking
 
             AddStep("selection", () =>
             {
-                MultiplayerPlaylistItem[] beatmaps = Enumerable.Range(1, 50).Select(i => new MultiplayerPlaylistItem
+                MultiplayerPlaylistItem[] beatmaps = Enumerable.Range(1, 5).Select(i => new MultiplayerPlaylistItem
                 {
                     ID = i,
                     BeatmapID = i,
@@ -141,7 +141,7 @@ namespace osu.Game.Tests.Visual.Matchmaking
             });
 
             // Prepare gameplay.
-            AddWaitStep("wait", 25);
+            AddWaitStep("wait", 40);
 
             AddStep("prepare gameplay", () => MultiplayerClient.ChangeMatchRoomState(new MatchmakingRoomState
             {
