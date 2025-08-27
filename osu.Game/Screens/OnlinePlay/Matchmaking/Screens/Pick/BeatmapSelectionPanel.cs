@@ -9,6 +9,7 @@ using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Shapes;
 using osu.Framework.Input.Events;
 using osu.Game.Database;
+using osu.Game.Graphics;
 using osu.Game.Graphics.UserInterface;
 using osu.Game.Online.API.Requests.Responses;
 using osu.Game.Online.Rooms;
@@ -111,6 +112,12 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.Screens.Pick
                 },
                 new HoverClickSounds(),
             };
+        }
+
+        [BackgroundDependencyLoader]
+        private void load(OsuColour colour)
+        {
+            border.Colour = colour.ForStarDifficulty(Item.StarRating);
         }
 
         protected override void LoadComplete()
