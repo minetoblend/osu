@@ -341,6 +341,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.Screens.Pick
                     Masking = true,
                     CornerRadius = 6,
                     Alpha = 0,
+                    Blending = BlendingParameters.Additive,
                     EdgeEffect = new EdgeEffectParameters
                     {
                         Type = EdgeEffectType.Glow,
@@ -373,8 +374,10 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.Screens.Pick
                 {
                     presentSample?.Play();
 
-                    panel.MoveToX(-250, 1000, Easing.OutExpo);
-                    panel.ScaleTo(1.5f, 1000, Easing.OutElasticHalf);
+                    panel.HideBorder();
+                    panel.PresentCover();
+                    panel.MoveToX(-BeatmapPanel.SIZE.X * 1.4f / 2 - 20, 1000, Easing.OutExpo)
+                         .ScaleTo(1.4f, 1000, Easing.OutElasticHalf);
 
                     var ripple = new Circle
                     {
@@ -383,6 +386,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.Screens.Pick
                         Anchor = Anchor.Centre,
                         Origin = Anchor.Centre,
                         Alpha = 0,
+                        Blending = BlendingParameters.Additive,
                     };
 
                     AddInternal(ripple);
@@ -399,14 +403,15 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.Screens.Pick
                         Text = "Selected beatmap",
                         Font = OsuFont.TorusAlternate.With(size: 50),
                         Anchor = Anchor.Centre,
-                        Origin = Anchor.Centre,
+                        Origin = Anchor.CentreLeft,
                         Depth = float.MaxValue,
                     };
 
                     AddInternal(text);
 
                     text
-                        .MoveToX(220, 1000, Easing.OutExpo)
+                        .MoveToX(-250)
+                        .MoveToX(20, 1000, Easing.OutExpo)
                         .FadeInFromZero(200);
                 }, windupSample?.Length ?? 1000);
             }

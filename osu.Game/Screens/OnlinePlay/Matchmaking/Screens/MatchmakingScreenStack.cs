@@ -18,11 +18,6 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.Screens
         [Resolved]
         private MultiplayerClient client { get; set; } = null!;
 
-        public MatchmakingScreenStack()
-        {
-            Masking = true;
-        }
-
         protected override void LoadComplete()
         {
             base.LoadComplete();

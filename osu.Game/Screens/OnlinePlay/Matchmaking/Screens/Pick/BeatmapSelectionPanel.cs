@@ -209,5 +209,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.Screens.Pick
 
             this.Delay(delay + duration).FadeOut().Expire();
         }
+
+        public void PresentCover() => beatmapPanel.PresentCover();
     }
 }

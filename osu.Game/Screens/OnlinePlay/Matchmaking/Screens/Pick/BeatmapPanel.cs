@@ -68,7 +68,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.Screens.Pick
                     RelativeSizeAxes = Axes.Both,
                     Anchor = Anchor.Centre,
                     Origin = Anchor.Centre,
-                    Colour = ColourInfo.GradientVertical(Color4.White.Opacity(0.1f), Color4.White.Opacity(0.3f))
+                    Colour = ColourInfo.GradientVertical(Color4.White.Opacity(0.3f), Color4.White.Opacity(0.4f))
                 },
                 content = new Container
                 {
@@ -79,8 +79,6 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.Screens.Pick
                     RelativeSizeAxes = Axes.Both,
                     Masking = true,
                     CornerRadius = 6,
-                    BorderThickness = 2,
-                    BorderColour = ColourInfo.GradientVertical(colourProvider.Background1, colourProvider.Background1.Opacity(0)),
                     Child = new Box
                     {
                         RelativeSizeAxes = Axes.Both,
@@ -118,6 +116,11 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.Screens.Pick
 
                 panelContent.FadeInFromZero(300);
             }
+        }
+
+        public void PresentCover()
+        {
+            cover.Colour = Color4.White.Opacity(0.7f);
         }
 
         private partial class BeatmapPanelContent : CompositeDrawable
