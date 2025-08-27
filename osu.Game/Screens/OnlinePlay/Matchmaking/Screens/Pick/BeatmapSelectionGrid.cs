@@ -35,7 +35,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.Screens.Pick
         private const double hide_duration = 800;
         private const double arrange_duration = 1000;
         private const double roll_duration = 4000;
-        private const double present_beatmap_delay = 1200;
+        private const double present_beatmap_delay = 400;
         private const float panel_spacing = 20;
 
         public event Action<MultiplayerPlaylistItem>? ItemSelected;
@@ -160,7 +160,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.Screens.Pick
             {
                 this.Delay(ARRANGE_DELAY)
                     .Schedule(() => ArrangeItemsForRollAnimation())
-                    .Delay(arrange_duration)
+                    .Delay(arrange_duration + present_beatmap_delay)
                     .Schedule(() => PresentUnanimouslyChosenBeatmap(finalItemId));
             }
             else
@@ -168,8 +168,8 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.Screens.Pick
                 this.Delay(ARRANGE_DELAY)
                     .Schedule(() => ArrangeItemsForRollAnimation())
                     .Delay(arrange_duration)
-                    .Schedule(() => PlayRollAnimation(finalItemId, roll_duration))
-                    .Delay(roll_duration)
+                    .Schedule(() => PlayRollAnimation(finalItemId))
+                    .Delay(roll_duration + present_beatmap_delay)
                     .Schedule(() => PresentRolledBeatmap(finalItemId));
             }
         }
