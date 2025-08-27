@@ -39,6 +39,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.Screens
                         {
                             RelativeSizeAxes = Axes.Both,
                             ColumnDimensions = new[] { new Dimension(), new Dimension(GridSizeMode.Absolute, 20), new Dimension(GridSizeMode.AutoSize)},
+                            Padding = new MarginPadding { Bottom = 20 },
                             Content = new Drawable?[][]
                             {
                                 [
