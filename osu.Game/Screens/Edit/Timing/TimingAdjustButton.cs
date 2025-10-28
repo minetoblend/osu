@@ -44,9 +44,6 @@ namespace osu.Game.Screens.Edit.Timing
         [Resolved]
         private OverlayColourProvider colourProvider { get; set; } = null!;
 
-        [Resolved]
-        private EditorBeatmap editorBeatmap { get; set; } = null!;
-
         public TimingAdjustButton(double adjustAmount)
         {
             this.adjustAmount = adjustAmount;
@@ -77,10 +74,14 @@ namespace osu.Game.Screens.Edit.Timing
 
             AddInternal(repeatBehaviour = new RepeatingButtonBehaviour(this)
             {
-                RepeatBegan = () => editorBeatmap.BeginChange(),
-                RepeatEnded = () => editorBeatmap.EndChange()
+                RepeatBegan = ChangeBegan,
+                RepeatEnded = ChangeEnded,
             });
         }
+
+        protected virtual void ChangeBegan() { }
+
+        protected virtual void ChangeEnded() { }
 
         [BackgroundDependencyLoader]
         private void load()

@@ -12,7 +12,6 @@ using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Shapes;
 using osu.Framework.Graphics.UserInterface;
-using osu.Framework.Localisation;
 using osu.Game.Configuration;
 using osu.Game.Extensions;
 using osu.Game.Graphics;
@@ -20,6 +19,7 @@ using osu.Game.Graphics.Containers;
 using osu.Game.Graphics.UserInterface;
 using osu.Game.Graphics.UserInterfaceV2;
 using osu.Game.Localisation;
+using osu.Game.Screens.Edit.Timing;
 using osu.Game.Screens.Play.PlayerSettings;
 using osuTK;
 
@@ -54,6 +54,7 @@ namespace osu.Game.Overlays.Settings.Sections.Audio
             private Container<Box> notchContainer = null!;
             private TextFlowContainer hintText = null!;
             private RoundedButton applySuggestion = null!;
+            private TimingAdjustButton timingAdjustButton = null!;
 
             [BackgroundDependencyLoader]
             private void load(SessionAverageHitErrorTracker hitErrorTracker)
@@ -70,11 +71,12 @@ namespace osu.Game.Overlays.Settings.Sections.Audio
                     Direction = FillDirection.Vertical,
                     Children = new Drawable[]
                     {
-                        new OffsetSliderBar
+                        timingAdjustButton = new TimingAdjustButton(1)
                         {
+                            Text = "foo",
                             RelativeSizeAxes = Axes.X,
-                            Current = { BindTarget = Current },
-                            KeyboardStep = 1,
+                            Size = new Vector2(1, 40),
+                            Action = value => Current.Value += value,
                         },
                         notchContainer = new Container<Box>
                         {
@@ -156,6 +158,8 @@ namespace osu.Game.Overlays.Settings.Sections.Audio
 
             private void updateHintText()
             {
+                timingAdjustButton.Text = BeatmapOffsetControl.GetOffsetExplanatoryText(Current.Value);
+
                 if (SuggestedOffset.Value == null)
                 {
                     applySuggestion.Enabled.Value = false;
@@ -171,11 +175,6 @@ namespace osu.Game.Overlays.Settings.Sections.Audio
                     applySuggestion.Enabled.Value = true;
                     hintText.Text = AudioSettingsStrings.SuggestedOffsetValueReceived(averageHitErrorHistory.Count, SuggestedOffset.Value.Value.ToStandardFormattedString(0));
                 }
-            }
-
-            private partial class OffsetSliderBar : RoundedSliderBar<double>
-            {
-                public override LocalisableString TooltipText => BeatmapOffsetControl.GetOffsetExplanatoryText(Current.Value);
             }
         }
     }
