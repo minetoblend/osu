@@ -67,11 +67,10 @@ namespace osu.Game.Rulesets.Osu.Edit
             }
         }
 
+        // Seeking in the timeline will rapidly move the cursor which will create ugly trails, which is why they get disabled when doing so
         private partial class OsuEditorCursorContainer : OsuCursorContainer
         {
             private IBindable<bool> seekingOrPaused = null!;
-
-            private bool cursorTrailEnabled;
 
             [BackgroundDependencyLoader]
             private void load(EditorClock clock)
@@ -85,8 +84,6 @@ namespace osu.Game.Rulesets.Osu.Edit
 
                 seekingOrPaused.BindValueChanged(e =>
                 {
-                    cursorTrailEnabled = !e.NewValue;
-
                     if (e.NewValue && CursorTrail.Drawable is CursorTrail trail)
                         SchedulerAfterChildren.Add(() => trail.ClearParts());
                 }, true);
@@ -97,7 +94,7 @@ namespace osu.Game.Rulesets.Osu.Edit
                 base.UpdateAfterChildren();
 
                 if (CursorTrail.Drawable is CursorTrail trail)
-                    trail.Enabled = cursorTrailEnabled;
+                    trail.Enabled = !seekingOrPaused.Value;
             }
         }
     }
