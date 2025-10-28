@@ -352,6 +352,22 @@ namespace osu.Game.Screens.Edit
                     editorAutoSeekOnPlacement.Value = false;
             });
 
+            var rulesetMenuItems = editorBeatmap.BeatmapInfo.Ruleset.CreateInstance().CreateEditorMenuBarItems();
+            if (rulesetMenuItems != null)
+                AddInternal(rulesetMenuItems);
+
+            IEnumerable<MenuItem> getRulesetMenuItems(Func<RulesetEditorMenuBarItems, IEnumerable<MenuItem>> getItems)
+            {
+                if (rulesetMenuItems == null)
+                    return Enumerable.Empty<MenuItem>();
+
+                var items = getItems(rulesetMenuItems).ToList();
+                if (items.Count > 0)
+                    items.Insert(0, new OsuMenuItemSpacer());
+
+                return items;
+            }
+
             AddInternal(new OsuContextMenuContainer
             {
                 RelativeSizeAxes = Axes.Both,
@@ -384,7 +400,7 @@ namespace osu.Game.Screens.Edit
                                 {
                                     new MenuItem(CommonStrings.MenuBarFile)
                                     {
-                                        Items = createFileMenuItems().ToList()
+                                        Items = createFileMenuItems().Concat(getRulesetMenuItems(m => m.CreateFileItems())).ToList()
                                     },
                                     new MenuItem(CommonStrings.MenuBarEdit)
                                     {
@@ -397,7 +413,7 @@ namespace osu.Game.Screens.Edit
                                             copyMenuItem = new EditorMenuItem(CommonStrings.Copy, MenuItemType.Standard, Copy) { Hotkey = new Hotkey(PlatformAction.Copy) },
                                             pasteMenuItem = new EditorMenuItem(CommonStrings.Paste, MenuItemType.Standard, Paste) { Hotkey = new Hotkey(PlatformAction.Paste) },
                                             cloneMenuItem = new EditorMenuItem(CommonStrings.Clone, MenuItemType.Standard, Clone) { Hotkey = new Hotkey(GlobalAction.EditorCloneSelection) },
-                                        }
+                                        }.Concat(getRulesetMenuItems(m => m.CreateEditItems())).ToList()
                                     },
                                     new MenuItem(CommonStrings.MenuBarView)
                                     {
@@ -445,7 +461,7 @@ namespace osu.Game.Screens.Edit
                                             {
                                                 State = { BindTarget = editorContractSidebars }
                                             },
-                                        }
+                                        }.Concat(getRulesetMenuItems(m => m.CreateViewItems())).ToList()
                                     },
                                     new MenuItem(EditorStrings.Timing)
                                     {
@@ -453,7 +469,7 @@ namespace osu.Game.Screens.Edit
                                         {
                                             new EditorMenuItem(EditorStrings.SetPreviewPointToCurrent, MenuItemType.Standard, SetPreviewPointToCurrentTime),
                                             bookmarkController.Menu,
-                                        }
+                                        }.Concat(getRulesetMenuItems(m => m.CreateTimingItems())).ToList()
                                     }
                                 }
                             },
@@ -1318,7 +1334,8 @@ namespace osu.Game.Screens.Edit
                 yield return new EditorMenuItem(EditorStrings.OpenInfoPage, MenuItemType.Standard,
                     () => (Game as OsuGame)?.OpenUrlExternally(editorBeatmap.BeatmapInfo.GetOnlineURL(api, editorBeatmap.BeatmapInfo.Ruleset)));
                 yield return new EditorMenuItem(EditorStrings.OpenDiscussionPage, MenuItemType.Standard,
-                    () => (Game as OsuGame)?.OpenUrlExternally($@"{api.Endpoints.WebsiteUrl}/beatmapsets/{editorBeatmap.BeatmapInfo.BeatmapSet!.OnlineID}/discussion/{editorBeatmap.BeatmapInfo.OnlineID}"));
+                    () => (Game as OsuGame)?.OpenUrlExternally(
+                        $@"{api.Endpoints.WebsiteUrl}/beatmapsets/{editorBeatmap.BeatmapInfo.BeatmapSet!.OnlineID}/discussion/{editorBeatmap.BeatmapInfo.OnlineID}"));
             }
 
             yield return new OsuMenuItemSpacer();
