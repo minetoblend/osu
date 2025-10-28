@@ -63,7 +63,7 @@ namespace osu.Game.Rulesets.Osu.UI.Cursor
         }
 
         /// <summary>
-        /// Whether new parts should be added to this frame
+        /// Whether new parts should be added to the trail
         /// </summary>
         public bool Enabled = true;
 
