@@ -85,27 +85,16 @@ namespace osu.Game.Rulesets.Osu.Edit
 
                 seekingOrPaused.BindValueChanged(e =>
                 {
-                    if (e.NewValue)
-                    {
-                        cursorTrailEnabled = false;
+                    cursorTrailEnabled = !e.NewValue;
 
-                        if (CursorTrail.Drawable is CursorTrail trail)
-                        {
-                            trail.Enabled = false;
-                            trail.ClearParts();
-                        }
-                    }
-                    else
-                    {
-                        // we have to wait an extra frame for re-enabling the trail because this logic gets run before the cursor gets moved to its new position during a seek
-                        SchedulerAfterChildren.Add(() => cursorTrailEnabled = !seekingOrPaused.Value);
-                    }
+                    if (e.NewValue && CursorTrail.Drawable is CursorTrail trail)
+                        SchedulerAfterChildren.Add(() => trail.ClearParts());
                 }, true);
             }
 
-            protected override void Update()
+            protected override void UpdateAfterChildren()
             {
-                base.Update();
+                base.UpdateAfterChildren();
 
                 if (CursorTrail.Drawable is CursorTrail trail)
                     trail.Enabled = cursorTrailEnabled;
