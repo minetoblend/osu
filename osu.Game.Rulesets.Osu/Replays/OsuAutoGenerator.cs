@@ -390,25 +390,30 @@ namespace osu.Game.Rulesets.Osu.Replays
 
         private void addSliderMovement(Slider slider, OsuHitObject? next, OsuAction action)
         {
-            var approximatedPath = approximateSliderPath(slider, next);
+            var approximatedPath = approximateCheesedSliderPath(slider, next);
 
             double endTime = approximatedPath.Count > 0 ? approximatedPath[^1].Time : slider.EndTime;
 
             for (double duration = GetFrameDelay(slider.StartTime); duration < slider.Duration; duration += GetFrameDelay(slider.StartTime + duration))
             {
-                Vector2 accuratePosition = slider.StackedPositionAt(duration / slider.Duration);
+                Vector2 position = slider.StackedPositionAt(duration / slider.Duration);
 
-                Vector2 sliderCheesePosition = approximatedPath.Count > 0 ? sampleApproximatePathPosition(approximatedPath, slider.StartTime + duration) : accuratePosition;
+                float cheeseFactor = float.Clamp(Interpolation.ValueAt(slider.Velocity, 0f, 1f, 1, 6.5), 0, 1);
 
-                Vector2 pos = Vector2.Lerp(accuratePosition, sliderCheesePosition, 1f);
+                if (cheeseFactor > 0 && approximatedPath.Count > 0)
+                {
+                    Vector2 cheesedPosition = sampleCheesedPathPosition(approximatedPath, slider.StartTime + duration);
 
-                AddFrameToReplay(new OsuReplayFrame(slider.StartTime + duration, new Vector2(pos.X, pos.Y), action));
+                    position = Vector2.Lerp(position, cheesedPosition, cheeseFactor);
+                }
+
+                AddFrameToReplay(new OsuReplayFrame(slider.StartTime + duration, position, action));
             }
 
             AddFrameToReplay(new OsuReplayFrame(endTime, approximatedPath[^1].Position, action));
         }
 
-        private static Vector2 sampleApproximatePathPosition(IReadOnlyList<PositionAtTime> path, double time)
+        private static Vector2 sampleCheesedPathPosition(IReadOnlyList<PositionAtTime> path, double time)
         {
             if (time <= path[0].Time)
                 return path[0].Position;
@@ -430,7 +435,7 @@ namespace osu.Game.Rulesets.Osu.Replays
             return path[0].Position;
         }
 
-        private List<PositionAtTime> approximateSliderPath(Slider slider, OsuHitObject? next)
+        private List<PositionAtTime> approximateCheesedSliderPath(Slider slider, OsuHitObject? next)
         {
             var path = new List<PositionAtTime>
             {
@@ -446,14 +451,14 @@ namespace osu.Game.Rulesets.Osu.Replays
 
                 double lenientEndTime = Math.Max(slider.EndTime - 36, path[^1].Time);
 
-                double substepEndTime = nested.StartTime;
+                double maxSubstepTime = nested.StartTime;
 
                 if (nested is SliderTailCircle && next != null)
-                    substepEndTime = Math.Min(substepEndTime, slider.EndTime - 50);
+                    maxSubstepTime = Math.Min(maxSubstepTime, slider.EndTime - 50);
 
-                const double interval = 50;
+                const double interval = 25;
 
-                for (double substep = path[^1].Time + interval; substep < substepEndTime; substep += interval)
+                for (double substep = path[^1].Time + interval; substep < maxSubstepTime; substep += interval)
                 {
                     var exactPosition = slider.StackedPositionAt((substep - slider.StartTime) / slider.Duration);
 
@@ -467,7 +472,7 @@ namespace osu.Game.Rulesets.Osu.Replays
 
                     var position = moveIntoCircle(lazyPosition, exactPosition, (float)slider.Radius);
 
-                    position = Vector2.Lerp(position, exactPosition, 0.5f);
+                    position = Vector2.Lerp(position, exactPosition, 0.1f);
 
                     path.Add(new PositionAtTime(position, substep));
                 }
