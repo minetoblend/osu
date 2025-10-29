@@ -432,22 +432,10 @@ namespace osu.Game.Rulesets.Osu.Replays
 
         private List<PositionAtTime> approximateSliderPath(Slider slider, OsuHitObject? next)
         {
-            var position = slider.StackedPosition;
-
             var path = new List<PositionAtTime>
             {
-                new PositionAtTime(position, slider.StartTime)
+                new PositionAtTime(slider.StackedPosition, slider.StartTime)
             };
-
-            void addPosition(Vector2 nextPosition, double time)
-            {
-                if (time - path[^1].Time > 300)
-                    position = nextPosition;
-                else
-                    position = moveIntoCircle(position, nextPosition, (float)slider.Radius);
-
-                path.Add(new PositionAtTime(position, time));
-            }
 
             foreach (var h in slider.NestedHitObjects)
             {
@@ -456,34 +444,58 @@ namespace osu.Game.Rulesets.Osu.Replays
 
                 var nested = (OsuHitObject)h;
 
+                double lenientEndTime = Math.Max(slider.EndTime - 36, path[^1].Time);
+
+                double substepEndTime = nested.StartTime;
+
+                if (nested is SliderTailCircle && next != null)
+                    substepEndTime = Math.Min(substepEndTime, slider.EndTime - 50);
+
+                const double interval = 50;
+
+                for (double substep = path[^1].Time + interval; substep < substepEndTime; substep += interval)
+                {
+                    var exactPosition = slider.StackedPositionAt((substep - slider.StartTime) / slider.Duration);
+
+                    var lazyPosition = Interpolation.ValueAt(
+                        substep,
+                        path[^1].Position,
+                        nested.StackedPosition,
+                        path[^1].Time,
+                        nested.StartTime
+                    );
+
+                    var position = moveIntoCircle(lazyPosition, exactPosition, (float)slider.Radius);
+
+                    position = Vector2.Lerp(position, exactPosition, 0.5f);
+
+                    path.Add(new PositionAtTime(position, substep));
+                }
+
                 if (nested is SliderTailCircle && next != null)
                 {
                     // sliderend leniency
-                    var lastPosition = path[^1].Position;
-                    var nextObjectPosition = next.StackedPosition;
-
-                    var optimalPosition = Interpolation.ValueAt(
-                        slider.EndTime,
-                        lastPosition,
-                        nextObjectPosition,
+                    var maximumCheesePosition = Interpolation.ValueAt(
+                        lenientEndTime,
+                        path[^1].Position,
+                        next.StackedPosition,
                         path[^1].Time,
                         next.StartTime
                     );
 
-                    double lenientEndTime = Math.Max(slider.GetEndTime() - 36, path[^1].Time);
-                    var lenientEndPosition = slider.StackedPositionAt((lenientEndTime - slider.StartTime) / slider.Duration);
+                    var actualPosition = slider.StackedPositionAt((lenientEndTime - slider.StartTime) / slider.Duration);
+
+                    var compromisePosition = moveIntoCircle(maximumCheesePosition, actualPosition, (float)slider.Radius);
 
                     path.Add(new PositionAtTime(
-                        moveIntoCircle(optimalPosition, lenientEndPosition, (float)slider.Radius),
+                        compromisePosition,
                         lenientEndTime
                     ));
 
                     break;
                 }
 
-                float progress = (float)((nested.StartTime - slider.StartTime) / slider.Duration);
-
-                addPosition(slider.StackedPositionAt(progress), nested.StartTime);
+                path.Add(new PositionAtTime(nested.StackedPosition, nested.StartTime));
             }
 
             return path;
