@@ -75,15 +75,16 @@ namespace osu.Game.Rulesets.Osu.Replays
 
             for (int i = 0; i < Beatmap.HitObjects.Count; i++)
             {
-                OsuHitObject h = Beatmap.HitObjects[i];
+                OsuHitObject current = Beatmap.HitObjects[i];
+                var next = i < Beatmap.HitObjects.Count - 1 ? Beatmap.HitObjects[i + 1] : null;
 
                 if (DelayedMovements && i > 0)
                 {
                     OsuHitObject prev = Beatmap.HitObjects[i - 1];
-                    addDelayedMovements(h, prev);
+                    addDelayedMovements(current, prev);
                 }
 
-                addHitObjectReplay(h);
+                addHitObjectReplay(current, next);
             }
 
             return Replay;
@@ -139,7 +140,7 @@ namespace osu.Game.Rulesets.Osu.Replays
             }
         }
 
-        private void addHitObjectReplay(OsuHitObject h)
+        private void addHitObjectReplay(OsuHitObject h, OsuHitObject? next)
         {
             // Default values for circles/sliders
             Vector2 startPosition = h.StackedPosition;
@@ -173,7 +174,7 @@ namespace osu.Game.Rulesets.Osu.Replays
             }
 
             // Add frames to click the hitobject
-            addHitObjectClickFrames(h, startPosition, spinnerDirection);
+            addHitObjectClickFrames(h, startPosition, spinnerDirection, next);
         }
 
         #endregion
@@ -281,7 +282,7 @@ namespace osu.Game.Rulesets.Osu.Replays
         private double getReactionTime(double timeInstant) => ApplyModsToRate(timeInstant, 100);
 
         // Add frames to click the hitobject
-        private void addHitObjectClickFrames(OsuHitObject h, Vector2 startPosition, float spinnerDirection)
+        private void addHitObjectClickFrames(OsuHitObject h, Vector2 startPosition, float spinnerDirection, OsuHitObject? next)
         {
             // Time to insert the first frame which clicks the object
             // Here we mainly need to determine which button to use
@@ -378,19 +379,127 @@ namespace osu.Game.Rulesets.Osu.Replays
                     break;
 
                 case Slider slider:
-                    for (double j = GetFrameDelay(slider.StartTime); j < slider.Duration; j += GetFrameDelay(slider.StartTime + j))
-                    {
-                        Vector2 pos = slider.StackedPositionAt(j / slider.Duration);
-                        AddFrameToReplay(new OsuReplayFrame(h.StartTime + j, new Vector2(pos.X, pos.Y), action));
-                    }
-
-                    AddFrameToReplay(new OsuReplayFrame(slider.EndTime, new Vector2(slider.StackedEndPosition.X, slider.StackedEndPosition.Y), action));
+                    addSliderMovement(slider, next is not Spinner ? next : null, action);
                     break;
             }
 
             // We only want to let go of our button if we are at the end of the current replay. Otherwise something is still going on after us so we need to keep the button pressed!
             if (Frames[^1].Time <= endFrame.Time)
                 AddFrameToReplay(endFrame);
+        }
+
+        private void addSliderMovement(Slider slider, OsuHitObject? next, OsuAction action)
+        {
+            var approximatedPath = approximateSliderPath(slider, next);
+
+            double endTime = approximatedPath.Count > 0 ? approximatedPath[^1].Time : slider.EndTime;
+
+            for (double duration = GetFrameDelay(slider.StartTime); duration < slider.Duration; duration += GetFrameDelay(slider.StartTime + duration))
+            {
+                Vector2 accuratePosition = slider.StackedPositionAt(duration / slider.Duration);
+
+                Vector2 sliderCheesePosition = approximatedPath.Count > 0 ? sampleApproximatePathPosition(approximatedPath, slider.StartTime + duration) : accuratePosition;
+
+                Vector2 pos = Vector2.Lerp(accuratePosition, sliderCheesePosition, 1f);
+
+                AddFrameToReplay(new OsuReplayFrame(slider.StartTime + duration, new Vector2(pos.X, pos.Y), action));
+            }
+
+            AddFrameToReplay(new OsuReplayFrame(endTime, approximatedPath[^1].Position, action));
+        }
+
+        private static Vector2 sampleApproximatePathPosition(IReadOnlyList<PositionAtTime> path, double time)
+        {
+            if (time <= path[0].Time)
+                return path[0].Position;
+
+            if (time >= path[^1].Time)
+                return path[^1].Position;
+
+            for (int i = 0; i < path.Count - 1; i++)
+            {
+                if (time > path[i + 1].Time)
+                    continue;
+
+                var current = path[i];
+                var next = path[i + 1];
+
+                return Interpolation.ValueAt(time, current.Position, next.Position, current.Time, next.Time);
+            }
+
+            return path[0].Position;
+        }
+
+        private List<PositionAtTime> approximateSliderPath(Slider slider, OsuHitObject? next)
+        {
+            var position = slider.StackedPosition;
+
+            var path = new List<PositionAtTime>
+            {
+                new PositionAtTime(position, slider.StartTime)
+            };
+
+            void addPosition(Vector2 nextPosition, double time)
+            {
+                if (time - path[^1].Time > 300)
+                    position = nextPosition;
+                else
+                    position = moveIntoCircle(position, nextPosition, (float)slider.Radius);
+
+                path.Add(new PositionAtTime(position, time));
+            }
+
+            foreach (var h in slider.NestedHitObjects)
+            {
+                if (h is not SliderTick and not SliderTailCircle and not SliderRepeat)
+                    continue;
+
+                var nested = (OsuHitObject)h;
+
+                if (nested is SliderTailCircle && next != null)
+                {
+                    // sliderend leniency
+                    var lastPosition = path[^1].Position;
+                    var nextObjectPosition = next.StackedPosition;
+
+                    var optimalPosition = Interpolation.ValueAt(
+                        slider.EndTime,
+                        lastPosition,
+                        nextObjectPosition,
+                        path[^1].Time,
+                        next.StartTime
+                    );
+
+                    double lenientEndTime = Math.Max(slider.GetEndTime() - 36, path[^1].Time);
+                    var lenientEndPosition = slider.StackedPositionAt((lenientEndTime - slider.StartTime) / slider.Duration);
+
+                    path.Add(new PositionAtTime(
+                        moveIntoCircle(optimalPosition, lenientEndPosition, (float)slider.Radius),
+                        lenientEndTime
+                    ));
+
+                    break;
+                }
+
+                float progress = (float)((nested.StartTime - slider.StartTime) / slider.Duration);
+
+                addPosition(slider.StackedPositionAt(progress), nested.StartTime);
+            }
+
+            return path;
+        }
+
+        private readonly record struct PositionAtTime(Vector2 Position, double Time);
+
+        private static Vector2 moveIntoCircle(Vector2 position, Vector2 center, float radius)
+        {
+            if (Vector2.Distance(position, center) <= radius)
+                return position;
+
+            var direction = position - center;
+            direction.Normalize();
+
+            return center + direction * radius;
         }
 
         #endregion
