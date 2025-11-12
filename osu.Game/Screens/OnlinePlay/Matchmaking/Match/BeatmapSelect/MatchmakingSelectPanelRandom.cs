@@ -1,12 +1,14 @@
 // Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
+using System;
 using osu.Framework.Allocation;
 using osu.Framework.Audio;
 using osu.Framework.Audio.Sample;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Shapes;
 using osu.Framework.Graphics.Sprites;
+using osu.Framework.Graphics.Transforms;
 using osu.Game.Database;
 using osu.Game.Graphics.Backgrounds;
 using osu.Game.Graphics.Sprites;
@@ -60,31 +62,31 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.Match.BeatmapSelect
                     Origin = Anchor.Centre,
                     Text = "Random"
                 },
-                dice = new SpriteIcon
-                {
-                    Y = -10,
-                    Size = new Vector2(28),
-                    Anchor = Anchor.Centre,
-                    Origin = Anchor.Centre,
-                    Icon = FontAwesome.Solid.DiceThree,
-                }
+            });
+
+            ScaleContainer.Add(dice = new SpriteIcon
+            {
+                Y = -10,
+                Size = new Vector2(28),
+                Anchor = Anchor.Centre,
+                Origin = Anchor.Centre,
+                Icon = FontAwesome.Solid.DiceThree,
             });
 
             dice.Spin(10_000, RotationDirection.Clockwise);
-
-            AddInternal(dice.CreateProxy());
         }
 
         public override void PresentAsChosenBeatmap(MatchmakingPlaylistItemBeatmap item)
         {
-            const double duration = 1000;
+            const double duration = 800;
 
             this.MoveTo(Vector2.Zero, 1000, Easing.OutExpo)
                 .ScaleTo(1.5f, duration, Easing.OutExpo);
 
-            dice.MoveToY(-200, duration * 0.5, Easing.OutCubic)
+            dice.MoveToY(-200, duration * 0.55, new PowEasingFunction(2.75, easeOut: true))
                 .Then()
-                .MoveToY(-DrawHeight / 2, duration * 0.5, Easing.InCubic)
+                .Schedule(() => ScaleContainer.ChangeChildDepth(dice, float.MaxValue))
+                .MoveToY(-DrawHeight / 2, duration * 0.45, new PowEasingFunction(2.2))
                 .Then()
                 .FadeOut()
                 .Expire();
@@ -101,7 +103,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.Match.BeatmapSelect
 
                 ShowChosenBorder();
 
-                ScaleContainer.ScaleTo(0.95f, 120, Easing.Out)
+                ScaleContainer.ScaleTo(0.92f, 120, Easing.Out)
                               .Then()
                               .ScaleTo(1f, 600, Easing.OutElasticHalf);
 
@@ -117,6 +119,19 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.Match.BeatmapSelect
 
                 flashLayer.FadeOutFromOne(1000).Expire();
             }, duration);
+        }
+
+        private readonly struct PowEasingFunction(double exponent, bool easeOut = false) : IEasingFunction
+        {
+            public double ApplyEasing(double time)
+            {
+                if (easeOut)
+                    time = 1 - time;
+
+                double value = Math.Pow(time, exponent);
+
+                return easeOut ? 1 - value : value;
+            }
         }
     }
 }
