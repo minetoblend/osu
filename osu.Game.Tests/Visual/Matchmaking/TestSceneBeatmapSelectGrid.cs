@@ -13,6 +13,7 @@ using osu.Game.Graphics;
 using osu.Game.Graphics.Sprites;
 using osu.Game.Online.API;
 using osu.Game.Online.API.Requests.Responses;
+using osu.Game.Online.Multiplayer.MatchTypes.Matchmaking;
 using osu.Game.Online.Rooms;
 using osu.Game.Rulesets.Mods;
 using osu.Game.Screens.OnlinePlay.Matchmaking.Match.BeatmapSelect;
@@ -118,7 +119,7 @@ namespace osu.Game.Tests.Visual.Matchmaking
             {
                 var (candidateItems, finalItem) = pickRandomItems(5);
 
-                grid.RollAndDisplayFinalBeatmap(candidateItems, finalItem, finalItem);
+                grid.RollAndDisplayFinalBeatmap(candidateItems, finalItem, MatchmakingRoomState.RollResultType.Beatmap);
             });
         }
 
