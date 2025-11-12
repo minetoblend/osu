@@ -137,7 +137,7 @@ namespace osu.Game.Tests.Visual.Matchmaking
 
             AddToggleStep("allow selection", value => panel!.AllowSelection = value);
 
-            AddStep("reveal beatmap", () => panel!.PresentAsChosenBeatmap());
+            AddStep("reveal beatmap", () => panel!.PresentAsChosenBeatmap(new MultiplayerPlaylistItem()));
         }
 
         [Test]

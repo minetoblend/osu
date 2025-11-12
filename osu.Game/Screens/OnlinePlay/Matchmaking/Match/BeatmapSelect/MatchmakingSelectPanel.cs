@@ -29,19 +29,22 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.Match.BeatmapSelect
 
         public Action<MultiplayerPlaylistItem>? Action { private get; init; }
 
+        protected override Container<Drawable> Content { get; } = new Container { RelativeSizeAxes = Axes.Both };
+
+        public readonly Container OverlayLayer = new Container { RelativeSizeAxes = Axes.Both };
+
         private const float border_width = 3;
 
         protected Container ScaleContainer = null!;
         private Container border = null!;
         private Drawable lighting = null!;
+        private BeatmapCardMatchmakingContent.AvatarOverlay selectionOverlay = null!;
 
         protected MatchmakingSelectPanel(MultiplayerPlaylistItem item)
         {
             Item = item;
             Size = SIZE;
         }
-
-        protected BeatmapCardMatchmaking Card = null!;
 
         [BackgroundDependencyLoader]
         private void load(OverlayColourProvider colourProvider)
@@ -61,7 +64,12 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.Match.BeatmapSelect
                         RelativeSizeAxes = Axes.Both,
                         Children = new[]
                         {
-                            Card = new BeatmapCardMatchmaking(),
+                            Content,
+                            selectionOverlay = new BeatmapCardMatchmakingContent.AvatarOverlay
+                            {
+                                Anchor = Anchor.TopRight,
+                                Origin = Anchor.TopRight,
+                            },
                             lighting = new Box
                             {
                                 Blending = BlendingParameters.Additive,
@@ -98,17 +106,23 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.Match.BeatmapSelect
                             },
                         }
                     },
-                }
+                    OverlayLayer,
+                },
             };
-
-            PopulateCard(Card);
         }
 
-        protected abstract void PopulateCard(BeatmapCardMatchmaking card);
+        public void AddUser(APIUser user) => selectionOverlay.AddUser(user);
 
-        public void AddUser(APIUser user) => Card.AddUser(user);
+        public void RemoveUser(APIUser user) => selectionOverlay.RemoveUser(user.Id);
 
-        public void RemoveUser(APIUser user) => Card.RemoveUser(user);
+        protected override void UpdateAfterChildren()
+        {
+            base.UpdateAfterChildren();
+
+            selectionOverlay.X = -AvatarOverlayOffset;
+        }
+
+        protected virtual float AvatarOverlayOffset => 10;
 
         protected override bool OnHover(HoverEvent e)
         {
@@ -117,6 +131,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.Match.BeatmapSelect
                 lighting.FadeTo(0.2f, 50)
                         .Then()
                         .FadeTo(0.1f, 300);
+
                 return true;
             }
 
@@ -170,7 +185,9 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.Match.BeatmapSelect
                   .FadeTo(0.7f, 800, Easing.OutQuint);
         }
 
-        public abstract void PresentAsChosenBeatmap();
+        public abstract void PresentAsChosenBeatmap(MultiplayerPlaylistItem item);
+
+        public virtual void PresentAsUnanimouslyChosenBeatmap(MultiplayerPlaylistItem item) => PresentAsChosenBeatmap(item);
 
         public void HideBorder()
         {

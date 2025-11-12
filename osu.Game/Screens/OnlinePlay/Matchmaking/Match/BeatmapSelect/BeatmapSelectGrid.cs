@@ -151,7 +151,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.Match.BeatmapSelect
                 return;
         }
 
-        public void RollAndDisplayFinalBeatmap(long[] candidateItemIds, long finalItemId)
+        public void RollAndDisplayFinalBeatmap(long[] candidateItemIds, long rolledItemId, long finalItemId)
         {
             Debug.Assert(candidateItemIds.Length >= 1);
             Debug.Assert(candidateItemIds.Contains(finalItemId));
@@ -167,7 +167,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.Match.BeatmapSelect
                 this.Delay(ARRANGE_DELAY)
                     .Schedule(() => ArrangeItemsForRollAnimation())
                     .Delay(arrange_duration + present_beatmap_delay)
-                    .Schedule(() => PresentUnanimouslyChosenBeatmap(finalItemId));
+                    .Schedule(() => PresentUnanimouslyChosenBeatmap(rolledItemId, finalItemId));
             }
             else
             {
@@ -176,7 +176,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.Match.BeatmapSelect
                     .Delay(arrange_duration)
                     .Schedule(() => PlayRollAnimation(finalItemId, roll_duration))
                     .Delay(roll_duration + present_beatmap_delay)
-                    .Schedule(() => PresentRolledBeatmap(finalItemId));
+                    .Schedule(() => PresentRolledBeatmap(rolledItemId, finalItemId));
             }
         }
 
@@ -323,13 +323,13 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.Match.BeatmapSelect
             }
         }
 
-        internal void PresentRolledBeatmap(long finalItem)
+        internal void PresentRolledBeatmap(long rolledItem, long finalItem)
         {
-            Debug.Assert(rollContainer.Children.Any(it => it.Item.ID == finalItem));
+            Debug.Assert(rollContainer.Children.Any(it => it.Item.ID == rolledItem));
 
             foreach (var panel in rollContainer.Children)
             {
-                if (panel.Item.ID != finalItem)
+                if (panel.Item.ID != rolledItem)
                 {
                     panel.FadeOut(200);
                     panel.PopOutAndExpire(easing: Easing.InQuad);
@@ -341,16 +341,36 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.Match.BeatmapSelect
                 {
                     rollContainer.ChangeChildDepth(panel, float.MinValue);
 
-                    panel.PresentAsChosenBeatmap();
+                    var item = panelLookup[finalItem].Item;
+
+                    panel.PresentAsChosenBeatmap(item);
                 });
             }
         }
 
-        internal void PresentUnanimouslyChosenBeatmap(long finalItem)
+        internal void PresentUnanimouslyChosenBeatmap(long rolledItem, long finalItem)
         {
-            // TODO: display special animation in this case
+            Debug.Assert(rollContainer.Children.Any(it => it.Item.ID == rolledItem));
 
-            PresentRolledBeatmap(finalItem);
+            foreach (var panel in rollContainer.Children)
+            {
+                if (panel.Item.ID != rolledItem)
+                {
+                    panel.FadeOut(200);
+                    panel.PopOutAndExpire(easing: Easing.InQuad);
+                    continue;
+                }
+
+                // if we changed child depth without scheduling we'd change the order of the panels while iterating
+                Schedule(() =>
+                {
+                    rollContainer.ChangeChildDepth(panel, float.MinValue);
+
+                    var item = panelLookup[finalItem].Item;
+
+                    panel.PresentAsUnanimouslyChosenBeatmap(item);
+                });
+            }
         }
 
         private partial class PanelGridContainer : FillFlowContainer<MatchmakingSelectPanel>

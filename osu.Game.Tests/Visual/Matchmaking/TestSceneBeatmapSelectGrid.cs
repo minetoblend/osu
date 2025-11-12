@@ -109,7 +109,7 @@ namespace osu.Game.Tests.Visual.Matchmaking
             {
                 var (candidateItems, finalItem) = pickRandomItems(5);
 
-                grid.RollAndDisplayFinalBeatmap(candidateItems, finalItem);
+                grid.RollAndDisplayFinalBeatmap(candidateItems, finalItem, finalItem);
             });
         }
 
@@ -138,7 +138,7 @@ namespace osu.Game.Tests.Visual.Matchmaking
                 grid.ArrangeItemsForRollAnimation(duration: 0, stagger: 0);
                 grid.PlayRollAnimation(finalItem, duration: 0);
 
-                Scheduler.AddDelayed(() => grid.PresentRolledBeatmap(finalItem), 500);
+                Scheduler.AddDelayed(() => grid.PresentRolledBeatmap(finalItem, finalItem), 500);
             });
         }
 
@@ -147,13 +147,13 @@ namespace osu.Game.Tests.Visual.Matchmaking
         {
             AddStep("present beatmap", () =>
             {
-                var (candidateItems, finalItem) = pickRandomItems(5);
+                var (candidateItems, finalItem) = pickRandomItems(1);
 
                 grid.TransferCandidatePanelsToRollContainer(candidateItems, duration: 0);
                 grid.ArrangeItemsForRollAnimation(duration: 0, stagger: 0);
                 grid.PlayRollAnimation(finalItem, duration: 0);
 
-                Scheduler.AddDelayed(() => grid.PresentUnanimouslyChosenBeatmap(finalItem), 500);
+                Scheduler.AddDelayed(() => grid.PresentUnanimouslyChosenBeatmap(finalItem, finalItem), 500);
             });
         }
 
@@ -166,7 +166,7 @@ namespace osu.Game.Tests.Visual.Matchmaking
                 grid.ArrangeItemsForRollAnimation(duration: 0, stagger: 0);
                 grid.PlayRollAnimation(-1, duration: 0);
 
-                Scheduler.AddDelayed(() => grid.PresentUnanimouslyChosenBeatmap(-1), 500);
+                Scheduler.AddDelayed(() => grid.PresentUnanimouslyChosenBeatmap(-1, /*TODO*/-1), 500);
             });
 
             AddWaitStep("wait for animation", 5);
