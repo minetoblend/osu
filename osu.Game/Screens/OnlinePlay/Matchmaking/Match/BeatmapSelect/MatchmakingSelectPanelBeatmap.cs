@@ -1,18 +1,11 @@
 // Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
-using System.Linq;
-using System.Threading.Tasks;
 using osu.Framework.Allocation;
 using osu.Framework.Audio;
 using osu.Framework.Audio.Sample;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Shapes;
-using osu.Game.Database;
-using osu.Game.Online.API.Requests.Responses;
-using osu.Game.Online.Rooms;
-using osu.Game.Rulesets;
-using osu.Game.Rulesets.Mods;
 using osu.Game.Screens.OnlinePlay.Matchmaking.Screens.Pick;
 using osuTK;
 
@@ -20,7 +13,9 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.Match.BeatmapSelect
 {
     public partial class MatchmakingSelectPanelBeatmap : MatchmakingSelectPanel
     {
-        public MatchmakingSelectPanelBeatmap(MultiplayerPlaylistItem item)
+        public new MatchmakingPlaylistItemBeatmap Item => (MatchmakingPlaylistItemBeatmap)base.Item;
+
+        public MatchmakingSelectPanelBeatmap(MatchmakingPlaylistItemBeatmap item)
             : base(item) { }
 
         private Sample? resultSample;
@@ -30,10 +25,10 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.Match.BeatmapSelect
         {
             resultSample = audio.Samples.Get(@"Multiplayer/Matchmaking/Selection/roulette-result");
 
-            Task.Run(loadContent);
+            Add(content = new BeatmapCardMatchmakingBeatmapContent(Item.Beatmap, Item.Mods));
         }
 
-        public override void PresentAsChosenBeatmap(MultiplayerPlaylistItem item)
+        public override void PresentAsChosenBeatmap(MatchmakingPlaylistItemBeatmap item)
         {
             ShowChosenBorder();
 
@@ -43,7 +38,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.Match.BeatmapSelect
             resultSample?.Play();
         }
 
-        public override void PresentAsUnanimouslyChosenBeatmap(MultiplayerPlaylistItem item)
+        public override void PresentAsUnanimouslyChosenBeatmap(MatchmakingPlaylistItemBeatmap item)
         {
             var flash = new Box
             {
@@ -77,43 +72,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.Match.BeatmapSelect
             }, 1000);
         }
 
-        [Resolved]
-        private BeatmapLookupCache beatmapLookupCache { get; set; } = null!;
-
-        [Resolved]
-        private RulesetStore rulesetStore { get; set; } = null!;
-
         private BeatmapCardMatchmakingBeatmapContent? content;
-
-        private async Task loadContent()
-        {
-            Ruleset? ruleset = rulesetStore.GetRuleset(Item.RulesetID)?.CreateInstance();
-
-            if (ruleset == null)
-                return;
-
-            Mod[] mods = Item.RequiredMods.Select(m => m.ToMod(ruleset)).ToArray();
-
-            APIBeatmap? beatmap = await beatmapLookupCache.GetBeatmapAsync(Item.BeatmapID).ConfigureAwait(false);
-
-            beatmap ??= new APIBeatmap
-            {
-                BeatmapSet = new APIBeatmapSet
-                {
-                    Title = "unknown beatmap",
-                    TitleUnicode = "unknown beatmap",
-                    Artist = "unknown artist",
-                    ArtistUnicode = "unknown artist",
-                }
-            };
-
-            beatmap.StarRating = Item.StarRating;
-
-            Scheduler.Add(() =>
-            {
-                Add(content = new BeatmapCardMatchmakingBeatmapContent(beatmap, mods));
-            });
-        }
 
         protected override float AvatarOverlayOffset => base.AvatarOverlayOffset + (content?.AvatarOffset ?? 0);
     }

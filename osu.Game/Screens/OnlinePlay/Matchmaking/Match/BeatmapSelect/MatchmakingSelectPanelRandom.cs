@@ -1,30 +1,26 @@
 // Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
-using System.Linq;
-using System.Threading.Tasks;
 using osu.Framework.Allocation;
 using osu.Framework.Audio;
 using osu.Framework.Audio.Sample;
 using osu.Framework.Graphics;
-using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Shapes;
 using osu.Framework.Graphics.Sprites;
 using osu.Game.Database;
 using osu.Game.Graphics.Backgrounds;
 using osu.Game.Graphics.Sprites;
-using osu.Game.Online.API.Requests.Responses;
-using osu.Game.Online.Rooms;
 using osu.Game.Overlays;
 using osu.Game.Rulesets;
-using osu.Game.Rulesets.Mods;
 using osuTK;
 
 namespace osu.Game.Screens.OnlinePlay.Matchmaking.Match.BeatmapSelect
 {
     public partial class MatchmakingSelectPanelRandom : MatchmakingSelectPanel
     {
-        public MatchmakingSelectPanelRandom(MultiplayerPlaylistItem item)
+        public new MatchmakingPlaylistItemRandom Item => (MatchmakingPlaylistItemRandom)base.Item;
+
+        public MatchmakingSelectPanelRandom(MatchmakingPlaylistItemRandom item)
             : base(item) { }
 
         [Resolved]
@@ -79,7 +75,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.Match.BeatmapSelect
             AddInternal(dice.CreateProxy());
         }
 
-        public override void PresentAsChosenBeatmap(MultiplayerPlaylistItem item)
+        public override void PresentAsChosenBeatmap(MatchmakingPlaylistItemBeatmap item)
         {
             const double duration = 1000;
 
@@ -99,92 +95,28 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.Match.BeatmapSelect
 
             swooshSample?.Play();
 
-            var contentAsync = loadContentAsync(item);
-
             Scheduler.AddDelayed(() =>
             {
                 resultSample?.Play();
 
                 ShowChosenBorder();
 
-                // ScaleContainer.ScaleTo(0.95f, 120, Easing.Out)
-                //               .Then()
-                //               .ScaleTo(1f, 600, Easing.OutElasticHalf);
+                ScaleContainer.ScaleTo(0.95f, 120, Easing.Out)
+                              .Then()
+                              .ScaleTo(1f, 600, Easing.OutElasticHalf);
 
-                Task.Run(() => showContentWhenReady(contentAsync));
-            }, duration);
-        }
+                var content = new BeatmapCardMatchmakingBeatmapContent(item.Beatmap, item.Mods);
 
-        private async Task<BeatmapCardMatchmakingBeatmapContent?> loadContentAsync(MultiplayerPlaylistItem item)
-        {
-            Ruleset? ruleset = rulesetStore.GetRuleset(item.RulesetID)?.CreateInstance();
-
-            if (ruleset == null)
-                return null;
-
-            Mod[] mods = item.RequiredMods.Select(m => m.ToMod(ruleset)).ToArray();
-
-            APIBeatmap? beatmap = await beatmapLookupCache.GetBeatmapAsync(item.BeatmapID).ConfigureAwait(false);
-
-            beatmap ??= new APIBeatmap
-            {
-                BeatmapSet = new APIBeatmapSet
-                {
-                    Title = "unknown beatmap",
-                    TitleUnicode = "unknown beatmap",
-                    Artist = "unknown artist",
-                    ArtistUnicode = "unknown artist",
-                }
-            };
-
-            beatmap.StarRating = Item.StarRating;
-
-            return new BeatmapCardMatchmakingBeatmapContent(beatmap, mods);
-        }
-
-        private async Task showContentWhenReady(Task<BeatmapCardMatchmakingBeatmapContent?> contentAsync)
-        {
-            var content = await contentAsync.ConfigureAwait(false);
-
-            if (content == null)
-                return;
-
-            Scheduler.Add(() =>
-            {
                 var flashLayer = new Box { RelativeSizeAxes = Axes.Both };
-
-                CircularContainer maskingContainer;
-                //
-                var contentWrapper = new BufferedContainer(pixelSnapping: false)
-                {
-                    RelativeSizeAxes = Axes.Both,
-                    Child = maskingContainer = new CircularContainer
-                    {
-                        Child = new BufferedContainer(pixelSnapping: false)
-                        {
-                            RelativeSizeAxes = Axes.Both,
-                            Children = new Drawable[]
-                            {
-                                content,
-                                flashLayer
-                            }
-                        },
-                        Masking = true,
-                        Origin = Anchor.Centre,
-                        Anchor = Anchor.TopCentre,
-                    },
-                };
 
                 AddRange(new Drawable[]
                 {
                     content,
-                    // flashLayer,
+                    flashLayer
                 });
 
-                maskingContainer.ResizeTo(new Vector2(DrawWidth * 1.15f), 2000, Easing.OutExpo);
-
                 flashLayer.FadeOutFromOne(1000).Expire();
-            });
+            }, duration);
         }
     }
 }
