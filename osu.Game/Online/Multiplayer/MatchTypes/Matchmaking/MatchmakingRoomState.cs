@@ -5,6 +5,7 @@ using System;
 using System.Linq;
 using MessagePack;
 using osu.Game.Online.API.Requests.Responses;
+using osu.Game.Screens.OnlinePlay.Matchmaking.Match.BeatmapSelect;
 
 namespace osu.Game.Online.Multiplayer.MatchTypes.Matchmaking
 {
@@ -34,8 +35,11 @@ namespace osu.Game.Online.Multiplayer.MatchTypes.Matchmaking
         public long[] CandidateItems { get; set; } = [];
 
         /// <summary>
-        /// The final gameplay candidate.
+        /// The rolled gameplay candidate.
         /// </summary>
+        /// <remarks>
+        /// This will equal to <see cref="CandidateItem"/> except if the rolled item was the <see cref="MatchmakingPlaylistItemRandom"/> in which case it will be <see cref="IMatchmakingPlaylistItem.ID_RANDOM"/>.
+        /// </remarks>
         [Key(3)]
         public long CandidateItem { get; set; }
 
@@ -44,6 +48,12 @@ namespace osu.Game.Online.Multiplayer.MatchTypes.Matchmaking
         /// </summary>
         [Key(4)]
         public MatchmakingUserList Users { get; set; } = new MatchmakingUserList();
+
+        /// <summary>
+        /// The final gameplay candidate.
+        /// </summary>
+        [Key(5)]
+        public long CandidateGameplayItem { get; set; }
 
         /// <summary>
         /// Advances to the next round.

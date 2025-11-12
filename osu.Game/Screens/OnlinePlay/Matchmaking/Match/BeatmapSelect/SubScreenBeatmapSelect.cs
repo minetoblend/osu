@@ -13,7 +13,6 @@ using osu.Framework.Graphics.Containers;
 using osu.Game.Database;
 using osu.Game.Online.API.Requests.Responses;
 using osu.Game.Online.Multiplayer;
-using osu.Game.Online.Multiplayer.MatchTypes.Matchmaking;
 using osu.Game.Online.Rooms;
 using osu.Game.Rulesets;
 using osu.Game.Rulesets.Mods;
@@ -74,7 +73,6 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.Match.BeatmapSelect
 
             client.MatchmakingItemSelected += onItemSelected;
             client.MatchmakingItemDeselected += onItemDeselected;
-            client.SettingsChanged += onSettingsChanged;
         }
 
         private void onItemAdded(MultiplayerPlaylistItem item) => Scheduler.Add(() =>
@@ -140,21 +138,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.Match.BeatmapSelect
             beatmapSelectGrid.SetUserSelection(user, itemId, false);
         }
 
-        private void onSettingsChanged(MultiplayerRoomSettings settings)
-        {
-            if (client.Room!.MatchState is not MatchmakingRoomState matchmakingState)
-                return;
-
-            if (matchmakingState.Stage != MatchmakingStage.ServerBeatmapFinalised)
-                return;
-
-            if (matchmakingState.CandidateItem != -1)
-                return;
-
-            beatmapSelectGrid.RevealRandomItem(client.Room!.CurrentPlaylistItem);
-        }
-
-        public void RollFinalBeatmap(long[] candidateItems, long finalItem) => beatmapSelectGrid.RollAndDisplayFinalBeatmap(candidateItems, finalItem, finalItem);
+        public void RollFinalBeatmap(long[] candidateItems, long rolledItem, long finalItem) => beatmapSelectGrid.RollAndDisplayFinalBeatmap(candidateItems, rolledItem, finalItem);
 
         protected override void Dispose(bool isDisposing)
         {
@@ -165,7 +149,6 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.Match.BeatmapSelect
                 client.ItemAdded -= onItemAdded;
                 client.MatchmakingItemSelected -= onItemSelected;
                 client.MatchmakingItemDeselected -= onItemDeselected;
-                client.SettingsChanged -= onSettingsChanged;
             }
         }
     }

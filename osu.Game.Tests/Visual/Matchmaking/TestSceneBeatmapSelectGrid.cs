@@ -179,8 +179,6 @@ namespace osu.Game.Tests.Visual.Matchmaking
             });
 
             AddWaitStep("wait for animation", 5);
-
-            AddStep("reveal beatmap", () => grid.RevealRandomItem(new MultiplayerPlaylistItem()));
         }
 
         [TestCase(1)]
