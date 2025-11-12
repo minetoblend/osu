@@ -38,7 +38,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.Match.BeatmapSelect
         protected Container ScaleContainer = null!;
         private Container border = null!;
         private Drawable lighting = null!;
-        private BeatmapCardMatchmakingContent.AvatarOverlay selectionOverlay = null!;
+        private AvatarOverlay selectionOverlay = null!;
 
         protected MatchmakingSelectPanel(IMatchmakingPlaylistItem item)
         {
@@ -65,7 +65,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.Match.BeatmapSelect
                         Children = new[]
                         {
                             Content,
-                            selectionOverlay = new BeatmapCardMatchmakingContent.AvatarOverlay
+                            selectionOverlay = new AvatarOverlay
                             {
                                 Anchor = Anchor.TopRight,
                                 Origin = Anchor.TopRight,
@@ -119,10 +119,10 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.Match.BeatmapSelect
         {
             base.UpdateAfterChildren();
 
-            selectionOverlay.X = -AvatarOverlayOffset;
+            selectionOverlay.X = -(10 + AvatarOverlayOffset);
         }
 
-        protected virtual float AvatarOverlayOffset => 10;
+        protected virtual float AvatarOverlayOffset => 0;
 
         protected override bool OnHover(HoverEvent e)
         {

@@ -74,6 +74,6 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.Match.BeatmapSelect
 
         private BeatmapCardMatchmakingBeatmapContent? content;
 
-        protected override float AvatarOverlayOffset => base.AvatarOverlayOffset + (content?.AvatarOffset ?? 0);
+        protected override float AvatarOverlayOffset => content?.AvatarOffset ?? 0;
     }
 }
