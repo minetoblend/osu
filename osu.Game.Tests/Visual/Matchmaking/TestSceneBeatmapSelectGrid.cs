@@ -24,7 +24,7 @@ namespace osu.Game.Tests.Visual.Matchmaking
 {
     public partial class TestSceneBeatmapSelectGrid : OnlinePlayTestScene
     {
-        private MultiplayerPlaylistItem[] items = null!;
+        private IMatchmakingPlaylistItem[] items = null!;
 
         private BeatmapSelectGrid grid = null!;
 
@@ -39,24 +39,44 @@ namespace osu.Game.Tests.Visual.Matchmaking
                                          .Take(50)
                                          .ToArray();
 
+            IEnumerable<MatchmakingPlaylistItemBeatmap> playlistItems;
+
             if (beatmaps.Length > 0)
             {
-                items = Enumerable.Range(1, 50).Select(i => new MultiplayerPlaylistItem
+                playlistItems = Enumerable.Range(1, 50).Select(i =>
                 {
-                    ID = i,
-                    BeatmapID = beatmaps[i % beatmaps.Length].OnlineID,
-                    StarRating = i / 10.0,
-                }).ToArray();
+                    var beatmap = beatmaps[i % beatmaps.Length];
+
+                    return new MatchmakingPlaylistItemBeatmap(
+                        new MultiplayerPlaylistItem
+                        {
+                            ID = i,
+                            BeatmapID = beatmap.OnlineID,
+                            StarRating = i / 10.0,
+                        },
+                        CreateAPIBeatmap(beatmap),
+                        Array.Empty<Mod>()
+                    );
+                });
             }
             else
             {
-                items = Enumerable.Range(1, 50).Select(i => new MultiplayerPlaylistItem
-                {
-                    ID = i,
-                    BeatmapID = i,
-                    StarRating = i / 10.0,
-                }).ToArray();
+                playlistItems = Enumerable.Range(1, 50).Select(i => new MatchmakingPlaylistItemBeatmap(
+                    new MultiplayerPlaylistItem
+                    {
+                        ID = i,
+                        BeatmapID = i,
+                        StarRating = i / 10.0,
+                    },
+                    CreateAPIBeatmap(),
+                    Array.Empty<Mod>()
+                ));
             }
+
+            foreach (var item in playlistItems)
+                item.Beatmap.StarRating = item.PlaylistItem.StarRating;
+
+            items = playlistItems.Cast<IMatchmakingPlaylistItem>().Append(new MatchmakingPlaylistItemRandom()).ToArray();
         }
 
         public override void SetUpSteps()
@@ -71,18 +91,7 @@ namespace osu.Game.Tests.Visual.Matchmaking
                 Scale = new Vector2(0.8f),
             });
 
-            AddStep("add items", () =>
-            {
-                IEnumerable<IMatchmakingPlaylistItem> playlistItems = items.Select(item =>
-                {
-                    var beatmap = CreateAPIBeatmap();
-                    beatmap.StarRating = item.StarRating;
-
-                    return new MatchmakingPlaylistItemBeatmap(item, beatmap, Array.Empty<Mod>());
-                });
-
-                grid.AddItems(playlistItems.Prepend(new MatchmakingPlaylistItemRandom()));
-            });
+            AddStep("add items", () => grid.AddItems(items));
 
             AddWaitStep("wait for panels", 3);
         }
