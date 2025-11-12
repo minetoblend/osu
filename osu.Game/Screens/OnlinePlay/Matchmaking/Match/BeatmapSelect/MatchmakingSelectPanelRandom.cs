@@ -9,6 +9,8 @@ using osu.Framework.Graphics;
 using osu.Framework.Graphics.Shapes;
 using osu.Framework.Graphics.Sprites;
 using osu.Framework.Graphics.Transforms;
+using osu.Framework.Input.Events;
+using osu.Framework.Utils;
 using osu.Game.Database;
 using osu.Game.Graphics.Backgrounds;
 using osu.Game.Graphics.Sprites;
@@ -132,6 +134,31 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.Match.BeatmapSelect
 
                 return easeOut ? 1 - value : value;
             }
+        }
+
+        protected override bool OnClick(ClickEvent e)
+        {
+            var icons = new[]
+            {
+                FontAwesome.Solid.DiceOne,
+                FontAwesome.Solid.DiceTwo,
+                FontAwesome.Solid.DiceThree,
+                FontAwesome.Solid.DiceFour,
+                FontAwesome.Solid.DiceFive,
+                FontAwesome.Solid.DiceSix,
+            };
+
+            var icon = icons[RNG.Next(icons.Length)];
+
+            while (icon.Equals(dice.Icon))
+                icon = icons[RNG.Next(icons.Length)];
+
+            dice.ScaleTo(0.65f, 60, Easing.Out)
+                .Then()
+                .Schedule(() => dice.Icon = icon)
+                .ScaleTo(1f, 400, Easing.OutElasticHalf);
+
+            return base.OnClick(e);
         }
     }
 }
