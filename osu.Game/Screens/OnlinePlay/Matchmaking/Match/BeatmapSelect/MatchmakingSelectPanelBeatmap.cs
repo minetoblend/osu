@@ -5,8 +5,6 @@ using osu.Framework.Allocation;
 using osu.Framework.Audio;
 using osu.Framework.Audio.Sample;
 using osu.Framework.Graphics;
-using osu.Framework.Graphics.Shapes;
-using osu.Game.Screens.OnlinePlay.Matchmaking.Screens.Pick;
 using osuTK;
 
 namespace osu.Game.Screens.OnlinePlay.Matchmaking.Match.BeatmapSelect
@@ -36,40 +34,6 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.Match.BeatmapSelect
                 .ScaleTo(1.5f, 1000, Easing.OutExpo);
 
             resultSample?.Play();
-        }
-
-        public override void PresentAsUnanimouslyChosenBeatmap(MatchmakingPlaylistItemBeatmap item)
-        {
-            var flash = new Box
-            {
-                RelativeSizeAxes = Axes.Both,
-            };
-
-            Add(flash);
-            OverlayLayer.Add(new TriangleImplosion
-            {
-                RelativeSizeAxes = Axes.Both,
-                Duration = 1000
-            });
-
-            this.ScaleTo(0.9f, 1000, Easing.InCubic)
-                .Then()
-                .ScaleTo(1f, 500, Easing.OutElasticHalf);
-
-            flash.FadeInFromZero(1000, Easing.In)
-                 .Then()
-                 .FadeOut(1000, Easing.Out)
-                 .Expire();
-
-            Scheduler.AddDelayed(() =>
-            {
-                ShowChosenBorder();
-
-                this.MoveTo(Vector2.Zero, 1000, Easing.OutExpo)
-                    .ScaleTo(1.5f, 600, Easing.OutElasticHalf);
-
-                resultSample?.Play();
-            }, 1000);
         }
 
         private BeatmapCardMatchmakingBeatmapContent? content;
