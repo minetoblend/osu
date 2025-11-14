@@ -96,6 +96,8 @@ namespace osu.Game.Rulesets.Osu.Edit
                 }
             );
 
+            PlayfieldContentContainer.Add(new OsuGameplayVisualizer());
+
             selectedHitObjects = EditorBeatmap.SelectedHitObjects.GetBoundCopy();
             selectedHitObjects.CollectionChanged += (_, _) => updateDistanceSnapGrid();
 
