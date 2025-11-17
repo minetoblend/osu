@@ -2,6 +2,7 @@
 // See the LICENCE file in the repository root for full licence text.
 
 using osu.Framework.Allocation;
+using osu.Framework.Graphics;
 using osu.Game.Online.API.Requests.Responses;
 using osu.Game.Rulesets.Mods;
 
@@ -24,7 +25,11 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.Match.BeatmapSelect
         [BackgroundDependencyLoader]
         private void load()
         {
-            Add(content = new CardContentBeatmap(beatmap, mods));
+            Add(content = new CardContentBeatmap2(beatmap, mods)
+            {
+                Anchor = Anchor.Centre,
+                Origin = Anchor.Centre,
+            });
         }
 
         public override void AddUser(APIUser user)

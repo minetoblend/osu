@@ -30,7 +30,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.Match.BeatmapSelect
         private const double arrange_duration = 1000;
         private const double roll_duration = 4000;
         private const double present_beatmap_delay = 1200;
-        private const float panel_spacing = 4;
+        private const float panel_spacing = 20;
 
         public event Action<MultiplayerPlaylistItem>? ItemSelected;
 

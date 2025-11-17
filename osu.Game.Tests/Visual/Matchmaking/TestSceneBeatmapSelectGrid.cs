@@ -7,6 +7,7 @@ using System.Linq;
 using NUnit.Framework;
 using osu.Framework.Allocation;
 using osu.Framework.Graphics;
+using osu.Framework.Graphics.Containers;
 using osu.Framework.Testing;
 using osu.Framework.Utils;
 using osu.Game.Beatmaps;
@@ -16,6 +17,7 @@ using osu.Game.Online.API;
 using osu.Game.Online.API.Requests.Responses;
 using osu.Game.Online.Rooms;
 using osu.Game.Rulesets.Mods;
+using osu.Game.Screens.OnlinePlay.Matchmaking.Match;
 using osu.Game.Screens.OnlinePlay.Matchmaking.Match.BeatmapSelect;
 using osu.Game.Tests.Visual.OnlinePlay;
 using osuTK;
@@ -36,8 +38,11 @@ namespace osu.Game.Tests.Visual.Matchmaking
         {
             var beatmaps = beatmapManager.GetAllUsableBeatmapSets()
                                          .SelectMany(it => it.Beatmaps)
-                                         .Take(50)
                                          .ToArray();
+
+            new Random().Shuffle(beatmaps);
+
+            beatmaps = beatmaps.Take(50).ToArray();
 
             IEnumerable<MatchmakingPlaylistItem> playlistItems;
 
@@ -79,16 +84,36 @@ namespace osu.Game.Tests.Visual.Matchmaking
             items = playlistItems.ToArray();
         }
 
+        private Drawable? background;
+
         public override void SetUpSteps()
         {
             base.SetUpSteps();
 
-            AddStep("add grid", () => Child = grid = new BeatmapSelectGrid
+            AddStep("add grid", () => Child = new Container
             {
                 RelativeSizeAxes = Axes.Both,
-                Anchor = Anchor.Centre,
-                Origin = Anchor.Centre,
-                Scale = new Vector2(0.8f),
+                Children = new Drawable[]
+                {
+                    background = new MatchmakingBackgroundScreen.Content
+                    {
+                        RelativeSizeAxes = Axes.Both,
+                        RelativePositionAxes = Axes.Y,
+                        Anchor = Anchor.TopCentre,
+                        Origin = Anchor.TopCentre,
+                    },
+                    new Container
+                    {
+                        RelativeSizeAxes = Axes.Both,
+                        Padding = new MarginPadding { Left = 200 },
+                        Child = grid = new BeatmapSelectGrid
+                        {
+                            RelativeSizeAxes = Axes.Both,
+                            Anchor = Anchor.Centre,
+                            Origin = Anchor.Centre,
+                        }
+                    }
+                }
             });
 
             AddStep("add items", () =>

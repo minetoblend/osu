@@ -23,7 +23,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.Match.BeatmapSelect
     public abstract partial class MatchmakingSelectPanel : Container
     {
         public const float WIDTH = 345;
-        public const float HEIGHT = 80;
+        public const float HEIGHT = 150;
 
         public static readonly Vector2 SIZE = new Vector2(WIDTH, HEIGHT);
 
@@ -61,9 +61,8 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.Match.BeatmapSelect
                     {
                         new Container
                         {
-                            Masking = true,
-                            CornerRadius = BeatmapCard.CORNER_RADIUS,
-                            CornerExponent = 10,
+                            // Masking = true,
+                            // CornerRadius = BeatmapCard.CORNER_RADIUS,
                             RelativeSizeAxes = Axes.Both,
                             Children = new[]
                             {
@@ -81,7 +80,6 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.Match.BeatmapSelect
                             Alpha = 0,
                             Masking = true,
                             CornerRadius = BeatmapCard.CORNER_RADIUS,
-                            CornerExponent = 10,
                             Blending = BlendingParameters.Additive,
                             RelativeSizeAxes = Axes.Both,
                             BorderThickness = border_width,
@@ -119,9 +117,9 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.Match.BeatmapSelect
         {
             if (AllowSelection)
             {
-                lighting.FadeTo(0.2f, 50)
-                        .Then()
-                        .FadeTo(0.1f, 300);
+                // lighting.FadeTo(0.2f, 50)
+                //         .Then()
+                //         .FadeTo(0.1f, 300);
                 return true;
             }
 

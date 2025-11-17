@@ -2,8 +2,10 @@
 // See the LICENCE file in the repository root for full licence text.
 
 using osu.Framework.Allocation;
+using osu.Framework.Extensions.Color4Extensions;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
+using osu.Framework.Graphics.Effects;
 using osu.Framework.Graphics.Shapes;
 using osu.Game.Graphics;
 using osu.Game.Online.API.Requests.Responses;
@@ -57,6 +59,12 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.Match
                 {
                     RelativeSizeAxes = Axes.Both,
                     Masking = true,
+                    EdgeEffect = new EdgeEffectParameters
+                    {
+                        Type = EdgeEffectType.Glow,
+                        Radius = 6,
+                        Colour = Color4.White.Opacity(0.1f),
+                    },
                     Children = new Drawable[]
                     {
                         new Box

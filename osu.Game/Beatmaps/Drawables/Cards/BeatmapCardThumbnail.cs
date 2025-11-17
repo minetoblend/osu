@@ -39,7 +39,7 @@ namespace osu.Game.Beatmaps.Drawables.Cards
         {
             InternalChildren = new Drawable[]
             {
-                new UpdateableOnlineBeatmapSetCover(BeatmapSetCoverType.List, keepLoaded ? 0 : 500, keepLoaded ? double.MaxValue : 1000)
+                new UpdateableOnlineBeatmapSetCover(BeatmapSetCoverType.Card, keepLoaded ? 0 : 500, keepLoaded ? double.MaxValue : 1000)
                 {
                     RelativeSizeAxes = Axes.Both,
                     OnlineInfo = onlineInfo

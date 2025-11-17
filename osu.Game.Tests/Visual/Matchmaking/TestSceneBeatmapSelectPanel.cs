@@ -13,6 +13,7 @@ using osu.Game.Overlays;
 using osu.Game.Rulesets.Osu.Mods;
 using osu.Game.Screens.OnlinePlay.Matchmaking.Match.BeatmapSelect;
 using osu.Game.Tests.Visual.Multiplayer;
+using osuTK;
 
 namespace osu.Game.Tests.Visual.Matchmaking
 {
@@ -46,13 +47,17 @@ namespace osu.Game.Tests.Visual.Matchmaking
 
             AddStep("add panel", () =>
             {
+                var beatmap = CreateAPIBeatmap();
+                beatmap.StarRating = 4.2;
+
                 Child = new OsuContextMenuContainer
                 {
                     RelativeSizeAxes = Axes.Both,
-                    Child = panel = new MatchmakingSelectPanelBeatmap(new MatchmakingPlaylistItem(new MultiplayerPlaylistItem(), CreateAPIBeatmap(), []))
+                    Child = panel = new MatchmakingSelectPanelBeatmap(new MatchmakingPlaylistItem(new MultiplayerPlaylistItem(), beatmap, []))
                     {
                         Anchor = Anchor.Centre,
                         Origin = Anchor.Centre,
+                        Scale = new Vector2(1.5f)
                     }
                 };
             });
