@@ -154,8 +154,6 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.Match.BeatmapSelect
                                         new FillFlowContainer
                                         {
                                             AutoSizeAxes = Axes.Both,
-                                            Anchor = Anchor.TopRight,
-                                            Origin = Anchor.TopRight,
                                             Scale = new Vector2(0.6f),
                                             Spacing = new Vector2(4),
                                             Margin = new MarginPadding { Top = 20 },
