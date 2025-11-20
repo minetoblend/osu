@@ -76,42 +76,33 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.Match
                             Origin = Anchor.CentreLeft,
                             Alpha = 0.5f,
                             Size = new Vector2(16),
-                            Icon = FontAwesome.Solid.ArrowRight,
+                            Icon = FontAwesome.Solid.ChevronRight,
                             Margin = new MarginPadding { Horizontal = 10 }
                         },
                         mainContent = new Container
                         {
-                            Masking = true,
-                            CornerRadius = 5,
-                            CornerExponent = 10,
                             Anchor = Anchor.CentreLeft,
                             Origin = Anchor.CentreLeft,
                             AutoSizeAxes = Axes.Both,
                             Children = new[]
                             {
-                                new Box
+                                new WedgeSprite
                                 {
                                     RelativeSizeAxes = Axes.Both,
-                                    Colour =
-                                        ColourInfo.GradientVertical(
-                                            colourProvider.Dark2,
-                                            colourProvider.Dark1
-                                        ),
+                                    Colour = colourProvider.Dark3
                                 },
-                                progressBar = new Box
+                                progressBar = new WedgeSprite
                                 {
-                                    Blending = BlendingParameters.Additive,
-                                    EdgeSmoothness = new Vector2(1),
                                     RelativeSizeAxes = Axes.Both,
                                     Width = 0,
-                                    Colour = colourProvider.Dark3,
+                                    Colour = ColourInfo.GradientHorizontal(colourProvider.Colour2, colourProvider.Colour3),
                                 },
                                 new OsuSpriteText
                                 {
                                     Anchor = Anchor.Centre,
                                     Origin = Anchor.Centre,
                                     Text = displayText,
-                                    Padding = new MarginPadding(10)
+                                    Padding = new MarginPadding { Horizontal = 20, Vertical = 10 }
                                 }
                             }
                         }
