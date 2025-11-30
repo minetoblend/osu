@@ -11,6 +11,7 @@ using osu.Framework.Graphics.Shapes;
 using osu.Framework.Screens;
 using osu.Game.Graphics;
 using osu.Game.Graphics.Sprites;
+using osu.Game.Online.Matchmaking;
 using osu.Game.Overlays;
 using osu.Game.Screens.OnlinePlay.Matchmaking.Match;
 using osu.Game.Screens.OnlinePlay.Matchmaking.Queue;
@@ -40,6 +41,8 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.Intro
         [Resolved]
         private MusicController musicController { get; set; } = null!;
 
+        private readonly MatchmakingPoolType poolType;
+
         private Sample? dateWindupSample;
         private Sample? dateImpactSample;
         private Sample? beatmapWindupSample;
@@ -54,14 +57,22 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.Intro
 
         protected override BackgroundScreen CreateBackground() => new MatchmakingBackgroundScreen(colourProvider);
 
-        public ScreenIntro()
+        public ScreenIntro(MatchmakingPoolType poolType)
         {
+            this.poolType = poolType;
             ValidForResume = false;
         }
 
         [BackgroundDependencyLoader]
         private void load(AudioManager audio)
         {
+            string poolTypeName = poolType switch
+            {
+                MatchmakingPoolType.QuickPlay => "Quick Play",
+                MatchmakingPoolType.RankedPlay => "Ranked Play",
+                _ => throw new ArgumentOutOfRangeException()
+            };
+
             InternalChildren = new Drawable[]
             {
                 introContent = new Container
@@ -99,7 +110,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.Intro
                                         {
                                             Anchor = Anchor.Centre,
                                             Origin = Anchor.Centre,
-                                            Text = "Quick Play",
+                                            Text = poolTypeName,
                                             Margin = new MarginPadding { Horizontal = 10f, Vertical = 5f },
                                             Shear = -OsuGame.SHEAR,
                                             Font = OsuFont.GetFont(size: 32, weight: FontWeight.Light, typeface: Typeface.TorusAlternate),
@@ -194,7 +205,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.Intro
                         Schedule(() =>
                         {
                             if (this.IsCurrentScreen())
-                                this.Push(new ScreenQueue());
+                                this.Push(new ScreenQueue(poolType));
                         });
                     }
                 }

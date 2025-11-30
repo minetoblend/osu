@@ -80,6 +80,8 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.Queue
         private readonly Bindable<MatchmakingPool[]> availablePools = new Bindable<MatchmakingPool[]>();
         private readonly Bindable<MatchmakingPool?> selectedPool = new Bindable<MatchmakingPool?>();
 
+        private readonly MatchmakingPoolType poolType;
+
         private CancellationTokenSource userLookupCancellation = new CancellationTokenSource();
 
         private Sample? enqueueSample;
@@ -88,6 +90,11 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.Queue
 
         private SampleChannel? waitingLoopChannel;
         private ScheduledDelegate? startLoopPlaybackDelegate;
+
+        public ScreenQueue(MatchmakingPoolType poolType)
+        {
+            this.poolType = poolType;
+        }
 
         protected override void LoadComplete()
         {
@@ -150,7 +157,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.Queue
 
         private async Task populateAvailablePools()
         {
-            MatchmakingPool[] pools = await client.GetMatchmakingPools().ConfigureAwait(false);
+            MatchmakingPool[] pools = await client.GetMatchmakingPools(poolType).ConfigureAwait(false);
 
             Schedule(() =>
             {

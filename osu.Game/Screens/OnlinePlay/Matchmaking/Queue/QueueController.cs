@@ -11,6 +11,7 @@ using osu.Framework.Graphics.Colour;
 using osu.Framework.Graphics.Sprites;
 using osu.Framework.Screens;
 using osu.Game.Graphics;
+using osu.Game.Online.Matchmaking;
 using osu.Game.Online.Multiplayer;
 using osu.Game.Online.Rooms;
 using osu.Game.Overlays;
@@ -174,7 +175,8 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.Queue
                     client.MatchmakingAcceptInvitation().FireAndForget();
                     controller.CurrentState.Value = ScreenQueue.MatchmakingScreenState.AcceptedWaitingForRoom;
 
-                    performer?.PerformFromScreen(s => s.Push(new ScreenIntro()));
+                    // Todo: Quick play value here is temporary. Needs some sort of signalling...
+                    performer?.PerformFromScreen(s => s.Push(new ScreenIntro(MatchmakingPoolType.QuickPlay)));
 
                     Close(false);
                     return true;
