@@ -54,6 +54,11 @@ namespace osu.Game.Online.Multiplayer.MatchTypes.Matchmaking
         /// <summary>
         /// All rounds have completed. Users may still be chatting.
         /// </summary>
-        Ended
+        Ended,
+
+        /// <summary>
+        /// Users are deciding which beatmaps to discard from their hand.
+        /// </summary>
+        UserBeatmapDiscard,
     }
 }
