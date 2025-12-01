@@ -77,7 +77,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.Queue
 
         private readonly IBindable<MatchmakingScreenState> currentState = new Bindable<MatchmakingScreenState>();
 
-        private readonly Bindable<MatchmakingPool[]> availablePools = new Bindable<MatchmakingPool[]>();
+        private readonly Bindable<MatchmakingPool[]> availablePools = new Bindable<MatchmakingPool[]>([]);
         private readonly Bindable<MatchmakingPool?> selectedPool = new Bindable<MatchmakingPool?>();
 
         private readonly MatchmakingPoolType poolType;
