@@ -12,7 +12,7 @@ using osu.Game.Tests.Visual.Multiplayer;
 
 namespace osu.Game.Tests.Visual.RankedPlay
 {
-    public class TestSceneRankedPlayCard : MultiplayerTestScene
+    public partial class TestSceneRankedPlayCard : MultiplayerTestScene
     {
         [Cached]
         private readonly OverlayColourProvider colourProvider = new OverlayColourProvider(OverlayColourScheme.Purple);

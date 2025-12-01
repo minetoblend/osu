@@ -4,7 +4,6 @@
 using osu.Framework.Allocation;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
-using osu.Framework.Graphics.Sprites;
 using osu.Framework.Localisation;
 using osu.Game.Graphics;
 using osu.Game.Graphics.Sprites;
@@ -16,7 +15,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
     {
         private partial class DetailsPill : CompositeDrawable
         {
-            public required BufferedContainerView<Drawable> Background { get; init; }
+            public required Drawable Background { get; init; }
 
             private readonly LocalisableString name;
             private readonly LocalisableString value;
@@ -39,7 +38,6 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                         Background.With(d =>
                         {
                             d.RelativeSizeAxes = Axes.Both;
-                            d.SynchronisedDrawQuad = true;
                         }),
                         new FillFlowContainer
                         {

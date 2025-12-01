@@ -4,7 +4,6 @@
 using osu.Framework.Allocation;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
-using osu.Framework.Graphics.Sprites;
 using osu.Game.Graphics;
 using osu.Game.Graphics.Sprites;
 using osu.Game.Online.API.Requests.Responses;
@@ -15,7 +14,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
     {
         private partial class UserTagPill : CompositeDrawable
         {
-            public required BufferedContainerView<Drawable> Background { get; init; }
+            public required Drawable Background { get; init; }
 
             private readonly APITag tag;
 
@@ -38,7 +37,6 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                         Background.With(d =>
                         {
                             d.RelativeSizeAxes = Axes.Both;
-                            d.SynchronisedDrawQuad = true;
                         }),
                         new OsuSpriteText
                         {

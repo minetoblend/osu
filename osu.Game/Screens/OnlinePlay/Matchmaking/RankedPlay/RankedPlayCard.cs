@@ -5,13 +5,16 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using osu.Framework.Allocation;
+using osu.Framework.Bindables;
 using osu.Framework.Extensions.Color4Extensions;
 using osu.Framework.Extensions.LocalisationExtensions;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Colour;
 using osu.Framework.Graphics.Containers;
+using osu.Framework.Graphics.Primitives;
 using osu.Framework.Graphics.Shapes;
 using osu.Framework.Graphics.Sprites;
+using osu.Framework.Layout;
 using osu.Game.Beatmaps;
 using osu.Game.Beatmaps.Drawables;
 using osu.Game.Extensions;
@@ -34,11 +37,9 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
         private readonly APIBeatmap beatmap;
 
         private FillFlowContainer<UserTagPill> userTags = null!;
-        private BufferedContainer baseBackground = null!;
         private BufferedContainer contentBackground = null!;
-        private Drawable shine = null!;
 
-        private bool shiny;
+        private readonly BindableBool shiny = new BindableBool();
 
         public RankedPlayCard(APIBeatmap beatmap)
         {
@@ -55,25 +56,12 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 
             InternalChildren = new Drawable[]
             {
-                baseBackground = new BufferedContainer
+                new Box
                 {
                     RelativeSizeAxes = Axes.Both,
-                    BackgroundColour = colourProvider.Background1,
-                    Child = shine = new Box
-                    {
-                        Anchor = Anchor.Centre,
-                        Origin = Anchor.Centre,
-                        RelativeSizeAxes = Axes.Both,
-                        Alpha = Shiny ? shiny_alpha : 0,
-                        Colour = new ColourInfo
-                        {
-                            TopLeft = new Color4(255, 255, 100, 255),
-                            TopRight = new Color4(50, 220, 255, 255),
-                            BottomLeft = new Color4(255, 100, 220, 255),
-                            BottomRight = new Color4(255, 255, 100, 255),
-                        }
-                    },
+                    Colour = colourProvider.Background1,
                 },
+                new Shine(this),
                 new Container
                 {
                     RelativeSizeAxes = Axes.Both,
@@ -90,10 +78,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                                 RelativeSizeAxes = Axes.Both,
                                 Children = new Drawable[]
                                 {
-                                    baseBackground.CreateView().With(d =>
-                                    {
-                                        d.RelativeSizeAxes = Axes.Both;
-                                    }),
+                                    new Shine(this),
                                     new Box
                                     {
                                         RelativeSizeAxes = Axes.Both,
@@ -189,14 +174,14 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                                                     null,
                                                     new DetailsPill("Length:", TimeSpan.FromMilliseconds(beatmap.HitLength).ToFormattedDuration())
                                                     {
-                                                        Background = contentBackground.CreateView(),
+                                                        Background = new Shine(this),
                                                         RelativeSizeAxes = Axes.X,
                                                         Height = 22
                                                     },
                                                     null,
                                                     new DetailsPill("BPM:", FormatUtils.RoundBPM(beatmap.BPM).ToLocalisableString(@"0.##"))
                                                     {
-                                                        Background = contentBackground.CreateView(),
+                                                        Background = new Shine(this),
                                                         RelativeSizeAxes = Axes.X,
                                                         Height = 22
                                                     },
@@ -261,11 +246,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                                         RelativeSizeAxes = Axes.Both,
                                         Children = new Drawable[]
                                         {
-                                            baseBackground.CreateView().With(d =>
-                                            {
-                                                d.RelativeSizeAxes = Axes.Both;
-                                                d.SynchronisedDrawQuad = true;
-                                            }),
+                                            new Shine(this),
                                             new OsuSpriteText
                                             {
                                                 Anchor = Anchor.BottomCentre,
@@ -291,14 +272,8 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 
         public bool Shiny
         {
-            get => shiny;
-            set
-            {
-                shiny = value;
-
-                if (LoadState >= LoadState.Ready)
-                    shine.Alpha = value ? shiny_alpha : 0;
-            }
+            get => shiny.Value;
+            set => shiny.Value = value;
         }
 
         private void updateUserTags()
@@ -315,9 +290,62 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                                        .ThenBy(t => t.relatedTag!.Name)
                                        .Select(t => new UserTagPill(t.relatedTag!)
                                        {
-                                           Background = baseBackground.CreateView()
+                                           Background = new Shine(this)
                                        })
                                        .ToArray();
+        }
+
+        private partial class Shine : Box
+        {
+            private readonly Drawable target;
+            private readonly LayoutValue transformBacking = new LayoutValue(Invalidation.MiscGeometry | Invalidation.DrawSize);
+
+            private readonly Bindable<bool> shiny;
+
+            public Shine(RankedPlayCard target)
+            {
+                this.target = target;
+                shiny = target.shiny.GetBoundCopy();
+
+                Alpha = shiny_alpha;
+                RelativeSizeAxes = Axes.Both;
+
+                AddLayout(transformBacking);
+            }
+
+            protected override void LoadComplete()
+            {
+                base.LoadComplete();
+
+                shiny.BindValueChanged(e => Alpha = e.NewValue ? shiny_alpha : 0, true);
+            }
+
+            protected override void Update()
+            {
+                base.Update();
+
+                if (!transformBacking.IsValid)
+                {
+                    var colourInfo = new ColourInfo
+                    {
+                        TopLeft = new Color4(255, 255, 100, 255),
+                        TopRight = new Color4(50, 220, 255, 255),
+                        BottomLeft = new Color4(255, 100, 220, 255),
+                        BottomRight = new Color4(255, 255, 100, 255),
+                    };
+
+                    Quad interp = Quad.FromRectangle(DrawRectangle) * (DrawInfo.Matrix * target.DrawInfo.MatrixInverse);
+                    Vector2 parentSize = target.DrawSize;
+
+                    Colour = colourInfo.Interpolate(new Quad(
+                        Vector2.Divide(interp.TopLeft, parentSize),
+                        Vector2.Divide(interp.TopRight, parentSize),
+                        Vector2.Divide(interp.BottomLeft, parentSize),
+                        Vector2.Divide(interp.BottomRight, parentSize)));
+
+                    transformBacking.Validate();
+                }
+            }
         }
     }
 }
