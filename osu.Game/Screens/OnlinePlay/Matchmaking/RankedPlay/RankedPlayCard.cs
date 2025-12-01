@@ -56,11 +56,6 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 
             InternalChildren = new Drawable[]
             {
-                new Box
-                {
-                    RelativeSizeAxes = Axes.Both,
-                    Colour = colourProvider.Background1,
-                },
                 new Shine(this),
                 new Container
                 {
@@ -295,29 +290,46 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                                        .ToArray();
         }
 
-        private partial class Shine : Box
+        private partial class Shine : CompositeDrawable
         {
             private readonly Drawable target;
             private readonly LayoutValue transformBacking = new LayoutValue(Invalidation.MiscGeometry | Invalidation.DrawSize);
 
             private readonly Bindable<bool> shiny;
+            private Box shine = null!;
 
             public Shine(RankedPlayCard target)
             {
                 this.target = target;
                 shiny = target.shiny.GetBoundCopy();
 
-                Alpha = shiny_alpha;
                 RelativeSizeAxes = Axes.Both;
 
                 AddLayout(transformBacking);
+            }
+
+            [BackgroundDependencyLoader]
+            private void load(OverlayColourProvider colourProvider)
+            {
+                InternalChildren =
+                [
+                    new Box
+                    {
+                        RelativeSizeAxes = Axes.Both,
+                        Colour = colourProvider.Background1,
+                    },
+                    shine = new Box
+                    {
+                        RelativeSizeAxes = Axes.Both,
+                    }
+                ];
             }
 
             protected override void LoadComplete()
             {
                 base.LoadComplete();
 
-                shiny.BindValueChanged(e => Alpha = e.NewValue ? shiny_alpha : 0, true);
+                shiny.BindValueChanged(e => shine.Alpha = e.NewValue ? shiny_alpha : 0, true);
             }
 
             protected override void Update()
@@ -337,7 +349,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                     Quad interp = Quad.FromRectangle(DrawRectangle) * (DrawInfo.Matrix * target.DrawInfo.MatrixInverse);
                     Vector2 parentSize = target.DrawSize;
 
-                    Colour = colourInfo.Interpolate(new Quad(
+                    shine.Colour = colourInfo.Interpolate(new Quad(
                         Vector2.Divide(interp.TopLeft, parentSize),
                         Vector2.Divide(interp.TopRight, parentSize),
                         Vector2.Divide(interp.BottomLeft, parentSize),
