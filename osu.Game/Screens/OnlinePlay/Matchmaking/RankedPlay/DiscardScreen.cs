@@ -23,7 +23,8 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
     {
         private Container<Card> cardFlow = null!;
 
-        private OsuButton discardButton, skipButton;
+        private OsuButton discardButton = null!;
+        private OsuButton skipButton = null!;
 
         [BackgroundDependencyLoader]
         private void load()
