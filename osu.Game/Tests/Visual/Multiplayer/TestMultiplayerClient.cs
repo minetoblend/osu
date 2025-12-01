@@ -615,6 +615,7 @@ namespace osu.Game.Tests.Visual.Multiplayer
                     break;
 
                 case MatchType.Matchmaking:
+                case MatchType.RankedPlay:
                     ServerRoom.MatchState = new MatchmakingRoomState();
                     await ((IMultiplayerClient)this).MatchRoomStateChanged(clone(ServerRoom.MatchState)).ConfigureAwait(false);
 
