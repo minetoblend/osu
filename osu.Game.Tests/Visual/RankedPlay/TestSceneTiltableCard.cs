@@ -14,10 +14,6 @@ namespace osu.Game.Tests.Visual.RankedPlay
 {
     public class TestSceneTiltableCard : MatchmakingTestScene
     {
-        public TestSceneTiltableCard()
-        {
-        }
-
         [BackgroundDependencyLoader]
         private void load(TextureStore textures)
         {
@@ -61,10 +57,8 @@ namespace osu.Game.Tests.Visual.RankedPlay
 
             beatmap.StarRating = 7.49;
 
-            Child = new TiltableSprite
+            Child = new TiltableSprite(beatmap)
             {
-                Child = new RankedPlayCard(beatmap),
-                AutoSizeAxes = Axes.Both,
                 Anchor = Anchor.Centre,
                 Origin = Anchor.Centre,
             };

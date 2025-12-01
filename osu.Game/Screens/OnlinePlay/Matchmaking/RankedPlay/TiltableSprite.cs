@@ -1,15 +1,14 @@
 // Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
-using System;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Colour;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Primitives;
 using osu.Framework.Graphics.Rendering;
-using osu.Framework.Graphics.Sprites;
 using osu.Framework.Input.Events;
 using osu.Framework.Logging;
+using osu.Game.Online.API.Requests.Responses;
 using osuTK;
 using osuTK.Graphics;
 
@@ -17,9 +16,21 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 {
     public class TiltableSprite : BufferedContainer
     {
+        private RankedPlayCard card;
+
+        public TiltableSprite(APIBeatmap beatmap)
+        {
+            Add(card = new RankedPlayCard(beatmap));
+            AutoSizeAxes = Axes.Both;
+        }
+
         protected override void Update()
         {
             base.Update();
+
+            actualMousePos.Update((float)(Time.Elapsed / 1000), mousePos);
+
+            card.Parallax = actualMousePos.Current * new Vector2(1, -1) / 10;
 
             Invalidate(Invalidation.DrawNode | Invalidation.MiscGeometry);
         }
@@ -29,6 +40,28 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
             this.FlashColour(Color4.Red, 100);
 
             return base.OnHover(e);
+        }
+
+        private Vector2 mousePos;
+
+        private SecondOrderDynamics actualMousePos = new SecondOrderDynamics(new Vector2(), new DynamicsParameters(
+            Frequency: 1,
+            Damping: 1,
+            Response: 1
+        ));
+
+        protected override bool OnMouseMove(MouseMoveEvent e)
+        {
+            mousePos = ToLocalSpace(e.ScreenSpaceMousePosition) - DrawSize / 2;
+
+            Logger.Log($"{mousePos}");
+
+            return base.OnMouseMove(e);
+        }
+
+        public override bool ReceivePositionalInputAt(Vector2 screenSpacePos)
+        {
+            return true;
         }
 
         protected Quad ComputePerspectiveDrawQuad()
@@ -41,7 +74,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 
             Matrix4 model =
                 Matrix4.CreateTranslation(-center) *
-                Matrix4.CreateFromAxisAngle(new Vector3(0, 1, 0), angle) *
+                Matrix4.LookAt(new Vector3(), new Vector3(actualMousePos.Current.X, -actualMousePos.Current.Y, 400), new Vector3(0, 1, 0)) *
                 Matrix4.CreateTranslation(center);
 
             return new Quad(
@@ -75,8 +108,6 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                 base.ApplyState();
 
                 perspectiveQuad = Source.ComputePerspectiveDrawQuad();
-
-                Logger.Log($"{perspectiveQuad}");
             }
 
             protected override void DrawContents(IRenderer renderer)
@@ -97,6 +128,8 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                         renderer.DrawQuad(SharedData.CurrentEffectBuffer.Texture, quad, finalEffectColour, rect * SharedData.CurrentEffectBuffer.Texture.DisplaySize);
                     }
                 }
+
+                // renderer.DrawFrameBuffer(SharedData.CurrentEffectBuffer, perspectiveQuad, finalEffectColour);
 
                 static Quad slice(Quad quad, RectangleF range) =>
                     verticalSlice(

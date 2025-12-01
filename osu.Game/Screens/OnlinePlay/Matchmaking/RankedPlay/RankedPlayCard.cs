@@ -47,6 +47,14 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
             Size = new Vector2(300, 500);
         }
 
+        private Drawable background;
+
+        public Vector2 Parallax
+        {
+            get => background.Position;
+            set => background.Position = value;
+        }
+
         [BackgroundDependencyLoader]
         private void load(OverlayColourProvider colourProvider)
         {
@@ -108,11 +116,16 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                                 Height = 0.7f,
                                 Children = new Drawable[]
                                 {
-                                    new UpdateableOnlineBeatmapSetCover
+                                    new Container
                                     {
                                         RelativeSizeAxes = Axes.Both,
-                                        OnlineInfo = beatmap.BeatmapSet,
-                                        Colour = ColourInfo.GradientVertical(Color4.White.Opacity(0.1f), Color4.White.Opacity(0.3f))
+                                        Padding = new MarginPadding(-20),
+                                        Child = background = new UpdateableOnlineBeatmapSetCover
+                                        {
+                                            RelativeSizeAxes = Axes.Both,
+                                            OnlineInfo = beatmap.BeatmapSet,
+                                            Colour = ColourInfo.GradientVertical(Color4.White.Opacity(0.1f), Color4.White.Opacity(0.3f))
+                                        },
                                     },
                                     new FillFlowContainer
                                     {
