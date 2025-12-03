@@ -19,6 +19,8 @@ using osu.Game.Online.API.Requests;
 using osu.Game.Online.API.Requests.Responses;
 using osu.Game.Online.Matchmaking;
 using osu.Game.Online.Multiplayer.Countdown;
+using osu.Game.Online.Multiplayer.MatchTypes.RankedPlay;
+using osu.Game.Online.RankedPlay;
 using osu.Game.Online.Rooms;
 using osu.Game.Overlays.Notifications;
 using osu.Game.Rulesets;
@@ -27,7 +29,11 @@ using osu.Game.Utils;
 
 namespace osu.Game.Online.Multiplayer
 {
-    public abstract partial class MultiplayerClient : Component, IMultiplayerClient, IMultiplayerRoomServer, IMatchmakingServer, IMatchmakingClient
+    public abstract partial class MultiplayerClient :
+        Component,
+        IMultiplayerClient, IMultiplayerRoomServer,
+        IMatchmakingServer, IMatchmakingClient,
+        IRankedPlayClient, IRankedPlayServer
     {
         public Action<Notification>? PostNotification { protected get; set; }
 
@@ -130,6 +136,11 @@ namespace osu.Game.Online.Multiplayer
         public event Action<int, long>? MatchmakingItemSelected;
         public event Action<int, long>? MatchmakingItemDeselected;
         public event Action<MatchRoomState>? MatchRoomStateChanged;
+
+        public event Action<MultiplayerRoomUser, RankedPlayCard[]>? RankedPlayCardsDrawn;
+        public event Action<RankedPlayCard[]>? RankedPlayCardsDiscarded;
+        public event Action<RankedPlayCard>? RankedPlayCardPlayed;
+        public event Action<RankedPlayCard, MultiplayerPlaylistItem>? RankedPlayCardRevealed;
 
         public event Action<int>? UserVotedToSkipIntro;
         public event Action? VoteToSkipIntroPassed;
@@ -1131,6 +1142,71 @@ namespace osu.Game.Online.Multiplayer
             Scheduler.Add(() =>
             {
                 MatchmakingItemDeselected?.Invoke(userId, playlistItemId);
+                RoomUpdated?.Invoke();
+            });
+
+            return Task.CompletedTask;
+        }
+
+        Task IRankedPlayClient.RankedPlayCardsDrawn(int userId, RankedPlayCard[] cards)
+        {
+            Scheduler.Add(() =>
+            {
+                Debug.Assert(Room != null);
+
+                var user = Room.Users.SingleOrDefault(u => u.UserID == userId);
+
+                // TODO: user should NEVER be null here, see https://github.com/ppy/osu/issues/17713.
+                if (user == null)
+                    return;
+
+                RankedPlayCardsDrawn?.Invoke(user, cards);
+                RoomUpdated?.Invoke();
+            });
+
+            return Task.CompletedTask;
+        }
+
+        Task IRankedPlayClient.RankedPlayCardsDiscarded(RankedPlayCard[] cards)
+        {
+            Scheduler.Add(() =>
+            {
+                RankedPlayCardsDiscarded?.Invoke(cards);
+                RoomUpdated?.Invoke();
+            });
+
+            return Task.CompletedTask;
+        }
+
+        Task IRankedPlayClient.RankedPlayCardPlayed(RankedPlayCard card)
+        {
+            Scheduler.Add(() =>
+            {
+                RankedPlayCardPlayed?.Invoke(card);
+                RoomUpdated?.Invoke();
+            });
+
+            return Task.CompletedTask;
+        }
+
+        Task IRankedPlayClient.RankedPlayCardRevealed(RankedPlayCard card, MultiplayerPlaylistItem item)
+        {
+            Scheduler.Add(() =>
+            {
+                Debug.Assert(Room != null);
+
+                foreach (var user in Room.Users)
+                {
+                    RankedPlayUserState userState = (RankedPlayUserState)user.MatchState!;
+
+                    foreach (var userCard in userState.Hand)
+                    {
+                        if (userCard.ID == card.ID)
+                            userCard.Item = item;
+                    }
+                }
+
+                RankedPlayCardRevealed?.Invoke(card, item);
                 RoomUpdated?.Invoke();
             });
 

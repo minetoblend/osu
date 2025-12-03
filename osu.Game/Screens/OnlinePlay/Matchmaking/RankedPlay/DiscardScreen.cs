@@ -23,7 +23,7 @@ using osuTK.Graphics;
 
 namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 {
-    public partial class DiscardScreen(MultiplayerPlaylistItem[] hand) : RankedPlaySubScreen
+    public partial class DiscardScreen(Online.Multiplayer.MatchTypes.RankedPlay.RankedPlayCard[] hand) : RankedPlaySubScreen
     {
         private Container<Card> cardFlow = null!;
         private OsuButton discardButton = null!;
@@ -35,7 +35,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
         [BackgroundDependencyLoader]
         private void load()
         {
-            cards.AddRange(hand.Select(item => new Card(item)
+            cards.AddRange(hand.Select(item => new Card(new MultiplayerPlaylistItem()) // Todo:
             {
                 Origin = Anchor.Centre,
                 Anchor = Anchor.Centre,

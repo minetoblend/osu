@@ -4,7 +4,7 @@
 using osu.Framework.Allocation;
 using osu.Framework.Extensions.ObjectExtensions;
 using osu.Game.Online.Multiplayer;
-using osu.Game.Online.Multiplayer.MatchTypes.Matchmaking;
+using osu.Game.Online.Multiplayer.MatchTypes.RankedPlay;
 
 namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 {
@@ -30,13 +30,14 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 
         private void onMatchRoomStateChanged(MatchRoomState? state) => Scheduler.Add(() =>
         {
-            if (state is not MatchmakingRoomState matchmakingState)
+            if (state is not RankedPlayRoomState rankedPlayState)
                 return;
 
-            switch (matchmakingState.Stage)
+            switch (rankedPlayState.Stage)
             {
-                case MatchmakingStage.UserBeatmapDiscard:
-                    InternalChild = new DiscardScreen(matchmakingState.Users.UserDictionary[client.LocalUser!.UserID].Hand);
+                case RankedPlayStage.CardDiscard:
+                    RankedPlayUserState userState = (RankedPlayUserState)client.LocalUser!.MatchState!;
+                    InternalChild = new DiscardScreen(userState.Hand);
                     break;
             }
         });
