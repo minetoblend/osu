@@ -1161,10 +1161,21 @@ namespace osu.Game.Online.Multiplayer
 
                     foreach (var userCard in userState.Hand)
                     {
-                        if (userCard.ID == card.ID)
+                        if (userCard.Equals(card))
                             userCard.Item = item;
                     }
                 }
+
+                RankedPlayRoomState roomState = (RankedPlayRoomState)Room.MatchState!;
+
+                foreach (var deckCard in roomState.Deck)
+                {
+                    if (deckCard.Equals(card))
+                        deckCard.Item = item;
+                }
+
+                if (roomState.PlayedCard?.Equals(card) == true)
+                    roomState.PlayedCard.Item = item;
 
                 RankedPlayCardRevealed?.Invoke(card, item);
                 RoomUpdated?.Invoke();
