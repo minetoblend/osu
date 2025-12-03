@@ -137,7 +137,7 @@ namespace osu.Game.Online.Multiplayer
         public event Action<int, long>? MatchmakingItemDeselected;
         public event Action<MatchRoomState>? MatchRoomStateChanged;
 
-        public event Action<RankedPlayCard, MultiplayerPlaylistItem>? RankedPlayCardRevealed;
+        public event Action<RankedPlayCard>? RankedPlayCardRevealed;
 
         public event Action<int>? UserVotedToSkipIntro;
         public event Action? VoteToSkipIntroPassed;
@@ -1153,6 +1153,8 @@ namespace osu.Game.Online.Multiplayer
         {
             Scheduler.Add(() =>
             {
+                card.Item = item;
+
                 Debug.Assert(Room != null);
 
                 foreach (var user in Room.Users)
@@ -1177,7 +1179,7 @@ namespace osu.Game.Online.Multiplayer
                 if (roomState.PlayedCard?.Equals(card) == true)
                     roomState.PlayedCard.Item = item;
 
-                RankedPlayCardRevealed?.Invoke(card, item);
+                RankedPlayCardRevealed?.Invoke(card);
                 RoomUpdated?.Invoke();
             });
 
