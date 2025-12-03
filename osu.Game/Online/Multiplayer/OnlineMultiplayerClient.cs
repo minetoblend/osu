@@ -84,9 +84,6 @@ namespace osu.Game.Online.Multiplayer
                     connection.On<int, long>(nameof(IMatchmakingClient.MatchmakingItemSelected), ((IMatchmakingClient)this).MatchmakingItemSelected);
                     connection.On<int, long>(nameof(IMatchmakingClient.MatchmakingItemDeselected), ((IMatchmakingClient)this).MatchmakingItemDeselected);
 
-                    connection.On<int, RankedPlayCard[]>(nameof(IRankedPlayClient.RankedPlayCardsDrawn), ((IRankedPlayClient)this).RankedPlayCardsDrawn);
-                    connection.On<RankedPlayCard[]>(nameof(IRankedPlayClient.RankedPlayCardsDiscarded), ((IRankedPlayClient)this).RankedPlayCardsDiscarded);
-                    connection.On<RankedPlayCard>(nameof(IRankedPlayClient.RankedPlayCardPlayed), ((IRankedPlayClient)this).RankedPlayCardPlayed);
                     connection.On<RankedPlayCard, MultiplayerPlaylistItem>(nameof(IRankedPlayClient.RankedPlayCardRevealed), ((IRankedPlayClient)this).RankedPlayCardRevealed);
 
                     connection.On(nameof(IStatefulUserHubClient.DisconnectRequested), ((IMultiplayerClient)this).DisconnectRequested);
@@ -338,6 +335,26 @@ namespace osu.Game.Online.Multiplayer
                 return Task.CompletedTask;
 
             return connector.Disconnect();
+        }
+
+        public override Task<RankedPlayDiscardResponse> DiscardCards(RankedPlayCard[] cards)
+        {
+            if (!IsConnected.Value)
+                return Task.FromResult(new RankedPlayDiscardResponse());
+
+            Debug.Assert(connection != null);
+
+            return connection.InvokeAsync<RankedPlayDiscardResponse>(nameof(IRankedPlayServer.DiscardCards), cards);
+        }
+
+        public override Task PlayCard(RankedPlayCard card)
+        {
+            if (!IsConnected.Value)
+                return Task.CompletedTask;
+
+            Debug.Assert(connection != null);
+
+            return connection.InvokeAsync<RankedPlayDiscardResponse>(nameof(IRankedPlayServer.PlayCard), card);
         }
 
         public override Task<MatchmakingPool[]> GetMatchmakingPools(MatchmakingPoolType type)

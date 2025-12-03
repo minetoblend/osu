@@ -21,12 +21,17 @@ namespace osu.Game.Online.Multiplayer.MatchTypes.RankedPlay
         CardDiscard,
 
         /// <summary>
+        /// Users have finished discarding their cards.
+        /// </summary>
+        FinishCardDiscard,
+
+        /// <summary>
         /// The active user is selecting a card to play.
         /// </summary>
         CardSelect,
 
         /// <summary>
-        /// Waiting for clients to download the beatmap.
+        /// The active user has made a selection, both players should now start downloading it.
         /// </summary>
         FinishSelection,
 

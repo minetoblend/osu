@@ -137,9 +137,6 @@ namespace osu.Game.Online.Multiplayer
         public event Action<int, long>? MatchmakingItemDeselected;
         public event Action<MatchRoomState>? MatchRoomStateChanged;
 
-        public event Action<MultiplayerRoomUser, RankedPlayCard[]>? RankedPlayCardsDrawn;
-        public event Action<RankedPlayCard[]>? RankedPlayCardsDiscarded;
-        public event Action<RankedPlayCard>? RankedPlayCardPlayed;
         public event Action<RankedPlayCard, MultiplayerPlaylistItem>? RankedPlayCardRevealed;
 
         public event Action<int>? UserVotedToSkipIntro;
@@ -1148,46 +1145,9 @@ namespace osu.Game.Online.Multiplayer
             return Task.CompletedTask;
         }
 
-        Task IRankedPlayClient.RankedPlayCardsDrawn(int userId, RankedPlayCard[] cards)
-        {
-            Scheduler.Add(() =>
-            {
-                Debug.Assert(Room != null);
+        public abstract Task<RankedPlayDiscardResponse> DiscardCards(RankedPlayCard[] cards);
 
-                var user = Room.Users.SingleOrDefault(u => u.UserID == userId);
-
-                // TODO: user should NEVER be null here, see https://github.com/ppy/osu/issues/17713.
-                if (user == null)
-                    return;
-
-                RankedPlayCardsDrawn?.Invoke(user, cards);
-                RoomUpdated?.Invoke();
-            });
-
-            return Task.CompletedTask;
-        }
-
-        Task IRankedPlayClient.RankedPlayCardsDiscarded(RankedPlayCard[] cards)
-        {
-            Scheduler.Add(() =>
-            {
-                RankedPlayCardsDiscarded?.Invoke(cards);
-                RoomUpdated?.Invoke();
-            });
-
-            return Task.CompletedTask;
-        }
-
-        Task IRankedPlayClient.RankedPlayCardPlayed(RankedPlayCard card)
-        {
-            Scheduler.Add(() =>
-            {
-                RankedPlayCardPlayed?.Invoke(card);
-                RoomUpdated?.Invoke();
-            });
-
-            return Task.CompletedTask;
-        }
+        public abstract Task PlayCard(RankedPlayCard card);
 
         Task IRankedPlayClient.RankedPlayCardRevealed(RankedPlayCard card, MultiplayerPlaylistItem item)
         {

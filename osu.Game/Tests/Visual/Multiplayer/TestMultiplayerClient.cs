@@ -812,6 +812,16 @@ namespace osu.Game.Tests.Visual.Multiplayer
             await ((IMultiplayerClient)this).MatchUserStateChanged(userId, clone(state)).ConfigureAwait(false);
         }
 
+        public override Task<RankedPlayDiscardResponse> DiscardCards(RankedPlayCard[] cards)
+        {
+            return Task.FromResult(new RankedPlayDiscardResponse());
+        }
+
+        public override Task PlayCard(RankedPlayCard card)
+        {
+            return Task.CompletedTask;
+        }
+
         public override Task<MatchmakingPool[]> GetMatchmakingPools(MatchmakingPoolType type)
         {
             return Task.FromResult<MatchmakingPool[]>(

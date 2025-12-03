@@ -9,12 +9,6 @@ namespace osu.Game.Online.RankedPlay
 {
     public interface IRankedPlayClient
     {
-        Task RankedPlayCardsDrawn(int userId, RankedPlayCard[] cards);
-
-        Task RankedPlayCardsDiscarded(RankedPlayCard[] cards);
-
-        Task RankedPlayCardPlayed(RankedPlayCard card);
-
         Task RankedPlayCardRevealed(RankedPlayCard card, MultiplayerPlaylistItem item);
     }
 }
