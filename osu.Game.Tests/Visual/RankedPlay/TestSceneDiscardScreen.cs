@@ -14,7 +14,14 @@ namespace osu.Game.Tests.Visual.RankedPlay
         {
             base.SetUpSteps();
 
-            MultiplayerPlaylistItem[] items = Enumerable.Range(0, 5).Select(id => new MultiplayerPlaylistItem { ID = id, BeatmapID = id }).ToArray();
+            Game.Online.Multiplayer.MatchTypes.RankedPlay.RankedPlayCard[] items = Enumerable.Range(0, 5).Select(id => new Game.Online.Multiplayer.MatchTypes.RankedPlay.RankedPlayCard
+            {
+                Item = new MultiplayerPlaylistItem
+                {
+                    ID = id,
+                    BeatmapID = id
+                }
+            }).ToArray();
 
             AddStep("add screen", () => Child = new DiscardScreen(items));
         }

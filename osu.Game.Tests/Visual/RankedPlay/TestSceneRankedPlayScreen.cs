@@ -10,10 +10,11 @@ using osu.Framework.Testing;
 using osu.Game.Graphics.UserInterfaceV2;
 using osu.Game.Online.API.Requests.Responses;
 using osu.Game.Online.Multiplayer;
-using osu.Game.Online.Multiplayer.MatchTypes.Matchmaking;
+using osu.Game.Online.Multiplayer.MatchTypes.RankedPlay;
 using osu.Game.Online.Rooms;
 using osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay;
 using osu.Game.Tests.Visual.Multiplayer;
+using RankedPlayCard = osu.Game.Online.Multiplayer.MatchTypes.RankedPlay.RankedPlayCard;
 
 namespace osu.Game.Tests.Visual.RankedPlay
 {
@@ -34,13 +35,28 @@ namespace osu.Game.Tests.Visual.RankedPlay
 
             WaitForJoined();
 
+            AddStep("set cards", () =>
+            {
+                MultiplayerClient.ChangeMatchLocalUserState(new RankedPlayUserState
+                {
+                    Hand = Enumerable.Range(0, 5).Select(id => new RankedPlayCard
+                    {
+                        Item = new MultiplayerPlaylistItem
+                        {
+                            ID = id,
+                            BeatmapID = id
+                        }
+                    }).ToArray()
+                }).WaitSafely();
+            });
+
             AddStep("join users", () =>
             {
                 MultiplayerClient.AddUser(new MultiplayerRoomUser(0)
                 {
                     User = new APIUser
                     {
-                        Username = $"Other User"
+                        Username = "Other User"
                     }
                 });
             });
@@ -64,15 +80,7 @@ namespace osu.Game.Tests.Visual.RankedPlay
         [Test]
         public void TestRankedPlayScreen()
         {
-            changeStage(MatchmakingStage.UserBeatmapDiscard, state =>
-            {
-                state.Users.GetOrAdd(MultiplayerClient.LocalUser!.UserID);
-
-                foreach (int userId in new[] { MultiplayerClient.LocalUser!.UserID, 0 })
-                {
-                    state.Users.GetOrAdd(userId).Hand = Enumerable.Range(0, 5).Select(id => new MultiplayerPlaylistItem { ID = id, BeatmapID = id }).ToArray();
-                }
-            });
+            changeStage(RankedPlayStage.CardDiscard);
 
             AddStep("select card", () => screen.ChildrenOfType<DiscardScreen.Card>().First().TriggerClick());
             AddStep("select another card", () => screen.ChildrenOfType<DiscardScreen.Card>().Skip(2).First().TriggerClick());
@@ -80,9 +88,9 @@ namespace osu.Game.Tests.Visual.RankedPlay
             AddStep("discard", () => screen.ChildrenOfType<RoundedButton>().First(it => it.Name == "Discard").TriggerClick());
         }
 
-        private void changeStage(MatchmakingStage stage, Action<MatchmakingRoomState>? prepare = null, int waitTime = 5)
+        private void changeStage(RankedPlayStage stage, Action<RankedPlayRoomState>? prepare = null, int waitTime = 5)
         {
-            AddStep($"stage: {stage}", () => MultiplayerClient.MatchmakingChangeStage(stage, prepare).WaitSafely());
+            AddStep($"stage: {stage}", () => MultiplayerClient.RankedPlayChangeStage(stage, prepare).WaitSafely());
             AddWaitStep("wait", waitTime);
         }
     }
