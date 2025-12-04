@@ -11,7 +11,7 @@ using osu.Game.Online.API.Requests.Responses;
 
 namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 {
-    public partial class RankedPlayCard
+    public partial class DrawableRankedPlayCard
     {
         private partial class UserTagPill : CompositeDrawable
         {

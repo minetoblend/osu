@@ -61,9 +61,9 @@ namespace osu.Game.Tests.Visual.RankedPlay
 
             beatmap.StarRating = 7.49;
 
-            RankedPlayCard card = null!;
+            DrawableRankedPlayCard card = null!;
 
-            AddStep("add card", () => Child = card = new RankedPlayCard(beatmap)
+            AddStep("add card", () => Child = card = new DrawableRankedPlayCard(beatmap)
             {
                 Anchor = Anchor.Centre,
                 Origin = Anchor.Centre,

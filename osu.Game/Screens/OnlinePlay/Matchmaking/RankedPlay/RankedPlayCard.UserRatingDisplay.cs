@@ -13,7 +13,7 @@ using osuTK;
 
 namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 {
-    public partial class RankedPlayCard
+    public partial class DrawableRankedPlayCard
     {
         private partial class UserRatingDisplay : CompositeDrawable
         {
