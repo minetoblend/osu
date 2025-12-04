@@ -14,7 +14,7 @@ namespace osu.Game.Tests.Visual.RankedPlay
         {
             base.SetUpSteps();
 
-            Game.Online.Multiplayer.MatchTypes.RankedPlay.RankedPlayCard[] items = Enumerable.Range(0, 5).Select(id => new Game.Online.Multiplayer.MatchTypes.RankedPlay.RankedPlayCard
+            Game.Online.Multiplayer.MatchTypes.RankedPlay.RankedPlayCardItem[] items = Enumerable.Range(0, 5).Select(id => new Game.Online.Multiplayer.MatchTypes.RankedPlay.RankedPlayCardItem
             {
                 Item = new MultiplayerPlaylistItem
                 {

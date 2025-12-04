@@ -25,7 +25,7 @@ using osuTK.Graphics;
 
 namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 {
-    public partial class DrawableRankedPlayCard : CompositeDrawable
+    public partial class RankedPlayCard : CompositeDrawable
     {
         private const float shiny_alpha = 0.2f;
 
@@ -40,7 +40,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 
         private bool shiny;
 
-        public DrawableRankedPlayCard(APIBeatmap beatmap)
+        public RankedPlayCard(APIBeatmap beatmap)
         {
             this.beatmap = beatmap;
 

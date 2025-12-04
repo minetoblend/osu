@@ -40,7 +40,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 
         public readonly BindableBool AllowSelection = new BindableBool();
 
-        public IEnumerable<RankedPlayCard> Cards => cards.Select(it => it.Item);
+        public IEnumerable<RankedPlayCardItem> Cards => cards.Select(it => it.Item);
 
         public override bool PropagatePositionalInputSubTree => State != CardState.Hidden;
 
@@ -57,7 +57,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
             };
         }
 
-        public void AddCard(RankedPlayCard card, Action<PlayerCard>? setupAction = null)
+        public void AddCard(RankedPlayCardItem card, Action<PlayerCard>? setupAction = null)
         {
             var drawable = new PlayerCard(card)
             {
@@ -71,7 +71,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
             setupAction?.Invoke(drawable);
         }
 
-        public void DrawCard(RankedPlayCard card) => AddCard(card, d =>
+        public void DrawCard(RankedPlayCardItem card) => AddCard(card, d =>
         {
             d.State = CardState.NewlyDrawn;
             d.X = DrawWidth;
@@ -81,7 +81,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
             d.Delay(500).ChangeStateTo(state);
         });
 
-        public void DiscardCards(RankedPlayCard[] items)
+        public void DiscardCards(RankedPlayCardItem[] items)
         {
             var drawables = cards.Where(card => items.Any(it => it.Equals(card.Item))).ToList();
 

@@ -15,12 +15,12 @@ namespace osu.Game.Online.RankedPlay
         /// The cards that were discarded.
         /// </summary>
         [Key(0)]
-        public RankedPlayCard[] Discarded { get; set; } = [];
+        public RankedPlayCardItem[] Discarded { get; set; } = [];
 
         /// <summary>
         /// Any new cards that were drawn to replace the discarded ones.
         /// </summary>
         [Key(1)]
-        public RankedPlayCard[] Drawn { get; set; } = [];
+        public RankedPlayCardItem[] Drawn { get; set; } = [];
     }
 }

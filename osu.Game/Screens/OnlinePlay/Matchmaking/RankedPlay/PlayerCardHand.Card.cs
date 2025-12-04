@@ -20,7 +20,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
     {
         public partial class PlayerCard : CompositeDrawable
         {
-            public readonly RankedPlayCard Item;
+            public readonly RankedPlayCardItem Item;
 
             public bool Selected;
 
@@ -28,7 +28,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 
             public readonly BindableBool AllowSelection = new BindableBool();
 
-            public PlayerCard(RankedPlayCard item)
+            public PlayerCard(RankedPlayCardItem item)
             {
                 Item = item;
                 Anchor = Anchor.Centre;

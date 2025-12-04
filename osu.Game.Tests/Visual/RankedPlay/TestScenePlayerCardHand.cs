@@ -25,14 +25,14 @@ namespace osu.Game.Tests.Visual.RankedPlay
             AddStep("add initial cards", () =>
             {
                 for (int i = 0; i < 4; i++)
-                    hand.AddCard(new RankedPlayCard());
+                    hand.AddCard(new RankedPlayCardItem());
             });
         }
 
         [Test]
         public void TestHand()
         {
-            AddStep("draw card", () => hand.DrawCard(new RankedPlayCard()));
+            AddStep("draw card", () => hand.DrawCard(new RankedPlayCardItem()));
             AddStep("discard selection", () => hand.DiscardSelectedCards());
             AddToggleStep("allow selection", value => hand.AllowSelection.Value = value);
             AddStep("hidden layout", () => hand.State = PlayerCardHand.CardState.Hidden);

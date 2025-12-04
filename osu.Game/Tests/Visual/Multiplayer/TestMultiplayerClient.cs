@@ -812,12 +812,12 @@ namespace osu.Game.Tests.Visual.Multiplayer
             await ((IMultiplayerClient)this).MatchUserStateChanged(userId, clone(state)).ConfigureAwait(false);
         }
 
-        public override Task<RankedPlayDiscardResponse> DiscardCards(RankedPlayCard[] cards)
+        public override Task<RankedPlayDiscardResponse> DiscardCards(RankedPlayCardItem[] cards)
         {
             return Task.FromResult(new RankedPlayDiscardResponse());
         }
 
-        public override Task PlayCard(RankedPlayCard card)
+        public override Task PlayCard(RankedPlayCardItem card)
         {
             return Task.CompletedTask;
         }

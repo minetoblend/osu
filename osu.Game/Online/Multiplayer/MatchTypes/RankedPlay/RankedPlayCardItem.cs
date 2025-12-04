@@ -11,7 +11,7 @@ namespace osu.Game.Online.Multiplayer.MatchTypes.RankedPlay
 {
     [Serializable]
     [MessagePackObject]
-    public class RankedPlayCard : IEquatable<RankedPlayCard>
+    public class RankedPlayCardItem : IEquatable<RankedPlayCardItem>
     {
         /// <summary>
         /// A unique identifier for this card.
@@ -28,11 +28,11 @@ namespace osu.Game.Online.Multiplayer.MatchTypes.RankedPlay
         [IgnoreMember]
         public MultiplayerPlaylistItem? Item { get; set; }
 
-        public bool Equals(RankedPlayCard? other)
+        public bool Equals(RankedPlayCardItem? other)
             => other != null && ID.Equals(other.ID);
 
         public override bool Equals(object? obj)
-            => obj is RankedPlayCard other && Equals(other);
+            => obj is RankedPlayCardItem other && Equals(other);
 
         [SuppressMessage("ReSharper", "NonReadonlyMemberInGetHashCode")]
         public override int GetHashCode()

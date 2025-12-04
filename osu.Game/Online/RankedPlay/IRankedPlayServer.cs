@@ -8,8 +8,8 @@ namespace osu.Game.Online.RankedPlay
 {
     public interface IRankedPlayServer
     {
-        Task<RankedPlayDiscardResponse> DiscardCards(RankedPlayCard[] cards);
+        Task<RankedPlayDiscardResponse> DiscardCards(RankedPlayCardItem[] cards);
 
-        Task PlayCard(RankedPlayCard card);
+        Task PlayCard(RankedPlayCardItem card);
     }
 }

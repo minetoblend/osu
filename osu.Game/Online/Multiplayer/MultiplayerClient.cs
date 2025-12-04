@@ -137,7 +137,7 @@ namespace osu.Game.Online.Multiplayer
         public event Action<int, long>? MatchmakingItemDeselected;
         public event Action<MatchRoomState>? MatchRoomStateChanged;
 
-        public event Action<RankedPlayCard>? RankedPlayCardRevealed;
+        public event Action<RankedPlayCardItem>? RankedPlayCardRevealed;
 
         public event Action<int>? UserVotedToSkipIntro;
         public event Action? VoteToSkipIntroPassed;
@@ -1145,11 +1145,11 @@ namespace osu.Game.Online.Multiplayer
             return Task.CompletedTask;
         }
 
-        public abstract Task<RankedPlayDiscardResponse> DiscardCards(RankedPlayCard[] cards);
+        public abstract Task<RankedPlayDiscardResponse> DiscardCards(RankedPlayCardItem[] cards);
 
-        public abstract Task PlayCard(RankedPlayCard card);
+        public abstract Task PlayCard(RankedPlayCardItem card);
 
-        Task IRankedPlayClient.RankedPlayCardRevealed(RankedPlayCard card, MultiplayerPlaylistItem item)
+        Task IRankedPlayClient.RankedPlayCardRevealed(RankedPlayCardItem card, MultiplayerPlaylistItem item)
         {
             Scheduler.Add(() =>
             {

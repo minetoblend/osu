@@ -14,7 +14,6 @@ using osu.Game.Online.Multiplayer.MatchTypes.RankedPlay;
 using osu.Game.Online.Rooms;
 using osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay;
 using osu.Game.Tests.Visual.Multiplayer;
-using RankedPlayCard = osu.Game.Online.Multiplayer.MatchTypes.RankedPlay.RankedPlayCard;
 
 namespace osu.Game.Tests.Visual.RankedPlay
 {
@@ -39,7 +38,7 @@ namespace osu.Game.Tests.Visual.RankedPlay
             {
                 MultiplayerClient.ChangeMatchLocalUserState(new RankedPlayUserState
                 {
-                    Hand = Enumerable.Range(0, 5).Select(id => new RankedPlayCard
+                    Hand = Enumerable.Range(0, 5).Select(id => new RankedPlayCardItem
                     {
                         Item = new MultiplayerPlaylistItem
                         {

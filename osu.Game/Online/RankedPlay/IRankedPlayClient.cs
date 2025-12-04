@@ -9,6 +9,6 @@ namespace osu.Game.Online.RankedPlay
 {
     public interface IRankedPlayClient
     {
-        Task RankedPlayCardRevealed(RankedPlayCard card, MultiplayerPlaylistItem item);
+        Task RankedPlayCardRevealed(RankedPlayCardItem card, MultiplayerPlaylistItem item);
     }
 }
