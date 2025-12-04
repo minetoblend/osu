@@ -50,7 +50,7 @@ namespace osu.Game.Utils
             Parameters = new SpringParameters(frequency, damping, response);
         }
 
-        public float Update(double elapsed, float current, float target, ref float velocity)
+        public readonly float Update(double elapsed, float current, float target, ref float velocity)
         {
             float dt = (float)(elapsed / 1000);
 
@@ -62,7 +62,7 @@ namespace osu.Game.Utils
             return current;
         }
 
-        public Vector2 Update(double elapsed, Vector2 current, Vector2 target, ref Vector2 velocity)
+        public readonly Vector2 Update(double elapsed, Vector2 current, Vector2 target, ref Vector2 velocity)
         {
             float dt = (float)(elapsed / 1000);
 

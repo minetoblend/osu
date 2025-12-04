@@ -1,6 +1,7 @@
 // Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
+using osu.Framework.Bindables;
 using osu.Framework.Extensions.Color4Extensions;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
@@ -14,18 +15,20 @@ using osuTK.Graphics;
 
 namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 {
-    public partial class PlayerCardDeck
+    public partial class PlayerCardHand
     {
         public partial class PlayerCard : CompositeDrawable
         {
-            public SpringParameters Movement
-            {
-                get => spring.Parameters;
-                set => spring.Parameters = value;
-            }
+            public readonly RankedPlayCard Item;
+
+            public bool NewlyAdded;
+            public bool Selected;
+
+            public readonly BindableBool AllowSelection = new BindableBool();
 
             public PlayerCard(RankedPlayCard item)
             {
+                Item = item;
                 Anchor = Anchor.Centre;
                 Origin = Anchor.Centre;
 
@@ -46,30 +49,18 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                     Child = new Box
                     {
                         RelativeSizeAxes = Axes.Both,
-                        Colour = Color4.LightGray,
+                        Colour = Color4.Gray,
                     }
                 };
             }
 
-            public Vector2 TargetPosition;
-            public float TargetRotation;
-
             private Vector2 velocity;
             private float rotationVelocity;
 
-            private Spring spring = new Spring
+            public void UpdateMovement(in Spring spring, Vector2 targetPosition, float targetRotation)
             {
-                NaturalFrequency = 4,
-                Damping = 2,
-                Response = 1.4f
-            };
-
-            protected override void Update()
-            {
-                base.Update();
-
-                Position = spring.Update(Time.Elapsed, current: Position, target: TargetPosition, velocity: ref velocity);
-                Rotation = spring.Update(Time.Elapsed, current: Rotation, target: TargetRotation, velocity: ref rotationVelocity);
+                Position = spring.Update(Time.Elapsed, current: Position, target: targetPosition, velocity: ref velocity);
+                Rotation = spring.Update(Time.Elapsed, current: Rotation, target: targetRotation, velocity: ref rotationVelocity);
             }
 
             protected override bool OnHover(HoverEvent e)
@@ -84,6 +75,17 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                 base.OnHoverLost(e);
 
                 this.ScaleTo(1, 400, Easing.OutExpo);
+            }
+
+            protected override bool OnClick(ClickEvent e)
+            {
+                if (AllowSelection.Value)
+                {
+                    Selected = !Selected;
+                    return true;
+                }
+
+                return base.OnClick(e);
             }
         }
     }
