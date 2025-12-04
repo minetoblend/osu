@@ -31,7 +31,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 
                 var entry = cardState switch
                 {
-                    CardState.Hand or CardState.NewlyDrawn => handLayout[i],
+                    CardState.Hand => handLayout[i],
                     CardState.Hidden => handLayout[i].OffsetBy(new Vector2(0, 200)),
                     CardState.Lineup => lineupLayout[i],
                     _ => throw new ArgumentOutOfRangeException()
