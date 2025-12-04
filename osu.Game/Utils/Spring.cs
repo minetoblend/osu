@@ -21,9 +21,9 @@ namespace osu.Game.Utils
             {
                 parameters = value;
 
-                k1 = parameters.Damping / (MathF.PI * parameters.NaturalFrequency);
-                k2 = 1 / (2 * MathF.PI * parameters.NaturalFrequency * (2 * MathF.PI * parameters.NaturalFrequency));
-                k3 = parameters.Response * parameters.Damping / (2 * MathF.PI * parameters.NaturalFrequency);
+                k1 = Damping / (MathF.PI * NaturalFrequency);
+                k2 = 1 / ((2 * MathF.PI * NaturalFrequency) * (2 * MathF.PI * NaturalFrequency));
+                k3 = Response * Damping / (2 * MathF.PI * NaturalFrequency);
             }
         }
 
@@ -54,7 +54,7 @@ namespace osu.Game.Utils
         {
             float dt = (float)(elapsed / 1000);
 
-            float k2Stable = MathF.Max(MathF.Max(k2, (dt * dt) / 2 + (dt * k1) / 2), dt * k1);
+            float k2Stable = MathF.Max(MathF.Max(k2, dt * dt / 2 + dt * k1 / 2), dt * k1);
 
             current += dt * velocity;
             velocity += (dt * (target + k3 * velocity - current - k1 * velocity)) / k2Stable;
@@ -66,7 +66,7 @@ namespace osu.Game.Utils
         {
             float dt = (float)(elapsed / 1000);
 
-            float k2Stable = MathF.Max(MathF.Max(k2, (dt * dt) / 2 + (dt * k1) / 2), dt * k1);
+            float k2Stable = MathF.Max(MathF.Max(k2, dt * dt / 2 + dt * k1 / 2), dt * k1);
 
             current += dt * velocity;
             velocity += (dt * (target + k3 * velocity - current - k1 * velocity)) / k2Stable;

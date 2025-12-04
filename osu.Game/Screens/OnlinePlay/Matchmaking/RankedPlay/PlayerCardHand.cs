@@ -15,16 +15,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 {
     public partial class PlayerCardHand : CompositeDrawable
     {
-        private readonly Container<PlayerCard> cardContainer;
-
-        private readonly List<PlayerCard> cards = new List<PlayerCard>();
-
         private CardState state = CardState.Hand;
-        private double stateTransitionTime;
-
-        public IEnumerable<RankedPlayCard> Cards => cards.Select(it => it.Item);
-
-        public readonly BindableBool AllowSelection = new BindableBool();
 
         public CardState State
         {
@@ -35,9 +26,26 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                     return;
 
                 state = value;
-                stateTransitionTime = Time.Current;
+
+                const double stagger = 50;
+                double delay = 0;
+
+                foreach (var card in cards)
+                {
+                    card.Delay(delay).ChangeStateTo(state);
+                    delay += stagger;
+                }
             }
         }
+
+        public readonly BindableBool AllowSelection = new BindableBool();
+
+        public IEnumerable<RankedPlayCard> Cards => cards.Select(it => it.Item);
+
+        public override bool PropagatePositionalInputSubTree => State != CardState.Hidden;
+
+        private readonly Container<PlayerCard> cardContainer;
+        private readonly List<PlayerCard> cards = new List<PlayerCard>();
 
         public PlayerCardHand()
         {
@@ -54,6 +62,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
             var drawable = new PlayerCard(card)
             {
                 AllowSelection = { BindTarget = AllowSelection },
+                State = state,
             };
 
             cards.Add(drawable);
@@ -64,25 +73,22 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 
         public void DrawCard(RankedPlayCard card) => AddCard(card, d =>
         {
-            d.NewlyAdded = true;
+            d.State = CardState.NewlyDrawn;
             d.X = DrawWidth;
             d.Rotation = -30;
             d.FadeInFromZero(200);
 
-            Scheduler.AddDelayed(() => d.NewlyAdded = false, 500);
+            d.Delay(500).ChangeStateTo(state);
         });
 
-        public void Discard(RankedPlayCard[] items)
+        public void DiscardCards(RankedPlayCard[] items)
         {
             var drawables = cards.Where(card => items.Any(it => it.Equals(card.Item))).ToList();
-
-            float totalWidth = drawables.Skip(1).Sum(it => it.DrawWidth + 40);
-            float x = -totalWidth / 2;
 
             const double stagger = 50;
             double delay = 0;
 
-            foreach (var card in drawables)
+            foreach ((var card, float x) in horizontalArrangement(drawables, spacing: 40))
             {
                 cards.Remove(card);
 
@@ -95,13 +101,11 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                     .FadeOut(200)
                     .Expire();
 
-                x += card.DrawWidth + 40;
-
                 delay += stagger;
             }
         }
 
-        public void DiscardSelectedCards() => Discard(cards.Where(it => it.Selected).Select(it => it.Item).ToArray());
+        public void DiscardSelectedCards() => DiscardCards(cards.Where(it => it.Selected).Select(it => it.Item).ToArray());
 
         protected override void Update()
         {
@@ -110,104 +114,29 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
             updateLayout();
         }
 
-        private void updateLayout()
-        {
-            foreach (var entry in computeCardLayout())
-            {
-                entry.Card.UpdateMovement(
-                    entry.movement,
-                    entry.Position,
-                    entry.Rotation
-                );
-            }
-        }
-
-        private IEnumerable<LayoutEntry> computeCardLayout()
-        {
-            const float stagger = 30;
-
-            int staggerCount = int.Clamp((int)((Time.Current - stateTransitionTime) / stagger), 0, cards.Count);
-
-            return State switch
-            {
-                CardState.Hand =>
-                [
-                    ..computeHandLayout().Take(staggerCount),
-                    ..computeLineupLayout().Skip(staggerCount)
-                ],
-                CardState.Lineup =>
-                [
-                    ..computeLineupLayout().Take(staggerCount),
-                    ..computeHandLayout().Skip(staggerCount)
-                ],
-                _ => throw new ArgumentOutOfRangeException()
-            };
-        }
-
-        private IEnumerable<LayoutEntry> computeHandLayout()
-        {
-            if (cards.Count == 0)
-                yield break;
-
-            const float spacing = -60;
-
-            float totalWidth = cards.Skip(1).Sum(card => cardWidth(card) + spacing);
-            float x = -totalWidth / 2;
-
-            var hoveredCard = cards.FirstOrDefault(it => it.IsHovered);
-
-            foreach (var card in cards)
-            {
-                var targetPosition = new Vector2(x + offsetToHoveredCard(card), 0);
-
-                targetPosition.Y = MathF.Pow(MathF.Abs(targetPosition.X / 250), 2) * 20;
-
-                float rotation = targetPosition.X * 0.03f;
-
-                if (card.Selected)
-                {
-                    float angle = MathHelper.DegreesToRadians(rotation - 90);
-
-                    targetPosition += new Vector2(MathF.Cos(angle), MathF.Sin(angle)) * 80;
-                }
-
-                yield return new LayoutEntry(card, targetPosition, rotation, card.NewlyAdded ? CardMovement.DAMPED : CardMovement.DEFAULT);
-
-                x += cardWidth(card) + spacing;
-            }
-
-            float offsetToHoveredCard(PlayerCard card)
-            {
-                if (hoveredCard is not null && card.X > hoveredCard.X)
-                    return 5000 / (card.X - hoveredCard.X);
-
-                return 0;
-            }
-        }
-
-        private IEnumerable<LayoutEntry> computeLineupLayout()
-        {
-            const float spacing = 10;
-
-            float totalWidth = cards.Skip(1).Sum(card => cardWidth(card) + spacing);
-            float x = -totalWidth / 2;
-
-            foreach (var card in cards)
-            {
-                yield return new LayoutEntry(card, new Vector2(x, -100), 0, CardMovement.DAMPED);
-
-                x += cardWidth(card) + spacing;
-            }
-        }
-
-        private float cardWidth(PlayerCard card) => card.LayoutSize.X * card.Scale.X;
-
-        private readonly record struct LayoutEntry(PlayerCard Card, Vector2 Position, float Rotation, Spring movement);
-
         public enum CardState
         {
+            Hidden,
             Hand,
             Lineup,
+            NewlyDrawn,
+        }
+
+        private static class CardMovement
+        {
+            public static readonly Spring ENERGETIC = new Spring
+            {
+                NaturalFrequency = 4,
+                Damping = 2,
+                Response = 1.35f
+            };
+
+            public static readonly Spring SMOOTH = new Spring
+            {
+                NaturalFrequency = 5,
+                Damping = 0.5f,
+                Response = -3.25f
+            };
         }
     }
 }

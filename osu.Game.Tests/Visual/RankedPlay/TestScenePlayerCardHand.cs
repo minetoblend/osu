@@ -1,8 +1,6 @@
 // Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
-using System;
-using System.Linq;
 using NUnit.Framework;
 using osu.Framework.Graphics;
 using osu.Framework.Testing;
@@ -37,6 +35,7 @@ namespace osu.Game.Tests.Visual.RankedPlay
             AddStep("draw card", () => hand.DrawCard(new RankedPlayCard()));
             AddStep("discard selection", () => hand.DiscardSelectedCards());
             AddToggleStep("allow selection", value => hand.AllowSelection.Value = value);
+            AddStep("hidden layout", () => hand.State = PlayerCardHand.CardState.Hidden);
             AddStep("hand layout", () => hand.State = PlayerCardHand.CardState.Hand);
             AddStep("lineup layout", () => hand.State = PlayerCardHand.CardState.Lineup);
         }

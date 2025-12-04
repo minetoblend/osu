@@ -1,15 +1,16 @@
 // Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
+using System;
 using osu.Framework.Bindables;
 using osu.Framework.Extensions.Color4Extensions;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Effects;
 using osu.Framework.Graphics.Shapes;
+using osu.Framework.Graphics.Transforms;
 using osu.Framework.Input.Events;
 using osu.Game.Online.Multiplayer.MatchTypes.RankedPlay;
-using osu.Game.Utils;
 using osuTK;
 using osuTK.Graphics;
 
@@ -21,8 +22,9 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
         {
             public readonly RankedPlayCard Item;
 
-            public bool NewlyAdded;
             public bool Selected;
+
+            public CardState State = CardState.Hand;
 
             public readonly BindableBool AllowSelection = new BindableBool();
 
@@ -57,11 +59,23 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
             private Vector2 velocity;
             private float rotationVelocity;
 
-            public void UpdateMovement(in Spring spring, Vector2 targetPosition, float targetRotation)
+            public void UpdateMovement(Vector2 targetPosition, float targetRotation)
             {
+                var spring = State switch
+                {
+                    CardState.Hand => CardMovement.ENERGETIC,
+                    CardState.Lineup => CardMovement.SMOOTH,
+                    CardState.NewlyDrawn => CardMovement.SMOOTH,
+                    CardState.Hidden => CardMovement.ENERGETIC,
+
+                    _ => throw new ArgumentOutOfRangeException()
+                };
+
                 Position = spring.Update(Time.Elapsed, current: Position, target: targetPosition, velocity: ref velocity);
                 Rotation = spring.Update(Time.Elapsed, current: Rotation, target: targetRotation, velocity: ref rotationVelocity);
             }
+
+            public float CardLayoutWidth => DrawWidth * DrawScale.X;
 
             protected override bool OnHover(HoverEvent e)
             {
@@ -87,6 +101,30 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 
                 return base.OnClick(e);
             }
+
+            private class StateTransform : Transform<CardState, PlayerCard>
+            {
+                public override string TargetMember => nameof(State);
+
+                protected override void Apply(PlayerCard d, double time)
+                {
+                    if (time >= EndTime)
+                        Target.State = EndValue;
+                }
+
+                protected override void ReadIntoStartValue(PlayerCard d)
+                {
+                    StartValue = d.State;
+                }
+            }
+
+            public TransformSequence<PlayerCard> ChangeStateTo(CardState state) => this.TransformTo(this.PopulateTransform(new StateTransform(), state));
         }
+    }
+
+    internal static class CardHandExtensions
+    {
+        public static TransformSequence<PlayerCardHand.PlayerCard> ChangeStateTo(this TransformSequence<PlayerCardHand.PlayerCard> sequence, PlayerCardHand.CardState state) =>
+            sequence.Append(o => o.ChangeStateTo(state));
     }
 }
