@@ -49,7 +49,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
             if (cards.Count == 0)
                 yield break;
 
-            var hoveredCard = cards.FirstOrDefault(it => it.IsHovered);
+            var hoveredCard = cards.FirstOrDefault(static it => it.IsHovered);
 
             foreach ((var card, float x) in horizontalArrangement(spacing: -60))
             {
@@ -86,7 +86,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 
         private IEnumerable<(PlayerCard card, float x)> horizontalArrangement(float spacing) => horizontalArrangement(cards, spacing);
 
-        private IEnumerable<(PlayerCard card, float x)> horizontalArrangement(IEnumerable<PlayerCard> cards, float spacing)
+        private static IEnumerable<(PlayerCard card, float x)> horizontalArrangement(IEnumerable<PlayerCard> cards, float spacing)
         {
             float totalWidth = cards.Sum(card => card.CardLayoutWidth + spacing) - spacing;
             float x = -totalWidth / 2;
