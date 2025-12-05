@@ -3,7 +3,6 @@
 
 using System;
 using MessagePack;
-using osu.Game.Online.Rooms;
 
 namespace osu.Game.Online.Multiplayer.MatchTypes.Matchmaking
 {
@@ -37,18 +36,5 @@ namespace osu.Game.Online.Multiplayer.MatchTypes.Matchmaking
         /// </summary>
         [Key(3)]
         public MatchmakingRoundList Rounds { get; set; } = new MatchmakingRoundList();
-
-        /// <summary>
-        /// Represents the set of cards in this user's current hand.
-        /// Any of these are playable.
-        /// </summary>
-        [Key(5)]
-        public MultiplayerPlaylistItem[] Hand { get; set; } = [];
-
-        /// <summary>
-        /// The current life points.
-        /// </summary>
-        [Key(6)]
-        public int Life { get; set; } = 1_000_000;
     }
 }

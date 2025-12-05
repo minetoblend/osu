@@ -1,10 +1,12 @@
 // Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
+using System.Linq;
 using osu.Framework.Allocation;
 using osu.Framework.Extensions.ObjectExtensions;
 using osu.Game.Online.Multiplayer;
-using osu.Game.Online.Multiplayer.MatchTypes.Matchmaking;
+using osu.Game.Online.Multiplayer.MatchTypes.RankedPlay;
+using osu.Game.Online.Rooms;
 
 namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 {
@@ -30,13 +32,17 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 
         private void onMatchRoomStateChanged(MatchRoomState? state) => Scheduler.Add(() =>
         {
-            if (state is not MatchmakingRoomState matchmakingState)
+            if (state is not RankedPlayRoomState rankedPlayState)
                 return;
 
-            switch (matchmakingState.Stage)
+            switch (rankedPlayState.Stage)
             {
-                case MatchmakingStage.UserBeatmapDiscard:
-                    InternalChild = new DiscardScreen(matchmakingState.Users.UserDictionary[client.LocalUser!.UserID].Hand);
+                case RankedPlayStage.CardDiscard:
+                    InternalChild = new DiscardScreen(Enumerable.Range(0, 5).Select(i => new MultiplayerPlaylistItem
+                    {
+                        ID = i,
+                        BeatmapID = i
+                    }).ToArray());
                     break;
             }
         });

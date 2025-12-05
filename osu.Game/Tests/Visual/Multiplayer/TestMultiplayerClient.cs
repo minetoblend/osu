@@ -19,7 +19,9 @@ using osu.Game.Online.Matchmaking.Events;
 using osu.Game.Online.Multiplayer;
 using osu.Game.Online.Multiplayer.Countdown;
 using osu.Game.Online.Multiplayer.MatchTypes.Matchmaking;
+using osu.Game.Online.Multiplayer.MatchTypes.RankedPlay;
 using osu.Game.Online.Multiplayer.MatchTypes.TeamVersus;
+using osu.Game.Online.RankedPlay;
 using osu.Game.Online.Rooms;
 using osu.Game.Rulesets.Mods;
 using osu.Game.Tests.Visual.OnlinePlay;
@@ -121,6 +123,11 @@ namespace osu.Game.Tests.Visual.Multiplayer
                                              .MinBy(pair => pair.userCount).teamID;
 
                     user.MatchState = new TeamVersusUserState { TeamID = bestTeam };
+                    ((IMultiplayerClient)this).MatchUserStateChanged(clone(user.UserID), clone(user.MatchState)).WaitSafely();
+                    break;
+
+                case RankedPlayRoomState:
+                    user.MatchState = new RankedPlayUserState { Hand = Enumerable.Range(0, 5).Select(_ => new RankedPlayCardItem()).ToArray() };
                     ((IMultiplayerClient)this).MatchUserStateChanged(clone(user.UserID), clone(user.MatchState)).WaitSafely();
                     break;
             }
@@ -615,13 +622,24 @@ namespace osu.Game.Tests.Visual.Multiplayer
                     break;
 
                 case MatchType.Matchmaking:
-                case MatchType.RankedPlay:
                     ServerRoom.MatchState = new MatchmakingRoomState();
                     await ((IMultiplayerClient)this).MatchRoomStateChanged(clone(ServerRoom.MatchState)).ConfigureAwait(false);
 
                     foreach (var user in ServerRoom.Users)
                     {
                         user.MatchState = null;
+                        await ((IMultiplayerClient)this).MatchUserStateChanged(clone(user.UserID), clone(user.MatchState)).ConfigureAwait(false);
+                    }
+
+                    break;
+
+                case MatchType.RankedPlay:
+                    ServerRoom.MatchState = new RankedPlayRoomState();
+                    await ((IMultiplayerClient)this).MatchRoomStateChanged(clone(ServerRoom.MatchState)).ConfigureAwait(false);
+
+                    foreach (var user in ServerRoom.Users)
+                    {
+                        user.MatchState = new RankedPlayUserState { Hand = Enumerable.Range(0, 5).Select(_ => new RankedPlayCardItem()).ToArray() };
                         await ((IMultiplayerClient)this).MatchUserStateChanged(clone(user.UserID), clone(user.MatchState)).ConfigureAwait(false);
                     }
 
@@ -783,6 +801,20 @@ namespace osu.Game.Tests.Visual.Multiplayer
             await ((IMultiplayerClient)this).MatchRoomStateChanged(clone(ServerRoom.MatchState)).ConfigureAwait(false);
         }
 
+        public override async Task DiscardCards(RankedPlayCardItem[] cards)
+        {
+            foreach (var card in cards)
+                await RankedPlayRemoveCard(card).ConfigureAwait(false);
+
+            foreach (var _ in cards)
+                await RankedPlayAddCard(new RankedPlayCardItem()).ConfigureAwait(false);
+        }
+
+        public override async Task PlayCard(RankedPlayCardItem card)
+        {
+            await ((IRankedPlayClient)this).RankedPlayCardPlayed(clone(card)).ConfigureAwait(false);
+        }
+
         public override Task<MatchmakingPool[]> GetMatchmakingPools(MatchmakingPoolType type)
         {
             return Task.FromResult<MatchmakingPool[]>(
@@ -863,6 +895,67 @@ namespace osu.Game.Tests.Visual.Multiplayer
             {
                 Stage = stage,
                 TimeRemaining = TimeSpan.FromSeconds(stage == MatchmakingStage.UserBeatmapSelect ? 30 : 10)
+            }).ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Adds a card for the local user.
+        /// </summary>
+        public Task RankedPlayAddCard(RankedPlayCardItem card)
+            => RankedPlayAddUserCard(api.LocalUser.Value.OnlineID, card);
+
+        /// <summary>
+        /// Adds a card for the given user.
+        /// </summary>
+        public async Task RankedPlayAddUserCard(int userId, RankedPlayCardItem card)
+        {
+            var userState = (RankedPlayUserState)ServerRoom!.Users.Single(u => u.UserID == userId).MatchState!;
+            userState.Hand = userState.Hand.Concat([card]).ToArray();
+            await ((IMultiplayerClient)this).MatchUserStateChanged(userId, clone(userState)).ConfigureAwait(false);
+            await ((IRankedPlayClient)this).RankedPlayCardAdded(userId, clone(card)).ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Removes a card from the local user.
+        /// </summary>
+        public Task RankedPlayRemoveCard(RankedPlayCardItem card)
+            => RankedPlayRemoveUserCard(api.LocalUser.Value.OnlineID, card);
+
+        /// <summary>
+        /// Removes a card for the given user.
+        /// </summary>
+        public async Task RankedPlayRemoveUserCard(int userId, RankedPlayCardItem card)
+        {
+            var userState = (RankedPlayUserState)ServerRoom!.Users.Single(u => u.UserID == userId).MatchState!;
+            userState.Hand = userState.Hand.Except([card]).ToArray();
+            await ((IMultiplayerClient)this).MatchUserStateChanged(userId, clone(userState)).ConfigureAwait(false);
+            await ((IRankedPlayClient)this).RankedPlayCardRemoved(userId, clone(card)).ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Reveals a card.
+        /// </summary>
+        public async Task RankedPlayRevealCard(RankedPlayCardItem card, MultiplayerPlaylistItem item)
+        {
+            await ((IRankedPlayClient)this).RankedPlayCardRevealed(clone(card), clone(item)).ConfigureAwait(false);
+        }
+
+        public async Task RankedPlayChangeStage(RankedPlayStage stage, Action<RankedPlayRoomState>? prepare = null)
+        {
+            RankedPlayRoomState state = clone((RankedPlayRoomState)ServerRoom!.MatchState!);
+
+            state.Stage = stage;
+
+            if (stage == RankedPlayStage.RoundWarmup)
+                state.CurrentRound++;
+
+            prepare?.Invoke(state);
+
+            await ChangeMatchRoomState(state).ConfigureAwait(false);
+            await StartCountdown(new RankedPlayStageCountdown
+            {
+                Stage = stage,
+                TimeRemaining = TimeSpan.FromSeconds(stage == RankedPlayStage.CardPlay ? 30 : 10)
             }).ConfigureAwait(false);
         }
 

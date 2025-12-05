@@ -61,12 +61,6 @@ namespace osu.Game.Online.Multiplayer.MatchTypes.Matchmaking
         public long GameplayItem { get; set; }
 
         /// <summary>
-        /// The user currently in control of selecting the beatmap to play.
-        /// </summary>
-        [Key(6)]
-        public uint SelectingUser { get; set; }
-
-        /// <summary>
         /// Advances to the next round.
         /// </summary>
         public void AdvanceRound()

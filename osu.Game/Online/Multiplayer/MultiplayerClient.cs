@@ -19,6 +19,8 @@ using osu.Game.Online.API.Requests;
 using osu.Game.Online.API.Requests.Responses;
 using osu.Game.Online.Matchmaking;
 using osu.Game.Online.Multiplayer.Countdown;
+using osu.Game.Online.Multiplayer.MatchTypes.RankedPlay;
+using osu.Game.Online.RankedPlay;
 using osu.Game.Online.Rooms;
 using osu.Game.Overlays.Notifications;
 using osu.Game.Rulesets;
@@ -27,7 +29,11 @@ using osu.Game.Utils;
 
 namespace osu.Game.Online.Multiplayer
 {
-    public abstract partial class MultiplayerClient : Component, IMultiplayerClient, IMultiplayerRoomServer, IMatchmakingServer, IMatchmakingClient
+    public abstract partial class MultiplayerClient :
+        Component,
+        IMultiplayerClient, IMultiplayerRoomServer,
+        IMatchmakingServer, IMatchmakingClient,
+        IRankedPlayClient, IRankedPlayServer
     {
         public Action<Notification>? PostNotification { protected get; set; }
 
@@ -130,6 +136,11 @@ namespace osu.Game.Online.Multiplayer
         public event Action<int, long>? MatchmakingItemSelected;
         public event Action<int, long>? MatchmakingItemDeselected;
         public event Action<MatchRoomState>? MatchRoomStateChanged;
+
+        public event Action<int, RankedPlayCardItem>? RankedPlayCardAdded;
+        public event Action<int, RankedPlayCardItem>? RankedPlayCardRemoved;
+        public event Action<RankedPlayCardItem, MultiplayerPlaylistItem>? RankedPlayCardRevealed;
+        public event Action<RankedPlayCardItem>? RankedPlayCardPlayed;
 
         public event Action<int>? UserVotedToSkipIntro;
         public event Action? VoteToSkipIntroPassed;
@@ -1131,6 +1142,54 @@ namespace osu.Game.Online.Multiplayer
             Scheduler.Add(() =>
             {
                 MatchmakingItemDeselected?.Invoke(userId, playlistItemId);
+                RoomUpdated?.Invoke();
+            });
+
+            return Task.CompletedTask;
+        }
+
+        public abstract Task DiscardCards(RankedPlayCardItem[] cards);
+
+        public abstract Task PlayCard(RankedPlayCardItem card);
+
+        Task IRankedPlayClient.RankedPlayCardAdded(int userId, RankedPlayCardItem card)
+        {
+            Scheduler.Add(() =>
+            {
+                RankedPlayCardAdded?.Invoke(userId, card);
+                RoomUpdated?.Invoke();
+            });
+
+            return Task.CompletedTask;
+        }
+
+        Task IRankedPlayClient.RankedPlayCardRemoved(int userId, RankedPlayCardItem card)
+        {
+            Scheduler.Add(() =>
+            {
+                RankedPlayCardRemoved?.Invoke(userId, card);
+                RoomUpdated?.Invoke();
+            });
+
+            return Task.CompletedTask;
+        }
+
+        Task IRankedPlayClient.RankedPlayCardRevealed(RankedPlayCardItem card, MultiplayerPlaylistItem item)
+        {
+            Scheduler.Add(() =>
+            {
+                RankedPlayCardRevealed?.Invoke(card, item);
+                RoomUpdated?.Invoke();
+            });
+
+            return Task.CompletedTask;
+        }
+
+        Task IRankedPlayClient.RankedPlayCardPlayed(RankedPlayCardItem card)
+        {
+            Scheduler.Add(() =>
+            {
+                RankedPlayCardPlayed?.Invoke(card);
                 RoomUpdated?.Invoke();
             });
 
