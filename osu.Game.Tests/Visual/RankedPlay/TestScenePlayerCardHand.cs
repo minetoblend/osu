@@ -6,10 +6,11 @@ using osu.Framework.Graphics;
 using osu.Framework.Testing;
 using osu.Game.Online.Multiplayer.MatchTypes.RankedPlay;
 using osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay;
+using osuTK;
 
 namespace osu.Game.Tests.Visual.RankedPlay
 {
-    public class TestScenePlayerCardHand : OsuTestScene
+    public partial class TestScenePlayerCardHand : OsuTestScene
     {
         private PlayerCardHand hand = null!;
 
@@ -18,6 +19,7 @@ namespace osu.Game.Tests.Visual.RankedPlay
         {
             AddStep("add drawable", () => Child = hand = new PlayerCardHand
             {
+                Size = new Vector2(750, 300),
                 Anchor = Anchor.BottomCentre,
                 Origin = Anchor.BottomCentre,
             });

@@ -81,8 +81,8 @@ namespace osu.Game.Tests.Visual.RankedPlay
         {
             changeStage(RankedPlayStage.CardDiscard);
 
-            AddStep("select card", () => screen.ChildrenOfType<DiscardScreen.Card>().First().TriggerClick());
-            AddStep("select another card", () => screen.ChildrenOfType<DiscardScreen.Card>().Skip(2).First().TriggerClick());
+            AddStep("select card", () => screen.ChildrenOfType<PlayerCardHand.PlayerCard>().First().TriggerClick());
+            AddStep("select another card", () => screen.ChildrenOfType<PlayerCardHand.PlayerCard>().Skip(2).First().TriggerClick());
             AddWaitStep("wait", 3);
             AddStep("discard", () => screen.ChildrenOfType<RoundedButton>().First(it => it.Name == "Discard").TriggerClick());
         }

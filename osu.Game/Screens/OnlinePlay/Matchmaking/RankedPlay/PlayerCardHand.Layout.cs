@@ -17,7 +17,13 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
         private LayoutEntry[] handLayout => handLayoutBacking.IsValid ? handLayoutBacking.Value : handLayoutBacking.Value = computeHandLayout().ToArray();
         private LayoutEntry[] lineupLayout => lineupLayoutBacking.IsValid ? lineupLayoutBacking.Value : lineupLayoutBacking.Value = computeLineupLayout().ToArray();
 
-        private void updateLayout()
+        public void ApplyLayoutImmediately()
+        {
+            FinishTransforms(true);
+            updateLayout(true);
+        }
+
+        private void updateLayout(bool immediate = false)
         {
             handLayoutBacking.Invalidate();
             lineupLayoutBacking.Invalidate();
@@ -32,14 +38,15 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                 var entry = cardState switch
                 {
                     CardState.Hand => handLayout[i],
-                    CardState.Hidden => handLayout[i].OffsetBy(new Vector2(0, 200)),
+                    CardState.Hidden => handLayout[i].OffsetBy(new Vector2(0, DrawHeight / 2 + 150)),
                     CardState.Lineup => lineupLayout[i],
                     _ => throw new ArgumentOutOfRangeException()
                 };
 
                 entry.Card.UpdateMovement(
                     entry.Position,
-                    entry.Rotation
+                    entry.Rotation,
+                    immediate
                 );
             }
         }
@@ -55,7 +62,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
             {
                 var targetPosition = new Vector2(x + offsetToHoveredCard(card), 0);
 
-                targetPosition.Y = MathF.Pow(MathF.Abs(targetPosition.X / 250), 2) * 20;
+                targetPosition.Y = DrawHeight / 2 + MathF.Pow(MathF.Abs(targetPosition.X / 250), 2) * 20;
 
                 float rotation = targetPosition.X * 0.03f;
 
@@ -81,7 +88,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
         private IEnumerable<LayoutEntry> computeLineupLayout()
         {
             foreach ((var card, float x) in horizontalArrangement(spacing: 10))
-                yield return new LayoutEntry(card, new Vector2(x, -100), 0);
+                yield return new LayoutEntry(card, new Vector2(x, 50), 0);
         }
 
         private IEnumerable<(PlayerCard card, float x)> horizontalArrangement(float spacing) => horizontalArrangement(cards, spacing);

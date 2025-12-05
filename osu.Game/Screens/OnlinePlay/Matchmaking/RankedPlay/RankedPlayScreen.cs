@@ -3,6 +3,8 @@
 
 using osu.Framework.Allocation;
 using osu.Framework.Extensions.ObjectExtensions;
+using osu.Framework.Graphics;
+using osu.Framework.Graphics.Containers;
 using osu.Game.Online.Multiplayer;
 using osu.Game.Online.Multiplayer.MatchTypes.RankedPlay;
 
@@ -11,10 +13,29 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
     public partial class RankedPlayScreen : OsuScreen
     {
         private readonly MultiplayerRoom room;
+        private readonly Container subscreenContainer;
+
+        [Cached]
+        private readonly PlayerCardHand playerHand;
 
         public RankedPlayScreen(MultiplayerRoom room)
         {
             this.room = room;
+
+            InternalChildren =
+            [
+                subscreenContainer = new Container
+                {
+                    RelativeSizeAxes = Axes.Both,
+                },
+                playerHand = new PlayerCardHand
+                {
+                    RelativeSizeAxes = Axes.Both,
+                    Height = 0.5f,
+                    Anchor = Anchor.BottomCentre,
+                    Origin = Anchor.BottomCentre,
+                }
+            ];
         }
 
         [Resolved]
@@ -37,7 +58,8 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
             {
                 case RankedPlayStage.CardDiscard:
                     RankedPlayUserState userState = (RankedPlayUserState)client.LocalUser!.MatchState!;
-                    InternalChild = new DiscardScreen(userState.Hand);
+
+                    subscreenContainer.Child = new DiscardScreen(userState.Hand);
                     break;
             }
         });

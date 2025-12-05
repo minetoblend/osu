@@ -15,7 +15,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 {
     public partial class PlayerCardHand : CompositeDrawable
     {
-        private CardState state = CardState.Hand;
+        private CardState state = CardState.Hidden;
 
         public CardState State
         {
@@ -49,12 +49,16 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 
         public PlayerCardHand()
         {
-            Size = new Vector2(750, 300);
-
             InternalChild = cardContainer = new Container<PlayerCard>
             {
                 RelativeSizeAxes = Axes.Both,
             };
+        }
+
+        public void Clear()
+        {
+            cards.Clear();
+            cardContainer.Clear();
         }
 
         public void AddCard(RankedPlayCardItem card, Action<PlayerCard>? setupAction = null)
@@ -63,6 +67,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
             {
                 AllowSelection = { BindTarget = AllowSelection },
                 State = state,
+                Y = DrawHeight / 2,
             };
 
             cards.Add(drawable);
@@ -94,11 +99,11 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 
                 card
                     .Delay(delay)
-                    .MoveTo(new Vector2(x, -400), 600, Easing.OutExpo)
+                    .MoveTo(new Vector2(x, -130), 600, Easing.OutExpo)
                     .RotateTo(0, 600, Easing.OutExpo)
                     .Then(200)
-                    .ScaleTo(0, 400, Easing.In)
-                    .FadeOut(200)
+                    .ScaleTo(0, 500, Easing.In)
+                    .FadeOut(300)
                     .Expire();
 
                 delay += stagger;
@@ -127,8 +132,8 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
             public static readonly Spring ENERGETIC = new Spring
             {
                 NaturalFrequency = 4,
-                Damping = 2,
-                Response = 1.35f
+                Damping = 0.8f,
+                Response = 0f
             };
 
             public static readonly Spring SMOOTH = new Spring

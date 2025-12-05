@@ -31,7 +31,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
             public PlayerCard(RankedPlayCardItem item)
             {
                 Item = item;
-                Anchor = Anchor.Centre;
+                Anchor = Anchor.TopCentre;
                 Origin = Anchor.Centre;
 
                 Size = new Vector2(150, 250) + new Vector2(20);
@@ -59,8 +59,18 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
             private Vector2 velocity;
             private float rotationVelocity;
 
-            public void UpdateMovement(Vector2 targetPosition, float targetRotation)
+            public void UpdateMovement(Vector2 targetPosition, float targetRotation, bool immediate)
             {
+                if (immediate)
+                {
+                    Position = targetPosition;
+                    Rotation = targetRotation;
+
+                    velocity = Vector2.Zero;
+                    rotationVelocity = 0;
+                    return;
+                }
+
                 var spring = State switch
                 {
                     CardState.Hand => CardMovement.ENERGETIC,
