@@ -264,9 +264,9 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                         c.Rotation = -30;
                     });
 
-                    facade.CardMovement.Value = MovementStyle.Smooth;
-
-                    Scheduler.AddDelayed(() => facade.CardMovement.Value = MovementStyle.Energetic, 300);
+                    facade.TransformMovementStyleTo(MovementStyle.Smooth)
+                          .Delay(300)
+                          .TransformMovementStyleTo(MovementStyle.Energetic);
                 }, insertTime - Time.Current);
             }
         }
