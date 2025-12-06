@@ -130,7 +130,9 @@ namespace osu.Game.Utils
     public class FloatSpring : Spring<float>
     {
         public FloatSpring(float initialValue = default, float naturalFrequency = 1, float damping = 1, float response = 0)
-            : base(initialValue, naturalFrequency, damping, response) { }
+            : base(initialValue, naturalFrequency, damping, response)
+        {
+        }
 
         protected override float GetTargetVelocity(float target, float previousTarget, float dt) => (target - previousTarget) / dt;
 
@@ -145,7 +147,9 @@ namespace osu.Game.Utils
     public class Vector2Spring : Spring<Vector2>
     {
         public Vector2Spring(Vector2 initialValue = default, float naturalFrequency = 1, float damping = 1, float response = 0)
-            : base(initialValue, naturalFrequency, damping, response) { }
+            : base(initialValue, naturalFrequency, damping, response)
+        {
+        }
 
         protected override Vector2 GetTargetVelocity(Vector2 target, Vector2 previousTarget, float dt) => (target - previousTarget) / dt;
 

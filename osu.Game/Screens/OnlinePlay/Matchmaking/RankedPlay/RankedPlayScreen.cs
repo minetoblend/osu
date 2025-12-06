@@ -12,11 +12,8 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 {
     public partial class RankedPlayScreen : OsuScreen
     {
-        private readonly MultiplayerRoom room;
-
         public RankedPlayScreen(MultiplayerRoom room)
         {
-            this.room = room;
         }
 
         [Resolved]
