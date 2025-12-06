@@ -255,7 +255,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 
         private void onRankedPlayCardRemoved(int userId, RankedPlayCardWithPlaylistItem item)
         {
-            if (userId == client.LocalUser!.UserID && cardForItem(item) is { } card)
+            if (cardForItem(item) is { } card)
             {
                 double discardTime = Math.Max(Time.Current, nextDiscardTime);
                 nextDiscardTime = discardTime + 50;
