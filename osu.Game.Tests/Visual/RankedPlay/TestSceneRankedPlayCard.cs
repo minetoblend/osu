@@ -21,52 +21,55 @@ namespace osu.Game.Tests.Visual.RankedPlay
         {
             base.SetUpSteps();
 
-            var beatmap = CreateAPIBeatmap();
-
-            beatmap.BeatmapSet!.Ratings = Enumerable.Range(0, 11).ToArray();
-            beatmap.BeatmapSet!.RelatedTags =
-            [
-                new APITag
-                {
-                    Id = 2,
-                    Name = "song representation/simple",
-                    Description = "Accessible and straightforward map design."
-                },
-                new APITag
-                {
-                    Id = 4,
-                    Name = "style/clean",
-                    Description = "Visually uncluttered and organised patterns, often involving few overlaps and equal visual spacing between objects."
-                },
-                new APITag
-                {
-                    Id = 23,
-                    Name = "aim/aim control",
-                    Description = "Patterns with velocity or direction changes which strongly go against a player's natural movement pattern."
-                }
-            ];
-
-            beatmap.TopTags =
-            [
-                new APIBeatmapTag { TagId = 4, VoteCount = 1 },
-                new APIBeatmapTag { TagId = 2, VoteCount = 1 },
-                new APIBeatmapTag { TagId = 23, VoteCount = 5 },
-            ];
-
-            beatmap.FailTimes = new APIFailTimes
-            {
-                Fails = Enumerable.Range(1, 100).Select(i => i % 12 - 6).ToArray(),
-                Retries = Enumerable.Range(-2, 100).Select(i => i % 12 - 6).ToArray(),
-            };
-
-            beatmap.StarRating = 7.49;
-
             RankedPlayCard card = null!;
 
-            AddStep("add card", () => Child = card = new RankedPlayCard(beatmap)
+            AddStep("add card", () =>
             {
-                Anchor = Anchor.Centre,
-                Origin = Anchor.Centre,
+                var beatmap = CreateAPIBeatmap();
+
+                beatmap.BeatmapSet!.Ratings = Enumerable.Range(0, 11).ToArray();
+                beatmap.BeatmapSet!.RelatedTags =
+                [
+                    new APITag
+                    {
+                        Id = 2,
+                        Name = "song representation/simple",
+                        Description = "Accessible and straightforward map design."
+                    },
+                    new APITag
+                    {
+                        Id = 4,
+                        Name = "style/clean",
+                        Description = "Visually uncluttered and organised patterns, often involving few overlaps and equal visual spacing between objects."
+                    },
+                    new APITag
+                    {
+                        Id = 23,
+                        Name = "aim/aim control",
+                        Description = "Patterns with velocity or direction changes which strongly go against a player's natural movement pattern."
+                    }
+                ];
+
+                beatmap.TopTags =
+                [
+                    new APIBeatmapTag { TagId = 4, VoteCount = 1 },
+                    new APIBeatmapTag { TagId = 2, VoteCount = 1 },
+                    new APIBeatmapTag { TagId = 23, VoteCount = 5 },
+                ];
+
+                beatmap.FailTimes = new APIFailTimes
+                {
+                    Fails = Enumerable.Range(1, 100).Select(i => i % 12 - 6).ToArray(),
+                    Retries = Enumerable.Range(-2, 100).Select(i => i % 12 - 6).ToArray(),
+                };
+
+                beatmap.StarRating = 7.49;
+
+                Child = card = new RankedPlayCard(beatmap)
+                {
+                    Anchor = Anchor.Centre,
+                    Origin = Anchor.Centre,
+                };
             });
 
             AddToggleStep("toggle shine", v => card.Shiny = v);
