@@ -326,6 +326,10 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                 cardContainer.Add(card);
             }
 
+            // TODO: verify if this is actually the correct thing to do here
+            playerCards.Remove(card);
+            opponentCards.Remove(card);
+
             activeSubscreen?.CardPlayed(card);
         }
 
