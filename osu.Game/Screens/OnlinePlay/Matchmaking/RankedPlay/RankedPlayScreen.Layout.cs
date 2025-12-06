@@ -18,7 +18,7 @@ using osuTK.Graphics;
 
 namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 {
-    public partial class RankedPlayScreen2
+    public partial class RankedPlayScreen
     {
         private readonly Dictionary<RankedPlayCardItem, Card> cardLookup = new Dictionary<RankedPlayCardItem, Card>();
         private readonly Dictionary<Card, ICardFacadeContainer> activeFacade = new Dictionary<Card, ICardFacadeContainer>();

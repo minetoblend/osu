@@ -34,7 +34,7 @@ using osuTK;
 
 namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 {
-    public partial class RankedPlayScreen2 : OsuScreen, IPreviewTrackOwner, IHandlePresentBeatmap
+    public partial class RankedPlayScreen : OsuScreen, IPreviewTrackOwner, IHandlePresentBeatmap
     {
         public ShearedButton ActionButton { get; }
 
@@ -82,7 +82,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
         private CancellationTokenSource? downloadCheckCancellation;
         private int? lastDownloadCheckedBeatmapId;
 
-        public RankedPlayScreen2(MultiplayerRoom room)
+        public RankedPlayScreen(MultiplayerRoom room)
         {
             this.room = room;
 

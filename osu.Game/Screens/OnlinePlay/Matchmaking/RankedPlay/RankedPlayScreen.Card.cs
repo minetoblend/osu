@@ -17,7 +17,7 @@ using osuTK.Graphics;
 
 namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 {
-    public partial class RankedPlayScreen2
+    public partial class RankedPlayScreen
     {
         public partial class Card : CompositeDrawable
         {

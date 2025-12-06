@@ -8,7 +8,7 @@ using osu.Game.Utils;
 
 namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 {
-    public partial class RankedPlayScreen2
+    public partial class RankedPlayScreen
     {
         public static class MovementStyle
         {
@@ -59,20 +59,20 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 
     public static class RankedPlayScreen2Extensions
     {
-        public static TransformSequence<RankedPlayScreen2.CardFacade> TransformMovementStyleTo(
-            this RankedPlayScreen2.CardFacade facade,
+        public static TransformSequence<RankedPlayScreen.CardFacade> TransformMovementStyleTo(
+            this RankedPlayScreen.CardFacade facade,
             SpringParameters value,
             double duration = 0,
             Easing easing = Easing.None
         )
         {
-            var transform = facade.PopulateTransform(new RankedPlayScreen2.MovementStyleTransform(), value, duration, easing);
+            var transform = facade.PopulateTransform(new RankedPlayScreen.MovementStyleTransform(), value, duration, easing);
 
             return facade.TransformTo(transform);
         }
 
-        public static TransformSequence<RankedPlayScreen2.CardFacade> TransformMovementStyleTo(
-            this TransformSequence<RankedPlayScreen2.CardFacade> sequence,
+        public static TransformSequence<RankedPlayScreen.CardFacade> TransformMovementStyleTo(
+            this TransformSequence<RankedPlayScreen.CardFacade> sequence,
             SpringParameters value,
             double duration = 0,
             Easing easing = Easing.None

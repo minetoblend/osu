@@ -17,7 +17,7 @@ using osuTK.Input;
 
 namespace osu.Game.Tests.Visual.RankedPlay
 {
-    public partial class TestSceneRankedPlayScreen2 : MultiplayerTestScene
+    public partial class TestSceneRankedPlayScreen : MultiplayerTestScene
     {
         [Cached(name: "debugEnabled")]
         private readonly Bindable<bool> debugEnabled = new Bindable<bool>();
@@ -33,7 +33,7 @@ namespace osu.Game.Tests.Visual.RankedPlay
             return base.OnKeyDown(e);
         }
 
-        private RankedPlayScreen2 screen = null!;
+        private RankedPlayScreen screen = null!;
 
         public override void SetUpSteps()
         {
@@ -42,7 +42,7 @@ namespace osu.Game.Tests.Visual.RankedPlay
             AddStep("join room", () => JoinRoom(CreateDefaultRoom(MatchType.RankedPlay)));
             WaitForJoined();
 
-            AddStep("load screen", () => LoadScreen(screen = new RankedPlayScreen2(MultiplayerClient.ClientRoom!)));
+            AddStep("load screen", () => LoadScreen(screen = new RankedPlayScreen(MultiplayerClient.ClientRoom!)));
         }
 
         [Test]
@@ -91,7 +91,7 @@ namespace osu.Game.Tests.Visual.RankedPlay
                 int i2 = i;
                 AddStep($"click card {i2}", () =>
                 {
-                    InputManager.MoveMouseTo(this.ChildrenOfType<RankedPlayScreen2.Card>().ElementAt(i2));
+                    InputManager.MoveMouseTo(this.ChildrenOfType<RankedPlayScreen.Card>().ElementAt(i2));
                     InputManager.Click(MouseButton.Left);
                 });
             }
@@ -113,7 +113,7 @@ namespace osu.Game.Tests.Visual.RankedPlay
                 int i2 = i;
                 AddStep($"click card {i2}", () =>
                 {
-                    InputManager.MoveMouseTo(this.ChildrenOfType<RankedPlayScreen2.Card>().ElementAt(i2));
+                    InputManager.MoveMouseTo(this.ChildrenOfType<RankedPlayScreen.Card>().ElementAt(i2));
                     InputManager.Click(MouseButton.Left);
                 });
             }
