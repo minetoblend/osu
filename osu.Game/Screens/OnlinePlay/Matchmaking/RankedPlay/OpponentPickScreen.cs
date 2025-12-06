@@ -24,7 +24,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                     Origin = Anchor.BottomCentre,
                     RelativeSizeAxes = Axes.Both,
                     Size = new Vector2(0.5f),
-                    SelectionMode = CardSelectionMode.Single,
+                    SelectionMode = CardSelectionMode.Disabled,
                     ContractedAmount = 0.5f,
                 },
                 playedCardFacade = new CardFacade
