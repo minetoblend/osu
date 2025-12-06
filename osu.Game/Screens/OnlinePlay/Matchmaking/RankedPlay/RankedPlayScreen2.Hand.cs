@@ -85,20 +85,6 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                 return true;
             }
 
-            private void shakeCard(CardFacade card)
-            {
-                float angle = MathHelper.DegreesToRadians(card.Rotation);
-                var offset = new Vector2(MathF.Cos(angle), MathF.Sin(angle));
-
-                card.MoveToOffset(offset * 20)
-                    .Delay(100)
-                    .MoveToOffset(offset * -30)
-                    .Delay(100)
-                    .MoveToOffset(offset * 20)
-                    .Delay(100)
-                    .MoveToOffset(offset * -10);
-            }
-
             public CardFacade AddCard(Card card)
             {
                 if (facades.TryGetValue(card, out var existing))
