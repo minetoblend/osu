@@ -350,37 +350,6 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
             }
         });
 
-        // private void onActionButtonClicked()
-        // {
-        //     RankedPlayCardItem[] selection = playerHand.Selection.Select(it => it.Card).ToArray();
-        //
-        //     bool finished = false;
-        //
-        //     switch (((RankedPlayRoomState)client.Room!.MatchState!).Stage)
-        //     {
-        //         case RankedPlayStage.CardDiscard:
-        //             client.DiscardCards(selection).FireAndForget();
-        //             finished = true;
-        //             break;
-        //
-        //         case RankedPlayStage.CardPlay:
-        //             if (selection.Length > 0)
-        //             {
-        //                 client.PlayCard(selection.First()).FireAndForget();
-        //                 finished = true;
-        //             }
-        //
-        //             break;
-        //     }
-        //
-        //     if (finished)
-        //     {
-        //         ActionButton.Hide();
-        //         ActionButton.Enabled.Value = false;
-        //         playerHand.DisableSelection();
-        //     }
-        // }
-
         private void updateGameplayState()
         {
             MultiplayerPlaylistItem item = client.Room!.CurrentPlaylistItem;
