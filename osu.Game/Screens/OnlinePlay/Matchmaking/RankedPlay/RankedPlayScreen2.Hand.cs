@@ -23,6 +23,18 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 
             private readonly BindableBool allowSelection = new BindableBool();
 
+            private float contractedAmount;
+
+            public float ContractedAmount
+            {
+                get => contractedAmount;
+                set
+                {
+                    contractedAmount = float.Clamp(value, 0, 1);
+                    invalidateLayout();
+                }
+            }
+
             private bool allowMultipleSelection;
 
             public void EnableSingleSelection()
@@ -95,7 +107,8 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                     InvalidateLayout = invalidateLayout,
                     Clicked = cardClicked,
                     Anchor = Anchor.BottomCentre,
-                    AllowSelection = { BindTarget = allowSelection }
+                    CardMovement = { Value = MovementStyle.Energetic },
+                    AllowSelection = { BindTarget = allowSelection },
                 };
 
                 facades[card] = facade;
@@ -155,6 +168,8 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 
                     float angle = MathHelper.DegreesToRadians(child.Rotation - 90);
                     child.Position += new Vector2(MathF.Cos(angle), MathF.Sin(angle)) * yOffset;
+
+                    child.Position = Vector2.Lerp(child.Position, new Vector2(child.X / 2, 150), contractedAmount);
 
                     x += child.LayoutWidth / 2 + spacing;
                 }
