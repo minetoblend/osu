@@ -134,5 +134,13 @@ namespace osu.Game.Tests.Visual.RankedPlay
 
             AddStep("play beatmap", () => MultiplayerClient.PlayCard(((RankedPlayUserState)MultiplayerClient.ServerRoom!.Users[1].MatchState!).Hand[0]).WaitSafely());
         }
+
+        [Test]
+        public void TestHandContraction()
+        {
+            AddStep("hand contracted", () => MultiplayerClient.RankedPlayChangeStage(RankedPlayStage.WaitForJoin).WaitSafely());
+            AddStep("hand half visible", () => MultiplayerClient.RankedPlayChangeStage(RankedPlayStage.Results).WaitSafely());
+            AddStep("hand fully visible", () => MultiplayerClient.RankedPlayChangeStage(RankedPlayStage.CardDiscard).WaitSafely());
+        }
     }
 }
