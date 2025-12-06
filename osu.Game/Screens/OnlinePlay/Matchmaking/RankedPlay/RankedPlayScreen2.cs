@@ -122,7 +122,8 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                     AutoSizeAxes = Axes.Both,
                     Anchor = Anchor.Centre,
                     Origin = Anchor.Centre,
-                    Spacing = new Vector2(20)
+                    Spacing = new Vector2(20),
+                    CardMovement = { Value = MovementStyle.Smooth }
                 }
             };
         }
@@ -245,11 +246,18 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                 double insertTime = Math.Max(Time.Current, nextInsertTime);
                 nextInsertTime = insertTime + 100;
 
-                Scheduler.AddDelayed(() => addCard(item, playerHand, c =>
+                Scheduler.AddDelayed(() =>
                 {
-                    c.Position = new Vector2(DrawWidth + 200, DrawHeight - 100);
-                    c.Rotation = -30;
-                }), insertTime - Time.Current);
+                    var facade = addCard(item, playerHand, c =>
+                    {
+                        c.Position = new Vector2(DrawWidth + 200, DrawHeight - 100);
+                        c.Rotation = -30;
+                    });
+
+                    facade.CardMovement.Value = MovementStyle.Smooth;
+
+                    Scheduler.AddDelayed(() => facade.CardMovement.Value = MovementStyle.Energetic, 300);
+                }, insertTime - Time.Current);
             }
         }
 

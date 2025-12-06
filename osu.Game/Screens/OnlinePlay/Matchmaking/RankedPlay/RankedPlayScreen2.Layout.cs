@@ -12,6 +12,7 @@ using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Shapes;
 using osu.Framework.Input.Events;
 using osu.Game.Online.Multiplayer.MatchTypes.RankedPlay;
+using osu.Game.Utils;
 using osuTK;
 using osuTK.Graphics;
 
@@ -25,7 +26,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
         private Card? cardForItem(RankedPlayCardItem item) => cardLookup.GetValueOrDefault(item);
         private Card? cardForItem(RankedPlayCardWithPlaylistItem item) => cardLookup.GetValueOrDefault(item.Card);
 
-        private void addCard(RankedPlayCardWithPlaylistItem card, ICardFacadeContainer facadeContainer, Action<Card>? setupAction = null)
+        private CardFacade addCard(RankedPlayCardWithPlaylistItem card, ICardFacadeContainer facadeContainer, Action<Card>? setupAction = null)
         {
             var drawable = cardLookup[card.Card] = new Card(card);
             var facade = facadeContainer.AddCard(drawable);
@@ -36,6 +37,8 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
             cardContainer.Add(drawable);
 
             setupAction?.Invoke(drawable);
+
+            return facade;
         }
 
         private void removeCard(RankedPlayCardWithPlaylistItem card)
@@ -112,6 +115,8 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
             [Resolved(name: "debugEnabled")]
             private Bindable<bool>? debugEnabled { get; set; }
 
+            public readonly Bindable<SpringParameters> CardMovement = new Bindable<SpringParameters>(MovementStyle.Smooth);
+
             protected readonly Container DebugOverlay;
 
             public CardFacade()
@@ -169,12 +174,17 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
         {
             private readonly Dictionary<Card, CardFacade> facades = new Dictionary<Card, CardFacade>();
 
+            public readonly Bindable<SpringParameters> CardMovement = new Bindable<SpringParameters>(MovementStyle.Energetic);
+
             public CardFacade AddCard(Card card)
             {
                 if (facades.TryGetValue(card, out var existing))
                     return existing;
 
-                var facade = new CardFacade();
+                var facade = new CardFacade
+                {
+                    CardMovement = { BindTarget = CardMovement }
+                };
 
                 Add(facade);
                 facades[card] = facade;

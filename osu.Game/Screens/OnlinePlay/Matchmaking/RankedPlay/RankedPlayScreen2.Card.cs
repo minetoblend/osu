@@ -39,6 +39,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 
                 Size = new Vector2(120, 200);
                 Masking = true;
+                CornerRadius = 10;
                 BorderColour = Color4.Yellow;
                 BorderThickness = 0;
                 Origin = Anchor.Centre;
@@ -79,6 +80,8 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                 };
             }
 
+            private readonly Bindable<SpringParameters> cardMovement = new Bindable<SpringParameters>(MovementStyle.Energetic);
+
             protected override void LoadComplete()
             {
                 base.LoadComplete();
@@ -91,6 +94,8 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                 position = new Vector2Spring(Position, naturalFrequency: 2.5f, response: 1.2f);
                 rotation = new FloatSpring(Rotation, naturalFrequency: 3, response: 1f);
                 scale = new Vector2Spring(Scale, naturalFrequency: 3, damping: 0.9f, response: 2f);
+
+                cardMovement.BindValueChanged(e => position.Parameters = e.NewValue, true);
             }
 
             private ScheduledDelegate? scheduledFacadeChange;
@@ -99,7 +104,12 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
             {
                 scheduledFacadeChange?.Cancel();
                 scheduledFacadeChange = null;
+
+                if (Facade is { } previous)
+                    cardMovement.UnbindFrom(previous.CardMovement);
+
                 Facade = facade;
+                cardMovement.BindTo(facade.CardMovement);
             }
 
             public void ChangeFacade(CardFacade facade, double delay)
