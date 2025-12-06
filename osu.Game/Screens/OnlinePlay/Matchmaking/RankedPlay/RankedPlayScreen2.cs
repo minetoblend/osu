@@ -200,7 +200,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 
             stageText.Text = string.Empty;
             ActionButton.Hide();
-            playerHand.AllowSelection = false;
+            playerHand.DisableSelection();
 
             switch (rankedPlayState.Stage)
             {
@@ -211,9 +211,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                     ActionButton.Text = "Discard";
                     ActionButton.Enabled.Value = true;
 
-                    playerHand.ClearSelection();
-                    playerHand.AllowSelection = true;
-                    playerHand.SelectionLength = int.MaxValue;
+                    playerHand.EnableMultiSelection();
                     break;
 
                 case RankedPlayStage.CardPlay:
@@ -228,8 +226,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                         ActionButton.Enabled.Value = isActivePlayer;
 
                         playerHand.ClearSelection();
-                        playerHand.AllowSelection = true;
-                        playerHand.SelectionLength = 1;
+                        playerHand.EnableSingleSelection();
                     }
                     else
                         stageText.Text = "waiting for the other player to play a card...";
@@ -326,7 +323,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
             {
                 ActionButton.Hide();
                 ActionButton.Enabled.Value = false;
-                playerHand.AllowSelection = false;
+                playerHand.DisableSelection();
             }
         }
 

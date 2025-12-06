@@ -9,6 +9,7 @@ using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Input.Events;
 using osuTK;
+using osuTK.Graphics;
 using osuTK.Input;
 
 namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
@@ -22,13 +23,26 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 
             private readonly BindableBool allowSelection = new BindableBool();
 
-            public bool AllowSelection
+            private bool allowMultipleSelection;
+
+            public void EnableSingleSelection()
             {
-                get => allowSelection.Value;
-                set => allowSelection.Value = value;
+                ClearSelection();
+
+                allowSelection.Value = true;
+                allowMultipleSelection = false;
             }
 
-            public int SelectionLength { get; set; }
+            public void EnableMultiSelection()
+            {
+                allowSelection.Value = true;
+                allowMultipleSelection = true;
+            }
+
+            public void DisableSelection()
+            {
+                allowSelection.Value = false;
+            }
 
             public readonly HashSet<RankedPlayCardWithPlaylistItem> Selection = new HashSet<RankedPlayCardWithPlaylistItem>();
 
@@ -50,7 +64,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 
             private bool cardClicked(HandCardFacade card)
             {
-                if (!AllowSelection)
+                if (!allowSelection.Value)
                     return false;
 
                 if (Selection.Contains(card.Item))
@@ -60,10 +74,9 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                     return true;
                 }
 
-                if (Selection.Count >= SelectionLength)
+                if (!allowMultipleSelection && Selection.Count > 0)
                 {
-                    shakeCard(card);
-                    return true;
+                    ClearSelection();
                 }
 
                 Selection.Add(card.Item);
@@ -235,6 +248,13 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                     Scale = new Vector2(CardHovered ? hovered_scale : 1);
                     if (CardPressed)
                         Scale *= 0.97f;
+
+                    DebugOverlay.BorderColour = (CardPressed, CardHovered) switch
+                    {
+                        (true, _) => Color4.Yellow,
+                        (_, true) => Color4.Green,
+                        _ => Color4.Red
+                    };
 
                     InvalidateLayout();
                 }

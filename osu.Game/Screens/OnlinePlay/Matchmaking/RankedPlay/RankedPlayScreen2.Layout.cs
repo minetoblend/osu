@@ -112,7 +112,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
             [Resolved(name: "debugEnabled")]
             private Bindable<bool>? debugEnabled { get; set; }
 
-            private readonly Container debugOverlay;
+            protected readonly Container DebugOverlay;
 
             public CardFacade()
             {
@@ -122,7 +122,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                 Size = new Vector2(120, 200);
                 Padding = new MarginPadding(-10);
 
-                InternalChild = debugOverlay = new Container
+                InternalChild = DebugOverlay = new Container
                 {
                     RelativeSizeAxes = Axes.Both,
 
@@ -145,7 +145,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
             {
                 base.LoadComplete();
 
-                debugEnabled?.BindValueChanged(e => debugOverlay.Alpha = e.NewValue ? 1 : 0, true);
+                debugEnabled?.BindValueChanged(e => DebugOverlay.Alpha = e.NewValue ? 1 : 0, true);
             }
 
             public virtual bool OnCardHover(HoverEvent e) => false;
