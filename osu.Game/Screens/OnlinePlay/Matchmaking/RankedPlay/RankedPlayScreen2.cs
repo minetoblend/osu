@@ -1,6 +1,7 @@
 // Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
+using System;
 using System.Linq;
 using System.Threading;
 using osu.Framework.Allocation;
@@ -29,6 +30,7 @@ using osu.Game.Overlays.Dialog;
 using osu.Game.Rulesets;
 using osu.Game.Screens.OnlinePlay.Matchmaking.Match.Gameplay;
 using osu.Game.Screens.OnlinePlay.Multiplayer;
+using osuTK;
 
 namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 {
@@ -71,9 +73,10 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 
         private readonly MultiplayerRoom room;
 
-        private readonly Container<Card> playedCardContainer;
+        private readonly CardContainer cardContainer;
         private readonly OsuSpriteText stageText;
-        private readonly Hand localUserHand;
+        private readonly PlayerHand playerHand;
+        private readonly CardFillFlowContainer centerCardRow;
 
         private Sample? sampleStart;
         private CancellationTokenSource? downloadCheckCancellation;
@@ -102,18 +105,24 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                     Font = OsuFont.Style.Title,
                     Y = 50
                 },
-                playedCardContainer = new Container<Card>
+                cardContainer = new CardContainer
                 {
-                    Anchor = Anchor.Centre,
-                    Origin = Anchor.Centre,
-                    RelativeSizeAxes = Axes.X,
-                    AutoSizeAxes = Axes.Y
+                    RelativeSizeAxes = Axes.Both,
                 },
-                localUserHand = new Hand
+                playerHand = new PlayerHand
                 {
                     Anchor = Anchor.BottomCentre,
                     Origin = Anchor.BottomCentre,
-                    RelativeSizeAxes = Axes.Both
+                    RelativeSizeAxes = Axes.Both,
+                    Size = new Vector2(0.5f)
+                },
+                centerCardRow = new CardFillFlowContainer
+                {
+                    Direction = FillDirection.Horizontal,
+                    AutoSizeAxes = Axes.Both,
+                    Anchor = Anchor.Centre,
+                    Origin = Anchor.Centre,
+                    Spacing = new Vector2(20)
                 }
             };
         }
@@ -140,8 +149,11 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
             beatmapAvailabilityTracker.Availability.BindValueChanged(onBeatmapAvailabilityChanged, true);
 
             var localUserState = (RankedPlayUserState)client.LocalUser!.MatchState!;
+
             foreach (var card in localUserState.Hand)
-                localUserHand.AddCard(client.GetCardWithPlaylistItem(card));
+                addCard(client.GetCardWithPlaylistItem(card), playerHand, c => c.Position = new Vector2(DrawWidth / 2, DrawHeight));
+
+            addCardExpiryListener();
         }
 
         private void onRoomUpdated()
@@ -188,7 +200,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 
             stageText.Text = string.Empty;
             ActionButton.Hide();
-            localUserHand.AllowSelection.Value = false;
+            playerHand.AllowSelection = false;
 
             switch (rankedPlayState.Stage)
             {
@@ -199,8 +211,9 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                     ActionButton.Text = "Discard";
                     ActionButton.Enabled.Value = true;
 
-                    localUserHand.AllowSelection.Value = true;
-                    localUserHand.SelectionLength = int.MaxValue;
+                    playerHand.ClearSelection();
+                    playerHand.AllowSelection = true;
+                    playerHand.SelectionLength = int.MaxValue;
                     break;
 
                 case RankedPlayStage.CardPlay:
@@ -214,8 +227,9 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                         ActionButton.Text = "Play";
                         ActionButton.Enabled.Value = isActivePlayer;
 
-                        localUserHand.AllowSelection.Value = true;
-                        localUserHand.SelectionLength = 1;
+                        playerHand.ClearSelection();
+                        playerHand.AllowSelection = true;
+                        playerHand.SelectionLength = 1;
                     }
                     else
                         stageText.Text = "waiting for the other player to play a card...";
@@ -224,30 +238,49 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
             }
         }
 
-        private void onRankedPlayCardAdded(int userId, RankedPlayCardWithPlaylistItem card)
+        private double nextInsertTime = double.MinValue;
+        private double nextDiscardTime = double.MinValue;
+
+        private void onRankedPlayCardAdded(int userId, RankedPlayCardWithPlaylistItem item)
         {
             if (userId == client.LocalUser!.UserID)
-                localUserHand.AddCard(card);
-        }
-
-        private void onRankedPlayCardRemoved(int userId, RankedPlayCardWithPlaylistItem card)
-        {
-            if (playedCardContainer.FirstOrDefault()?.Item.Equals(card) == true)
-                playedCardContainer.Clear();
-
-            if (userId == client.LocalUser!.UserID)
-                localUserHand.RemoveCard(card);
-        }
-
-        private void onRankedPlayCardPlayed(RankedPlayCardWithPlaylistItem card)
-        {
-            localUserHand.RemoveCard(card);
-
-            playedCardContainer.Child = new Card(card)
             {
-                Anchor = Anchor.Centre,
-                Origin = Anchor.Centre
-            };
+                double insertTime = Math.Max(Time.Current, nextInsertTime);
+                nextInsertTime = insertTime + 100;
+
+                Scheduler.AddDelayed(() => addCard(item, playerHand, c =>
+                {
+                    c.Position = new Vector2(DrawWidth + 200, DrawHeight - 100);
+                    c.Rotation = -30;
+                }), insertTime - Time.Current);
+            }
+        }
+
+        private void onRankedPlayCardRemoved(int userId, RankedPlayCardWithPlaylistItem item)
+        {
+            if (userId == client.LocalUser!.UserID && cardForItem(item) is { } card)
+            {
+                double discardTime = Math.Max(Time.Current, nextDiscardTime);
+                nextDiscardTime = discardTime + 50;
+                nextInsertTime = discardTime + 1500;
+
+                double delay = discardTime - Time.Current;
+
+                moveCardToContainer(card, centerCardRow, moveDelay: delay);
+                card.PopOutAndExpire(delay: 1000 + delay);
+            }
+        }
+
+        private void onRankedPlayCardPlayed(RankedPlayCardWithPlaylistItem item)
+        {
+            if (!moveCardToContainer(item, centerCardRow))
+            {
+                addCard(item, centerCardRow, c =>
+                {
+                    // TODO: use card position from other player's hand
+                    c.Position = new Vector2(DrawWidth / 2, 0);
+                });
+            }
         }
 
         private void onBeatmapAvailabilityChanged(ValueChangedEvent<BeatmapAvailability> e) => Scheduler.Add(() =>
@@ -268,7 +301,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 
         private void onActionButtonClicked()
         {
-            RankedPlayCardItem[] selection = localUserHand.CurrentSelection.ToArray();
+            RankedPlayCardItem[] selection = playerHand.Selection.Select(it => it.Card).ToArray();
 
             bool finished = false;
 
@@ -293,8 +326,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
             {
                 ActionButton.Hide();
                 ActionButton.Enabled.Value = false;
-
-                localUserHand.AllowSelection.Value = false;
+                playerHand.AllowSelection = false;
             }
         }
 
