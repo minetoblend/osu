@@ -4,6 +4,7 @@
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Transforms;
 using osu.Framework.Utils;
+using osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Facades;
 using osu.Game.Utils;
 
 namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
@@ -29,23 +30,23 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 
         public class MovementStyleTransform : Transform<SpringParameters, CardFacade>
         {
-            public override string TargetMember => nameof(CardFacade.CardMovement);
+            public override string TargetMember => nameof(CardFacade.CardMovementBindable);
 
             protected override void Apply(CardFacade d, double time)
             {
                 if (time <= StartTime)
                 {
-                    d.CardMovement.Value = StartValue;
+                    d.CardMovementBindable.Value = StartValue;
                     return;
                 }
 
                 if (time >= EndTime)
                 {
-                    d.CardMovement.Value = EndValue;
+                    d.CardMovementBindable.Value = EndValue;
                     return;
                 }
 
-                d.CardMovement.Value = new SpringParameters
+                d.CardMovementBindable.Value = new SpringParameters
                 {
                     NaturalFrequency = Interpolation.ValueAt(time, StartValue.NaturalFrequency, EndValue.NaturalFrequency, StartTime, EndTime),
                     Damping = Interpolation.ValueAt(time, StartValue.Damping, EndValue.Damping, StartTime, EndTime),
@@ -53,14 +54,14 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                 };
             }
 
-            protected override void ReadIntoStartValue(CardFacade d) => StartValue = d.CardMovement.Value;
+            protected override void ReadIntoStartValue(CardFacade d) => StartValue = d.CardMovementBindable.Value;
         }
     }
 
     public static class RankedPlayScreen2Extensions
     {
-        public static TransformSequence<RankedPlayScreen.CardFacade> TransformMovementStyleTo(
-            this RankedPlayScreen.CardFacade facade,
+        public static TransformSequence<CardFacade> TransformMovementStyleTo(
+            this CardFacade facade,
             SpringParameters value,
             double duration = 0,
             Easing easing = Easing.None
@@ -71,8 +72,8 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
             return facade.TransformTo(transform);
         }
 
-        public static TransformSequence<RankedPlayScreen.CardFacade> TransformMovementStyleTo(
-            this TransformSequence<RankedPlayScreen.CardFacade> sequence,
+        public static TransformSequence<CardFacade> TransformMovementStyleTo(
+            this TransformSequence<CardFacade> sequence,
             SpringParameters value,
             double duration = 0,
             Easing easing = Easing.None

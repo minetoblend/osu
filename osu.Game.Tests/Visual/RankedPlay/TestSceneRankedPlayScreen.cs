@@ -8,6 +8,7 @@ using osu.Framework.Bindables;
 using osu.Framework.Extensions;
 using osu.Framework.Input.Events;
 using osu.Framework.Testing;
+using osu.Game.Graphics.UserInterface;
 using osu.Game.Online.API.Requests.Responses;
 using osu.Game.Online.Multiplayer.MatchTypes.RankedPlay;
 using osu.Game.Online.Rooms;
@@ -48,6 +49,8 @@ namespace osu.Game.Tests.Visual.RankedPlay
         [Test]
         public void TestAddRemoveCards()
         {
+            AddStep("set discard phase", () => MultiplayerClient.RankedPlayChangeStage(RankedPlayStage.CardDiscard).WaitSafely());
+
             for (int i = 0; i < 3; i++)
                 AddStep("add card", () => MultiplayerClient.RankedPlayAddCard(new RankedPlayCardItem()).WaitSafely());
 
@@ -58,6 +61,8 @@ namespace osu.Game.Tests.Visual.RankedPlay
         [Test]
         public void TestRevealCards()
         {
+            AddStep("set discard phase", () => MultiplayerClient.RankedPlayChangeStage(RankedPlayStage.CardDiscard).WaitSafely());
+
             for (int i = 0; i < 3; i++)
             {
                 int i2 = i;
@@ -72,12 +77,16 @@ namespace osu.Game.Tests.Visual.RankedPlay
         [Test]
         public void TestPlayCardDirect()
         {
+            AddStep("set play phase", () => MultiplayerClient.RankedPlayChangeStage(RankedPlayStage.CardPlay).WaitSafely());
+            AddWaitStep("wait", 3);
             AddStep("play card", () => MultiplayerClient.PlayCard(((RankedPlayUserState)MultiplayerClient.LocalUser!.MatchState!).Hand[0]).WaitSafely());
         }
 
         [Test]
         public void TestDiscardCardsDirect()
         {
+            AddStep("set discard phase", () => MultiplayerClient.RankedPlayChangeStage(RankedPlayStage.CardDiscard).WaitSafely());
+            AddWaitStep("wait", 3);
             AddStep("discard cards", () => MultiplayerClient.DiscardCards(((RankedPlayUserState)MultiplayerClient.LocalUser!.MatchState!).Hand.Take(3).ToArray()).WaitSafely());
         }
 
@@ -85,6 +94,8 @@ namespace osu.Game.Tests.Visual.RankedPlay
         public void TestDiscardCardsStage()
         {
             AddStep("set discard phase", () => MultiplayerClient.RankedPlayChangeStage(RankedPlayStage.CardDiscard).WaitSafely());
+
+            AddWaitStep("wait", 3);
 
             for (int i = 0; i < 3; i++)
             {
@@ -96,9 +107,13 @@ namespace osu.Game.Tests.Visual.RankedPlay
                 });
             }
 
+            AddWaitStep("wait", 3);
+
             AddStep("click discard button", () =>
             {
-                InputManager.MoveMouseTo(screen.ActionButton);
+                var button = screen.ChildrenOfType<ShearedButton>().Single(it => it.Text == "Discard");
+
+                InputManager.MoveMouseTo(button);
                 InputManager.Click(MouseButton.Left);
             });
         }
@@ -118,9 +133,13 @@ namespace osu.Game.Tests.Visual.RankedPlay
                 });
             }
 
+            AddWaitStep("wait", 3);
+
             AddStep("click play button", () =>
             {
-                InputManager.MoveMouseTo(screen.ActionButton);
+                var button = screen.ChildrenOfType<ShearedButton>().Single(it => it.Text == "Play");
+
+                InputManager.MoveMouseTo(button);
                 InputManager.Click(MouseButton.Left);
             });
         }
@@ -133,14 +152,6 @@ namespace osu.Game.Tests.Visual.RankedPlay
             AddStep("set play phase", () => MultiplayerClient.RankedPlayChangeStage(RankedPlayStage.CardPlay, state => state.ActivePlayerIndex = 1).WaitSafely());
 
             AddStep("play beatmap", () => MultiplayerClient.PlayCard(((RankedPlayUserState)MultiplayerClient.ServerRoom!.Users[1].MatchState!).Hand[0]).WaitSafely());
-        }
-
-        [Test]
-        public void TestHandContraction()
-        {
-            AddStep("hand contracted", () => MultiplayerClient.RankedPlayChangeStage(RankedPlayStage.WaitForJoin).WaitSafely());
-            AddStep("hand half visible", () => MultiplayerClient.RankedPlayChangeStage(RankedPlayStage.Results).WaitSafely());
-            AddStep("hand fully visible", () => MultiplayerClient.RankedPlayChangeStage(RankedPlayStage.CardDiscard).WaitSafely());
         }
     }
 }

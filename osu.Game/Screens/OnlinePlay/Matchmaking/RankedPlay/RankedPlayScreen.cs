@@ -2,6 +2,7 @@
 // See the LICENCE file in the repository root for full licence text.
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using osu.Framework.Allocation;
@@ -17,9 +18,6 @@ using osu.Game.Audio;
 using osu.Game.Beatmaps;
 using osu.Game.Configuration;
 using osu.Game.Database;
-using osu.Game.Graphics;
-using osu.Game.Graphics.Sprites;
-using osu.Game.Graphics.UserInterface;
 using osu.Game.Online;
 using osu.Game.Online.API.Requests.Responses;
 using osu.Game.Online.Multiplayer;
@@ -29,15 +27,14 @@ using osu.Game.Overlays;
 using osu.Game.Overlays.Dialog;
 using osu.Game.Rulesets;
 using osu.Game.Screens.OnlinePlay.Matchmaking.Match.Gameplay;
+using osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Facades;
 using osu.Game.Screens.OnlinePlay.Multiplayer;
-using osuTK;
 
 namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 {
+    [Cached]
     public partial class RankedPlayScreen : OsuScreen, IPreviewTrackOwner, IHandlePresentBeatmap
     {
-        public ShearedButton ActionButton { get; }
-
         [Cached(typeof(OnlinePlayBeatmapAvailabilityTracker))]
         private readonly OnlinePlayBeatmapAvailabilityTracker beatmapAvailabilityTracker = new MultiplayerBeatmapAvailabilityTracker();
 
@@ -74,13 +71,14 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
         private readonly MultiplayerRoom room;
 
         private readonly CardContainer cardContainer;
-        private readonly OsuSpriteText stageText;
-        private readonly PlayerHand playerHand;
-        private readonly CardFillFlowContainer centerCardRow;
+        private readonly Container<RankedPlaySubScreen> screenContainer;
 
         private Sample? sampleStart;
         private CancellationTokenSource? downloadCheckCancellation;
         private int? lastDownloadCheckedBeatmapId;
+
+        private readonly CardFacade hiddenPlayerCardFacade;
+        private readonly CardFacade hiddenOpponentCardFacade;
 
         public RankedPlayScreen(MultiplayerRoom room)
         {
@@ -89,42 +87,28 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
             InternalChildren = new Drawable[]
             {
                 beatmapAvailabilityTracker,
-                ActionButton = new ShearedButton(width: 150)
+                screenContainer = new Container<RankedPlaySubScreen>
                 {
-                    Anchor = Anchor.BottomRight,
-                    Origin = Anchor.BottomRight,
-                    Y = -100,
-                    Alpha = 0,
-                    Action = onActionButtonClicked,
-                    Enabled = { Value = false }
-                },
-                stageText = new OsuSpriteText
-                {
-                    Anchor = Anchor.TopCentre,
-                    Origin = Anchor.TopCentre,
-                    Font = OsuFont.Style.Title,
-                    Y = 50
+                    RelativeSizeAxes = Axes.Both,
                 },
                 cardContainer = new CardContainer
                 {
                     RelativeSizeAxes = Axes.Both,
                 },
-                playerHand = new PlayerHand
+                hiddenPlayerCardFacade = new CardFacade
                 {
                     Anchor = Anchor.BottomCentre,
-                    Origin = Anchor.BottomCentre,
-                    RelativeSizeAxes = Axes.Both,
-                    Size = new Vector2(0.5f)
+                    Origin = Anchor.TopCentre,
+                    Y = 20,
+                    CardMovement = MovementStyle.Energetic
                 },
-                centerCardRow = new CardFillFlowContainer
+                hiddenOpponentCardFacade = new CardFacade
                 {
-                    Direction = FillDirection.Horizontal,
-                    AutoSizeAxes = Axes.Both,
-                    Anchor = Anchor.Centre,
-                    Origin = Anchor.Centre,
-                    Spacing = new Vector2(20),
-                    CardMovement = { Value = MovementStyle.Smooth }
-                }
+                    Anchor = Anchor.TopCentre,
+                    Origin = Anchor.BottomCentre,
+                    Y = -20,
+                    CardMovement = MovementStyle.Energetic
+                },
             };
         }
 
@@ -149,12 +133,84 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 
             beatmapAvailabilityTracker.Availability.BindValueChanged(onBeatmapAvailabilityChanged, true);
 
-            var localUserState = (RankedPlayUserState)client.LocalUser!.MatchState!;
+            foreach (var user in client.Room!.Users)
+            {
+                bool isOwnUser = user.UserID == client.LocalUser!.UserID;
 
-            foreach (var card in localUserState.Hand)
-                addCard(client.GetCardWithPlaylistItem(card), playerHand, c => c.Position = new Vector2(DrawWidth / 2, DrawHeight));
+                var localUserState = (RankedPlayUserState)user.MatchState!;
 
-            addCardExpiryListener();
+                foreach (var item in localUserState.Hand)
+                {
+                    var card = new Card(client.GetCardWithPlaylistItem(item))
+                    {
+                        OwnCard = isOwnUser,
+                        Position = ToLocalSpace(hiddenPlayerCardFacade.ScreenSpaceDrawQuad.Centre),
+                    };
+
+                    cardContainer.Add(card);
+
+                    if (isOwnUser)
+                        playerCards.Add(card);
+                    else
+                        opponentCards.Add(card);
+
+                    card.ChangeFacade(hiddenPlayerCardFacade);
+                }
+            }
+
+            cardContainer.CardRemoved += card =>
+            {
+                playerCards.Remove(card);
+                opponentCards.Remove(card);
+            };
+        }
+
+        private RankedPlaySubScreen? activeSubscreen;
+
+        public void ShowScreen(RankedPlaySubScreen screen)
+        {
+            if (screen == activeSubscreen)
+                return;
+
+            LoadComponent(screen);
+
+            var previousScreen = activeSubscreen;
+
+            previousScreen?.OnExiting(screen);
+            previousScreen?.Expire();
+
+            screenContainer.Add(activeSubscreen = screen);
+
+            screen.OnEntering(previousScreen);
+
+            double playerCardDelay = 0;
+
+            foreach (var card in playerCards)
+            {
+                var facade = screen.PlayerCardContainer?.AddCard(card);
+
+                facade ??= hiddenPlayerCardFacade;
+
+                card.ChangeFacade(facade, playerCardDelay);
+
+                playerCardDelay += screen.CardTransitionStagger;
+            }
+
+            double opponentCardDelay = 0;
+
+            foreach (var card in opponentCards)
+            {
+                var facade = screen.OpponnetCardContainer?.AddCard(card);
+
+                facade ??= hiddenOpponentCardFacade;
+
+                card.ChangeFacade(facade, opponentCardDelay);
+
+                opponentCardDelay += screen.CardTransitionStagger;
+            }
+
+            if (previousScreen != null)
+                previousScreen.LifetimeEnd += Math.Max(playerCardDelay, opponentCardDelay);
         }
 
         private void onRoomUpdated()
@@ -194,108 +250,88 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
             this.Push(new MultiplayerPlayerLoader(() => new ScreenGameplay(new Room(room), new PlaylistItem(client.Room!.CurrentPlaylistItem), room.Users.ToArray())));
         });
 
+        private readonly List<Card> playerCards = new List<Card>();
+        private readonly List<Card> opponentCards = new List<Card>();
+
         private void onMatchRoomStateChanged(MatchRoomState state)
         {
             if (state is not RankedPlayRoomState rankedPlayState)
                 return;
 
-            stageText.Text = string.Empty;
-            ActionButton.Hide();
-            playerHand.DisableSelection();
-            playerHand.TransformTo(nameof(playerHand.ContractedAmount), rankedPlayState.Stage switch
-            {
-                RankedPlayStage.WaitForJoin
-                    or RankedPlayStage.RoundWarmup
-                    or RankedPlayStage.GameplayWarmup
-                    or RankedPlayStage.Gameplay
-                    or RankedPlayStage.Ended => 1,
-                RankedPlayStage.Results => 0.5f,
-                _ => 0
-            }, 100);
-
             switch (rankedPlayState.Stage)
             {
                 case RankedPlayStage.CardDiscard:
-                    stageText.Text = "discard beatmaps from your hand";
+                    ShowScreen(new DiscardScreen());
+                    break;
 
-                    ActionButton.Show();
-                    ActionButton.Text = "Discard";
-                    ActionButton.Enabled.Value = true;
-
-                    playerHand.EnableMultiSelection();
+                case RankedPlayStage.FinishCardDiscard:
+                    // Noop for now
                     break;
 
                 case RankedPlayStage.CardPlay:
                     bool isActivePlayer = client.Room!.Users[rankedPlayState.ActivePlayerIndex].Equals(client.LocalUser);
 
-                    if (isActivePlayer)
-                    {
-                        stageText.Text = "play a card from your hand!";
+                    ShowScreen(isActivePlayer ? new PickScreen() : new OpponentPickScreen());
+                    break;
 
-                        ActionButton.Show();
-                        ActionButton.Text = "Play";
-                        ActionButton.Enabled.Value = isActivePlayer;
-
-                        playerHand.ClearSelection();
-                        playerHand.EnableSingleSelection();
-                    }
-                    else
-                        stageText.Text = "waiting for the other player to play a card...";
-
+                default:
+                    // TODO
+                    ShowScreen(new PlaceholderScreen());
                     break;
             }
         }
 
-        private double nextInsertTime = double.MinValue;
-        private double nextDiscardTime = double.MinValue;
-
         private void onRankedPlayCardAdded(int userId, RankedPlayCardWithPlaylistItem item)
         {
-            if (userId == client.LocalUser!.UserID)
+            var card = new Card(item)
             {
-                double insertTime = Math.Max(Time.Current, nextInsertTime);
-                nextInsertTime = insertTime + 100;
+                OwnCard = userId == client.LocalUser!.UserID
+            };
 
-                Scheduler.AddDelayed(() =>
-                {
-                    var facade = addCard(item, playerHand, c =>
-                    {
-                        c.Position = new Vector2(DrawWidth + 200, DrawHeight - 100);
-                        c.Rotation = -30;
-                    });
+            cardContainer.Add(card);
+            if (card.OwnCard)
+                playerCards.Add(card);
+            else
+                opponentCards.Add(card);
 
-                    facade.TransformMovementStyleTo(MovementStyle.Smooth)
-                          .Delay(300)
-                          .TransformMovementStyleTo(MovementStyle.Energetic);
-                }, insertTime - Time.Current);
+            activeSubscreen?.CardAdded(card);
+
+            if (card.Facade == null)
+            {
+                var facade = activeSubscreen?.PlayerCardContainer?.AddCard(card);
+
+                facade ??= card.OwnCard ? hiddenPlayerCardFacade : hiddenOpponentCardFacade;
+
+                card.Position = ToLocalSpace(facade.ScreenSpaceDrawQuad.Centre);
+
+                card.ChangeFacade(facade);
             }
         }
 
         private void onRankedPlayCardRemoved(int userId, RankedPlayCardWithPlaylistItem item)
         {
-            if (cardForItem(item) is { } card)
-            {
-                double discardTime = Math.Max(Time.Current, nextDiscardTime);
-                nextDiscardTime = discardTime + 50;
-                nextInsertTime = discardTime + 1500;
+            var card = cardContainer.FirstOrDefault(it => it.Item.Equals(item));
 
-                double delay = discardTime - Time.Current;
-
-                moveCardToContainer(card, centerCardRow, moveDelay: delay);
-                card.PopOutAndExpire(delay: 1000 + delay);
-            }
+            if (card != null)
+                activeSubscreen?.CardRemoved(card);
         }
 
         private void onRankedPlayCardPlayed(RankedPlayCardWithPlaylistItem item)
         {
-            if (!moveCardToContainer(item, centerCardRow))
+            var card = cardContainer.FirstOrDefault(it => it.Item.Equals(item));
+
+            if (card == null)
             {
-                addCard(item, centerCardRow, c =>
+                card = new Card(item)
                 {
-                    // TODO: use card position from other player's hand
-                    c.Position = new Vector2(DrawWidth / 2, 0);
-                });
+                    OwnCard = true
+                };
+
+                cardContainer.Add(card);
+                playerCards.Add(card);
             }
+
+            activeSubscreen?.CardPlayed(card);
         }
 
         private void onBeatmapAvailabilityChanged(ValueChangedEvent<BeatmapAvailability> e) => Scheduler.Add(() =>
@@ -314,36 +350,36 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
             }
         });
 
-        private void onActionButtonClicked()
-        {
-            RankedPlayCardItem[] selection = playerHand.Selection.Select(it => it.Card).ToArray();
-
-            bool finished = false;
-
-            switch (((RankedPlayRoomState)client.Room!.MatchState!).Stage)
-            {
-                case RankedPlayStage.CardDiscard:
-                    client.DiscardCards(selection).FireAndForget();
-                    finished = true;
-                    break;
-
-                case RankedPlayStage.CardPlay:
-                    if (selection.Length > 0)
-                    {
-                        client.PlayCard(selection.First()).FireAndForget();
-                        finished = true;
-                    }
-
-                    break;
-            }
-
-            if (finished)
-            {
-                ActionButton.Hide();
-                ActionButton.Enabled.Value = false;
-                playerHand.DisableSelection();
-            }
-        }
+        // private void onActionButtonClicked()
+        // {
+        //     RankedPlayCardItem[] selection = playerHand.Selection.Select(it => it.Card).ToArray();
+        //
+        //     bool finished = false;
+        //
+        //     switch (((RankedPlayRoomState)client.Room!.MatchState!).Stage)
+        //     {
+        //         case RankedPlayStage.CardDiscard:
+        //             client.DiscardCards(selection).FireAndForget();
+        //             finished = true;
+        //             break;
+        //
+        //         case RankedPlayStage.CardPlay:
+        //             if (selection.Length > 0)
+        //             {
+        //                 client.PlayCard(selection.First()).FireAndForget();
+        //                 finished = true;
+        //             }
+        //
+        //             break;
+        //     }
+        //
+        //     if (finished)
+        //     {
+        //         ActionButton.Hide();
+        //         ActionButton.Enabled.Value = false;
+        //         playerHand.DisableSelection();
+        //     }
+        // }
 
         private void updateGameplayState()
         {
@@ -509,13 +545,30 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                 return;
 
             beatmap.NewValue.PrepareTrackForPreview(true);
+#if (!DEBUG)
             music.EnsurePlayingSomething();
+#endif
         }
 
         public void PresentBeatmap(WorkingBeatmap beatmap, RulesetInfo ruleset)
         {
             // Do nothing to prevent the user from potentially being kicked out
             // of gameplay due to the screen performer's internal processes.
+        }
+
+        private partial class CardContainer : Container<Card>
+        {
+            public event Action<Card>? CardRemoved;
+
+            protected override bool RemoveInternal(Drawable drawable, bool disposeImmediately)
+            {
+                if (!base.RemoveInternal(drawable, disposeImmediately))
+                    return false;
+
+                if (drawable is Card card)
+                    CardRemoved?.Invoke(card);
+                return true;
+            }
         }
     }
 }

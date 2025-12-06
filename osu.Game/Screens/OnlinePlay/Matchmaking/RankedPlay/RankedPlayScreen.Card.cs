@@ -10,7 +10,9 @@ using osu.Framework.Graphics.Shapes;
 using osu.Framework.Input.Events;
 using osu.Framework.Threading;
 using osu.Game.Graphics.Sprites;
+using osu.Game.Graphics.UserInterface;
 using osu.Game.Online.Rooms;
+using osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Facades;
 using osu.Game.Utils;
 using osuTK;
 using osuTK.Graphics;
@@ -21,6 +23,8 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
     {
         public partial class Card : CompositeDrawable
         {
+            public required bool OwnCard;
+
             public readonly Bindable<bool> AllowSelection = new Bindable<bool>();
             public readonly BindableBool Selected = new BindableBool();
 
@@ -76,7 +80,8 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                                 Text = "Hidden"
                             }
                         }
-                    }
+                    },
+                    new HoverClickSounds()
                 };
             }
 
@@ -92,7 +97,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                 Selected.BindValueChanged(onSelectedChanged, true);
 
                 position = new Vector2Spring(Position, naturalFrequency: 2.5f, response: 1.2f);
-                rotation = new FloatSpring(Rotation, naturalFrequency: 3, response: 1f);
+                rotation = new FloatSpring(Rotation, naturalFrequency: 3, response: 2f);
                 scale = new Vector2Spring(Scale, naturalFrequency: 3, damping: 0.9f, response: 2f);
 
                 cardMovement.BindValueChanged(e => position.Parameters = e.NewValue, true);
@@ -106,10 +111,11 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                 scheduledFacadeChange = null;
 
                 if (Facade is { } previous)
-                    cardMovement.UnbindFrom(previous.CardMovement);
+                    cardMovement.UnbindFrom(previous.CardMovementBindable);
 
                 Facade = facade;
-                cardMovement.BindTo(facade.CardMovement);
+
+                cardMovement.BindTo(facade.CardMovementBindable);
             }
 
             public void ChangeFacade(CardFacade facade, double delay)
