@@ -23,8 +23,6 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
     {
         public partial class Card : CompositeDrawable
         {
-            public required bool OwnCard;
-
             public readonly Bindable<bool> AllowSelection = new Bindable<bool>();
             public readonly BindableBool Selected = new BindableBool();
 

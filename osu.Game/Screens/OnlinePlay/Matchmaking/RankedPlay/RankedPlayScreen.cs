@@ -143,7 +143,6 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                 {
                     var card = new Card(client.GetCardWithPlaylistItem(item))
                     {
-                        OwnCard = isOwnUser,
                         Position = ToLocalSpace(hiddenPlayerCardFacade.ScreenSpaceDrawQuad.Centre),
                     };
 
@@ -283,13 +282,13 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 
         private void onRankedPlayCardAdded(int userId, RankedPlayCardWithPlaylistItem item)
         {
-            var card = new Card(item)
-            {
-                OwnCard = userId == client.LocalUser!.UserID
-            };
+            bool isOwnPlayer = userId == client.LocalUser!.UserID;
+
+            var card = new Card(item);
 
             cardContainer.Add(card);
-            if (card.OwnCard)
+
+            if (isOwnPlayer)
                 playerCards.Add(card);
             else
                 opponentCards.Add(card);
@@ -300,7 +299,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
             {
                 var facade = activeSubscreen?.PlayerCardContainer?.AddCard(card);
 
-                facade ??= card.OwnCard ? hiddenPlayerCardFacade : hiddenOpponentCardFacade;
+                facade ??= isOwnPlayer ? hiddenPlayerCardFacade : hiddenOpponentCardFacade;
 
                 card.Position = ToLocalSpace(facade.ScreenSpaceDrawQuad.Centre);
 
@@ -322,13 +321,9 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 
             if (card == null)
             {
-                card = new Card(item)
-                {
-                    OwnCard = true
-                };
+                card = new Card(item);
 
                 cardContainer.Add(card);
-                playerCards.Add(card);
             }
 
             activeSubscreen?.CardPlayed(card);
