@@ -2,12 +2,16 @@
 // See the LICENCE file in the repository root for full licence text.
 
 using osu.Framework.Bindables;
+using osu.Framework.Extensions.Color4Extensions;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
+using osu.Framework.Graphics.Effects;
 using osu.Framework.Graphics.Shapes;
 using osu.Framework.Input.Events;
+using osu.Framework.Threading;
 using osu.Game.Graphics.Sprites;
 using osu.Game.Online.Rooms;
+using osu.Game.Utils;
 using osuTK;
 using osuTK.Graphics;
 
@@ -27,14 +31,24 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
             private readonly Box background;
             private readonly OsuSpriteText beatmapIdText;
 
+            public CardFacade? Facade { get; private set; }
+
             public Card(RankedPlayCardWithPlaylistItem item)
             {
                 Item = item;
 
-                Size = new Vector2(100, 200);
+                Size = new Vector2(120, 200);
                 Masking = true;
+                CornerRadius = 10;
                 BorderColour = Color4.Yellow;
                 BorderThickness = 0;
+                Origin = Anchor.Centre;
+                EdgeEffect = new EdgeEffectParameters
+                {
+                    Type = EdgeEffectType.Shadow,
+                    Radius = 10,
+                    Colour = Color4.Black.Opacity(0.1f),
+                };
 
                 InternalChildren = new Drawable[]
                 {
@@ -66,6 +80,8 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                 };
             }
 
+            private readonly Bindable<SpringParameters> cardMovement = new Bindable<SpringParameters>(MovementStyle.Energetic);
+
             protected override void LoadComplete()
             {
                 base.LoadComplete();
@@ -73,8 +89,44 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                 playlistItem.BindTo(Item.PlaylistItem);
                 playlistItem.BindValueChanged(onPlaylistItemChanged, true);
 
-                AllowSelection.BindValueChanged(onAllowSelectionChanged, true);
                 Selected.BindValueChanged(onSelectedChanged, true);
+
+                position = new Vector2Spring(Position, naturalFrequency: 2.5f, response: 1.2f);
+                rotation = new FloatSpring(Rotation, naturalFrequency: 3, response: 1f);
+                scale = new Vector2Spring(Scale, naturalFrequency: 3, damping: 0.9f, response: 2f);
+
+                cardMovement.BindValueChanged(e => position.Parameters = e.NewValue, true);
+            }
+
+            private ScheduledDelegate? scheduledFacadeChange;
+
+            public void ChangeFacade(CardFacade facade)
+            {
+                scheduledFacadeChange?.Cancel();
+                scheduledFacadeChange = null;
+
+                if (Facade is { } previous)
+                    cardMovement.UnbindFrom(previous.CardMovement);
+
+                Facade = facade;
+                cardMovement.BindTo(facade.CardMovement);
+            }
+
+            public void ChangeFacade(CardFacade facade, double delay)
+            {
+                if (delay <= 0)
+                {
+                    ChangeFacade(facade);
+                    return;
+                }
+
+                scheduledFacadeChange?.Cancel();
+                scheduledFacadeChange = Scheduler.AddDelayed(() => ChangeFacade(facade), delay);
+            }
+
+            private void onSelectedChanged(ValueChangedEvent<bool> e)
+            {
+                BorderThickness = e.NewValue ? 5 : 0;
             }
 
             private void onPlaylistItemChanged(ValueChangedEvent<MultiplayerPlaylistItem?> e)
@@ -86,24 +138,57 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                 }
             }
 
-            private void onAllowSelectionChanged(ValueChangedEvent<bool> e)
+            private Vector2Spring position = null!;
+            private FloatSpring rotation = null!;
+            private Vector2Spring scale = null!;
+
+            protected override void Update()
             {
-                if (!e.NewValue)
-                    Selected.Value = false;
+                base.Update();
+
+                if (Facade == null)
+                    return;
+
+                Selected.Value = Facade.Selected;
+
+                var drawQuad = Parent!.ToLocalSpace(Facade.ScreenSpaceDrawQuad);
+
+                Position = position.Update(Time.Elapsed, drawQuad.Centre);
+                Rotation = rotation.Update(Time.Elapsed, Facade.Rotation);
+                Scale = scale.Update(Time.Elapsed, Facade.Scale);
             }
 
-            private void onSelectedChanged(ValueChangedEvent<bool> e)
+            public void PopOutAndExpire(double delay = 0)
             {
-                BorderThickness = e.NewValue ? 5 : 0;
+                this.Delay(delay)
+                    .Schedule(() => Facade = null)
+                    .ScaleTo(0, 400, Easing.In)
+                    .FadeOut(200)
+                    .Expire();
+
+                // bit of extra time before it expires to make sure there is no delay
+                LifetimeEnd += 1000;
             }
 
-            protected override bool OnClick(ClickEvent e)
-            {
-                if (AllowSelection.Value)
-                    Selected.Toggle();
+            #region event handling
 
-                return true;
-            }
+            protected override bool OnHover(HoverEvent e) => Facade?.OnCardHover(e) ?? base.OnHover(e);
+
+            protected override void OnHoverLost(HoverLostEvent e) => Facade?.OnCardHoverLost(e);
+
+            protected override bool OnClick(ClickEvent e) => Facade?.OnCardClicked(e) ?? base.OnClick(e);
+
+            protected override bool OnMouseDown(MouseDownEvent e) => Facade?.OnCardMouseDown(e) ?? base.OnMouseDown(e);
+
+            protected override void OnMouseUp(MouseUpEvent e) => Facade?.OnCardMouseUp(e);
+
+            protected override bool OnDragStart(DragStartEvent e) => Facade?.OnCardDragStart(e) ?? base.OnDragStart(e);
+
+            protected override void OnDrag(DragEvent e) => Facade?.OnCardDrag(e);
+
+            protected override void OnDragEnd(DragEndEvent e) => Facade?.OnCardDragEnd(e);
+
+            #endregion
         }
     }
 }

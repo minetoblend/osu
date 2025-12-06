@@ -3,7 +3,10 @@
 
 using System.Linq;
 using NUnit.Framework;
+using osu.Framework.Allocation;
+using osu.Framework.Bindables;
 using osu.Framework.Extensions;
+using osu.Framework.Input.Events;
 using osu.Framework.Testing;
 using osu.Game.Online.API.Requests.Responses;
 using osu.Game.Online.Multiplayer.MatchTypes.RankedPlay;
@@ -16,6 +19,20 @@ namespace osu.Game.Tests.Visual.RankedPlay
 {
     public partial class TestSceneRankedPlayScreen2 : MultiplayerTestScene
     {
+        [Cached(name: "debugEnabled")]
+        private readonly Bindable<bool> debugEnabled = new Bindable<bool>();
+
+        protected override bool OnKeyDown(KeyDownEvent e)
+        {
+            if (e.Key == Key.T)
+            {
+                debugEnabled.Value = !debugEnabled.Value;
+                return true;
+            }
+
+            return base.OnKeyDown(e);
+        }
+
         private RankedPlayScreen2 screen = null!;
 
         public override void SetUpSteps()
