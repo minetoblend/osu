@@ -202,6 +202,16 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
             stageText.Text = string.Empty;
             ActionButton.Hide();
             playerHand.DisableSelection();
+            playerHand.TransformTo(nameof(playerHand.ContractedAmount), rankedPlayState.Stage switch
+            {
+                RankedPlayStage.WaitForJoin
+                    or RankedPlayStage.RoundWarmup
+                    or RankedPlayStage.GameplayWarmup
+                    or RankedPlayStage.Gameplay
+                    or RankedPlayStage.Ended => 1,
+                RankedPlayStage.Results => 0.5f,
+                _ => 0
+            }, 100);
 
             switch (rankedPlayState.Stage)
             {
