@@ -121,5 +121,23 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                 card.PopOutAndExpire(1000);
             }, delay);
         }
+
+        public void PresentRemainingCards(RankedPlayScreen.Card[] cards)
+        {
+            centerRow.Clear();
+
+            const double stagger = 50;
+            double delay = 0;
+
+            centerRow.CardMovement.Value = RankedPlayScreen.MovementStyle.Slow;
+
+            foreach (var card in cards)
+            {
+                var facade = centerRow.AddCard(card);
+
+                card.ChangeFacade(facade, delay);
+                delay += stagger;
+            }
+        }
     }
 }

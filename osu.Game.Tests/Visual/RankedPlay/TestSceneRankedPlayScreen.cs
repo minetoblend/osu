@@ -88,6 +88,8 @@ namespace osu.Game.Tests.Visual.RankedPlay
             AddStep("set discard phase", () => MultiplayerClient.RankedPlayChangeStage(RankedPlayStage.CardDiscard).WaitSafely());
             AddWaitStep("wait", 3);
             AddStep("discard cards", () => MultiplayerClient.DiscardCards(((RankedPlayUserState)MultiplayerClient.LocalUser!.MatchState!).Hand.Take(3).ToArray()).WaitSafely());
+            AddWaitStep("wait", 13);
+            AddStep("set finish discard phase", () => MultiplayerClient.RankedPlayChangeStage(RankedPlayStage.FinishCardDiscard).WaitSafely());
         }
 
         [Test]
@@ -116,6 +118,9 @@ namespace osu.Game.Tests.Visual.RankedPlay
                 InputManager.MoveMouseTo(button);
                 InputManager.Click(MouseButton.Left);
             });
+
+            AddWaitStep("wait", 13);
+            AddStep("set finish discard phase", () => MultiplayerClient.RankedPlayChangeStage(RankedPlayStage.FinishCardDiscard).WaitSafely());
         }
 
         [Test]

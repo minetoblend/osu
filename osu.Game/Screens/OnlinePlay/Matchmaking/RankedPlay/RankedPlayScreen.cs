@@ -264,7 +264,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                     break;
 
                 case RankedPlayStage.FinishCardDiscard:
-                    // Noop for now
+                    (activeSubscreen as DiscardScreen)?.PresentRemainingCards(playerCards.ToArray());
                     break;
 
                 case RankedPlayStage.CardPlay:

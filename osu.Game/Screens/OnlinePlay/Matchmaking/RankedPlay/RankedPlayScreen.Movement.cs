@@ -26,6 +26,13 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                 Damping = 1f,
                 Response = 1.2f,
             };
+
+            public static SpringParameters Slow => new SpringParameters
+            {
+                NaturalFrequency = 1.3f,
+                Damping = 1f,
+                Response = 1.2f,
+            };
         }
 
         public class MovementStyleTransform : Transform<SpringParameters, CardFacade>

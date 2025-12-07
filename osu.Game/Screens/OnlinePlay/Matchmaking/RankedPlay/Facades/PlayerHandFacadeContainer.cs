@@ -161,7 +161,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Facades
 
         private void invalidateLayout() => Scheduler.AddOnce(updateLayout);
 
-        private partial class HandCardFacade : CardFacade
+        public partial class HandCardFacade : CardFacade
         {
             private const float hovered_scale = 1.2f;
 
