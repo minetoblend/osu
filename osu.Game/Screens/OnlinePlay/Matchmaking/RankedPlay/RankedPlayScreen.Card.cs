@@ -160,10 +160,18 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 
                 var drawQuad = Parent!.ToLocalSpace(Facade.ScreenSpaceDrawQuad);
 
+                var originPosition = RelativeOriginPosition;
+
+                var targetPosition = Vector2.Lerp(
+                    Vector2.Lerp(drawQuad.TopLeft, drawQuad.TopRight, originPosition.X),
+                    Vector2.Lerp(drawQuad.BottomLeft, drawQuad.BottomRight, originPosition.X),
+                    originPosition.Y
+                );
+
                 float targetRotation = MathHelper.RadiansToDegrees(new Line(drawQuad.TopLeft, drawQuad.TopRight).Theta);
                 float targetScale = Vector2.Distance(drawQuad.TopLeft, drawQuad.BottomLeft) / SIZE.Y;
 
-                Position = position.Update(Time.Elapsed, drawQuad.Centre);
+                Position = position.Update(Time.Elapsed, targetPosition);
                 Rotation = rotation.Update(Time.Elapsed, targetRotation);
                 Scale = scale.Update(Time.Elapsed, new Vector2(targetScale));
             }
