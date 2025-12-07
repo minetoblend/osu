@@ -10,7 +10,7 @@ using osuTK.Graphics;
 
 namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Facades
 {
-    public class DebugBox : Container
+    public partial class DebugBox : Container
     {
         [Resolved(name: "debugEnabled")]
         private Bindable<bool>? debugEnabled { get; set; }
