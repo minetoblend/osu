@@ -35,6 +35,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 
             private readonly Box background;
             private readonly OsuSpriteText beatmapIdText;
+            private readonly Container shadow;
 
             public CardFacade? Facade { get; private set; }
 
@@ -43,44 +44,59 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                 Item = item;
 
                 Size = SIZE;
-                Masking = true;
-                CornerRadius = 10;
                 BorderColour = Color4.Yellow;
                 BorderThickness = 0;
                 Origin = Anchor.Centre;
-                EdgeEffect = new EdgeEffectParameters
-                {
-                    Type = EdgeEffectType.Shadow,
-                    Radius = 10,
-                    Colour = Color4.Black.Opacity(0.1f),
-                };
 
                 InternalChildren = new Drawable[]
                 {
-                    background = new Box
+                    shadow = new Container
                     {
                         RelativeSizeAxes = Axes.Both,
-                        Colour = Color4.DimGray
-                    },
-                    new FillFlowContainer
-                    {
+                        Masking = true,
+                        CornerRadius = 10,
                         Anchor = Anchor.Centre,
                         Origin = Anchor.Centre,
-                        Children = new Drawable[]
+                        EdgeEffect = new EdgeEffectParameters
                         {
-                            new OsuSpriteText
-                            {
-                                Anchor = Anchor.Centre,
-                                Origin = Anchor.Centre,
-                                Text = $"ID: {item.Card.ID.GetHashCode()}"
-                            },
-                            beatmapIdText = new OsuSpriteText
-                            {
-                                Anchor = Anchor.Centre,
-                                Origin = Anchor.Centre,
-                                Text = "Hidden"
-                            }
+                            Type = EdgeEffectType.Shadow,
+                            Radius = 10,
+                            Colour = Color4.Black.Opacity(0.1f),
                         }
+                    },
+                    new Container
+                    {
+                        RelativeSizeAxes = Axes.Both,
+                        Masking = true,
+                        CornerRadius = 10,
+                        Children =
+                        [
+                            background = new Box
+                            {
+                                RelativeSizeAxes = Axes.Both,
+                                Colour = Color4.DimGray
+                            },
+                            new FillFlowContainer
+                            {
+                                Anchor = Anchor.Centre,
+                                Origin = Anchor.Centre,
+                                Children = new Drawable[]
+                                {
+                                    new OsuSpriteText
+                                    {
+                                        Anchor = Anchor.Centre,
+                                        Origin = Anchor.Centre,
+                                        Text = $"ID: {item.Card.ID.GetHashCode()}"
+                                    },
+                                    beatmapIdText = new OsuSpriteText
+                                    {
+                                        Anchor = Anchor.Centre,
+                                        Origin = Anchor.Centre,
+                                        Text = "Hidden"
+                                    }
+                                }
+                            },
+                        ]
                     },
                     new HoverClickSounds()
                 };
@@ -100,6 +116,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                 position = new Vector2Spring(Position, naturalFrequency: 2.5f, response: 1.2f);
                 rotation = new FloatSpring(Rotation, naturalFrequency: 3, response: 2f);
                 scale = new Vector2Spring(Scale, naturalFrequency: 3, damping: 0.9f, response: 2f);
+                elevation = new FloatSpring { Parameters = MovementStyle.Energetic };
 
                 cardMovement.BindValueChanged(e => position.Parameters = e.NewValue, true);
             }
@@ -148,6 +165,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
             private Vector2Spring position = null!;
             private FloatSpring rotation = null!;
             private Vector2Spring scale = null!;
+            private FloatSpring elevation = null!;
 
             protected override void Update()
             {
@@ -174,6 +192,17 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                 Position = position.Update(Time.Elapsed, targetPosition);
                 Rotation = rotation.Update(Time.Elapsed, targetRotation);
                 Scale = scale.Update(Time.Elapsed, new Vector2(targetScale));
+
+                elevation.Update(Time.Elapsed, Facade.Elevation);
+
+                shadow.Scale = new Vector2(100 / (100 + elevation.Current));
+                shadow.EdgeEffect = new EdgeEffectParameters
+                {
+                    Type = EdgeEffectType.Shadow,
+                    Radius = 10,
+                    Colour = Color4.Black.Opacity(0.1f),
+                    Offset = new Vector2(-elevation.Current, elevation.Current)
+                };
             }
 
             public void PopOutAndExpire(double delay = 0)

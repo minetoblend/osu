@@ -267,6 +267,8 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Facades
                 if (CardPressed)
                     Scale *= 0.97f;
 
+                Elevation = CardHovered ? 20 : 0;
+
                 DebugOverlay.BorderColour = (CardPressed, CardHovered) switch
                 {
                     (true, _) => Color4.Yellow,

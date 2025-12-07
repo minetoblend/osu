@@ -15,6 +15,8 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Facades
 
         public readonly Bindable<SpringParameters> CardMovementBindable = new Bindable<SpringParameters>(RankedPlayScreen.MovementStyle.Smooth);
 
+        public float Elevation;
+
         public SpringParameters CardMovement
         {
             get => CardMovementBindable.Value;
