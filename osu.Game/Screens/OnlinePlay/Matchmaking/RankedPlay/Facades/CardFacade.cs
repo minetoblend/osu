@@ -3,7 +3,6 @@
 
 using osu.Framework.Allocation;
 using osu.Framework.Bindables;
-using osu.Framework.Extensions.Color4Extensions;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Shapes;
@@ -46,7 +45,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Facades
                 Masking = true,
                 MaskingSmoothness = 1,
 
-                BorderColour = Color4.Red.Opacity(0.3f),
+                BorderColour = Color4.Red,
                 BorderThickness = 1.5f,
                 Padding = new MarginPadding(-1),
                 Alpha = 0,

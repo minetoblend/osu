@@ -33,6 +33,8 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Facades
             }
         }
 
+        public IEnumerable<HandCardFacade> Cards => cardContainer.Children;
+
         private CardSelectionMode selectionMode;
 
         public CardSelectionMode SelectionMode
@@ -153,7 +155,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Facades
                     xOffset /= 2;
                 }
 
-                child.Position = Vector2.Lerp(child.Position, new Vector2(child.X / 2, 150), contractedAmount);
+                child.Position = Vector2.Lerp(child.Position, new Vector2(child.X * 0.75f, 220), contractedAmount);
 
                 x += child.LayoutWidth / 2 + spacing;
             }
