@@ -148,12 +148,11 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Facades
         {
             const float spacing = -40;
 
+            cardContainer.Scale = new Vector2(float.Min((DrawWidth - 50) / cardContainer.Sum(it => it.DrawWidth + spacing), 1));
+
             float totalWidth = cardContainer.Sum(it => it.LayoutWidth + spacing) - spacing;
-            float scale = float.Min((DrawWidth - 50) / totalWidth, 1);
 
             float x = -totalWidth / 2;
-
-            cardContainer.Scale = new Vector2(scale);
 
             float xOffset = 0;
 
