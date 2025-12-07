@@ -6,7 +6,6 @@ using NUnit.Framework;
 using osu.Framework.Allocation;
 using osu.Framework.Bindables;
 using osu.Framework.Extensions;
-using osu.Framework.Input.Events;
 using osu.Framework.Testing;
 using osu.Game.Graphics.UserInterface;
 using osu.Game.Online.API.Requests.Responses;
@@ -23,15 +22,9 @@ namespace osu.Game.Tests.Visual.RankedPlay
         [Cached(name: "debugEnabled")]
         private readonly Bindable<bool> debugEnabled = new Bindable<bool>();
 
-        protected override bool OnKeyDown(KeyDownEvent e)
+        public TestSceneRankedPlayScreen()
         {
-            if (e.Key == Key.T)
-            {
-                debugEnabled.Value = !debugEnabled.Value;
-                return true;
-            }
-
-            return base.OnKeyDown(e);
+            AddToggleStep("debug overlay", enabled => debugEnabled.Value = enabled);
         }
 
         private RankedPlayScreen screen = null!;
