@@ -11,7 +11,7 @@ using osuTK;
 
 namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 {
-    public class PickScreen : RankedPlaySubScreen
+    public partial class PickScreen : RankedPlaySubScreen
     {
         private PlayerHandFacadeContainer playerHand = null!;
         private ShearedButton playButton = null!;

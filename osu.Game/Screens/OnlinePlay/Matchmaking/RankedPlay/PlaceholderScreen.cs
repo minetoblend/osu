@@ -3,5 +3,5 @@
 
 namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 {
-    public class PlaceholderScreen : RankedPlaySubScreen;
+    public partial class PlaceholderScreen : RankedPlaySubScreen;
 }
