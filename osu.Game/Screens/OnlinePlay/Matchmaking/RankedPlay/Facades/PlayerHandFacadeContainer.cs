@@ -51,10 +51,16 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Facades
 
         public PlayerHandFacadeContainer()
         {
-            InternalChild = cardContainer = new Container<HandCardFacade>
-            {
-                RelativeSizeAxes = Axes.Both,
-            };
+            InternalChildren =
+            [
+                new DebugBox(),
+                cardContainer = new Container<HandCardFacade>
+                {
+                    RelativeSizeAxes = Axes.Both,
+                    Anchor = Anchor.BottomCentre,
+                    Origin = Anchor.BottomCentre,
+                }
+            ];
         }
 
         public void ClearSelection()
@@ -125,10 +131,14 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Facades
 
         private void updateLayout()
         {
-            const float spacing = -20;
+            const float spacing = -40;
 
             float totalWidth = cardContainer.Sum(it => it.LayoutWidth + spacing) - spacing;
+            float scale = float.Min((DrawWidth - 50) / totalWidth, 1);
+
             float x = -totalWidth / 2;
+
+            cardContainer.Scale = new Vector2(scale);
 
             float xOffset = 0;
 
@@ -140,20 +150,27 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Facades
                 x += child.LayoutWidth / 2;
 
                 child.X = x;
-                child.Y = MathF.Pow(MathF.Abs(x / 250), 2) * 20;
+                child.Y = MathF.Pow(MathF.Abs(x / 250), 2) * 20 + 10;
                 child.Rotation = x * 0.03f;
+
+                float yOffset = 0;
 
                 // if a card is hovered, we want to move the cards to it's right a bit further away so the card is fully visible
                 if (child.CardHovered)
                 {
                     x += 30;
                     xOffset = 30;
+                    yOffset = -15;
                 }
                 else
                 {
                     x -= xOffset / 2;
                     xOffset /= 2;
                 }
+
+                float angle = MathHelper.DegreesToRadians(child.Rotation + 90);
+
+                child.Position += new Vector2(MathF.Cos(angle), MathF.Sin(angle)) * yOffset;
 
                 child.Position = Vector2.Lerp(child.Position, new Vector2(child.X * 0.75f, 220), contractedAmount);
 
