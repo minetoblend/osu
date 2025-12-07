@@ -8,6 +8,7 @@ using osu.Framework.Bindables;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Input.Events;
+using osu.Framework.Layout;
 using osuTK;
 using osuTK.Graphics;
 using osuTK.Input;
@@ -18,6 +19,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Facades
     {
         private readonly Container<HandCardFacade> cardContainer;
         private readonly Dictionary<RankedPlayScreen.Card, HandCardFacade> facades = new Dictionary<RankedPlayScreen.Card, HandCardFacade>();
+        private readonly LayoutValue drawSizeBacking = new LayoutValue(Invalidation.DrawSize);
 
         private readonly BindableBool allowSelection = new BindableBool();
 
@@ -51,6 +53,8 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Facades
 
         public PlayerHandFacadeContainer()
         {
+            AddLayout(drawSizeBacking);
+
             InternalChildren =
             [
                 new DebugBox(),
@@ -61,6 +65,17 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Facades
                     Origin = Anchor.BottomCentre,
                 }
             ];
+        }
+
+        protected override void Update()
+        {
+            base.Update();
+
+            if (!drawSizeBacking.IsValid)
+            {
+                updateLayout();
+                drawSizeBacking.Validate();
+            }
         }
 
         public void ClearSelection()
