@@ -26,6 +26,7 @@ using osu.Game.Online.Rooms;
 using osu.Game.Overlays;
 using osu.Game.Overlays.Dialog;
 using osu.Game.Rulesets;
+using osu.Game.Screens.Footer;
 using osu.Game.Screens.OnlinePlay.Matchmaking.Match;
 using osu.Game.Screens.OnlinePlay.Matchmaking.Match.Gameplay;
 using osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Facades;
@@ -92,28 +93,36 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
             InternalChildren = new Drawable[]
             {
                 beatmapAvailabilityTracker,
-                screenContainer = new Container<RankedPlaySubScreen>
+                new Container
                 {
                     RelativeSizeAxes = Axes.Both,
-                },
-                cardContainer = new CardContainer
-                {
-                    RelativeSizeAxes = Axes.Both,
-                },
-                hiddenPlayerCardFacade = new CardFacade
-                {
-                    Anchor = Anchor.BottomCentre,
-                    Origin = Anchor.TopCentre,
-                    Y = 20,
-                    CardMovement = MovementStyle.Energetic
-                },
-                hiddenOpponentCardFacade = new CardFacade
-                {
-                    Anchor = Anchor.TopCentre,
-                    Origin = Anchor.BottomCentre,
-                    Y = -20,
-                    CardMovement = MovementStyle.Energetic
-                },
+                    Padding = new MarginPadding { Bottom = ScreenFooter.HEIGHT },
+                    Children =
+                    [
+                        screenContainer = new Container<RankedPlaySubScreen>
+                        {
+                            RelativeSizeAxes = Axes.Both,
+                        },
+                        cardContainer = new CardContainer
+                        {
+                            RelativeSizeAxes = Axes.Both,
+                        },
+                        hiddenPlayerCardFacade = new CardFacade
+                        {
+                            Anchor = Anchor.BottomCentre,
+                            Origin = Anchor.TopCentre,
+                            Y = 20,
+                            CardMovement = MovementStyle.Energetic
+                        },
+                        hiddenOpponentCardFacade = new CardFacade
+                        {
+                            Anchor = Anchor.TopCentre,
+                            Origin = Anchor.BottomCentre,
+                            Y = -20,
+                            CardMovement = MovementStyle.Energetic
+                        },
+                    ]
+                }
             };
         }
 
