@@ -199,7 +199,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 
             foreach (var card in opponentCards)
             {
-                var facade = screen.OpponnetCardContainer?.AddCard(card);
+                var facade = screen.OpponentCardContainer?.AddCard(card);
 
                 facade ??= hiddenOpponentCardFacade;
 

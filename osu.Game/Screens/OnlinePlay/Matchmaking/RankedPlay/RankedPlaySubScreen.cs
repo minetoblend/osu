@@ -46,6 +46,6 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 
         public virtual ICardFacadeContainer? PlayerCardContainer => null;
 
-        public virtual ICardFacadeContainer? OpponnetCardContainer => null;
+        public virtual ICardFacadeContainer? OpponentCardContainer => null;
     }
 }

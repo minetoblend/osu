@@ -20,7 +20,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
         private PlayerHandFacadeContainer contractedPlayerHand = null!;
         private ShearedButton playButton = null!;
         private CardFacade playedCardFacade = null!;
-        private FillFlowContainer textContainer;
+        private FillFlowContainer textContainer = null!;
 
         public override double CardTransitionStagger => 50;
 
