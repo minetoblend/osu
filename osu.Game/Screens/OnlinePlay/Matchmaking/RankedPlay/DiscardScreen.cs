@@ -154,6 +154,9 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 
         public override void CardRemoved(RankedPlayScreen.Card card, CardOwner owner)
         {
+            if (owner == CardOwner.Opponent)
+                return;
+
             double discardTime = Math.Max(Time.Current, lastDiscardTime + 50);
             lastDiscardTime = discardTime;
 
