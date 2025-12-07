@@ -4,11 +4,12 @@
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Transforms;
 using osu.Framework.Utils;
+using osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Facades;
 using osu.Game.Utils;
 
 namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 {
-    public partial class RankedPlayScreen2
+    public partial class RankedPlayScreen
     {
         public static class MovementStyle
         {
@@ -25,27 +26,34 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                 Damping = 1f,
                 Response = 1.2f,
             };
+
+            public static SpringParameters Slow => new SpringParameters
+            {
+                NaturalFrequency = 1.3f,
+                Damping = 1f,
+                Response = 1.2f,
+            };
         }
 
         public class MovementStyleTransform : Transform<SpringParameters, CardFacade>
         {
-            public override string TargetMember => nameof(CardFacade.CardMovement);
+            public override string TargetMember => nameof(CardFacade.CardMovementBindable);
 
             protected override void Apply(CardFacade d, double time)
             {
                 if (time <= StartTime)
                 {
-                    d.CardMovement.Value = StartValue;
+                    d.CardMovementBindable.Value = StartValue;
                     return;
                 }
 
                 if (time >= EndTime)
                 {
-                    d.CardMovement.Value = EndValue;
+                    d.CardMovementBindable.Value = EndValue;
                     return;
                 }
 
-                d.CardMovement.Value = new SpringParameters
+                d.CardMovementBindable.Value = new SpringParameters
                 {
                     NaturalFrequency = Interpolation.ValueAt(time, StartValue.NaturalFrequency, EndValue.NaturalFrequency, StartTime, EndTime),
                     Damping = Interpolation.ValueAt(time, StartValue.Damping, EndValue.Damping, StartTime, EndTime),
@@ -53,26 +61,26 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                 };
             }
 
-            protected override void ReadIntoStartValue(CardFacade d) => StartValue = d.CardMovement.Value;
+            protected override void ReadIntoStartValue(CardFacade d) => StartValue = d.CardMovementBindable.Value;
         }
     }
 
     public static class RankedPlayScreen2Extensions
     {
-        public static TransformSequence<RankedPlayScreen2.CardFacade> TransformMovementStyleTo(
-            this RankedPlayScreen2.CardFacade facade,
+        public static TransformSequence<CardFacade> TransformMovementStyleTo(
+            this CardFacade facade,
             SpringParameters value,
             double duration = 0,
             Easing easing = Easing.None
         )
         {
-            var transform = facade.PopulateTransform(new RankedPlayScreen2.MovementStyleTransform(), value, duration, easing);
+            var transform = facade.PopulateTransform(new RankedPlayScreen.MovementStyleTransform(), value, duration, easing);
 
             return facade.TransformTo(transform);
         }
 
-        public static TransformSequence<RankedPlayScreen2.CardFacade> TransformMovementStyleTo(
-            this TransformSequence<RankedPlayScreen2.CardFacade> sequence,
+        public static TransformSequence<CardFacade> TransformMovementStyleTo(
+            this TransformSequence<CardFacade> sequence,
             SpringParameters value,
             double duration = 0,
             Easing easing = Easing.None

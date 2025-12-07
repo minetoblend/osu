@@ -1,81 +1,155 @@
 // Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
-using System;
 using System.Linq;
 using NUnit.Framework;
+using osu.Framework.Allocation;
+using osu.Framework.Bindables;
 using osu.Framework.Extensions;
-using osu.Framework.Screens;
 using osu.Framework.Testing;
-using osu.Game.Graphics.UserInterfaceV2;
+using osu.Game.Graphics.UserInterface;
 using osu.Game.Online.API.Requests.Responses;
-using osu.Game.Online.Multiplayer;
 using osu.Game.Online.Multiplayer.MatchTypes.RankedPlay;
 using osu.Game.Online.Rooms;
 using osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay;
 using osu.Game.Tests.Visual.Multiplayer;
+using osuTK.Input;
 
 namespace osu.Game.Tests.Visual.RankedPlay
 {
     public partial class TestSceneRankedPlayScreen : MultiplayerTestScene
     {
+        [Cached(name: "debugEnabled")]
+        private readonly Bindable<bool> debugEnabled = new Bindable<bool>();
+
+        public TestSceneRankedPlayScreen()
+        {
+            AddToggleStep("debug overlay", enabled => debugEnabled.Value = enabled);
+        }
+
         private RankedPlayScreen screen = null!;
 
         public override void SetUpSteps()
         {
             base.SetUpSteps();
 
-            AddStep("join room", () =>
-            {
-                var room = CreateDefaultRoom(MatchType.RankedPlay);
-
-                JoinRoom(room);
-            });
-
+            AddStep("join room", () => JoinRoom(CreateDefaultRoom(MatchType.RankedPlay)));
             WaitForJoined();
 
-            AddStep("join users", () =>
-            {
-                MultiplayerClient.AddUser(new MultiplayerRoomUser(0)
-                {
-                    User = new APIUser
-                    {
-                        Username = "Other User"
-                    }
-                });
-            });
-
-            AddStep("load match", () =>
-            {
-                LoadScreen(screen = new RankedPlayScreen(new MultiplayerRoom(0)
-                {
-                    Users =
-                    [
-                        new MultiplayerRoomUser(0)
-                        {
-                            User = new APIUser { Username = "Other Player" }
-                        }
-                    ],
-                }));
-            });
-            AddUntilStep("wait for load", () => screen.IsCurrentScreen());
+            AddStep("load screen", () => LoadScreen(screen = new RankedPlayScreen(MultiplayerClient.ClientRoom!)));
         }
 
         [Test]
-        public void TestRankedPlayScreen()
+        public void TestAddRemoveCards()
         {
-            changeStage(RankedPlayStage.CardDiscard);
+            AddStep("set discard phase", () => MultiplayerClient.RankedPlayChangeStage(RankedPlayStage.CardDiscard).WaitSafely());
 
-            AddStep("select card", () => screen.ChildrenOfType<DiscardScreen.Card>().First().TriggerClick());
-            AddStep("select another card", () => screen.ChildrenOfType<DiscardScreen.Card>().Skip(2).First().TriggerClick());
-            AddWaitStep("wait", 3);
-            AddStep("discard", () => screen.ChildrenOfType<RoundedButton>().First(it => it.Name == "Discard").TriggerClick());
+            for (int i = 0; i < 3; i++)
+                AddStep("add card", () => MultiplayerClient.RankedPlayAddCard(new RankedPlayCardItem()).WaitSafely());
+
+            for (int i = 0; i < 3; i++)
+                AddStep("remove card", () => MultiplayerClient.RankedPlayRemoveCard(((RankedPlayUserState)MultiplayerClient.LocalUser!.MatchState!).Hand[0]).WaitSafely());
         }
 
-        private void changeStage(RankedPlayStage stage, Action<RankedPlayRoomState>? prepare = null, int waitTime = 5)
+        [Test]
+        public void TestRevealCards()
         {
-            AddStep($"stage: {stage}", () => MultiplayerClient.RankedPlayChangeStage(stage, prepare).WaitSafely());
-            AddWaitStep("wait", waitTime);
+            AddStep("set discard phase", () => MultiplayerClient.RankedPlayChangeStage(RankedPlayStage.CardDiscard).WaitSafely());
+
+            for (int i = 0; i < 3; i++)
+            {
+                int i2 = i;
+                AddStep("reveal card", () => MultiplayerClient.RankedPlayRevealCard(((RankedPlayUserState)MultiplayerClient.LocalUser!.MatchState!).Hand[i2], new MultiplayerPlaylistItem
+                {
+                    ID = i2,
+                    BeatmapID = i2
+                }).WaitSafely());
+            }
+        }
+
+        [Test]
+        public void TestPlayCardDirect()
+        {
+            AddStep("set play phase", () => MultiplayerClient.RankedPlayChangeStage(RankedPlayStage.CardPlay).WaitSafely());
+            AddWaitStep("wait", 3);
+            AddStep("play card", () => MultiplayerClient.PlayCard(((RankedPlayUserState)MultiplayerClient.LocalUser!.MatchState!).Hand[0]).WaitSafely());
+        }
+
+        [Test]
+        public void TestDiscardCardsDirect()
+        {
+            AddStep("set discard phase", () => MultiplayerClient.RankedPlayChangeStage(RankedPlayStage.CardDiscard).WaitSafely());
+            AddWaitStep("wait", 3);
+            AddStep("discard cards", () => MultiplayerClient.DiscardCards(((RankedPlayUserState)MultiplayerClient.LocalUser!.MatchState!).Hand.Take(3).ToArray()).WaitSafely());
+            AddWaitStep("wait", 13);
+            AddStep("set finish discard phase", () => MultiplayerClient.RankedPlayChangeStage(RankedPlayStage.FinishCardDiscard).WaitSafely());
+        }
+
+        [Test]
+        public void TestDiscardCardsStage()
+        {
+            AddStep("set discard phase", () => MultiplayerClient.RankedPlayChangeStage(RankedPlayStage.CardDiscard).WaitSafely());
+
+            AddWaitStep("wait", 3);
+
+            for (int i = 0; i < 3; i++)
+            {
+                int i2 = i;
+                AddStep($"click card {i2}", () =>
+                {
+                    InputManager.MoveMouseTo(this.ChildrenOfType<RankedPlayScreen.Card>().ElementAt(i2));
+                    InputManager.Click(MouseButton.Left);
+                });
+            }
+
+            AddWaitStep("wait", 3);
+
+            AddStep("click discard button", () =>
+            {
+                var button = screen.ChildrenOfType<ShearedButton>().Single(it => it.Text == "Discard");
+
+                InputManager.MoveMouseTo(button);
+                InputManager.Click(MouseButton.Left);
+            });
+
+            AddWaitStep("wait", 13);
+            AddStep("set finish discard phase", () => MultiplayerClient.RankedPlayChangeStage(RankedPlayStage.FinishCardDiscard).WaitSafely());
+        }
+
+        [Test]
+        public void TestPlayStage()
+        {
+            AddStep("set play phase", () => MultiplayerClient.RankedPlayChangeStage(RankedPlayStage.CardPlay).WaitSafely());
+
+            for (int i = 0; i < 3; i++)
+            {
+                int i2 = i;
+                AddStep($"click card {i2}", () =>
+                {
+                    InputManager.MoveMouseTo(this.ChildrenOfType<RankedPlayScreen.Card>().ElementAt(i2));
+                    InputManager.Click(MouseButton.Left);
+                });
+            }
+
+            AddWaitStep("wait", 3);
+
+            AddStep("click play button", () =>
+            {
+                var button = screen.ChildrenOfType<ShearedButton>().Single(it => it.Text == "Play");
+
+                InputManager.MoveMouseTo(button);
+                InputManager.Click(MouseButton.Left);
+            });
+        }
+
+        [Test]
+        public void TestOtherPlaysCard()
+        {
+            AddStep("join other user", () => MultiplayerClient.AddUser(new APIUser { Id = 2 }));
+
+            AddStep("set play phase", () => MultiplayerClient.RankedPlayChangeStage(RankedPlayStage.CardPlay, state => state.ActivePlayerIndex = 1).WaitSafely());
+
+            AddStep("play beatmap", () => MultiplayerClient.PlayCard(((RankedPlayUserState)MultiplayerClient.ServerRoom!.Users[1].MatchState!).Hand[0]).WaitSafely());
         }
     }
 }

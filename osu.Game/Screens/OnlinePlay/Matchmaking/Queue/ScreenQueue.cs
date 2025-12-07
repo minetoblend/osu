@@ -456,7 +456,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.Queue
                                     break;
 
                                 case MatchmakingPoolType.RankedPlay:
-                                    this.Push(new RankedPlayScreen2(client.Room!));
+                                    this.Push(new RankedPlayScreen(client.Room!));
                                     break;
                             }
                         });
