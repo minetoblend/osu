@@ -24,7 +24,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
     {
         public partial class Card : CompositeDrawable
         {
-            public static readonly Vector2 SIZE = new Vector2(120, 200) * 1.3f;
+            public static readonly Vector2 SIZE = new Vector2(120, 200);
 
             public readonly Bindable<bool> AllowSelection = new Bindable<bool>();
             public readonly BindableBool Selected = new BindableBool();
