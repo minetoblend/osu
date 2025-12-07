@@ -121,8 +121,11 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
             Client.DiscardCards(playerHand.Selection.Select(it => it.Card).ToArray()).FireAndForget();
         }
 
-        public override void CardAdded(RankedPlayScreen.Card card)
+        public override void CardAdded(RankedPlayScreen.Card card, CardOwner owner)
         {
+            if (owner == CardOwner.Opponent)
+                return;
+
             card.Position = new Vector2(DrawWidth, DrawHeight - 120);
             card.Rotation = -30;
 
@@ -149,7 +152,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
             }, delay);
         }
 
-        public override void CardRemoved(RankedPlayScreen.Card card)
+        public override void CardRemoved(RankedPlayScreen.Card card, CardOwner owner)
         {
             double discardTime = Math.Max(Time.Current, lastDiscardTime + 50);
             lastDiscardTime = discardTime;

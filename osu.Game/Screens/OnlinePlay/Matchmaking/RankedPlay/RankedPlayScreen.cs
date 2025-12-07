@@ -140,7 +140,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 
             foreach (var user in client.Room!.Users)
             {
-                bool isOwnUser = user.UserID == client.LocalUser!.UserID;
+                var cardOwner = getCardOwner(user.UserID);
 
                 var localUserState = (RankedPlayUserState)user.MatchState!;
 
@@ -153,10 +153,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 
                     cardContainer.Add(card);
 
-                    if (isOwnUser)
-                        playerCards.Add(card);
-                    else
-                        opponentCards.Add(card);
+                    cardListFor(cardOwner).Add(card);
 
                     card.ChangeFacade(hiddenPlayerCardFacade);
                 }
@@ -287,24 +284,26 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 
         private void onRankedPlayCardAdded(int userId, RankedPlayCardWithPlaylistItem item)
         {
-            bool isOwnPlayer = userId == client.LocalUser!.UserID;
+            var cardOwner = getCardOwner(userId);
 
             var card = new Card(item);
 
             cardContainer.Add(card);
 
-            if (isOwnPlayer)
-                playerCards.Add(card);
-            else
-                opponentCards.Add(card);
+            cardListFor(cardOwner).Add(card);
 
-            activeSubscreen?.CardAdded(card);
+            activeSubscreen?.CardAdded(card, cardOwner);
 
             if (card.Facade == null)
             {
                 var facade = activeSubscreen?.PlayerCardContainer?.AddCard(card);
 
-                facade ??= isOwnPlayer ? hiddenPlayerCardFacade : hiddenOpponentCardFacade;
+                facade ??= cardOwner switch
+                {
+                    CardOwner.Player => hiddenPlayerCardFacade,
+                    CardOwner.Opponent => hiddenOpponentCardFacade,
+                    _ => throw new ArgumentOutOfRangeException()
+                };
 
                 card.Position = ToLocalSpace(facade.ScreenSpaceDrawQuad.Centre);
 
@@ -317,8 +316,22 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
             var card = cardContainer.FirstOrDefault(it => it.Item.Equals(item));
 
             if (card != null)
-                activeSubscreen?.CardRemoved(card);
+            {
+                var cardOwner = getCardOwner(userId);
+
+                cardListFor(cardOwner).Remove(card);
+                activeSubscreen?.CardRemoved(card, cardOwner);
+            }
         }
+
+        private CardOwner getCardOwner(int userId) => userId == client.LocalUser!.UserID ? CardOwner.Player : CardOwner.Opponent;
+
+        private List<Card> cardListFor(CardOwner owner) => owner switch
+        {
+            CardOwner.Player => playerCards,
+            CardOwner.Opponent => opponentCards,
+            _ => throw new ArgumentOutOfRangeException(nameof(owner), owner, null)
+        };
 
         private void onRankedPlayCardPlayed(RankedPlayCardWithPlaylistItem item)
         {

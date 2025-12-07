@@ -32,11 +32,11 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
             Hide();
         }
 
-        public virtual void CardAdded(RankedPlayScreen.Card card)
+        public virtual void CardAdded(RankedPlayScreen.Card card, CardOwner owner)
         {
         }
 
-        public virtual void CardRemoved(RankedPlayScreen.Card card)
+        public virtual void CardRemoved(RankedPlayScreen.Card card, CardOwner owner)
         {
         }
 
