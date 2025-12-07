@@ -36,6 +36,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
             private readonly Box background;
             private readonly OsuSpriteText beatmapIdText;
             private readonly Container shadow;
+            private readonly Container content;
 
             public CardFacade? Facade { get; private set; }
 
@@ -44,8 +45,6 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                 Item = item;
 
                 Size = SIZE;
-                BorderColour = Color4.Yellow;
-                BorderThickness = 0;
                 Origin = Anchor.Centre;
 
                 InternalChildren = new Drawable[]
@@ -64,11 +63,13 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                             Colour = Color4.Black.Opacity(0.1f),
                         }
                     },
-                    new Container
+                    content = new Container
                     {
                         RelativeSizeAxes = Axes.Both,
                         Masking = true,
                         CornerRadius = 10,
+                        BorderColour = Color4.Yellow,
+                        BorderThickness = 0,
                         Children =
                         [
                             background = new Box
@@ -150,7 +151,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 
             private void onSelectedChanged(ValueChangedEvent<bool> e)
             {
-                BorderThickness = e.NewValue ? 5 : 0;
+                content.BorderThickness = e.NewValue ? 5 : 0;
             }
 
             private void onPlaylistItemChanged(ValueChangedEvent<MultiplayerPlaylistItem?> e)
