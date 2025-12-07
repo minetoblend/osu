@@ -313,7 +313,11 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 
             if (card.Facade == null)
             {
-                var facade = activeSubscreen?.PlayerCardContainer?.AddCard(card);
+                var facade = (
+                    cardOwner == CardOwner.Player
+                        ? activeSubscreen?.PlayerCardContainer
+                        : activeSubscreen?.OpponentCardContainer
+                )?.AddCard(card);
 
                 facade ??= cardOwner switch
                 {
