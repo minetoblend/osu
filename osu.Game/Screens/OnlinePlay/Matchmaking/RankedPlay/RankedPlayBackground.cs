@@ -2,13 +2,14 @@
 // See the LICENCE file in the repository root for full licence text.
 
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using osu.Framework.Allocation;
+using osu.Framework.Extensions.Color4Extensions;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
-using osu.Framework.Graphics.Primitives;
 using osu.Framework.Graphics.Rendering;
 using osu.Framework.Graphics.Shaders;
-using osu.Game.Graphics.Backgrounds;
+using osu.Framework.Graphics.Shaders.Types;
 using osuTK;
 using osuTK.Graphics;
 
@@ -16,37 +17,56 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 {
     public partial class RankedPlayBackground : CompositeDrawable, IBufferedDrawable
     {
-        public float Spacing = 10;
+        public float GridSize = 10;
 
         public IShader? TextureShader { get; private set; }
         public Color4 BackgroundColour => Color4.Black;
         public DrawColourInfo? FrameBufferDrawColour => null;
-        public Vector2 FrameBufferScale => new Vector2(0.25f);
+        public Vector2 FrameBufferScale => new Vector2(0.1f);
+
+        public Color4 GradientOutside = Color4Extensions.FromHex("AC6D97");
+        public Color4 GradientInside = Color4Extensions.FromHex("544483");
+        public Color4 DotsColour = Color4Extensions.FromHex("6b2980");
+
+        public RankedPlayBackground()
+        {
+            InternalChildren =
+            [
+                new TrianglesV4
+                {
+                    RelativeSizeAxes = Axes.Both,
+                    Alpha = 0.5f,
+                    Colour = Color4.Red
+                },
+            ];
+        }
 
         [BackgroundDependencyLoader]
         private void load(ShaderManager shaders)
         {
-            TextureShader = shaders.Load(VertexShaderDescriptor.TEXTURE_2, FragmentShaderDescriptor.TEXTURE);
-
-            InternalChild = new TrianglesV2
-            {
-                RelativeSizeAxes = Axes.Both,
-                ScaleAdjust = 2,
-                Thickness = 0.05f,
-            };
+            TextureShader = shaders.Load(VertexShaderDescriptor.TEXTURE_2, @"RankedPlayBackground");
         }
 
         private readonly BufferedDrawNodeSharedData sharedData = new BufferedDrawNodeSharedData();
 
-        protected override DrawNode CreateDrawNode()
+        protected override void Update()
         {
-            return new RankedPlayBackgroundDrawNode(this, sharedData);
+            base.Update();
+
+            Invalidate(Invalidation.DrawNode);
+        }
+
+        protected override DrawNode CreateDrawNode() => new RankedPlayBackgroundDrawNode(this, sharedData);
+
+        protected override void Dispose(bool isDisposing)
+        {
+            sharedData.Dispose();
+
+            base.Dispose(isDisposing);
         }
 
         private class RankedPlayBackgroundDrawNode : BufferedDrawNode, ICompositeDrawNode
         {
-            private const int max_sprites = 20_000;
-
             protected new RankedPlayBackground Source => (RankedPlayBackground)base.Source;
 
             protected new CompositeDrawableDrawNode Child => (CompositeDrawableDrawNode)base.Child;
@@ -56,54 +76,42 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
             {
             }
 
-            private int rows;
-            private int cols;
-            private Vector2 spacing;
-            private Part[] parts = [];
+            private Vector2 drawSize;
+            private float time;
+            private float gridSize;
+            private Color4 gradientOutside;
+            private Color4 gradientInside;
+            private Color4 dotsColour;
+
+            private IUniformBuffer<RankedPlayBackgroundParameters>? shaderParameterBuffer;
 
             public override void ApplyState()
             {
                 base.ApplyState();
 
-                const float hex_ratio = 0.86f;
-
-                spacing = new Vector2(
-                    Source.Spacing / Source.DrawWidth * DrawRectangle.Width,
-                    Source.Spacing / Source.DrawHeight * DrawRectangle.Height * hex_ratio
-                );
-                rows = (int)(DrawRectangle.Height / spacing.Y);
-                cols = (int)(DrawRectangle.Width / spacing.X);
-
-                if (parts.Length != cols * rows)
-                    parts = new Part[rows * cols];
-
-                var cellSize = new Vector2(spacing.X);
-
-                for (int i = 0; i < parts.Length; i++)
-                {
-                    int row = i / cols;
-                    int col = i % cols;
-
-                    var position = new Vector2(col, row) * spacing;
-
-                    if ((row & 0x01) == 0)
-                        position.X += spacing.X / 2;
-
-                    var drawQuad = new RectangleF(DrawRectangle.TopLeft + position - cellSize * 0.5f, cellSize);
-                    var uvs = new RectangleF(new Vector2((float)col / cols, (float)row / cols), Vector2.Zero);
-
-                    parts[i] = new Part(drawQuad, uvs);
-                }
+                time = (float)(Source.Time.Current / 1000);
+                drawSize = Source.DrawSize;
+                gridSize = Source.GridSize;
+                gradientOutside = Source.GradientOutside;
+                gradientInside = Source.GradientInside;
+                dotsColour = Source.DotsColour;
             }
 
-            protected override void DrawContents(IRenderer renderer)
+            protected override void BindUniformResources(IShader shader, IRenderer renderer)
             {
-                var texture = renderer.WhitePixel;
+                shaderParameterBuffer ??= renderer.CreateUniformBuffer<RankedPlayBackgroundParameters>();
 
-                foreach (var part in parts)
+                shaderParameterBuffer.Data = new RankedPlayBackgroundParameters
                 {
-                    renderer.DrawQuad(texture, vertexQuad: part.DrawQuad, drawColour: Color4.White, textureCoords: part.UVs);
-                }
+                    DrawSize = drawSize,
+                    Time = time,
+                    GridSize = gridSize,
+                    GradientOutside = new Vector4(gradientOutside.R, gradientOutside.G, gradientOutside.B, gradientOutside.A),
+                    GradientInside = new Vector4(gradientInside.R, gradientInside.G, gradientInside.B, gradientInside.A),
+                    DotsColour = new Vector4(dotsColour.R, dotsColour.G, dotsColour.B, dotsColour.A),
+                };
+
+                shader.BindUniformBlock("m_RankedPlayBackgroundParameters", shaderParameterBuffer);
             }
 
             public List<DrawNode>? Children
@@ -114,7 +122,16 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 
             public bool AddChildDrawNodes => RequiresRedraw;
 
-            private readonly record struct Part(Quad DrawQuad, RectangleF UVs);
+            [StructLayout(LayoutKind.Sequential, Pack = 1)]
+            private record struct RankedPlayBackgroundParameters
+            {
+                public UniformVector2 DrawSize;
+                public UniformFloat Time;
+                public UniformFloat GridSize;
+                public UniformVector4 GradientOutside;
+                public UniformVector4 GradientInside;
+                public UniformVector4 DotsColour;
+            }
         }
     }
 }

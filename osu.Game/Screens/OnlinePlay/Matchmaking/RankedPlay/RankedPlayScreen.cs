@@ -27,7 +27,6 @@ using osu.Game.Overlays;
 using osu.Game.Overlays.Dialog;
 using osu.Game.Rulesets;
 using osu.Game.Screens.Footer;
-using osu.Game.Screens.OnlinePlay.Matchmaking.Match;
 using osu.Game.Screens.OnlinePlay.Matchmaking.Match.Gameplay;
 using osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Facades;
 using osu.Game.Screens.OnlinePlay.Multiplayer;
@@ -39,7 +38,9 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
     {
         public override bool ShowFooter => true;
 
-        protected override BackgroundScreen CreateBackground() => new MatchmakingBackgroundScreen(new OverlayColourProvider(OverlayColourScheme.Pink));
+        public override float BackgroundParallaxAmount => 0;
+
+        protected override BackgroundScreen CreateBackground() => new RankedPlayBackgroundScreen();
 
         [Cached(typeof(OnlinePlayBeatmapAvailabilityTracker))]
         private readonly OnlinePlayBeatmapAvailabilityTracker beatmapAvailabilityTracker = new MultiplayerBeatmapAvailabilityTracker();
