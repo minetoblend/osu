@@ -2,6 +2,8 @@
 // See the LICENCE file in the repository root for full licence text.
 
 using System;
+using System.Linq;
+using osu.Framework.Allocation;
 using osu.Framework.Bindables;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Colour;
@@ -13,6 +15,8 @@ using osu.Game.Graphics;
 using osu.Game.Graphics.Backgrounds;
 using osu.Game.Graphics.Sprites;
 using osu.Game.Online.API.Requests.Responses;
+using osu.Game.Online.Multiplayer;
+using osu.Game.Online.Multiplayer.MatchTypes.RankedPlay;
 using osu.Game.Users.Drawables;
 using osuTK;
 using osuTK.Graphics;
@@ -21,6 +25,8 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
 {
     public partial class RankedPlayUserDisplay : CompositeDrawable
     {
+        private readonly APIUser user;
+
         public readonly BindableInt Health = new BindableInt
         {
             MaxValue = 1_000_000,
@@ -30,6 +36,8 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
 
         public RankedPlayUserDisplay(APIUser user, Anchor contentAnchor, RankedPlayColourScheme colourScheme)
         {
+            this.user = user;
+
             InternalChildren =
             [
                 new CircularContainer
@@ -81,6 +89,31 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
                     ]
                 }
             ];
+        }
+
+        [Resolved]
+        private MultiplayerClient client { get; set; } = null!;
+
+        protected override void LoadComplete()
+        {
+            base.LoadComplete();
+
+            client.RoomUpdated += onRoomUpdated;
+        }
+
+        private void onRoomUpdated()
+        {
+            if (client.Room?.Users.FirstOrDefault(it => it.UserID == this.user.Id)?.MatchState is not RankedPlayUserState matchState)
+                return;
+
+            Health.Value = matchState.Life;
+        }
+
+        protected override void Dispose(bool isDisposing)
+        {
+            client.RoomUpdated -= onRoomUpdated;
+
+            base.Dispose(isDisposing);
         }
 
         private partial class HealthBar : CompositeDrawable

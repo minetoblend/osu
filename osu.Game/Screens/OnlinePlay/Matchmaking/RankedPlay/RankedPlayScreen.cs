@@ -86,9 +86,6 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
         private readonly CardFacade hiddenPlayerCardFacade;
         private readonly CardFacade hiddenOpponentCardFacade;
 
-        private RankedPlayUserDisplay playerUserDisplay = null!;
-        private RankedPlayUserDisplay opponentUserDisplay = null!;
-
         public RankedPlayScreen(MultiplayerRoom room)
         {
             this.room = room;
@@ -176,14 +173,14 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
             AddRangeInternal([
                 new RankedPlayCornerPiece(RankedPlayColourScheme.Blue, Anchor.BottomLeft)
                 {
-                    Child = playerUserDisplay = new RankedPlayUserDisplay(client.LocalUser!.User!, Anchor.BottomLeft, RankedPlayColourScheme.Blue)
+                    Child = new RankedPlayUserDisplay(client.LocalUser!.User!, Anchor.BottomLeft, RankedPlayColourScheme.Blue)
                     {
                         RelativeSizeAxes = Axes.Both,
                     }
                 },
                 new RankedPlayCornerPiece(RankedPlayColourScheme.Red, Anchor.TopRight)
                 {
-                    Child = opponentUserDisplay = new RankedPlayUserDisplay(opponent, Anchor.TopRight, RankedPlayColourScheme.Red)
+                    Child = new RankedPlayUserDisplay(opponent, Anchor.TopRight, RankedPlayColourScheme.Red)
                     {
                         RelativeSizeAxes = Axes.Both,
                     }
@@ -246,21 +243,6 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                 Logger.Log($"{this} exiting due to loss of room or connection");
                 exitConfirmed = true;
                 this.Exit();
-                return;
-            }
-
-            if (client.Room != null)
-            {
-                foreach (var user in client.Room.Users)
-                {
-                    if (user.MatchState is not RankedPlayUserState rankedPlayState)
-                        continue;
-
-                    if (user.UserID == client.LocalUser!.UserID)
-                        playerUserDisplay.Health.Value = rankedPlayState.Life;
-                    else
-                        opponentUserDisplay.Health.Value = rankedPlayState.Life;
-                }
             }
         }
 

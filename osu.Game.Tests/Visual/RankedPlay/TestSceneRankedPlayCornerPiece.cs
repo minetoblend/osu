@@ -3,16 +3,13 @@
 
 using osu.Framework.Allocation;
 using osu.Framework.Graphics;
-using osu.Framework.Graphics.Containers;
-using osu.Framework.Graphics.Shapes;
-using osu.Game.Graphics.Sprites;
 using osu.Game.Online.API.Requests.Responses;
 using osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay;
 using osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components;
 
 namespace osu.Game.Tests.Visual.RankedPlay
 {
-    public class TestSceneRankedPlayCornerPiece : OsuTestScene
+    public partial class TestSceneRankedPlayCornerPiece : OsuTestScene
     {
         [BackgroundDependencyLoader]
         private void load()
@@ -42,28 +39,6 @@ namespace osu.Game.Tests.Visual.RankedPlay
                     }
                 },
             ];
-        }
-
-        private partial class ContentBox : CompositeDrawable
-        {
-            public ContentBox()
-            {
-                RelativeSizeAxes = Axes.Both;
-                InternalChildren =
-                [
-                    new Box
-                    {
-                        RelativeSizeAxes = Axes.Both,
-                        Alpha = 0.1f,
-                    },
-                    new OsuSpriteText
-                    {
-                        Text = "Content Area",
-                        Anchor = Anchor.Centre,
-                        Origin = Anchor.Centre,
-                    }
-                ];
-            }
         }
     }
 }
