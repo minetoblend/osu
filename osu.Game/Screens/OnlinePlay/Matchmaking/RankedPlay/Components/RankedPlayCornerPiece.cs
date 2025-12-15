@@ -10,7 +10,7 @@ using osuTK;
 
 namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
 {
-    public class RankedPlayCornerPiece : Container
+    public partial class RankedPlayCornerPiece : Container
     {
         protected override Container<Drawable> Content { get; }
 
