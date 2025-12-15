@@ -153,5 +153,12 @@ namespace osu.Game.Tests.Visual.RankedPlay
 
             AddStep("play beatmap", () => MultiplayerClient.PlayCard(((RankedPlayUserState)MultiplayerClient.ServerRoom!.Users[1].MatchState!).Hand[0]).WaitSafely());
         }
+
+        [Test]
+        public void TestHealthChange()
+        {
+            AddStep("change player 1 health", () => MultiplayerClient.RankedPlayChangeUserState(MultiplayerClient.LocalUser!.UserID, state => state.Life = 250_000).WaitSafely());
+            AddStep("change player 2 health", () => MultiplayerClient.RankedPlayChangeUserState(2, state => state.Life = 250_000).WaitSafely());
+        }
     }
 }
