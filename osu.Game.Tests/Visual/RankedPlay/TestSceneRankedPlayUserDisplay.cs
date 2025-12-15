@@ -10,7 +10,7 @@ using osuTK;
 
 namespace osu.Game.Tests.Visual.RankedPlay
 {
-    public class TestSceneRankedPlayUserDisplay : OsuTestScene
+    public partial class TestSceneRankedPlayUserDisplay : OsuTestScene
     {
         private RankedPlayUserDisplay userDisplay;
 
