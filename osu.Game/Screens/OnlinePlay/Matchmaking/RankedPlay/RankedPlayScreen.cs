@@ -152,10 +152,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                 {
                     var facade = cardOwner == CardOwner.Player ? hiddenPlayerCardFacade : hiddenOpponentCardFacade;
 
-                    var card = new Card(client.GetCardWithPlaylistItem(item))
-                    {
-                        Origin = cardOwner == CardOwner.Player ? Anchor.BottomCentre : Anchor.TopCentre,
-                    };
+                    var card = new Card(client.GetCardWithPlaylistItem(item));
 
                     card.Position = ToLocalSpace(facade.ScreenSpaceDrawQuad.Centre);
 
@@ -329,10 +326,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
         {
             var cardOwner = getCardOwner(userId);
 
-            var card = new Card(item)
-            {
-                Origin = cardOwner == CardOwner.Player ? Anchor.BottomCentre : Anchor.TopCentre
-            };
+            var card = new Card(item);
 
             cardContainer.Add(card);
 
