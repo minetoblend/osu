@@ -16,7 +16,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
 
         public RankedPlayCornerPiece(RankedPlayColourScheme colourScheme, Anchor anchor)
         {
-            Size = new Vector2(335, 90);
+            Size = new Vector2(345, 100);
 
             Anchor = Origin = anchor;
 
@@ -42,8 +42,8 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
                         {
                             Left = -60,
                             Bottom = -30,
-                            Top = 10,
-                            Right = 5,
+                            Top = 20,
+                            Right = 15,
                         },
                         Children =
                         [
@@ -84,9 +84,16 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
                     Origin = anchor,
                     X = (anchor & Anchor.x0) != 0 ? 18 : -18,
                     Y = (anchor & Anchor.y0) != 0 ? 18 : -18,
-                    Size = new Vector2(345, 72),
+                    RelativeSizeAxes = Axes.Both,
                 }
             ];
+        }
+
+        protected override void Update()
+        {
+            base.Update();
+
+            Width = float.Clamp(Parent!.ChildSize.X * 0.25f, 250, 335);
         }
     }
 }

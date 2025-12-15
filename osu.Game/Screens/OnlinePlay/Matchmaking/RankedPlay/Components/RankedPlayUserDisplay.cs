@@ -85,9 +85,6 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
 
         private partial class HealthBar : CompositeDrawable
         {
-            private readonly RankedPlayColourScheme colourScheme;
-            private readonly bool leftToRight;
-
             public readonly BindableInt Health = new BindableInt
             {
                 MaxValue = 1_000_000,
@@ -111,9 +108,6 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
 
             public HealthBar(RankedPlayColourScheme colourScheme, bool leftToRight)
             {
-                this.colourScheme = colourScheme;
-                this.leftToRight = leftToRight;
-
                 Shear = OsuGame.SHEAR;
 
                 Anchor contentAnchor = leftToRight ? Anchor.CentreLeft : Anchor.CentreRight;
