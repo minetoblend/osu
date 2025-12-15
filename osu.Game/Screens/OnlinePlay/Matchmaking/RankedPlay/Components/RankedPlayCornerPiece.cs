@@ -1,0 +1,92 @@
+// Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
+// See the LICENCE file in the repository root for full licence text.
+
+using osu.Framework.Extensions.Color4Extensions;
+using osu.Framework.Graphics;
+using osu.Framework.Graphics.Colour;
+using osu.Framework.Graphics.Containers;
+using osu.Framework.Graphics.Shapes;
+using osuTK;
+
+namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
+{
+    public class RankedPlayCornerPiece : Container
+    {
+        protected override Container<Drawable> Content { get; }
+
+        public RankedPlayCornerPiece(RankedPlayColourScheme colourScheme, Anchor anchor)
+        {
+            Size = new Vector2(335, 90);
+
+            Anchor = Origin = anchor;
+
+            InternalChildren =
+            [
+                new Container
+                {
+                    RelativeSizeAxes = Axes.Both,
+                    Anchor = Anchor.Centre,
+                    Origin = Anchor.Centre,
+                    Scale = new Vector2(
+                        (anchor & Anchor.x0) != 0 ? 1 : -1,
+                        (anchor & Anchor.y0) != 0 ? -1 : 1
+                    ),
+                    Child = new Container
+                    {
+                        RelativeSizeAxes = Axes.Both,
+                        Rotation = -2,
+                        Anchor = Anchor.BottomLeft,
+                        Origin = Anchor.BottomLeft,
+                        Shear = new Vector2(-0.5f, 0),
+                        Padding = new MarginPadding
+                        {
+                            Left = -60,
+                            Bottom = -30,
+                            Top = 10,
+                            Right = 5,
+                        },
+                        Children =
+                        [
+                            new Container
+                            {
+                                RelativeSizeAxes = Axes.Both,
+                                Masking = true,
+                                CornerRadius = 20,
+                                Child = new Box
+                                {
+                                    RelativeSizeAxes = Axes.Both,
+                                    Colour = colourScheme.PrimaryDarkest,
+                                    Alpha = 0.2f,
+                                },
+                            },
+                            new Container
+                            {
+                                RelativeSizeAxes = Axes.Both,
+                                Padding = new MarginPadding(10),
+                                Child = new Container
+                                {
+                                    RelativeSizeAxes = Axes.Both,
+                                    Masking = true,
+                                    CornerRadius = 15,
+                                    Child = new Box
+                                    {
+                                        RelativeSizeAxes = Axes.Both,
+                                        Colour = ColourInfo.GradientHorizontal(colourScheme.Primary.Opacity(0.75f), colourScheme.PrimaryDarker.Opacity(0.25f)),
+                                    },
+                                },
+                            }
+                        ]
+                    },
+                },
+                Content = new Container
+                {
+                    Anchor = anchor,
+                    Origin = anchor,
+                    X = (anchor & Anchor.x0) != 0 ? 18 : -18,
+                    Y = (anchor & Anchor.y0) != 0 ? 18 : -18,
+                    Size = new Vector2(345, 72),
+                }
+            ];
+        }
+    }
+}
