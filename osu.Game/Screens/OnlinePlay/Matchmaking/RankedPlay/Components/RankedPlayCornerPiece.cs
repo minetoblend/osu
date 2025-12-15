@@ -10,7 +10,7 @@ using osuTK;
 
 namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
 {
-    public class RankedPlayCornerPiece : Container
+    public partial class RankedPlayCornerPiece : Container
     {
         protected override Container<Drawable> Content { get; }
 
@@ -93,7 +93,9 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
         {
             base.Update();
 
-            Width = float.Clamp(Parent!.ChildSize.X * 0.25f, 250, 335);
+            Width = WidthFor(Parent!.ChildSize.X);
         }
+
+        public static float WidthFor(float parentWidth) => float.Clamp(parentWidth * 0.25f, 250, 335);
     }
 }

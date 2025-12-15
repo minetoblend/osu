@@ -1,14 +1,18 @@
 // Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
+using System.Diagnostics;
 using System.Linq;
+using Humanizer;
 using osu.Framework.Allocation;
+using osu.Framework.Extensions.Color4Extensions;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Game.Graphics;
 using osu.Game.Graphics.Sprites;
 using osu.Game.Graphics.UserInterface;
 using osu.Game.Online.Multiplayer;
+using osu.Game.Online.Multiplayer.MatchTypes.RankedPlay;
 using osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Facades;
 using osuTK;
 
@@ -17,7 +21,9 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
     public partial class PickScreen : RankedPlaySubScreen
     {
         private PlayerHandFacadeContainer playerHand = null!;
-        private PlayerHandFacadeContainer contractedPlayerHand = null!;
+        private CardFacade hiddenPlayerFacade = null!;
+        private OpponentHandFacadeContainer opponentHand = null!;
+        private CardFacade hiddenOpponentFacade = null!;
         private ShearedButton playButton = null!;
         private CardFacade playedCardFacade = null!;
         private FillFlowContainer textContainer = null!;
@@ -25,66 +31,88 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
         public override double CardTransitionStagger => 50;
 
         [BackgroundDependencyLoader]
-        private void load(OsuColour colour)
+        private void load()
         {
-            InternalChildren =
+            var matchState = Client.Room?.MatchState as RankedPlayRoomState;
+
+            Debug.Assert(matchState != null);
+
+            CenterColumn.Children =
             [
                 playerHand = new PlayerHandFacadeContainer
                 {
                     Anchor = Anchor.BottomCentre,
                     Origin = Anchor.BottomCentre,
                     RelativeSizeAxes = Axes.Both,
-                    Size = new Vector2(0.5f),
+                    Height = 0.5f,
                     SelectionMode = CardSelectionMode.Single,
                 },
-                contractedPlayerHand = new PlayerHandFacadeContainer
+                opponentHand = new OpponentHandFacadeContainer
                 {
-                    Anchor = Anchor.BottomCentre,
+                    Anchor = Anchor.TopCentre,
                     Origin = Anchor.BottomCentre,
                     RelativeSizeAxes = Axes.Both,
-                    Size = new Vector2(0.5f),
-                    ContractedAmount = 1f,
+                    Rotation = 180,
+                    Height = 0.5f,
+                    SelectionMode = CardSelectionMode.Disabled,
+                    Y = -20,
+                    ContractedAmount = 0.5f,
                 },
                 playedCardFacade = new CardFacade
                 {
                     Anchor = Anchor.Centre,
                     Origin = Anchor.Centre,
+                    Scale = new Vector2(1.2f)
                 },
-                playButton = new ShearedButton(width: 150)
+                hiddenPlayerFacade = new CardFacade
                 {
-                    Anchor = Anchor.BottomRight,
-                    Origin = Anchor.BottomRight,
-                    Y = -100,
-                    Action = onPlayButtonClicked,
-                    Enabled = { Value = true },
-                    Text = "Play",
+                    Anchor = Anchor.BottomCentre,
+                    Origin = Anchor.TopCentre,
+                    Y = 30,
+                    CardMovement = RankedPlayScreen.MovementStyle.Slow,
+                },
+                hiddenOpponentFacade = new CardFacade
+                {
+                    Anchor = Anchor.TopCentre,
+                    Origin = Anchor.BottomCentre,
+                    Y = -30,
+                    CardMovement = RankedPlayScreen.MovementStyle.Slow,
                 },
                 textContainer = new FillFlowContainer
                 {
                     RelativeSizeAxes = Axes.X,
                     AutoSizeAxes = Axes.Y,
                     Direction = FillDirection.Vertical,
+                    Anchor = Anchor.Centre,
+                    Origin = Anchor.Centre,
+                    Spacing = new Vector2(20),
                     Children =
                     [
                         new OsuSpriteText
                         {
-                            Text = "First pick!",
+                            Text = $"{FormatRoundIndex(matchState.CurrentRound).Titleize()} pick!",
                             Anchor = Anchor.TopCentre,
                             Origin = Anchor.TopCentre,
-                            Font = OsuFont.Style.Title,
-                            Margin = new MarginPadding(20)
+                            Font = OsuFont.GetFont(typeface: Typeface.TorusAlternate, size: 42, weight: FontWeight.Regular),
                         },
                         new OsuSpriteText
                         {
                             Text = "It’s your turn!",
                             Anchor = Anchor.TopCentre,
                             Origin = Anchor.TopCentre,
-                            Colour = colour.Blue,
-                            Font = OsuFont.Style.Subtitle,
+                            Colour = Color4Extensions.FromHex("87CDFF"),
+                            Font = OsuFont.GetFont(typeface: Typeface.TorusAlternate, size: 28, weight: FontWeight.SemiBold),
                         },
                     ]
-                }
+                },
             ];
+
+            ButtonsContainer.Child = playButton = new ShearedButton(width: 150)
+            {
+                Action = onPlayButtonClicked,
+                Enabled = { Value = true },
+                Text = "Play",
+            };
         }
 
         private void onPlayButtonClicked()
@@ -99,26 +127,40 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 
         public override ICardFacadeContainer PlayerCardContainer => playerHand;
 
+        public override ICardFacadeContainer? OpponentCardContainer => opponentHand;
+
         public override void CardPlayed(RankedPlayScreen.Card card)
         {
             playerHand.RemoveCard(card);
             card.ChangeFacade(playedCardFacade);
 
-            Scheduler.AddDelayed(() =>
+            textContainer.FadeOut(50);
+
+            card.ChangeFacade(playedCardFacade);
+
+            double delay = 0;
+
+            foreach (var c in playerHand.Cards)
             {
-                textContainer.FadeOut(50);
-                double delay = 0;
+                if (c.Card == card)
+                    continue;
 
-                foreach (var c in playerHand.Cards)
-                {
-                    var facade = contractedPlayerHand.AddCard(c.Card);
+                c.Card.ChangeFacade(hiddenPlayerFacade, delay);
 
-                    facade.CardMovement = RankedPlayScreen.MovementStyle.Slow;
-                    c.Card.ChangeFacade(facade, delay);
+                delay += 25;
+            }
 
-                    delay += 25;
-                }
-            }, 0);
+            delay = opponentHand.Cards.Count() * 25;
+
+            foreach (var c in opponentHand.Cards)
+            {
+                if (c.Card == card)
+                    continue;
+
+                c.Card.ChangeFacade(hiddenOpponentFacade, delay);
+
+                delay -= 25;
+            }
         }
     }
 }

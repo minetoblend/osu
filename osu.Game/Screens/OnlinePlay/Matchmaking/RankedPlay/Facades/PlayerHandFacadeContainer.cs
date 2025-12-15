@@ -186,7 +186,10 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Facades
 
                 child.Position += new Vector2(MathF.Cos(angle), MathF.Sin(angle)) * yOffset;
 
-                child.Position = Vector2.Lerp(child.Position, new Vector2(child.X * 0.75f, 220), contractedAmount);
+                if (!child.CardHovered)
+                    child.Position = Vector2.Lerp(child.Position, new Vector2(child.X * 0.75f, 230), contractedAmount);
+                else
+                    child.Position = Vector2.Lerp(child.Position, new Vector2(child.X * 0.75f, 220), contractedAmount * 0.2f);
 
                 x += child.LayoutWidth / 2 + spacing;
             }

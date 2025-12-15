@@ -4,6 +4,7 @@
 using System;
 using System.Linq;
 using osu.Framework.Allocation;
+using osu.Framework.Extensions.Color4Extensions;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Game.Graphics;
@@ -29,18 +30,10 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
         private OsuTextFlowContainer explainer = null!;
 
         [BackgroundDependencyLoader]
-        private void load(OsuColour colour)
+        private void load()
         {
-            InternalChildren =
+            Children =
             [
-                playerHand = new PlayerHandFacadeContainer
-                {
-                    Anchor = Anchor.BottomCentre,
-                    Origin = Anchor.BottomCentre,
-                    RelativeSizeAxes = Axes.Both,
-                    Size = new Vector2(0.5f),
-                    SelectionMode = CardSelectionMode.Multiple,
-                },
                 centerRow = new CardFillFlowContainer
                 {
                     RelativeSizeAxes = Axes.Both,
@@ -55,14 +48,24 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                     Y = -120,
                     Rotation = -30,
                 },
-                discardButton = new ShearedButton(width: 150)
+            ];
+
+            ButtonsContainer.Child = discardButton = new ShearedButton(width: 150)
+            {
+                Action = onDiscardButtonClicked,
+                Enabled = { Value = true },
+                Text = "Discard",
+            };
+
+            CenterColumn.Children =
+            [
+                playerHand = new PlayerHandFacadeContainer
                 {
-                    Anchor = Anchor.BottomRight,
-                    Origin = Anchor.BottomRight,
-                    Y = -100,
-                    Action = onDiscardButtonClicked,
-                    Enabled = { Value = true },
-                    Text = "Discard",
+                    Anchor = Anchor.BottomCentre,
+                    Origin = Anchor.BottomCentre,
+                    RelativeSizeAxes = Axes.Both,
+                    Height = 0.5f,
+                    SelectionMode = CardSelectionMode.Multiple,
                 },
                 new FillFlowContainer
                 {
@@ -76,7 +79,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                             Text = "Discarding Phase",
                             Anchor = Anchor.TopCentre,
                             Origin = Anchor.TopCentre,
-                            Font = OsuFont.Style.Title,
+                            Font = OsuFont.GetFont(typeface: Typeface.TorusAlternate, size: 42, weight: FontWeight.SemiBold),
                             Margin = new MarginPadding(20)
                         },
                         readyToGo = new OsuSpriteText
@@ -84,27 +87,27 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                             Text = "You’re ready to go!",
                             Anchor = Anchor.TopCentre,
                             Origin = Anchor.TopCentre,
-                            Colour = colour.Blue,
-                            Font = OsuFont.Style.Subtitle,
+                            Colour = Color4Extensions.FromHex("87CDFF"),
+                            Font = OsuFont.GetFont(typeface: Typeface.TorusAlternate, size: 28, weight: FontWeight.SemiBold),
                             Alpha = 0,
                         },
-                        explainer = new OsuTextFlowContainer(s => s.Font = OsuFont.Style.Heading2)
-                        {
-                            AutoSizeAxes = Axes.Y,
-                            Width = 500,
-                            Anchor = Anchor.TopCentre,
-                            Origin = Anchor.TopCentre,
-                            TextAnchor = Anchor.TopCentre,
-                            Margin = new MarginPadding { Top = 50 },
-                            ParagraphSpacing = 1,
-                            Alpha = 0,
-                        }.With(d =>
-                        {
-                            d.AddParagraph("These are your Cards for this match!");
-                            d.AddParagraph("When it’s your pick, you can choose one card to go head-to-head with against your opponent!");
-                        })
-                    ]
-                }
+                    ],
+                },
+                explainer = new OsuTextFlowContainer(s => s.Font = OsuFont.GetFont(size: 24))
+                {
+                    AutoSizeAxes = Axes.Y,
+                    RelativeSizeAxes = Axes.X,
+                    Anchor = Anchor.Centre,
+                    Origin = Anchor.BottomCentre,
+                    TextAnchor = Anchor.TopCentre,
+                    Y = 250,
+                    ParagraphSpacing = 1,
+                    Alpha = 0,
+                }.With(d =>
+                {
+                    d.AddParagraph("These are your Cards for this match!");
+                    d.AddParagraph("When it’s your pick, you can choose one card to go head-to-head with against your opponent!");
+                })
             ];
         }
 
@@ -192,7 +195,11 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
             }
 
             readyToGo.FadeIn(50);
-            explainer.FadeIn(50);
+            explainer
+                .Delay(delay / 2)
+                .MoveToOffset(new Vector2(0, 50))
+                .MoveToOffset(new Vector2(0, -50), 600, Easing.OutExpo)
+                .FadeIn(250);
         }
     }
 }

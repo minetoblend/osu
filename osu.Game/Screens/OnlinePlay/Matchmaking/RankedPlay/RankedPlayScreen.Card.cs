@@ -187,7 +187,11 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                     originPosition.Y
                 );
 
-                float targetRotation = MathHelper.RadiansToDegrees(new Line(drawQuad.TopLeft, drawQuad.TopRight).Theta);
+                float targetRotation = MathHelper.RadiansToDegrees(
+                    drawQuad.TopLeft.Y < drawQuad.BottomLeft.Y
+                        ? new Line(drawQuad.TopLeft, drawQuad.TopRight).Theta
+                        : new Line(drawQuad.TopRight, drawQuad.TopLeft).Theta);
+
                 float targetScale = Vector2.Distance(drawQuad.TopLeft, drawQuad.BottomLeft) / SIZE.Y;
 
                 Position = position.Update(Time.Elapsed, targetPosition);
