@@ -9,11 +9,9 @@ using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Effects;
 using osu.Framework.Graphics.Primitives;
-using osu.Framework.Graphics.Shapes;
 using osu.Framework.Input.Events;
 using osu.Framework.Threading;
 using osu.Game.Database;
-using osu.Game.Graphics.Sprites;
 using osu.Game.Graphics.UserInterface;
 using osu.Game.Online.API.Requests.Responses;
 using osu.Game.Online.Rooms;
@@ -35,8 +33,6 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 
             private readonly Bindable<MultiplayerPlaylistItem?> playlistItem = new Bindable<MultiplayerPlaylistItem?>();
 
-            private readonly Box background;
-            private readonly OsuSpriteText beatmapIdText;
             private readonly Container shadow;
             private readonly Container content;
 
@@ -58,7 +54,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                     {
                         RelativeSizeAxes = Axes.Both,
                         Masking = true,
-                        CornerRadius = 10,
+                        CornerRadius = 25,
                         Anchor = Anchor.Centre,
                         Origin = Anchor.Centre,
                         EdgeEffect = new EdgeEffectParameters
@@ -74,7 +70,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                         Anchor = Anchor.Centre,
                         Origin = Anchor.Centre,
                         Masking = true,
-                        CornerRadius = 10,
+                        CornerRadius = 25,
                         BorderColour = Color4.Yellow,
                         BorderThickness = 0,
                         Child = new RankedPlayCardBackSide()
@@ -131,7 +127,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 
             private void onSelectedChanged(ValueChangedEvent<bool> e)
             {
-                content.BorderThickness = e.NewValue ? 5 : 0;
+                content.BorderThickness = e.NewValue ? 12.5f : 0;
             }
 
             private void onPlaylistItemChanged(ValueChangedEvent<MultiplayerPlaylistItem?> e)
@@ -197,7 +193,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                     Type = EdgeEffectType.Shadow,
                     Radius = 10,
                     Colour = Color4.Black.Opacity(0.1f),
-                    Offset = new Vector2(-elevation.Current, elevation.Current)
+                    Offset = new Vector2(-elevation.Current * 2.5f, elevation.Current)
                 };
             }
 
