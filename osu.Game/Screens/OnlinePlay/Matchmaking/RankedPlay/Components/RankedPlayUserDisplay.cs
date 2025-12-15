@@ -328,9 +328,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
 
                     this.TransformTo(nameof(normalizedHealthWithDamage), Health.NormalizedValue, 400, Easing.OutExpo)
                         .Then(500)
-                        .TransformTo(nameof(normalizedHealth), Health.NormalizedValue, 800, Easing.OutExpo)
-                        .Then()
-                        .Schedule(flashHealth);
+                        .TransformTo(nameof(normalizedHealth), Health.NormalizedValue, 800, Easing.OutExpo);
                 }
 
                 else
@@ -366,8 +364,6 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
                     .ScaleTo(0.8f, 150, Easing.Out)
                     .Then()
                     .ScaleTo(1f, 400, Easing.OutElasticHalf);
-
-                Scheduler.AddDelayed(flashHealth, 1000);
             }
         }
     }
