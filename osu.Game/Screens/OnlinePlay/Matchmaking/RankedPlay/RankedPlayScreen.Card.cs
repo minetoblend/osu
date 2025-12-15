@@ -1,6 +1,8 @@
 // Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
+using System.Threading.Tasks;
+using osu.Framework.Allocation;
 using osu.Framework.Bindables;
 using osu.Framework.Extensions.Color4Extensions;
 using osu.Framework.Graphics;
@@ -10,8 +12,10 @@ using osu.Framework.Graphics.Primitives;
 using osu.Framework.Graphics.Shapes;
 using osu.Framework.Input.Events;
 using osu.Framework.Threading;
+using osu.Game.Database;
 using osu.Game.Graphics.Sprites;
 using osu.Game.Graphics.UserInterface;
+using osu.Game.Online.API.Requests.Responses;
 using osu.Game.Online.Rooms;
 using osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Facades;
 using osu.Game.Utils;
@@ -24,8 +28,6 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
     {
         public partial class Card : CompositeDrawable
         {
-            public static readonly Vector2 SIZE = new Vector2(120, 200);
-
             public readonly Bindable<bool> AllowSelection = new Bindable<bool>();
             public readonly BindableBool Selected = new BindableBool();
 
@@ -40,11 +42,14 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 
             public CardFacade? Facade { get; private set; }
 
+            [Resolved]
+            private BeatmapLookupCache beatmapLookupCache { get; set; } = null!;
+
             public Card(RankedPlayCardWithPlaylistItem item)
             {
                 Item = item;
 
-                Size = SIZE;
+                Size = RankedPlayCard.SIZE;
                 Origin = Anchor.Centre;
 
                 InternalChildren = new Drawable[]
@@ -66,38 +71,13 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                     content = new Container
                     {
                         RelativeSizeAxes = Axes.Both,
+                        Anchor = Anchor.Centre,
+                        Origin = Anchor.Centre,
                         Masking = true,
                         CornerRadius = 10,
                         BorderColour = Color4.Yellow,
                         BorderThickness = 0,
-                        Children =
-                        [
-                            background = new Box
-                            {
-                                RelativeSizeAxes = Axes.Both,
-                                Colour = Color4.DimGray
-                            },
-                            new FillFlowContainer
-                            {
-                                Anchor = Anchor.Centre,
-                                Origin = Anchor.Centre,
-                                Children = new Drawable[]
-                                {
-                                    new OsuSpriteText
-                                    {
-                                        Anchor = Anchor.Centre,
-                                        Origin = Anchor.Centre,
-                                        Text = $"ID: {item.Card.ID.GetHashCode()}"
-                                    },
-                                    beatmapIdText = new OsuSpriteText
-                                    {
-                                        Anchor = Anchor.Centre,
-                                        Origin = Anchor.Centre,
-                                        Text = "Hidden"
-                                    }
-                                }
-                            },
-                        ]
+                        Child = new RankedPlayCardBackSide()
                     },
                     new HoverClickSounds()
                 };
@@ -157,10 +137,25 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
             private void onPlaylistItemChanged(ValueChangedEvent<MultiplayerPlaylistItem?> e)
             {
                 if (e.NewValue != null)
-                {
-                    background.Colour = Color4.SlateGray;
-                    beatmapIdText.Text = $"Beatmap: {e.NewValue.BeatmapID}";
-                }
+                    Task.Run(() => loadBeatmapAndRevealCard(e.NewValue.BeatmapID));
+                else
+                    content.Child = new RankedPlayCardBackSide();
+            }
+
+            private async Task loadBeatmapAndRevealCard(int beatmapId)
+            {
+                var beatmap = await beatmapLookupCache.GetBeatmapAsync(beatmapId).ConfigureAwait(false);
+
+                if (beatmap != null)
+                    Schedule(() => revealCard(beatmap));
+            }
+
+            private void revealCard(APIBeatmap beatmap)
+            {
+                content.ScaleTo(new Vector2(0, 1), 150, Easing.In)
+                       .Then()
+                       .Schedule(() => content.Child = new RankedPlayCard(beatmap))
+                       .ScaleTo(new Vector2(1), 250, Easing.OutElasticQuarter);
             }
 
             private Vector2Spring position = null!;
@@ -188,7 +183,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                 );
 
                 float targetRotation = MathHelper.RadiansToDegrees(new Line(drawQuad.TopLeft, drawQuad.TopRight).Theta);
-                float targetScale = Vector2.Distance(drawQuad.TopLeft, drawQuad.BottomLeft) / SIZE.Y;
+                float targetScale = Vector2.Distance(drawQuad.TopLeft, drawQuad.BottomLeft) / RankedPlayCard.SIZE.Y;
 
                 Position = position.Update(Time.Elapsed, targetPosition);
                 Rotation = rotation.Update(Time.Elapsed, targetRotation);
@@ -196,7 +191,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 
                 elevation.Update(Time.Elapsed, Facade.Elevation);
 
-                shadow.Scale = new Vector2(100 / (100 + elevation.Current));
+                shadow.Scale = new Vector2(100 / (100 + elevation.Current)) * content.Scale;
                 shadow.EdgeEffect = new EdgeEffectParameters
                 {
                     Type = EdgeEffectType.Shadow,

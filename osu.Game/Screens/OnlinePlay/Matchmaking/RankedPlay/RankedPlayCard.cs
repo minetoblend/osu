@@ -27,6 +27,8 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 {
     public partial class RankedPlayCard : CompositeDrawable
     {
+        public static readonly Vector2 SIZE = new Vector2(300, 500);
+
         private const float shiny_alpha = 0.2f;
 
         private static FontUsage heading0 => OsuFont.GetFont(size: 24, weight: FontWeight.Bold);
@@ -44,7 +46,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
         {
             this.beatmap = beatmap;
 
-            Size = new Vector2(300, 500);
+            Size = SIZE;
         }
 
         [BackgroundDependencyLoader]
@@ -221,7 +223,9 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                                     {
                                         Anchor = Anchor.TopCentre,
                                         Origin = Anchor.TopCentre,
-                                        Text = $"User Rating {beatmap.BeatmapSet!.Ratings.Average():0.00}",
+                                        Text = beatmap.BeatmapSet!.Ratings.Length > 0
+                                            ? $"User Rating {beatmap.BeatmapSet!.Ratings.Average():0.00}"
+                                            : $"User Rating unknown",
                                         Font = OsuFont.Style.Body.With(weight: FontWeight.Bold)
                                     },
                                     new UserRatingDisplay

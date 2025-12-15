@@ -30,7 +30,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Facades
             Anchor = Anchor.Centre;
             Origin = Anchor.Centre;
 
-            Size = RankedPlayScreen.Card.SIZE;
+            Size = RankedPlayCard.SIZE * 0.4f;
             Padding = new MarginPadding(-10);
 
             AddInternal(DebugOverlay = new DebugBox());
