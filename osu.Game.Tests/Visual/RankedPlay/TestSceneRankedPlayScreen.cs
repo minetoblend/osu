@@ -19,6 +19,8 @@ namespace osu.Game.Tests.Visual.RankedPlay
 {
     public partial class TestSceneRankedPlayScreen : MultiplayerTestScene
     {
+        public override bool AutomaticallyRunFirstStep => false;
+
         [Cached(name: "debugEnabled")]
         private readonly Bindable<bool> debugEnabled = new Bindable<bool>();
 
@@ -35,6 +37,8 @@ namespace osu.Game.Tests.Visual.RankedPlay
 
             AddStep("join room", () => JoinRoom(CreateDefaultRoom(MatchType.RankedPlay)));
             WaitForJoined();
+
+            AddStep("join other user", () => MultiplayerClient.AddUser(new APIUser { Id = 2 }));
 
             AddStep("load screen", () => LoadScreen(screen = new RankedPlayScreen(MultiplayerClient.ClientRoom!)));
         }
@@ -145,8 +149,6 @@ namespace osu.Game.Tests.Visual.RankedPlay
         [Test]
         public void TestOtherPlaysCard()
         {
-            AddStep("join other user", () => MultiplayerClient.AddUser(new APIUser { Id = 2 }));
-
             AddStep("set play phase", () => MultiplayerClient.RankedPlayChangeStage(RankedPlayStage.CardPlay, state => state.ActivePlayerIndex = 1).WaitSafely());
 
             AddStep("play beatmap", () => MultiplayerClient.PlayCard(((RankedPlayUserState)MultiplayerClient.ServerRoom!.Users[1].MatchState!).Hand[0]).WaitSafely());
