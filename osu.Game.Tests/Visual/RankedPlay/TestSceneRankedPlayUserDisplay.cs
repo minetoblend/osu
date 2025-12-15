@@ -12,7 +12,7 @@ namespace osu.Game.Tests.Visual.RankedPlay
 {
     public class TestSceneRankedPlayUserDisplay : OsuTestScene
     {
-        private readonly RankedPlayUserDisplay userDisplay;
+        private RankedPlayUserDisplay userDisplay;
 
         public TestSceneRankedPlayUserDisplay()
         {
@@ -27,6 +27,18 @@ namespace osu.Game.Tests.Visual.RankedPlay
         [Test]
         public void TesUserDisplay()
         {
+            AddStep("blue color scheme", () => Child = userDisplay = new RankedPlayUserDisplay(new APIUser(), Anchor.BottomLeft, RankedPlayColourScheme.Blue)
+            {
+                Anchor = Anchor.Centre,
+                Origin = Anchor.Centre,
+                Size = new Vector2(256, 72)
+            });
+            AddStep("red color scheme", () => Child = userDisplay = new RankedPlayUserDisplay(new APIUser(), Anchor.BottomLeft, RankedPlayColourScheme.Red)
+            {
+                Anchor = Anchor.Centre,
+                Origin = Anchor.Centre,
+                Size = new Vector2(256, 72)
+            });
             AddSliderStep("health", 0, 1_000_000, 1_000_000, value => userDisplay.Health.Value = value);
         }
     }

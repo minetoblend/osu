@@ -5,9 +5,11 @@ using System;
 using System.Linq;
 using osu.Framework.Allocation;
 using osu.Framework.Bindables;
+using osu.Framework.Extensions.Color4Extensions;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Colour;
 using osu.Framework.Graphics.Containers;
+using osu.Framework.Graphics.Effects;
 using osu.Framework.Graphics.Shapes;
 using osu.Framework.Graphics.Sprites;
 using osu.Framework.Utils;
@@ -103,7 +105,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
 
         private void onRoomUpdated()
         {
-            if (client.Room?.Users.FirstOrDefault(it => it.UserID == this.user.Id)?.MatchState is not RankedPlayUserState matchState)
+            if (client.Room?.Users.FirstOrDefault(it => it.UserID == user.Id)?.MatchState is not RankedPlayUserState matchState)
                 return;
 
             Health.Value = matchState.Life;
@@ -118,6 +120,8 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
 
         private partial class HealthBar : CompositeDrawable
         {
+            private readonly bool leftToRight;
+
             public readonly BindableInt Health = new BindableInt
             {
                 MaxValue = 1_000_000,
@@ -125,7 +129,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
                 Value = 1_000_000,
             };
 
-            private readonly BindableInt healthDelayed = new BindableInt();
+            private readonly BindableInt healthTextValue = new BindableInt();
 
             /// <summary>
             /// relative health threshold below which the health bar starts flashing red
@@ -133,17 +137,23 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
             public float HealthFlashThreshold { get; set; } = 0.3f;
 
             private readonly ColourInfo healthBarColour;
+
             private readonly Container healthBar;
             private readonly Box healthBarBackground;
+            private readonly Container damageIndicator;
             private readonly TrianglesV2 triangles;
             private readonly SpriteIcon heartIcon;
             private readonly OsuSpriteText healthText;
 
             public HealthBar(RankedPlayColourScheme colourScheme, bool leftToRight)
             {
+                this.leftToRight = leftToRight;
+
                 Shear = OsuGame.SHEAR;
 
                 Anchor contentAnchor = leftToRight ? Anchor.CentreLeft : Anchor.CentreRight;
+
+                BufferedContainer content;
 
                 InternalChildren =
                 [
@@ -165,74 +175,120 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
                     {
                         RelativeSizeAxes = Axes.Both,
                         Padding = new MarginPadding { Horizontal = 2.2f, Vertical = 2 }, // slightly different ratio to account for shear
-                        Child = healthBar = new Container
-                        {
-                            RelativeSizeAxes = Axes.Both,
-                            Masking = true,
-                            CornerRadius = 2,
-                            Anchor = contentAnchor,
-                            Origin = contentAnchor,
-                            Children =
-                            [
-                                healthBarBackground = new Box
-                                {
-                                    RelativeSizeAxes = Axes.Both,
-                                    Alpha = 0.8f,
-                                    Colour = healthBarColour = leftToRight
-                                        ? ColourInfo.GradientHorizontal(colourScheme.PrimaryDarker, colourScheme.Primary)
-                                        : ColourInfo.GradientHorizontal(colourScheme.Primary, colourScheme.PrimaryDarker),
-                                },
-                                triangles = new TrianglesV2
-                                {
-                                    RelativeSizeAxes = Axes.Y,
-                                    Anchor = contentAnchor,
-                                    Origin = contentAnchor,
-                                    SpawnRatio = 0.5f,
-                                    ScaleAdjust = 0.75f,
-                                    Alpha = 0.1f,
-                                    Blending = BlendingParameters.Additive,
-                                    Colour = leftToRight
-                                        ? ColourInfo.GradientHorizontal(Color4.Transparent, Color4.White)
-                                        : ColourInfo.GradientHorizontal(Color4.White, Color4.Transparent),
-                                }
-                            ]
-                        },
-                    },
-                    new FillFlowContainer
-                    {
-                        RelativeSizeAxes = Axes.Both,
-                        Direction = FillDirection.Horizontal,
-                        Shear = -OsuGame.SHEAR,
-                        Anchor = Anchor.Centre,
-                        Origin = Anchor.Centre,
-                        Spacing = new Vector2(3),
-                        Padding = new MarginPadding { Horizontal = 10 },
                         Children =
                         [
-                            new Container
+                            healthBar = new Container
                             {
-                                Size = new Vector2(10),
+                                RelativeSizeAxes = Axes.Both,
+                                Masking = true,
+                                CornerRadius = 2,
                                 Anchor = contentAnchor,
                                 Origin = contentAnchor,
-                                Child = heartIcon = new SpriteIcon
-                                {
-                                    Icon = FontAwesome.Solid.Heart,
-                                    RelativeSizeAxes = Axes.Both,
-                                    Anchor = Anchor.Centre,
-                                    Origin = Anchor.Centre,
-                                }
+                                Children =
+                                [
+                                    healthBarBackground = new Box
+                                    {
+                                        RelativeSizeAxes = Axes.Both,
+                                        Alpha = 0.8f,
+                                        Colour = healthBarColour = leftToRight
+                                            ? ColourInfo.GradientHorizontal(colourScheme.PrimaryDarker, colourScheme.Primary)
+                                            : ColourInfo.GradientHorizontal(colourScheme.Primary, colourScheme.PrimaryDarker),
+                                    },
+                                    triangles = new TrianglesV2
+                                    {
+                                        RelativeSizeAxes = Axes.Y,
+                                        Anchor = contentAnchor,
+                                        Origin = contentAnchor,
+                                        SpawnRatio = 0.5f,
+                                        ScaleAdjust = 0.75f,
+                                        Alpha = 0.1f,
+                                        Blending = BlendingParameters.Additive,
+                                        Colour = leftToRight
+                                            ? ColourInfo.GradientHorizontal(Color4.Transparent, Color4.White)
+                                            : ColourInfo.GradientHorizontal(Color4.White, Color4.Transparent),
+                                    },
+                                ],
                             },
-                            healthText = new OsuSpriteText
+                        ]
+                    },
+                    content = new BufferedContainer(pixelSnapping: true)
+                    {
+                        RelativeSizeAxes = Axes.Both,
+                        Shear = -OsuGame.SHEAR,
+                        Child = new FillFlowContainer
+                        {
+                            RelativeSizeAxes = Axes.Both,
+                            Direction = FillDirection.Horizontal,
+                            Anchor = Anchor.Centre,
+                            Origin = Anchor.Centre,
+                            Spacing = new Vector2(3),
+                            Padding = new MarginPadding { Horizontal = 10 },
+                            Children =
+                            [
+                                new Container
+                                {
+                                    Size = new Vector2(10),
+                                    Anchor = contentAnchor,
+                                    Origin = contentAnchor,
+                                    Child = heartIcon = new SpriteIcon
+                                    {
+                                        Icon = FontAwesome.Solid.Heart,
+                                        RelativeSizeAxes = Axes.Both,
+                                        Anchor = Anchor.Centre,
+                                        Origin = Anchor.Centre,
+                                    }
+                                },
+                                healthText = new OsuSpriteText
+                                {
+                                    Text = "1,000,000",
+                                    Anchor = contentAnchor,
+                                    Origin = contentAnchor,
+                                    Font = OsuFont.GetFont(size: 14, weight: FontWeight.Medium),
+                                    UseFullGlyphHeight = false,
+                                    Padding = new MarginPadding { Top = 1 },
+                                    Shadow = false,
+                                }
+                            ]
+                        }
+                    },
+                    new Container
+                    {
+                        RelativeSizeAxes = Axes.Both,
+                        Padding = new MarginPadding { Horizontal = 2.2f, Vertical = 2 }, // slightly different ratio to account for shear
+                        Children =
+                        [
+                            damageIndicator = new Container
                             {
-                                Text = "1,000,000",
+                                RelativeSizeAxes = Axes.Both,
+                                RelativePositionAxes = Axes.X,
                                 Anchor = contentAnchor,
                                 Origin = contentAnchor,
-                                Font = OsuFont.GetFont(size: 14, weight: FontWeight.Medium),
-                                UseFullGlyphHeight = false,
-                                Padding = new MarginPadding { Top = 1 }
-                            }
+                                Masking = true,
+                                CornerRadius = 2,
+                                Alpha = 0,
+                                EdgeEffect = new EdgeEffectParameters
+                                {
+                                    Type = EdgeEffectType.Glow,
+                                    Radius = 25,
+                                    Colour = Color4Extensions.FromHex("FF171B").Opacity(0.5f),
+                                    Roundness = 10,
+                                    Hollow = true,
+                                },
+                                Children =
+                                [
+                                    new Box
+                                    {
+                                        RelativeSizeAxes = Axes.Both,
+                                    },
+                                    content.CreateView().With(d =>
+                                    {
+                                        d.SynchronisedDrawQuad = true;
+                                        d.Colour = Color4.Red;
+                                    })
+                                ],
+                            },
                         ]
-                    }
+                    },
                 ];
             }
 
@@ -240,18 +296,48 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
             {
                 base.LoadComplete();
 
-                Health.BindValueChanged(e =>
-                {
-                    healthBar.ResizeWidthTo(Health.NormalizedValue, 400, Easing.OutExpo);
+                Health.BindValueChanged(onHealthChanged, true);
 
-                    this.TransformBindableTo(healthDelayed, e.NewValue, 300, Easing.OutExpo);
-                }, true);
-
-                healthDelayed.BindValueChanged(e => healthText.Text = FormattableString.Invariant($"{e.NewValue:N0}"), true);
+                healthTextValue.BindValueChanged(e => healthText.Text = FormattableString.Invariant($"{e.NewValue:N0}"), true);
 
                 FinishTransforms(true);
 
                 Scheduler.AddDelayed(flashHealth, 1000, true);
+            }
+
+#pragma warning disable CS0649 // Field is never assigned to, and will always have its default value
+            private float normalizedHealth;
+            private float normalizedHealthWithDamage;
+#pragma warning restore CS0649 // Field is never assigned to, and will always have its default value
+
+            private void onHealthChanged(ValueChangedEvent<int> e)
+            {
+                this.TransformBindableTo(healthTextValue, e.NewValue, 500, Easing.OutExpo);
+
+                bool isHealthDecrease = e.NewValue < e.OldValue;
+
+                if (isHealthDecrease)
+                {
+                    damageIndicator.FadeIn(50)
+                                   .Then(delay: 1100)
+                                   .FadeOut(200);
+
+                    healthBarBackground.FadeColour(Color4.Red, 100)
+                                       .Then()
+                                       .FadeColour(healthBarColour, 1000);
+
+                    this.TransformTo(nameof(normalizedHealthWithDamage), Health.NormalizedValue, 400, Easing.OutExpo)
+                        .Then(500)
+                        .TransformTo(nameof(normalizedHealth), Health.NormalizedValue, 800, Easing.OutExpo)
+                        .Then()
+                        .Schedule(flashHealth);
+                }
+
+                else
+                {
+                    this.TransformTo(nameof(normalizedHealthWithDamage), Health.NormalizedValue, 800, Easing.OutExpo)
+                        .TransformTo(nameof(normalizedHealth), Health.NormalizedValue, 800, Easing.OutExpo);
+                }
             }
 
             protected override void Update()
@@ -259,6 +345,10 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
                 base.Update();
 
                 triangles.Width = DrawWidth;
+                healthBar.Width = normalizedHealth;
+
+                damageIndicator.X = leftToRight ? normalizedHealthWithDamage : -normalizedHealthWithDamage;
+                damageIndicator.Width = float.Clamp(normalizedHealth - normalizedHealthWithDamage, 0, 1);
             }
 
             private void flashHealth()
@@ -266,9 +356,9 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
                 if (Health.NormalizedValue > HealthFlashThreshold)
                     return;
 
-                var flashColour = Interpolation.ValueAt(0.75, healthBarColour, ColourInfo.SingleColour(Color4.Red), 0.0, 1.0);
+                var almostRed = Interpolation.ValueAt(0.75, healthBarColour, ColourInfo.SingleColour(Color4.Red), 0.0, 1.0);
 
-                healthBarBackground.FadeColour(flashColour, 150)
+                healthBarBackground.FadeColour(almostRed, 150)
                                    .Then()
                                    .FadeColour(healthBarColour, 800);
 
@@ -276,6 +366,8 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
                     .ScaleTo(0.8f, 150, Easing.Out)
                     .Then()
                     .ScaleTo(1f, 400, Easing.OutElasticHalf);
+
+                Scheduler.AddDelayed(flashHealth, 1000);
             }
         }
     }
