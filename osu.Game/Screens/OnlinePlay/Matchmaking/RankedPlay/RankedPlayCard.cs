@@ -225,7 +225,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                                         Origin = Anchor.TopCentre,
                                         Text = beatmap.BeatmapSet!.Ratings.Length > 0
                                             ? $"User Rating {beatmap.BeatmapSet!.Ratings.Average():0.00}"
-                                            : $"User Rating unknown",
+                                            : "User Rating unknown",
                                         Font = OsuFont.Style.Body.With(weight: FontWeight.Bold)
                                     },
                                     new UserRatingDisplay
