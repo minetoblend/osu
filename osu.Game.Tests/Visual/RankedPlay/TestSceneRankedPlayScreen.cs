@@ -150,7 +150,7 @@ namespace osu.Game.Tests.Visual.RankedPlay
         public void TestOtherPlaysCard()
         {
             AddStep("set play phase", () => MultiplayerClient.RankedPlayChangeStage(RankedPlayStage.CardPlay, state => state.ActivePlayerIndex = 1).WaitSafely());
-
+            AddWaitStep("wait", 5);
             AddStep("play beatmap", () => MultiplayerClient.PlayCard(((RankedPlayUserState)MultiplayerClient.ServerRoom!.Users[1].MatchState!).Hand[0]).WaitSafely());
         }
 
