@@ -26,9 +26,9 @@ using osu.Game.Online.Rooms;
 using osu.Game.Overlays;
 using osu.Game.Overlays.Dialog;
 using osu.Game.Rulesets;
-using osu.Game.Screens.Footer;
 using osu.Game.Screens.OnlinePlay.Matchmaking.Match;
 using osu.Game.Screens.OnlinePlay.Matchmaking.Match.Gameplay;
+using osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components;
 using osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Facades;
 using osu.Game.Screens.OnlinePlay.Multiplayer;
 
@@ -37,7 +37,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
     [Cached]
     public partial class RankedPlayScreen : OsuScreen, IPreviewTrackOwner, IHandlePresentBeatmap
     {
-        public override bool ShowFooter => true;
+        public override bool AllowUserExit => false;
 
         protected override BackgroundScreen CreateBackground() => new MatchmakingBackgroundScreen(new OverlayColourProvider(OverlayColourScheme.Pink));
 
@@ -93,36 +93,28 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
             InternalChildren = new Drawable[]
             {
                 beatmapAvailabilityTracker,
-                new Container
+                screenContainer = new Container<RankedPlaySubScreen>
                 {
                     RelativeSizeAxes = Axes.Both,
-                    Padding = new MarginPadding { Bottom = ScreenFooter.HEIGHT },
-                    Children =
-                    [
-                        screenContainer = new Container<RankedPlaySubScreen>
-                        {
-                            RelativeSizeAxes = Axes.Both,
-                        },
-                        cardContainer = new CardContainer
-                        {
-                            RelativeSizeAxes = Axes.Both,
-                        },
-                        hiddenPlayerCardFacade = new CardFacade
-                        {
-                            Anchor = Anchor.BottomCentre,
-                            Origin = Anchor.TopCentre,
-                            Y = 20,
-                            CardMovement = MovementStyle.Energetic
-                        },
-                        hiddenOpponentCardFacade = new CardFacade
-                        {
-                            Anchor = Anchor.TopCentre,
-                            Origin = Anchor.BottomCentre,
-                            Y = -20,
-                            CardMovement = MovementStyle.Energetic
-                        },
-                    ]
-                }
+                },
+                cardContainer = new CardContainer
+                {
+                    RelativeSizeAxes = Axes.Both,
+                },
+                hiddenPlayerCardFacade = new CardFacade
+                {
+                    Anchor = Anchor.BottomCentre,
+                    Origin = Anchor.TopCentre,
+                    Y = 20,
+                    CardMovement = MovementStyle.Energetic
+                },
+                hiddenOpponentCardFacade = new CardFacade
+                {
+                    Anchor = Anchor.TopCentre,
+                    Origin = Anchor.BottomCentre,
+                    Y = -20,
+                    CardMovement = MovementStyle.Energetic
+                },
             };
         }
 
@@ -155,21 +147,17 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 
                 foreach (var item in localUserState.Hand)
                 {
-                    var card = new Card(client.GetCardWithPlaylistItem(item))
-                    {
-                        Origin = cardOwner == CardOwner.Player ? Anchor.BottomCentre : Anchor.TopCentre,
-                        Position = ToLocalSpace(
-                            cardOwner == CardOwner.Player
-                                ? hiddenPlayerCardFacade.ScreenSpaceDrawQuad.Centre
-                                : hiddenOpponentCardFacade.ScreenSpaceDrawQuad.Centre
-                        ),
-                    };
+                    var facade = cardOwner == CardOwner.Player ? hiddenPlayerCardFacade : hiddenOpponentCardFacade;
+
+                    var card = new Card(client.GetCardWithPlaylistItem(item));
+
+                    card.Position = ToLocalSpace(facade.ScreenSpaceDrawQuad.Centre);
 
                     cardContainer.Add(card);
 
                     cardListFor(cardOwner).Add(card);
 
-                    card.ChangeFacade(hiddenPlayerCardFacade);
+                    card.ChangeFacade(facade);
                 }
             }
 
@@ -178,6 +166,26 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                 playerCards.Remove(card);
                 opponentCards.Remove(card);
             };
+
+            var ownUser = client.LocalUser!.User!;
+            var opponent = client.Room!.Users.First(it => it.UserID != ownUser.Id).User!;
+
+            AddRangeInternal([
+                new RankedPlayCornerPiece(RankedPlayColourScheme.Blue, Anchor.BottomLeft)
+                {
+                    Child = new RankedPlayUserDisplay(client.LocalUser!.User!, Anchor.BottomLeft, RankedPlayColourScheme.Blue)
+                    {
+                        RelativeSizeAxes = Axes.Both,
+                    }
+                },
+                new RankedPlayCornerPiece(RankedPlayColourScheme.Red, Anchor.TopRight)
+                {
+                    Child = new RankedPlayUserDisplay(opponent, Anchor.TopRight, RankedPlayColourScheme.Red)
+                    {
+                        RelativeSizeAxes = Axes.Both,
+                    }
+                },
+            ]);
         }
 
         private RankedPlaySubScreen? activeSubscreen;
@@ -300,10 +308,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
         {
             var cardOwner = getCardOwner(userId);
 
-            var card = new Card(item)
-            {
-                Origin = cardOwner == CardOwner.Player ? Anchor.BottomCentre : Anchor.TopCentre
-            };
+            var card = new Card(item);
 
             cardContainer.Add(card);
 

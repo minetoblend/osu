@@ -959,6 +959,21 @@ namespace osu.Game.Tests.Visual.Multiplayer
             }).ConfigureAwait(false);
         }
 
+        public async Task RankedPlayChangeUserState(int userId, Action<RankedPlayUserState> prepare)
+        {
+            Debug.Assert(ServerRoom != null);
+
+            var user = ServerRoom.Users.Single(u => u.UserID == userId);
+
+            RankedPlayUserState state = clone((RankedPlayUserState)user.MatchState!);
+
+            prepare(state);
+
+            user.MatchState = state;
+
+            await ((IMultiplayerClient)this).MatchUserStateChanged(clone(user.UserID), clone(state)).ConfigureAwait(false);
+        }
+
         #region API Room Handling
 
         public IReadOnlyList<Room> ServerSideRooms
