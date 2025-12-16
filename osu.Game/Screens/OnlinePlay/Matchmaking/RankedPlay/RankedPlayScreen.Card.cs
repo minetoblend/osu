@@ -9,6 +9,7 @@ using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Effects;
 using osu.Framework.Graphics.Primitives;
+using osu.Framework.Graphics.Shapes;
 using osu.Framework.Input.Events;
 using osu.Framework.Threading;
 using osu.Game.Database;
@@ -35,6 +36,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 
             private readonly Container shadow;
             private readonly Container content;
+            private readonly Container border;
 
             public CardFacade? Facade { get; private set; }
 
@@ -71,9 +73,21 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                         Origin = Anchor.Centre,
                         Masking = true,
                         CornerRadius = 25,
+                        Child = new RankedPlayCardBackSide()
+                    },
+                    border = new Container
+                    {
+                        RelativeSizeAxes = Axes.Both,
+                        Masking = true,
+                        CornerRadius = 25,
                         BorderColour = Color4.Yellow,
                         BorderThickness = 0,
-                        Child = new RankedPlayCardBackSide()
+                        Child = new Box
+                        {
+                            RelativeSizeAxes = Axes.Both,
+                            Alpha = 0,
+                            AlwaysPresent = true
+                        }
                     },
                     new HoverClickSounds()
                 };
@@ -127,7 +141,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 
             private void onSelectedChanged(ValueChangedEvent<bool> e)
             {
-                content.BorderThickness = e.NewValue ? 12.5f : 0;
+                border.BorderThickness = e.NewValue ? 12.5f : 0;
             }
 
             private void onPlaylistItemChanged(ValueChangedEvent<MultiplayerPlaylistItem?> e)
