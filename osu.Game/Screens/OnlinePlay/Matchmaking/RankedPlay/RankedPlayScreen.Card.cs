@@ -10,6 +10,7 @@ using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Effects;
 using osu.Framework.Graphics.Primitives;
 using osu.Framework.Graphics.Shapes;
+using osu.Framework.Graphics.Transforms;
 using osu.Framework.Input.Events;
 using osu.Framework.Threading;
 using osu.Game.Database;
@@ -17,7 +18,6 @@ using osu.Game.Graphics.UserInterface;
 using osu.Game.Online.API.Requests.Responses;
 using osu.Game.Online.Rooms;
 using osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Facades;
-using osu.Game.Utils;
 using osuTK;
 using osuTK.Graphics;
 
@@ -104,10 +104,31 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 
                 Selected.BindValueChanged(onSelectedChanged, true);
 
-                position = new Vector2Spring(Position, naturalFrequency: 2.5f, response: 1.2f);
-                rotation = new FloatSpring(Rotation, naturalFrequency: 3, response: 2f);
-                scale = new Vector2Spring(Scale, naturalFrequency: 3, damping: 0.9f, response: 2f);
-                elevation = new FloatSpring { Parameters = MovementStyle.Energetic };
+                position = new Vector2Spring
+                {
+                    Current = Position,
+                    PreviousTarget = Position,
+                    Parameters = new SpringParameters(NaturalFrequency: 2.5f, Response: 1.2f)
+                };
+
+                rotation = new FloatSpring
+                {
+                    Current = Rotation,
+                    PreviousTarget = Rotation,
+                    Parameters = new SpringParameters(NaturalFrequency: 3, Response: 2f)
+                };
+
+                scale = new Vector2Spring
+                {
+                    Current = Scale,
+                    PreviousTarget = Scale,
+                    Parameters = new SpringParameters(NaturalFrequency: 3, Damping: 0.9f, Response: 2f)
+                };
+
+                elevation = new FloatSpring
+                {
+                    Parameters = MovementStyle.Energetic
+                };
 
                 cardMovement.BindValueChanged(e => position.Parameters = e.NewValue, true);
             }

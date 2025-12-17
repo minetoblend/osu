@@ -5,7 +5,6 @@ using osu.Framework.Graphics;
 using osu.Framework.Graphics.Transforms;
 using osu.Framework.Utils;
 using osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Facades;
-using osu.Game.Utils;
 
 namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 {

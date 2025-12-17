@@ -4,7 +4,7 @@
 using System.Collections.Generic;
 using osu.Framework.Bindables;
 using osu.Framework.Graphics.Containers;
-using osu.Game.Utils;
+using osu.Framework.Graphics.Transforms;
 
 namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Facades
 {
