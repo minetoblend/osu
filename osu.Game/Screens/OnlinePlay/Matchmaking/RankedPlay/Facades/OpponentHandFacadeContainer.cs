@@ -5,7 +5,7 @@ using osu.Framework.Input.Events;
 
 namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Facades
 {
-    public class OpponentHandFacadeContainer : PlayerHandFacadeContainer
+    public partial class OpponentHandFacadeContainer : PlayerHandFacadeContainer
     {
         private partial class OpponentCardFacade : HandCardFacade
         {
