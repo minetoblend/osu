@@ -1,6 +1,7 @@
 // Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
+using System.Globalization;
 using Humanizer;
 using osu.Framework.Allocation;
 using osu.Framework.Graphics;
@@ -96,7 +97,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
         {
             int roundNumber = roundIndex + 1;
 
-            return roundNumber >= 10 ? roundNumber.Ordinalize() : roundNumber.ToOrdinalWords();
+            return roundNumber >= 10 ? roundNumber.Ordinalize(CultureInfo.InvariantCulture) : roundNumber.ToOrdinalWords(CultureInfo.InvariantCulture);
         }
     }
 }
