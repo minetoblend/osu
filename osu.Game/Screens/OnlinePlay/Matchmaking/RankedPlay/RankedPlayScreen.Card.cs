@@ -50,6 +50,8 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                 Size = RankedPlayCard.SIZE;
                 Origin = Anchor.Centre;
 
+                Scale = new Vector2(1 / 2.5f);
+
                 InternalChildren = new Drawable[]
                 {
                     shadow = new Container
@@ -213,7 +215,11 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                     originPosition.Y
                 );
 
-                float targetRotation = MathHelper.RadiansToDegrees(new Line(drawQuad.TopLeft, drawQuad.TopRight).Theta);
+                float targetRotation = MathHelper.RadiansToDegrees(
+                    drawQuad.TopLeft.Y < drawQuad.BottomLeft.Y
+                        ? new Line(drawQuad.TopLeft, drawQuad.TopRight).Theta
+                        : new Line(drawQuad.TopRight, drawQuad.TopLeft).Theta);
+
                 float targetScale = Vector2.Distance(drawQuad.TopLeft, drawQuad.BottomLeft) / RankedPlayCard.SIZE.Y;
 
                 Position = position.Update(Time.Elapsed, targetPosition);
