@@ -127,7 +127,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 
         public override ICardFacadeContainer PlayerCardContainer => playerHand;
 
-        public override ICardFacadeContainer? OpponentCardContainer => opponentHand;
+        public override ICardFacadeContainer OpponentCardContainer => opponentHand;
 
         public override void CardPlayed(RankedPlayScreen.Card card)
         {
