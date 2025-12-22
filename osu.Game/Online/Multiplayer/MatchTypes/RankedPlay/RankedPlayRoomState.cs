@@ -2,6 +2,7 @@
 // See the LICENCE file in the repository root for full licence text.
 
 using System;
+using System.Collections.Generic;
 using MessagePack;
 
 namespace osu.Game.Online.Multiplayer.MatchTypes.RankedPlay
@@ -29,9 +30,21 @@ namespace osu.Game.Online.Multiplayer.MatchTypes.RankedPlay
         public double DamageMultiplier { get; set; }
 
         /// <summary>
-        /// The index of the user currently playing a card.
+        /// A dictionary containing all users in the room.
         /// </summary>
         [Key(3)]
-        public int ActivePlayerIndex { get; set; }
+        public Dictionary<int, RankedPlayUserInfo> Users { get; set; } = [];
+
+        /// <summary>
+        /// The ID of the user currently playing a card.
+        /// </summary>
+        [Key(4)]
+        public int ActiveUserId { get; set; }
+
+        /// <summary>
+        /// The user currently playing a card.
+        /// </summary>
+        [IgnoreMember]
+        public RankedPlayUserInfo ActiveUser => Users[ActiveUserId];
     }
 }

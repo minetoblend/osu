@@ -2,9 +2,9 @@
 // See the LICENCE file in the repository root for full licence text.
 
 using System;
-using System.Linq;
 using osu.Framework.Allocation;
 using osu.Framework.Bindables;
+using osu.Framework.Extensions;
 using osu.Framework.Extensions.Color4Extensions;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Colour;
@@ -13,6 +13,7 @@ using osu.Framework.Graphics.Effects;
 using osu.Framework.Graphics.Shapes;
 using osu.Framework.Graphics.Sprites;
 using osu.Framework.Utils;
+using osu.Game.Database;
 using osu.Game.Graphics;
 using osu.Game.Graphics.Backgrounds;
 using osu.Game.Graphics.Sprites;
@@ -27,8 +28,6 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
 {
     public partial class RankedPlayUserDisplay : CompositeDrawable
     {
-        private readonly APIUser user;
-
         public readonly BindableInt Health = new BindableInt
         {
             MaxValue = 1_000_000,
@@ -36,9 +35,27 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
             Value = 1_000_000,
         };
 
-        public RankedPlayUserDisplay(APIUser user, Anchor contentAnchor, RankedPlayColourScheme colourScheme)
+        [Resolved]
+        private MultiplayerClient client { get; set; } = null!;
+
+        [Resolved]
+        private UserLookupCache users { get; set; } = null!;
+
+        private readonly int userId;
+        private readonly Anchor contentAnchor;
+        private readonly RankedPlayColourScheme colourScheme;
+
+        public RankedPlayUserDisplay(int userId, Anchor contentAnchor, RankedPlayColourScheme colourScheme)
         {
-            this.user = user;
+            this.userId = userId;
+            this.contentAnchor = contentAnchor;
+            this.colourScheme = colourScheme;
+        }
+
+        [BackgroundDependencyLoader]
+        private void load()
+        {
+            APIUser user = users.GetUserAsync(userId).GetResultSafely()!;
 
             InternalChildren =
             [
@@ -93,27 +110,24 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
             ];
         }
 
-        [Resolved]
-        private MultiplayerClient client { get; set; } = null!;
-
         protected override void LoadComplete()
         {
             base.LoadComplete();
 
-            client.RoomUpdated += onRoomUpdated;
+            client.MatchRoomStateChanged += onRoomStateChanged;
         }
 
-        private void onRoomUpdated()
+        private void onRoomStateChanged(MatchRoomState state) => Scheduler.Add(() =>
         {
-            if (client.Room?.Users.FirstOrDefault(it => it.UserID == user.Id)?.MatchState is not RankedPlayUserState matchState)
+            if (state is not RankedPlayRoomState rankedPlayState)
                 return;
 
-            Health.Value = matchState.Life;
-        }
+            Health.Value = rankedPlayState.Users[userId].Life;
+        });
 
         protected override void Dispose(bool isDisposing)
         {
-            client.RoomUpdated -= onRoomUpdated;
+            client.MatchRoomStateChanged -= onRoomStateChanged;
 
             base.Dispose(isDisposing);
         }
