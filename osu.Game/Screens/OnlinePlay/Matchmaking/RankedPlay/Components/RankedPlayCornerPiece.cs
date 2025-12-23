@@ -10,8 +10,10 @@ using osuTK;
 
 namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
 {
-    public partial class RankedPlayCornerPiece : Container
+    public partial class RankedPlayCornerPiece : VisibilityContainer
     {
+        private readonly Container background;
+
         protected override Container<Drawable> Content { get; }
 
         public RankedPlayCornerPiece(RankedPlayColourScheme colourScheme, Anchor anchor)
@@ -22,7 +24,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
 
             InternalChildren =
             [
-                new Container
+                background = new Container
                 {
                     RelativeSizeAxes = Axes.Both,
                     Anchor = Anchor.Centre,
@@ -97,5 +99,21 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
         }
 
         public static float WidthFor(float parentWidth) => float.Clamp(parentWidth * 0.25f, 250, 335);
+
+        protected override void PopIn()
+        {
+            this.FadeIn(300);
+
+            Content.MoveToX(0, 500, Easing.OutExpo);
+            background.MoveToY(0, 500, Easing.OutExpo);
+        }
+
+        protected override void PopOut()
+        {
+            this.FadeOut(300);
+
+            background.MoveToY((Anchor & Anchor.y0) != 0 ? -120 : 120, 400, Easing.OutExpo);
+            Content.MoveToX((Anchor & Anchor.x0) != 0 ? -500 : 500, 400, Easing.OutExpo);
+        }
     }
 }

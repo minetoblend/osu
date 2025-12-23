@@ -16,6 +16,11 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 {
     public partial class IntroScreen : RankedPlaySubScreen
     {
+        public IntroScreen()
+        {
+            CornerPieceVisibility.Value = Visibility.Hidden;
+        }
+
         [BackgroundDependencyLoader]
         private void load()
         {
@@ -88,6 +93,11 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                 user2.MoveToY(-1, 600, Easing.InCubic);
                 box.Delay(100).ResizeHeightTo(0, 400, Easing.InQuad);
             }, 2000);
+
+            Scheduler.AddDelayed(() =>
+            {
+                CornerPieceVisibility.Value = Visibility.Visible;
+            }, 2600);
 
             Scheduler.AddDelayed(rangeDisplay.PlayAnimation, 2700);
         }

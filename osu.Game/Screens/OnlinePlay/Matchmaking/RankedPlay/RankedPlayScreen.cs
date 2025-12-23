@@ -85,6 +85,8 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
         private CancellationTokenSource? downloadCheckCancellation;
         private int? lastDownloadCheckedBeatmapId;
 
+        private readonly Bindable<Visibility> cornerPieceVisibility = new Bindable<Visibility>();
+
         [Cached]
         private readonly RankedPlayMatchInfo matchInfo;
 
@@ -127,6 +129,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
             AddRangeInternal([
                 new RankedPlayCornerPiece(RankedPlayColourScheme.Blue, Anchor.BottomLeft)
                 {
+                    State = { BindTarget = cornerPieceVisibility },
                     Child = new RankedPlayUserDisplay(localUserId, Anchor.BottomLeft, RankedPlayColourScheme.Blue)
                     {
                         RelativeSizeAxes = Axes.Both,
@@ -134,6 +137,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                 },
                 new RankedPlayCornerPiece(RankedPlayColourScheme.Red, Anchor.TopRight)
                 {
+                    State = { BindTarget = cornerPieceVisibility },
                     Child = new RankedPlayUserDisplay(opponentUserId, Anchor.TopRight, RankedPlayColourScheme.Red)
                     {
                         RelativeSizeAxes = Axes.Both,
@@ -141,7 +145,9 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                 },
             ]);
 
-            stage.BindValueChanged(e => onStageChanged(e.NewValue), true);
+            ShowScreen(new IntroScreen());
+
+            stage.BindValueChanged(e => onStageChanged(e.NewValue));
         }
 
         private RankedPlaySubScreen? activeSubscreen;
@@ -155,13 +161,17 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 
             var previousScreen = activeSubscreen;
 
-            previousScreen?.OnExiting(screen);
-
             screenContainer.Add(activeSubscreen = screen);
             screen.OnLoadComplete += _ =>
             {
+                previousScreen?.OnExiting(screen);
                 screen.OnEntering(previousScreen);
                 previousScreen?.Expire();
+
+                if (previousScreen != null)
+                    cornerPieceVisibility.UnbindFrom(previousScreen.CornerPieceVisibility);
+
+                cornerPieceVisibility.BindTo(screen.CornerPieceVisibility);
             };
         }
 
