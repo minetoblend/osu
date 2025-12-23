@@ -139,6 +139,8 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
 
         protected virtual HandCard CreateCardFacade(RankedPlayCard card) => new HandCard(card);
 
+        protected virtual void OnCardStateChanged(HandCard handCardFacade, CardState state) => InvalidateLayout();
+
         #region Layout
 
         private readonly Cached layoutBacking = new Cached();
@@ -212,31 +214,36 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
 
         public partial class HandCard : CompositeDrawable
         {
-            public float LayoutWidth => DrawWidth * (CardHovered ? hover_scale : 1);
+            public float LayoutWidth => DrawWidth * (State.Hovered ? hover_scale : 1);
 
-            private bool selected;
+            private CardState state;
 
-            public bool Selected
+            public CardState State
             {
-                get => selected;
+                get => state;
                 set
                 {
-                    selected = value;
-                    selectionOverlay.Alpha = value ? 1 : 0;
-                    cardHand.InvalidateLayout();
+                    if (state.Equals(value))
+                        return;
+
+                    state = value;
+
+                    selectionOverlay.Alpha = state.Selected ? 1 : 0;
+
+                    cardHand.OnCardStateChanged(this, value);
                 }
             }
 
-            private bool cardHovered;
+            public bool Selected
+            {
+                get => State.Selected;
+                set => State = State with { Selected = value };
+            }
 
             public bool CardHovered
             {
-                get => cardHovered;
-                set
-                {
-                    cardHovered = value;
-                    cardHand.InvalidateLayout();
-                }
+                get => State.Hovered;
+                set => State = State with { Hovered = value };
             }
 
             private readonly Container selectionOverlay;
@@ -295,5 +302,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
                 Card.Elevation = float.Lerp(CardHovered ? 1 : 0, Card.Elevation, (float)Math.Exp(-0.03f * Time.Elapsed));
             }
         }
+
+        public readonly record struct CardState(bool Selected, bool Hovered);
     }
 }
