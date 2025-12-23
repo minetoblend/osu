@@ -88,12 +88,18 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
                         ]
                     },
                 },
-                Content = new Container
+                new Container
                 {
+                    RelativeSizeAxes = Axes.Both,
                     Anchor = anchor,
                     Origin = anchor,
                     Margin = new MarginPadding(18),
-                    RelativeSizeAxes = Axes.Both,
+                    Child = Content = new Container
+                    {
+                        Anchor = (anchor & Anchor.x0) != 0 ? Anchor.CentreLeft : Anchor.CentreRight,
+                        Origin = (anchor & Anchor.x0) != 0 ? Anchor.CentreLeft : Anchor.CentreRight,
+                        RelativeSizeAxes = Axes.Both,
+                    }
                 }
             ];
         }
@@ -111,7 +117,9 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
         {
             this.FadeIn(300);
 
-            Content.MoveToX(0, 400, Easing.OutExpo);
+            Content.MoveToX(0, 400, Easing.OutExpo)
+                   .ScaleTo(1f, 400, Easing.OutExpo)
+                   .FadeIn();
             background.MoveToY(0, 400, Easing.OutExpo);
 
             bottomLayer.RotateTo(0, 400, Easing.OutQuart);
@@ -123,7 +131,9 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
             this.FadeOut(300);
 
             background.MoveToY((Anchor & Anchor.y0) != 0 ? -60 : 60, 500, new CubicBezierEasingFunction(easeIn: 0.2, easeOut: 0.75));
-            Content.MoveToX((Anchor & Anchor.x0) != 0 ? -500 : 500, 500, new CubicBezierEasingFunction(easeIn: 0.33, easeOut: 0.5));
+            Content.MoveToX((Anchor & Anchor.x0) != 0 ? -200 : 200, 500, new CubicBezierEasingFunction(easeIn: 0.2, easeOut: 0.5))
+                   .ScaleTo(0.5f, 400, Easing.OutCubic)
+                   .FadeOut(200);
 
             bottomLayer.RotateTo(-25, 500, new CubicBezierEasingFunction(easeIn: 0.2, easeOut: 0.75));
             topLayer.RotateTo(25, 500, new CubicBezierEasingFunction(easeIn: 0.2, easeOut: 0.75));
