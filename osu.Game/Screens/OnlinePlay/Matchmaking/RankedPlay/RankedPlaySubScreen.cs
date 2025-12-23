@@ -76,10 +76,8 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
             Hide();
         }
 
-        protected static string FormatRoundIndex(int roundIndex)
+        protected static string FormatRoundIndex(int roundNumber)
         {
-            int roundNumber = roundIndex + 1;
-
             return roundNumber >= 10 ? roundNumber.Ordinalize(CultureInfo.InvariantCulture) : roundNumber.ToOrdinalWords(CultureInfo.InvariantCulture);
         }
     }
