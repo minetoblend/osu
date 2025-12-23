@@ -6,6 +6,7 @@ using osu.Framework.Graphics;
 using osu.Framework.Graphics.Colour;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Shapes;
+using osu.Framework.Graphics.Transforms;
 using osuTK;
 
 namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
@@ -109,10 +110,10 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
 
         protected override void PopOut()
         {
-            this.FadeOut(300);
+            this.FadeOut(500);
 
-            background.MoveToY((Anchor & Anchor.y0) != 0 ? -120 : 120, 400, Easing.OutExpo);
-            Content.MoveToX((Anchor & Anchor.x0) != 0 ? -500 : 500, 400, Easing.OutExpo);
+            background.MoveToY((Anchor & Anchor.y0) != 0 ? -120 : 120, 500, new CubicBezierEasingFunction(easeIn: 0.2, easeOut: 0.75));
+            Content.MoveToX((Anchor & Anchor.x0) != 0 ? -500 : 500, 500, new CubicBezierEasingFunction(easeIn: 0.33, easeOut: 0.5));
         }
     }
 }
