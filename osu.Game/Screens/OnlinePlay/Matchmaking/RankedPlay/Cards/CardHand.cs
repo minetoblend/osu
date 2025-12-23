@@ -121,7 +121,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
         /// <param name="item">Item to remove the card for</param>
         /// <param name="card">Contained <see cref="RankedPlayCard"/></param>
         /// <param name="screenSpaceDrawQuad"><see cref="Drawable.ScreenSpaceDrawQuad"/> of the removed card</param>
-        /// <returns>Whether a card was found for the provided <see cref="item"/></returns>
+        /// <returns>Whether a card was found for the provided item</returns>
         public bool RemoveCard(RankedPlayCardWithPlaylistItem item, [MaybeNullWhen(false)] out RankedPlayCard card, out Quad screenSpaceDrawQuad)
         {
             if (!cardLookup.Remove(item.Card, out var drawable))

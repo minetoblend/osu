@@ -16,7 +16,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
     /// Card hand representing the player's current hand, intended to be placed at the bottom edge of the screen.
     /// This version of the card hand reacts to player inputs like hovering a card.
     /// </summary>
-    public class PlayerCardHand : CardHand
+    public partial class PlayerCardHand : CardHand
     {
         /// <summary>
         /// Fired if any card is selected or deselected

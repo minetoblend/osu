@@ -17,7 +17,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
     /// <remarks>
     /// Drawables are expected to be added to this container with an Anchor/Origin of <see cref="Anchor.Centre"/>.
     /// </remarks>
-    public class CardRow : Container<RankedPlayCard>
+    public partial class CardRow : Container<RankedPlayCard>
     {
         public float Spacing = 20;
 
