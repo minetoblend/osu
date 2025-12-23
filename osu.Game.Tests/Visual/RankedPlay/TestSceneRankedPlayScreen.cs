@@ -3,8 +3,6 @@
 
 using System.Linq;
 using NUnit.Framework;
-using osu.Framework.Allocation;
-using osu.Framework.Bindables;
 using osu.Framework.Extensions;
 using osu.Framework.Testing;
 using osu.Game.Graphics.UserInterface;
@@ -12,6 +10,7 @@ using osu.Game.Online.API.Requests.Responses;
 using osu.Game.Online.Multiplayer.MatchTypes.RankedPlay;
 using osu.Game.Online.Rooms;
 using osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay;
+using osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards;
 using osu.Game.Tests.Visual.Multiplayer;
 using osuTK.Input;
 
@@ -19,16 +18,6 @@ namespace osu.Game.Tests.Visual.RankedPlay
 {
     public partial class TestSceneRankedPlayScreen : MultiplayerTestScene
     {
-        public override bool AutomaticallyRunFirstStep => false;
-
-        [Cached(name: "debugEnabled")]
-        private readonly Bindable<bool> debugEnabled = new Bindable<bool>();
-
-        public TestSceneRankedPlayScreen()
-        {
-            AddToggleStep("debug overlay", enabled => debugEnabled.Value = enabled);
-        }
-
         private RankedPlayScreen screen = null!;
 
         public override void SetUpSteps()
@@ -74,7 +63,7 @@ namespace osu.Game.Tests.Visual.RankedPlay
         [Test]
         public void TestPlayCardDirect()
         {
-            AddStep("set play phase", () => MultiplayerClient.RankedPlayChangeStage(RankedPlayStage.CardPlay).WaitSafely());
+            AddStep("set play phase", () => MultiplayerClient.RankedPlayChangeStage(RankedPlayStage.CardPlay, state => state.ActiveUserId = API.LocalUser.Value.OnlineID).WaitSafely());
             AddWaitStep("wait", 3);
             AddStep("play card", () => MultiplayerClient.PlayCard(hand => hand[0]).WaitSafely());
         }
@@ -101,7 +90,7 @@ namespace osu.Game.Tests.Visual.RankedPlay
                 int i2 = i;
                 AddStep($"click card {i2}", () =>
                 {
-                    InputManager.MoveMouseTo(this.ChildrenOfType<RankedPlayScreen.Card>().ElementAt(i2));
+                    InputManager.MoveMouseTo(this.ChildrenOfType<PlayerCardHand.PlayerHandCard>().ElementAt(i2));
                     InputManager.Click(MouseButton.Left);
                 });
             }
@@ -130,7 +119,7 @@ namespace osu.Game.Tests.Visual.RankedPlay
                 int i2 = i;
                 AddStep($"click card {i2}", () =>
                 {
-                    InputManager.MoveMouseTo(this.ChildrenOfType<RankedPlayScreen.Card>().ElementAt(i2));
+                    InputManager.MoveMouseTo(this.ChildrenOfType<PlayerCardHand.PlayerHandCard>().ElementAt(i2));
                     InputManager.Click(MouseButton.Left);
                 });
             }
@@ -152,6 +141,11 @@ namespace osu.Game.Tests.Visual.RankedPlay
             AddStep("set play phase", () => MultiplayerClient.RankedPlayChangeStage(RankedPlayStage.CardPlay, state => state.ActiveUserId = 2).WaitSafely());
             AddWaitStep("wait", 5);
             AddStep("play beatmap", () => MultiplayerClient.PlayUserCard(2, hand => hand[0]).WaitSafely());
+            AddStep("reveal card", () => MultiplayerClient.RankedPlayRevealUserCard(2, hand => hand[0], new MultiplayerPlaylistItem
+            {
+                ID = 0,
+                BeatmapID = 0
+            }).WaitSafely());
         }
 
         [Test]

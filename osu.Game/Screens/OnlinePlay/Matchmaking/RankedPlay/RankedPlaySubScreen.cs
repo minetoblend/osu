@@ -8,19 +8,18 @@ using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Game.Online.Multiplayer;
 using osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components;
-using osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Facades;
 using osuTK;
 
 namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 {
     public abstract partial class RankedPlaySubScreen : Container
     {
+        public const float CENTERED_CARD_SCALE = 1.2f;
+
         [Resolved]
         private MultiplayerClient client { get; set; } = null!;
 
         protected MultiplayerClient Client => client;
-
-        public virtual double CardTransitionStagger => 0;
 
         protected override Container<Drawable> Content { get; }
 
@@ -77,26 +76,8 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
             Hide();
         }
 
-        public virtual void CardAdded(RankedPlayScreen.Card card, CardOwner owner)
+        protected static string FormatRoundIndex(int roundNumber)
         {
-        }
-
-        public virtual void CardRemoved(RankedPlayScreen.Card card, CardOwner owner)
-        {
-        }
-
-        public virtual void CardPlayed(RankedPlayScreen.Card card)
-        {
-        }
-
-        public virtual ICardFacadeContainer? PlayerCardContainer => null;
-
-        public virtual ICardFacadeContainer? OpponentCardContainer => null;
-
-        protected static string FormatRoundIndex(int roundIndex)
-        {
-            int roundNumber = roundIndex + 1;
-
             return roundNumber >= 10 ? roundNumber.Ordinalize(CultureInfo.InvariantCulture) : roundNumber.ToOrdinalWords(CultureInfo.InvariantCulture);
         }
     }

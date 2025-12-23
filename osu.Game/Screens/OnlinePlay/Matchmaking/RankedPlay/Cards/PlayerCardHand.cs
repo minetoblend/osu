@@ -1,0 +1,157 @@
+// Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
+// See the LICENCE file in the repository root for full licence text.
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using osu.Framework.Bindables;
+using osu.Framework.Graphics;
+using osu.Framework.Input.Events;
+using osu.Game.Graphics.UserInterface;
+using osuTK.Input;
+
+namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
+{
+    /// <summary>
+    /// Card hand representing the player's current hand, intended to be placed at the bottom edge of the screen.
+    /// This version of the card hand reacts to player inputs like hovering a card.
+    /// </summary>
+    public partial class PlayerCardHand : CardHand
+    {
+        /// <summary>
+        /// Fired if any card is selected or deselected
+        /// </summary>
+        public event Action? SelectionChanged;
+
+        private CardSelectionMode selectionMode;
+
+        /// <summary>
+        /// Current selection mode.
+        /// </summary>
+        /// <remarks>
+        /// <see cref="CardSelectionMode.Disabled"/> will disable some of the card's mouse interactions.
+        /// </remarks>
+        public CardSelectionMode SelectionMode
+        {
+            get => selectionMode;
+            set
+            {
+                selectionMode = value;
+                allowSelection.Value = value != CardSelectionMode.Disabled;
+
+                if (value == CardSelectionMode.Disabled)
+                {
+                    foreach (var card in Cards)
+                        card.Selected = false;
+                }
+            }
+        }
+
+        private IEnumerable<PlayerHandCard> selection => Cards.OfType<PlayerHandCard>().Where(it => it.Selected);
+
+        /// <summary>
+        /// Currently selected cards.
+        /// </summary>
+        public IEnumerable<RankedPlayCardWithPlaylistItem> Selection => selection.Select(it => it.Card.Item);
+
+        private readonly BindableBool allowSelection = new BindableBool(true);
+
+        protected override HandCard CreateHandCard(RankedPlayCard card) => new PlayerHandCard(card)
+        {
+            Action = cardClicked,
+            AllowSelection = allowSelection.GetBoundCopy(),
+        };
+
+        private void cardClicked(PlayerHandCard card)
+        {
+            if (selectionMode == CardSelectionMode.Disabled)
+                return;
+
+            try
+            {
+                if (card.Selected)
+                {
+                    card.Selected = false;
+                    return;
+                }
+
+                if (selectionMode == CardSelectionMode.Single)
+                {
+                    foreach (var c in Cards)
+                    {
+                        ((PlayerHandCard)c).Selected = c == card;
+                    }
+                }
+                else
+                {
+                    card.Selected = true;
+                }
+            }
+            finally
+            {
+                SelectionChanged?.Invoke();
+            }
+        }
+
+        public partial class PlayerHandCard : HandCard
+        {
+            public required Action<PlayerHandCard> Action;
+
+            public required IBindable<bool> AllowSelection;
+
+            public PlayerHandCard(RankedPlayCard card)
+                : base(card)
+            {
+            }
+
+            protected override void LoadComplete()
+            {
+                base.LoadComplete();
+
+                AddInternal(new HoverClickSounds
+                {
+                    Enabled = { BindTarget = AllowSelection }
+                });
+            }
+
+            protected override bool OnHover(HoverEvent e)
+            {
+                CardHovered = true;
+
+                return true;
+            }
+
+            protected override void OnHoverLost(HoverLostEvent e)
+            {
+                CardHovered = false;
+            }
+
+            protected override bool OnMouseDown(MouseDownEvent e)
+            {
+                if (e.Button == MouseButton.Left && AllowSelection.Value)
+                {
+                    Card.ScaleTo(0.95f, 300, Easing.OutExpo);
+                    return true;
+                }
+
+                return false;
+            }
+
+            protected override void OnMouseUp(MouseUpEvent e)
+            {
+                if (e.Button == MouseButton.Left)
+                    Card.ScaleTo(1f, 400, Easing.OutElasticHalf);
+            }
+
+            protected override bool OnClick(ClickEvent e)
+            {
+                if (!AllowSelection.Value)
+                    return false;
+
+                Action(this);
+
+                return true;
+            }
+        }
+    }
+}
