@@ -35,7 +35,7 @@ namespace osu.Game.Tests.Visual.RankedPlay
         [Test]
         public void TestIntro()
         {
-            // nothing to do
+            AddStep("set round warmup phase", () => MultiplayerClient.RankedPlayChangeStage(RankedPlayStage.RoundWarmup).WaitSafely());
         }
 
         [Test]

@@ -1,6 +1,7 @@
 // Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
+using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using osu.Framework.Allocation;
@@ -145,8 +146,6 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                 },
             ]);
 
-            ShowScreen(new IntroScreen());
-
             stage.BindValueChanged(e => onStageChanged(e.NewValue));
         }
 
@@ -216,6 +215,10 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
         {
             switch (stage)
             {
+                case RankedPlayStage.RoundWarmup when matchInfo.CurrentRound == 1:
+                    ShowScreen(new IntroScreen());
+                    break;
+
                 case RankedPlayStage.CardDiscard:
                     ShowScreen(new DiscardScreen());
                     break;
@@ -226,6 +229,10 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 
                 case RankedPlayStage.CardPlay:
                     ShowScreen(matchInfo.IsOwnTurn ? new PickScreen() : new OpponentPickScreen());
+                    break;
+
+                case RankedPlayStage.FinishCardPlay:
+                    Debug.Assert(activeSubscreen is PickScreen || activeSubscreen is OpponentPickScreen);
                     break;
 
                 default:
