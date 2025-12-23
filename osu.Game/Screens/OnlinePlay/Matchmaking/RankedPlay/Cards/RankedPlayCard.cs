@@ -107,6 +107,10 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
 
         #region beatmap fetching logic & card flip
 
+        private readonly TaskCompletionSource cardRevealed = new TaskCompletionSource();
+
+        public Task CardRevealed => cardRevealed.Task;
+
         private void onPlaylistItemChanged(MultiplayerPlaylistItem? playlistItem)
         {
             if (playlistItem == null)
@@ -121,6 +125,8 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
         private void loadCardContent(MultiplayerPlaylistItem playlistItem, bool flip) => Task.Run(async () =>
         {
             var beatmap = await beatmapLookupCache.GetBeatmapAsync(playlistItem.BeatmapID).ConfigureAwait(false);
+
+            cardRevealed.TrySetResult();
 
             if (beatmap == null)
             {

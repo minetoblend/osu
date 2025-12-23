@@ -2,6 +2,7 @@
 // See the LICENCE file in the repository root for full licence text.
 
 using System.Diagnostics;
+using System.Linq;
 using System.Threading.Tasks;
 using Humanizer;
 using osu.Framework.Allocation;
@@ -13,7 +14,6 @@ using osu.Game.Database;
 using osu.Game.Graphics;
 using osu.Game.Graphics.Sprites;
 using osu.Game.Online.Multiplayer.MatchTypes.RankedPlay;
-using osu.Game.Online.Rooms;
 using osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards;
 using osuTK;
 
@@ -119,7 +119,8 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 
         private void cardPlayed(RankedPlayCardWithPlaylistItem item) => Task.Run(async () =>
         {
-            await waitForCardReveal(item);
+            if (opponentHand.Cards.FirstOrDefault(it => it.Card.Item.Equals(item)) is { } c)
+                await c.Card.CardRevealed.ConfigureAwait(false);
 
             Schedule(() =>
             {
@@ -153,25 +154,6 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                 playerHand.Contract();
             });
         });
-
-        private async Task waitForCardReveal(RankedPlayCardWithPlaylistItem item)
-        {
-            var revealTask = new TaskCompletionSource<MultiplayerPlaylistItem>();
-            var bindable = item.PlaylistItem.GetBoundCopy();
-
-            bindable.BindValueChanged(e =>
-            {
-                if (e.NewValue != null)
-                    revealTask.SetResult(e.NewValue);
-            }, true);
-
-            var playlistItem = await revealTask.Task.ConfigureAwait(false);
-
-            bindable.UnbindAll();
-
-            // making sure the beatmap is in the cache so the reveal happens at the same time as the reveal
-            await beatmapLookupCache.GetBeatmapAsync(playlistItem.BeatmapID).ConfigureAwait(false);
-        }
 
         protected override void Dispose(bool isDisposing)
         {
