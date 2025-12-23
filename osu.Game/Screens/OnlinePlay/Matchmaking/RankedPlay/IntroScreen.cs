@@ -1,6 +1,7 @@
 // Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
+using System.Linq;
 using osu.Framework.Allocation;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
@@ -21,8 +22,29 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
             CornerPieceVisibility.Value = Visibility.Hidden;
         }
 
-        [BackgroundDependencyLoader]
-        private void load()
+        protected override void LoadComplete()
+        {
+            base.LoadComplete();
+
+            waitForUsers();
+        }
+
+        private void waitForUsers()
+        {
+            var player = Client.LocalUser?.User;
+
+            var opponent = Client.Room?.Users.FirstOrDefault(it => it.UserID != player?.Id)?.User;
+
+            if (player == null || opponent == null)
+            {
+                Schedule(waitForUsers);
+                return;
+            }
+
+            playIntroSequence(player, opponent);
+        }
+
+        private void playIntroSequence(APIUser player, APIUser opponent)
         {
             Box box;
             Drawable user1, user2;
@@ -46,11 +68,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                             Anchor = Anchor.Centre,
                             Origin = Anchor.Centre,
                         },
-                        user1 = new CurrentlyOnlineDisplay.OnlineUserPanel(new APIUser
-                        {
-                            Id = 0,
-                            Username = "Hydrogen Bomb",
-                        })
+                        user1 = new CurrentlyOnlineDisplay.OnlineUserPanel(player)
                         {
                             RelativePositionAxes = Axes.Both,
                             Anchor = Anchor.Centre,
@@ -58,11 +76,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                             Position = new Vector2(-0.25f, -0.75f),
                             Shear = -OsuGame.SHEAR,
                         },
-                        user2 = new CurrentlyOnlineDisplay.OnlineUserPanel(new APIUser
-                        {
-                            Id = 1,
-                            Username = "Coughing Baby",
-                        })
+                        user2 = new CurrentlyOnlineDisplay.OnlineUserPanel(opponent)
                         {
                             RelativePositionAxes = Axes.Both,
                             Anchor = Anchor.Centre,
