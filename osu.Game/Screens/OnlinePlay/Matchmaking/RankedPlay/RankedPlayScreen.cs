@@ -156,10 +156,13 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
             var previousScreen = activeSubscreen;
 
             previousScreen?.OnExiting(screen);
-            previousScreen?.Expire();
 
             screenContainer.Add(activeSubscreen = screen);
-            screen.OnEntering(previousScreen);
+            screen.OnLoadComplete += _ =>
+            {
+                screen.OnEntering(previousScreen);
+                previousScreen?.Expire();
+            };
         }
 
         private void onRoomUpdated()
