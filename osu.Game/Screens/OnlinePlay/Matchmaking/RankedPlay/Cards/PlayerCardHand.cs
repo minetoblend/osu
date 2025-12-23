@@ -4,7 +4,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using osu.Framework.Allocation;
 using osu.Framework.Bindables;
 using osu.Framework.Graphics;
 using osu.Framework.Input.Events;
@@ -99,9 +98,6 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
             public required Action<PlayerHandCard> Action;
 
             public required IBindable<bool> AllowSelection;
-
-            [Resolved]
-            private PlayerCardHand cardHand { get; set; } = null!;
 
             public PlayerHandCard(RankedPlayCard card)
                 : base(card)
