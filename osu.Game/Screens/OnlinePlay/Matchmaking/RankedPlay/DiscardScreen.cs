@@ -130,7 +130,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 
         private void cardRemoved(RankedPlayCardWithPlaylistItem item) => discardedCards.Add(item);
 
-        private void playDiscardAnimation() => Schedule(() =>
+        private void playDiscardAnimation()
         {
             const double stagger = 100;
             double delay = 0;
@@ -156,8 +156,8 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
             }
 
             discardedCards.Clear();
-            SchedulerAfterChildren.Add(() => CenterRow.LayoutCards(stagger: stagger));
-        });
+            CenterRow.LayoutCards(stagger: stagger);
+        }
 
         private double nextCardDrawTime;
 
@@ -197,7 +197,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
             playerHand.UpdateLayout(stagger: 50);
         }
 
-        public void PresentRemainingCards() => Schedule(() =>
+        public void PresentRemainingCards()
         {
             foreach (var item in matchInfo.PlayerCards)
             {
@@ -219,15 +219,13 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 
             CenterRow.LayoutCards(stagger: 50, duration: 600);
 
-            SchedulerAfterChildren.Add(() => CenterRow.LayoutCards(stagger: 50, duration: 600));
-
             readyToGo.FadeIn(50);
             explainer
                 .Delay(100)
                 .MoveToOffset(new Vector2(0, 50))
                 .MoveToOffset(new Vector2(0, -50), 600, Easing.OutExpo)
                 .FadeIn(250);
-        });
+        }
 
         protected override void Dispose(bool isDisposing)
         {

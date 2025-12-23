@@ -149,7 +149,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
             opponentHand.UpdateLayout(stagger: 50);
         }
 
-        private void cardPlayed(RankedPlayCardWithPlaylistItem item) => Schedule(() =>
+        private void cardPlayed(RankedPlayCardWithPlaylistItem item)
         {
             textContainer.FadeOut(50);
 
@@ -172,16 +172,14 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 
             AddInternal(card);
 
-            SchedulerAfterChildren.Add(() =>
-            {
-                card
-                    .MoveTo(new Vector2(0), 600, Easing.OutExpo)
-                    .RotateTo(0, 400, Easing.OutExpo);
-            });
+            card
+                .MoveTo(new Vector2(0), 600, Easing.OutExpo)
+                .ScaleTo(CENTERED_CARD_SCALE, 600, Easing.OutExpo)
+                .RotateTo(0, 400, Easing.OutExpo);
 
             opponentHand.Contract();
             playerHand.Contract();
-        });
+        }
 
         protected override void Dispose(bool isDisposing)
         {

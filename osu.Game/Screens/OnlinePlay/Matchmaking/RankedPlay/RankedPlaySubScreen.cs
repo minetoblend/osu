@@ -14,6 +14,8 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 {
     public abstract partial class RankedPlaySubScreen : Container
     {
+        public const float CENTERED_CARD_SCALE = 1.2f;
+
         [Resolved]
         private MultiplayerClient client { get; set; } = null!;
 
