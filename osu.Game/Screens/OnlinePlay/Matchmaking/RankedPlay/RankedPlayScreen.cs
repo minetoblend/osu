@@ -217,6 +217,10 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                 case RankedPlayStage.CardPlay:
                     ShowScreen(matchInfo.IsOwnTurn ? new PickScreen() : new OpponentPickScreen());
                     break;
+
+                default:
+                    ShowScreen(new PlaceholderScreen(stage));
+                    break;
             }
         }
 
