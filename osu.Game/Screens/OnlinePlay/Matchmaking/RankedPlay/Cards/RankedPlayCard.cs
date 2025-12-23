@@ -149,7 +149,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
         {
             if (!flip)
             {
-                cardContent.Child = new RankedPlayCardBackSide();
+                cardContent.Child = newContent;
                 return;
             }
 
