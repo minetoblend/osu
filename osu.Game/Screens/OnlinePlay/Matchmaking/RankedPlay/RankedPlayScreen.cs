@@ -122,7 +122,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
             beatmapAvailabilityTracker.Availability.BindValueChanged(onBeatmapAvailabilityChanged, true);
 
             int localUserId = api.LocalUser.Value.OnlineID;
-            int opponentUserId = ((RankedPlayRoomState)client.Room.MatchState!).Users.Keys.Single(it => it != localUserId);
+            int opponentUserId = ((RankedPlayRoomState)client.Room!.MatchState!).Users.Keys.Single(it => it != localUserId);
 
             AddRangeInternal([
                 new RankedPlayCornerPiece(RankedPlayColourScheme.Blue, Anchor.BottomLeft)
