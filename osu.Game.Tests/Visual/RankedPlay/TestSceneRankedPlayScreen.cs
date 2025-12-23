@@ -3,8 +3,6 @@
 
 using System.Linq;
 using NUnit.Framework;
-using osu.Framework.Allocation;
-using osu.Framework.Bindables;
 using osu.Framework.Extensions;
 using osu.Framework.Testing;
 using osu.Game.Graphics.UserInterface;
@@ -20,16 +18,6 @@ namespace osu.Game.Tests.Visual.RankedPlay
 {
     public partial class TestSceneRankedPlayScreen : MultiplayerTestScene
     {
-        public override bool AutomaticallyRunFirstStep => false;
-
-        [Cached(name: "debugEnabled")]
-        private readonly Bindable<bool> debugEnabled = new Bindable<bool>();
-
-        public TestSceneRankedPlayScreen()
-        {
-            AddToggleStep("debug overlay", enabled => debugEnabled.Value = enabled);
-        }
-
         private RankedPlayScreen screen = null!;
 
         public override void SetUpSteps()
