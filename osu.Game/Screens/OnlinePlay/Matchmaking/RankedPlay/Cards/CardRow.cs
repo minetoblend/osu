@@ -10,10 +10,23 @@ using osuTK;
 
 namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
 {
+    /// <summary>
+    /// Container that arranges a collection of <see cref="RankedPlayCard"/>s horizontally.
+    /// Layout is not automatic and has to be triggered by calling <see cref="LayoutCards"/>
+    /// </summary>
+    /// <remarks>
+    /// Drawables are expected to be added to this container with an Anchor/Origin of <see cref="Anchor.Centre"/>.
+    /// </remarks>
     public class CardRow : Container<RankedPlayCard>
     {
         public float Spacing = 20;
 
+        /// <summary>
+        /// Moves all cards into a horizontal arrangement centered within the container's bounds.
+        /// </summary>
+        /// <param name="stagger">delay to be added to the movement of each subsequent card</param>
+        /// <param name="duration">duration of the movement</param>
+        /// <param name="easing">easing of the movement</param>
         public void LayoutCards(double stagger = 0, double duration = 400, Easing easing = Easing.OutExpo)
         {
             // makes sure that all facades had a chance to initialize their transforms based on the provided drawQuad
@@ -38,6 +51,13 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
             }
         }
 
+        /// <summary>
+        ///
+        /// </summary>
+        /// <param name="item"></param>
+        /// <param name="card"></param>
+        /// <param name="screenSpaceDrawQuad"></param>
+        /// <returns></returns>
         public bool RemoveCard(RankedPlayCardWithPlaylistItem item, [MaybeNullWhen(false)] out RankedPlayCard card, out Quad screenSpaceDrawQuad)
         {
             card = Children.FirstOrDefault(it => it.Item.Equals(item));

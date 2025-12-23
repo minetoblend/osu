@@ -13,13 +13,25 @@ using osuTK.Input;
 
 namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
 {
-    [Cached]
+    /// <summary>
+    /// Card hand representing the player's current hand, intended to be placed at the bottom edge of the screen.
+    /// This version of the card hand reacts to player inputs like hovering a card.
+    /// </summary>
     public class PlayerCardHand : CardHand
     {
+        /// <summary>
+        /// Fired if any card is selected or deselected
+        /// </summary>
         public event Action? SelectionChanged;
 
         private CardSelectionMode selectionMode;
 
+        /// <summary>
+        /// Current selection mode.
+        /// </summary>
+        /// <remarks>
+        /// <see cref="CardSelectionMode.Disabled"/> will disable some of the card's mouse interactions.
+        /// </remarks>
         public CardSelectionMode SelectionMode
         {
             get => selectionMode;
@@ -36,6 +48,13 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
             }
         }
 
+        private IEnumerable<PlayerHandCard> selection => Cards.OfType<PlayerHandCard>().Where(it => it.Selected);
+
+        /// <summary>
+        /// Currently selected cards.
+        /// </summary>
+        public IEnumerable<RankedPlayCardWithPlaylistItem> Selection => selection.Select(it => it.Card.Item);
+
         private readonly BindableBool allowSelection = new BindableBool(true);
 
         protected override HandCard CreateCardFacade(RankedPlayCard card) => new PlayerHandCard(card)
@@ -43,10 +62,6 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
             Action = cardClicked,
             AllowSelection = allowSelection.GetBoundCopy(),
         };
-
-        private IEnumerable<PlayerHandCard> selection => Cards.OfType<PlayerHandCard>().Where(it => it.Selected);
-
-        public IEnumerable<RankedPlayCardWithPlaylistItem> Selection => selection.Select(it => it.Card.Item);
 
         private void cardClicked(PlayerHandCard card)
         {

@@ -17,6 +17,9 @@ using osuTK;
 
 namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
 {
+    /// <summary>
+    /// Drawable that layouts cards as if held in a player's hands.
+    /// </summary>
     [Cached]
     public abstract partial class CardHand : CompositeDrawable
     {

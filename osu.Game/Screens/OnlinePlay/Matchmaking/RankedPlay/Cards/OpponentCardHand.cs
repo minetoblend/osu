@@ -3,6 +3,9 @@
 
 namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
 {
+    /// <summary>
+    /// Card hand representing the opponent's current hand, intended to be placed at the top edge of the screen.
+    /// </summary>
     public partial class OpponentCardHand : CardHand
     {
         protected override bool Flipped => true;
