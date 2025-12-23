@@ -14,6 +14,8 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
     public partial class RankedPlayCornerPiece : VisibilityContainer
     {
         private readonly Container background;
+        private readonly Container bottomLayer;
+        private readonly Container topLayer;
 
         protected override Container<Drawable> Content { get; }
 
@@ -50,11 +52,13 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
                         },
                         Children =
                         [
-                            new Container
+                            bottomLayer = new Container
                             {
                                 RelativeSizeAxes = Axes.Both,
                                 Masking = true,
                                 CornerRadius = 20,
+                                Anchor = Anchor.TopRight,
+                                Origin = Anchor.TopRight,
                                 Child = new Box
                                 {
                                     RelativeSizeAxes = Axes.Both,
@@ -62,10 +66,12 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
                                     Alpha = 0.2f,
                                 },
                             },
-                            new Container
+                            topLayer = new Container
                             {
                                 RelativeSizeAxes = Axes.Both,
                                 Padding = new MarginPadding(10),
+                                Anchor = Anchor.BottomLeft,
+                                Origin = Anchor.BottomLeft,
                                 Child = new Container
                                 {
                                     RelativeSizeAxes = Axes.Both,
@@ -74,7 +80,8 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
                                     Child = new Box
                                     {
                                         RelativeSizeAxes = Axes.Both,
-                                        Colour = ColourInfo.GradientHorizontal(colourScheme.Primary.Opacity(0.75f), colourScheme.PrimaryDarker.Opacity(0.25f)),
+                                        Colour = ColourInfo.GradientHorizontal(colourScheme.Primary, colourScheme.PrimaryDarker.Opacity(0.35f)),
+                                        Alpha = 0.75f
                                     },
                                 },
                             }
@@ -104,16 +111,22 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
         {
             this.FadeIn(300);
 
-            Content.MoveToX(0, 500, Easing.OutExpo);
-            background.MoveToY(0, 500, Easing.OutExpo);
+            Content.MoveToX(0, 400, Easing.OutExpo);
+            background.MoveToY(0, 400, Easing.OutExpo);
+
+            bottomLayer.RotateTo(0, 400, Easing.OutQuart);
+            topLayer.RotateTo(0, 400, Easing.OutQuart);
         }
 
         protected override void PopOut()
         {
-            this.FadeOut(500);
+            this.FadeOut(300);
 
-            background.MoveToY((Anchor & Anchor.y0) != 0 ? -120 : 120, 500, new CubicBezierEasingFunction(easeIn: 0.2, easeOut: 0.75));
+            background.MoveToY((Anchor & Anchor.y0) != 0 ? -60 : 60, 500, new CubicBezierEasingFunction(easeIn: 0.2, easeOut: 0.75));
             Content.MoveToX((Anchor & Anchor.x0) != 0 ? -500 : 500, 500, new CubicBezierEasingFunction(easeIn: 0.33, easeOut: 0.5));
+
+            bottomLayer.RotateTo(-25, 500, new CubicBezierEasingFunction(easeIn: 0.2, easeOut: 0.75));
+            topLayer.RotateTo(25, 500, new CubicBezierEasingFunction(easeIn: 0.2, easeOut: 0.75));
         }
     }
 }
