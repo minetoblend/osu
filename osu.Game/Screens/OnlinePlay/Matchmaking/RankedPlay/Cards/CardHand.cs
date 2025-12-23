@@ -94,7 +94,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
             if (cardLookup.ContainsKey(card.Item.Card))
                 return;
 
-            var drawable = CreateCardFacade(card);
+            var drawable = CreateHandCard(card);
             drawable.Anchor = drawable.Origin = cardAnchor;
 
             cardLookup[card.Item.Card] = drawable;
@@ -140,7 +140,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
             return true;
         }
 
-        protected virtual HandCard CreateCardFacade(RankedPlayCard card) => new HandCard(card);
+        protected virtual HandCard CreateHandCard(RankedPlayCard card) => new HandCard(card);
 
         protected virtual void OnCardStateChanged(HandCard handCardFacade, CardState state) => InvalidateLayout();
 

@@ -57,7 +57,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
 
         private readonly BindableBool allowSelection = new BindableBool(true);
 
-        protected override HandCard CreateCardFacade(RankedPlayCard card) => new PlayerHandCard(card)
+        protected override HandCard CreateHandCard(RankedPlayCard card) => new PlayerHandCard(card)
         {
             Action = cardClicked,
             AllowSelection = allowSelection.GetBoundCopy(),
