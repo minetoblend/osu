@@ -96,11 +96,12 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
             base.LoadComplete();
 
             matchInfo.CardPlayed += cardPlayed;
+            playerHand.SelectionChanged += onSelectionChanged;
+        }
 
-            playerHand.SelectionChanged += () =>
-            {
-                playButton.Enabled.Value = playerHand.Selection.Any();
-            };
+        private void onSelectionChanged()
+        {
+            playButton.Enabled.Value = playerHand.Selection.Any();
         }
 
         private void onPlayButtonClicked()

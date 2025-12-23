@@ -112,10 +112,12 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
             matchInfo.PlayerCardAdded += cardAdded;
             matchInfo.PlayerCardRemoved += cardRemoved;
 
-            playerHand.SelectionChanged += () =>
-            {
-                discardButton.Enabled.Value = playerHand.Selection.Any();
-            };
+            playerHand.SelectionChanged += onSelectionChanged;
+        }
+
+        private void onSelectionChanged()
+        {
+            discardButton.Enabled.Value = playerHand.Selection.Any();
         }
 
         private void onDiscardButtonClicked()
@@ -124,6 +126,23 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 
             Client.DiscardCards(playerHand.Selection.Select(it => it.Card).ToArray()).FireAndForget();
             playerHand.SelectionMode = CardSelectionMode.Disabled;
+        }
+
+        public override void OnEntering(RankedPlaySubScreen? previous)
+        {
+            base.OnEntering(previous);
+
+            var screenBottomCenter = new Vector2(DrawWidth / 2, DrawHeight);
+
+            foreach (var card in matchInfo.PlayerCards)
+            {
+                playerHand.AddCard(card, c =>
+                {
+                    c.Position = ToSpaceOfOtherDrawable(screenBottomCenter, playerHand);
+                });
+            }
+
+            playerHand.UpdateLayout(stagger: 50);
         }
 
         private readonly List<RankedPlayCardWithPlaylistItem> discardedCards = new List<RankedPlayCardWithPlaylistItem>();
@@ -180,21 +199,6 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                     d.Rotation = -30;
                 });
             }, delay);
-        }
-
-        public override void OnEntering(RankedPlaySubScreen? previous)
-        {
-            base.OnEntering(previous);
-
-            foreach (var card in matchInfo.PlayerCards)
-            {
-                playerHand.AddCard(card, c =>
-                {
-                    c.Position = ToSpaceOfOtherDrawable(new Vector2(DrawWidth / 2, DrawHeight), playerHand);
-                });
-            }
-
-            playerHand.UpdateLayout(stagger: 50);
         }
 
         public void PresentRemainingCards()
