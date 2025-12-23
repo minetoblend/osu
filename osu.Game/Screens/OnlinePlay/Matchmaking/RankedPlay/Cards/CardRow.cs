@@ -10,7 +10,7 @@ using osuTK;
 
 namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
 {
-    public class CardRow : Container<CardFacade>
+    public class CardRow : Container<RankedPlayCard>
     {
         public float Spacing = 20;
 
@@ -40,19 +40,17 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
 
         public bool RemoveCard(RankedPlayCardWithPlaylistItem item, [MaybeNullWhen(false)] out RankedPlayCard card, out Quad screenSpaceDrawQuad)
         {
-            var facade = Children.FirstOrDefault(it => it.Card.Item.Equals(item));
+            card = Children.FirstOrDefault(it => it.Item.Equals(item));
 
-            if (facade == null)
+            if (card == null)
             {
-                card = null;
                 screenSpaceDrawQuad = default;
                 return false;
             }
 
-            screenSpaceDrawQuad = facade.ScreenSpaceDrawQuad;
-            card = facade.Detach();
+            screenSpaceDrawQuad = card.ScreenSpaceDrawQuad;
 
-            Remove(facade, true);
+            Remove(card, false);
 
             return true;
         }

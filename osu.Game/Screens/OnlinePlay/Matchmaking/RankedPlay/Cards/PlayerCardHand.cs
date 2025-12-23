@@ -38,17 +38,17 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
 
         private readonly BindableBool allowSelection = new BindableBool(true);
 
-        protected override HandCardFacade CreateCardFacade(RankedPlayCard card) => new PlayerCardFacade(card)
+        protected override HandCard CreateCardFacade(RankedPlayCard card) => new PlayerHandCard(card)
         {
             Action = cardClicked,
             AllowSelection = allowSelection.GetBoundCopy(),
         };
 
-        private IEnumerable<PlayerCardFacade> selection => Cards.OfType<PlayerCardFacade>().Where(it => it.Selected);
+        private IEnumerable<PlayerHandCard> selection => Cards.OfType<PlayerHandCard>().Where(it => it.Selected);
 
         public IEnumerable<RankedPlayCardWithPlaylistItem> Selection => selection.Select(it => it.Card.Item);
 
-        private void cardClicked(PlayerCardFacade card)
+        private void cardClicked(PlayerHandCard card)
         {
             if (selectionMode == CardSelectionMode.Disabled)
                 return;
@@ -65,7 +65,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
                 {
                     foreach (var c in Cards)
                     {
-                        ((PlayerCardFacade)c).Selected = c == card;
+                        ((PlayerHandCard)c).Selected = c == card;
                     }
                 }
                 else
@@ -79,16 +79,16 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
             }
         }
 
-        public partial class PlayerCardFacade : HandCardFacade
+        public partial class PlayerHandCard : HandCard
         {
-            public required Action<PlayerCardFacade> Action;
+            public required Action<PlayerHandCard> Action;
 
             public required IBindable<bool> AllowSelection;
 
             [Resolved]
             private PlayerCardHand cardHand { get; set; } = null!;
 
-            public PlayerCardFacade(RankedPlayCard card)
+            public PlayerHandCard(RankedPlayCard card)
                 : base(card)
             {
             }

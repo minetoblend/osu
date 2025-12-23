@@ -16,7 +16,6 @@ using osu.Game.Graphics.UserInterface;
 using osu.Game.Online.Multiplayer;
 using osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards;
 using osuTK;
-using CardFacade = osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards.CardFacade;
 
 namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 {
@@ -144,18 +143,13 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                 card.Anchor = Anchor.Centre;
                 card.Origin = Anchor.Centre;
 
-                var facade = new CardFacade(card)
-                {
-                    Anchor = Anchor.Centre,
-                    Origin = Anchor.Centre,
-                    ScreenSpaceDrawQuad = drawQuad,
-                };
+                card.MatchScreenSpaceDrawQuad(drawQuad, CenterRow);
 
-                CenterRow.Add(facade);
+                CenterRow.Add(card);
 
                 using (BeginDelayedSequence(1000 + delay))
                 {
-                    facade.PopOutAndExpire();
+                    card.PopOutAndExpire();
                 }
 
                 delay += stagger;
@@ -209,16 +203,13 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
             {
                 if (playerHand.RemoveCard(item, out var card, out Quad drawQuad))
                 {
-                    CenterRow.Add(new CardFacade(card)
-                    {
-                        ScreenSpaceDrawQuad = drawQuad,
-                        Anchor = Anchor.Centre,
-                        Origin = Anchor.Centre,
-                    });
+                    card.MatchScreenSpaceDrawQuad(drawQuad, CenterRow);
+
+                    CenterRow.Add(card);
                 }
                 else
                 {
-                    CenterRow.Add(new CardFacade(new RankedPlayCard(item))
+                    CenterRow.Add(new RankedPlayCard(item)
                     {
                         Anchor = Anchor.Centre,
                         Origin = Anchor.Centre,

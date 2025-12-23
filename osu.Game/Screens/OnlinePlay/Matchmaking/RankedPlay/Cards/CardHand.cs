@@ -22,7 +22,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
     {
         private const float hover_scale = 1.2f;
 
-        public IEnumerable<HandCardFacade> Cards => cardContainer.Children;
+        public IEnumerable<HandCard> Cards => cardContainer.Children;
 
         /// <summary>
         /// How far a card slides upwards when hovered.
@@ -36,13 +36,13 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
         /// </summary>
         protected virtual bool Flipped => false;
 
-        private readonly Container<HandCardFacade> cardContainer;
+        private readonly Container<HandCard> cardContainer;
 
-        private readonly Dictionary<RankedPlayCardItem, HandCardFacade> cardLookup = new Dictionary<RankedPlayCardItem, HandCardFacade>();
+        private readonly Dictionary<RankedPlayCardItem, HandCard> cardLookup = new Dictionary<RankedPlayCardItem, HandCard>();
 
         protected CardHand()
         {
-            AddInternal(cardContainer = new Container<HandCardFacade>
+            AddInternal(cardContainer = new Container<HandCard>
             {
                 RelativeSizeAxes = Axes.Both,
             });
@@ -84,9 +84,9 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
 
         private Anchor cardAnchor => Flipped ? Anchor.TopCentre : Anchor.BottomCentre;
 
-        public void AddCard(RankedPlayCardWithPlaylistItem item, Action<HandCardFacade>? setupAction = null) => AddCard(new RankedPlayCard(item), setupAction);
+        public void AddCard(RankedPlayCardWithPlaylistItem item, Action<HandCard>? setupAction = null) => AddCard(new RankedPlayCard(item), setupAction);
 
-        public void AddCard(RankedPlayCard card, Action<HandCardFacade>? setupAction = null)
+        public void AddCard(RankedPlayCard card, Action<HandCard>? setupAction = null)
         {
             if (cardLookup.ContainsKey(card.Item.Card))
                 return;
@@ -137,9 +137,9 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
             return true;
         }
 
-        protected virtual HandCardFacade CreateCardFacade(RankedPlayCard card) => new HandCardFacade(card);
+        protected virtual HandCard CreateCardFacade(RankedPlayCard card) => new HandCard(card);
 
-        protected virtual void OnCardStateChanged(HandCardFacade handCardFacade, CardState state) => InvalidateLayout();
+        protected virtual void OnCardStateChanged(HandCard handCardFacade, CardState state) => InvalidateLayout();
 
         #region Layout
 
@@ -212,7 +212,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
 
         #endregion
 
-        public partial class HandCardFacade : CardFacade
+        public partial class HandCard : CompositeDrawable
         {
             public float LayoutWidth => DrawWidth * (State.Hovered ? hover_scale : 1);
 
@@ -251,9 +251,20 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
             [Resolved]
             private CardHand cardHand { get; set; } = null!;
 
-            public HandCardFacade(RankedPlayCard card)
-                : base(card)
+            public readonly RankedPlayCard Card;
+
+            public HandCard(RankedPlayCard card)
             {
+                Size = card.DrawSize;
+
+                card.Anchor = Anchor.Centre;
+                card.Origin = Anchor.Centre;
+                card.Position = Vector2.Zero;
+                card.Rotation = 0;
+                card.Scale = Vector2.One;
+
+                AddInternal(Card = card);
+
                 Anchor = Anchor.BottomCentre;
                 Origin = Anchor.BottomCentre;
 
@@ -274,12 +285,14 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
                 };
             }
 
-            public override RankedPlayCard Detach()
+            public RankedPlayCard Detach()
             {
                 Card.OverlayLayer.Clear();
                 Card.Elevation = 0;
 
-                return base.Detach();
+                RemoveInternal(Card, false);
+
+                return Card;
             }
 
             protected override void Update()

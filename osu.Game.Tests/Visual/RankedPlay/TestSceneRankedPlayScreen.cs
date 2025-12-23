@@ -102,7 +102,7 @@ namespace osu.Game.Tests.Visual.RankedPlay
                 int i2 = i;
                 AddStep($"click card {i2}", () =>
                 {
-                    InputManager.MoveMouseTo(this.ChildrenOfType<PlayerCardHand.PlayerCardFacade>().ElementAt(i2));
+                    InputManager.MoveMouseTo(this.ChildrenOfType<PlayerCardHand.PlayerHandCard>().ElementAt(i2));
                     InputManager.Click(MouseButton.Left);
                 });
             }
@@ -131,7 +131,7 @@ namespace osu.Game.Tests.Visual.RankedPlay
                 int i2 = i;
                 AddStep($"click card {i2}", () =>
                 {
-                    InputManager.MoveMouseTo(this.ChildrenOfType<PlayerCardHand.PlayerCardFacade>().ElementAt(i2));
+                    InputManager.MoveMouseTo(this.ChildrenOfType<PlayerCardHand.PlayerHandCard>().ElementAt(i2));
                     InputManager.Click(MouseButton.Left);
                 });
             }

@@ -125,33 +125,28 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
             {
                 textContainer.FadeOut(50);
 
-                CardFacade facade;
+                RankedPlayCard? card;
 
-                if (opponentHand.RemoveCard(item, out var card, out var drawQuad))
+                if (opponentHand.RemoveCard(item, out card, out var drawQuad))
                 {
-                    facade = new CardFacade(card)
-                    {
-                        Anchor = Anchor.Centre,
-                        Origin = Anchor.Centre,
-                        ScreenSpaceDrawQuad = drawQuad,
-                    };
+                    card.MatchScreenSpaceDrawQuad(drawQuad, this);
                 }
                 else
                 {
                     Logger.Log($"Played card {item.Card.ID} was not present in hand.", level: LogLevel.Error);
 
-                    facade = new CardFacade(new Cards.RankedPlayCard(item))
+                    card = new RankedPlayCard(item)
                     {
                         Anchor = Anchor.Centre,
                         Origin = Anchor.Centre,
                     };
                 }
 
-                AddInternal(facade);
+                AddInternal(card);
 
                 SchedulerAfterChildren.Add(() =>
                 {
-                    facade
+                    card
                         .MoveTo(new Vector2(0), 600, Easing.OutExpo)
                         .RotateTo(0, 400, Easing.OutExpo);
                 });

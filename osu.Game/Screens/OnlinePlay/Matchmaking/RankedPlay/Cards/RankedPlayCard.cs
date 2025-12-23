@@ -154,5 +154,13 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
         }
 
         #endregion
+
+        public void PopOutAndExpire()
+        {
+            content.ScaleTo(0, 500, Easing.In);
+
+            this.FadeOut(500)
+                .Expire();
+        }
     }
 }
