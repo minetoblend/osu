@@ -84,8 +84,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
                 {
                     Anchor = anchor,
                     Origin = anchor,
-                    X = (anchor & Anchor.x0) != 0 ? 18 : -18,
-                    Y = (anchor & Anchor.y0) != 0 ? 18 : -18,
+                    Margin = new MarginPadding(18),
                     RelativeSizeAxes = Axes.Both,
                 }
             ];
