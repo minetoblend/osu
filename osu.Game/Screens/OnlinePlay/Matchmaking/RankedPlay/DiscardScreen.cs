@@ -100,7 +100,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
             ButtonsContainer.Child = discardButton = new ShearedButton(width: 150)
             {
                 Action = onDiscardButtonClicked,
-                Enabled = { Value = false },
+                Enabled = { Value = true },
                 Text = "Discard",
             };
         }
@@ -117,7 +117,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 
         private void onSelectionChanged()
         {
-            discardButton.Enabled.Value = playerHand.Selection.Any();
+            discardButton.Text = playerHand.Selection.Any() ? "Discard" : "Keep Cards";
         }
 
         private void onDiscardButtonClicked()
