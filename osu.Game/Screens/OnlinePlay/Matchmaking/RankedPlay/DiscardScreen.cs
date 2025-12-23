@@ -179,6 +179,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
         }
 
         private double nextCardDrawTime;
+        private double earliestPresentationTime;
 
         private void cardAdded(RankedPlayCardWithPlaylistItem card)
         {
@@ -191,6 +192,8 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
             double delay = Math.Max(0, nextCardDrawTime - Time.Current);
             nextCardDrawTime = Time.Current + delay + 100;
 
+            earliestPresentationTime = Time.Current + 3500;
+
             Scheduler.AddDelayed(() =>
             {
                 playerHand.AddCard(card, d =>
@@ -202,6 +205,13 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
         }
 
         public void PresentRemainingCards()
+        {
+            double presentationTime = Math.Max(earliestPresentationTime, Time.Current);
+
+            Scheduler.AddDelayed(presentRemainingCards, presentationTime - Time.Current);
+        }
+
+        private void presentRemainingCards()
         {
             foreach (var item in matchInfo.PlayerCards)
             {
