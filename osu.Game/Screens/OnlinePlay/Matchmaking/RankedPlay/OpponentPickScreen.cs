@@ -10,7 +10,6 @@ using osu.Framework.Extensions.Color4Extensions;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Logging;
-using osu.Game.Database;
 using osu.Game.Graphics;
 using osu.Game.Graphics.Sprites;
 using osu.Game.Online.Multiplayer.MatchTypes.RankedPlay;
@@ -113,9 +112,6 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 
             matchInfo.CardPlayed += cardPlayed;
         }
-
-        [Resolved]
-        private BeatmapLookupCache beatmapLookupCache { get; set; } = null!;
 
         private void cardPlayed(RankedPlayCardWithPlaylistItem item) => Task.Run(async () =>
         {
