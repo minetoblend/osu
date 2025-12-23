@@ -23,9 +23,9 @@ using osu.Game.Utils;
 using osuTK;
 using osuTK.Graphics;
 
-namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
+namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
 {
-    public partial class RankedPlayCard : CompositeDrawable
+    public partial class RankedPlayCardContent : CompositeDrawable
     {
         public static readonly Vector2 SIZE = new Vector2(300, 500);
 
@@ -42,7 +42,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 
         private bool shiny;
 
-        public RankedPlayCard(APIBeatmap beatmap)
+        public RankedPlayCardContent(APIBeatmap beatmap)
         {
             this.beatmap = beatmap;
 
@@ -110,7 +110,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                                 Height = 0.7f,
                                 Children = new Drawable[]
                                 {
-                                    new UpdateableOnlineBeatmapSetCover
+                                    new UpdateableOnlineBeatmapSetCover(timeBeforeLoad: 0)
                                     {
                                         RelativeSizeAxes = Axes.Both,
                                         OnlineInfo = beatmap.BeatmapSet,

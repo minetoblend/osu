@@ -9,9 +9,9 @@ using osu.Game.Graphics;
 using osu.Game.Graphics.Sprites;
 using osu.Game.Online.API.Requests.Responses;
 
-namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
+namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
 {
-    public partial class RankedPlayCard
+    public partial class RankedPlayCardContent
     {
         private partial class UserTagPill : CompositeDrawable
         {

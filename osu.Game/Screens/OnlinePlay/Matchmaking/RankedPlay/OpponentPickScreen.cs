@@ -2,30 +2,31 @@
 // See the LICENCE file in the repository root for full licence text.
 
 using System.Diagnostics;
-using System.Linq;
+using System.Threading.Tasks;
 using Humanizer;
 using osu.Framework.Allocation;
 using osu.Framework.Extensions.Color4Extensions;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
+using osu.Framework.Logging;
+using osu.Game.Database;
 using osu.Game.Graphics;
 using osu.Game.Graphics.Sprites;
 using osu.Game.Online.Multiplayer.MatchTypes.RankedPlay;
-using osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Facades;
+using osu.Game.Online.Rooms;
+using osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards;
 using osuTK;
 
 namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 {
     public partial class OpponentPickScreen : RankedPlaySubScreen
     {
-        private PlayerHandFacadeContainer playerHand = null!;
-        private CardFacade playedCardFacade = null!;
-        private CardFacade hiddenPlayerFacade = null!;
-        private OpponentHandFacadeContainer opponentHand = null!;
-        private CardFacade hiddenOpponentFacade = null!;
+        private PlayerCardHand playerHand = null!;
+        private OpponentCardHand opponentHand = null!;
         private FillFlowContainer textContainer = null!;
 
-        public override double CardTransitionStagger => 50;
+        [Resolved]
+        private RankedPlayMatchInfo matchInfo { get; set; } = null!;
 
         [BackgroundDependencyLoader]
         private void load()
@@ -36,44 +37,21 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 
             CenterColumn.Children =
             [
-                playerHand = new PlayerHandFacadeContainer
+                playerHand = new PlayerCardHand
                 {
                     Anchor = Anchor.BottomCentre,
                     Origin = Anchor.BottomCentre,
                     RelativeSizeAxes = Axes.Both,
                     Height = 0.5f,
-                    SelectionMode = CardSelectionMode.Disabled,
-                    ContractedAmount = 0.5f,
+                    Y = 100,
+                    HoverYOffset = 90
                 },
-                opponentHand = new OpponentHandFacadeContainer
+                opponentHand = new OpponentCardHand
                 {
                     Anchor = Anchor.TopCentre,
-                    Origin = Anchor.BottomCentre,
-                    RelativeSizeAxes = Axes.Both,
-                    Rotation = 180,
-                    Height = 0.5f,
-                    SelectionMode = CardSelectionMode.Disabled,
-                    Y = -20,
-                },
-                hiddenPlayerFacade = new CardFacade
-                {
-                    Anchor = Anchor.BottomCentre,
                     Origin = Anchor.TopCentre,
-                    Y = 30,
-                    CardMovement = RankedPlayScreen.MovementStyle.Slow,
-                },
-                hiddenOpponentFacade = new CardFacade
-                {
-                    Anchor = Anchor.TopCentre,
-                    Origin = Anchor.BottomCentre,
-                    Y = -30,
-                    CardMovement = RankedPlayScreen.MovementStyle.Slow,
-                },
-                playedCardFacade = new CardFacade
-                {
-                    Anchor = Anchor.Centre,
-                    Origin = Anchor.Centre,
-                    Scale = new Vector2(1.2f)
+                    RelativeSizeAxes = Axes.Both,
+                    Height = 0.5f,
                 },
                 textContainer = new FillFlowContainer
                 {
@@ -105,39 +83,108 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
             ];
         }
 
-        public override ICardFacadeContainer PlayerCardContainer => playerHand;
-
-        public override ICardFacadeContainer OpponentCardContainer => opponentHand;
-
-        public override void CardPlayed(RankedPlayScreen.Card card)
+        public override void OnEntering(RankedPlaySubScreen? previous)
         {
-            textContainer.FadeOut(50);
+            base.OnEntering(previous);
 
-            card.ChangeFacade(playedCardFacade);
-
-            double delay = 0;
-
-            foreach (var c in playerHand.Cards)
+            foreach (var card in matchInfo.PlayerCards)
             {
-                if (c.Card == card)
-                    continue;
-
-                c.Card.ChangeFacade(hiddenPlayerFacade, delay);
-
-                delay += 25;
+                playerHand.AddCard(card, c =>
+                {
+                    c.Position = ToSpaceOfOtherDrawable(new Vector2(DrawWidth / 2, DrawHeight), playerHand);
+                });
             }
 
-            delay = opponentHand.Cards.Count() * 25;
-
-            foreach (var c in opponentHand.Cards)
+            foreach (var card in matchInfo.OpponentCards)
             {
-                if (c.Card == card)
-                    continue;
-
-                c.Card.ChangeFacade(hiddenOpponentFacade, delay);
-
-                delay -= 25;
+                opponentHand.AddCard(card, c =>
+                {
+                    c.Position = ToSpaceOfOtherDrawable(new Vector2(DrawWidth / 2, 0), playerHand);
+                });
             }
+
+            playerHand.UpdateLayout(stagger: 50);
+            opponentHand.UpdateLayout(stagger: 50);
+        }
+
+        protected override void LoadComplete()
+        {
+            base.LoadComplete();
+
+            matchInfo.CardPlayed += cardPlayed;
+        }
+
+        [Resolved]
+        private BeatmapLookupCache beatmapLookupCache { get; set; } = null!;
+
+        private void cardPlayed(RankedPlayCardWithPlaylistItem item) => Task.Run(async () =>
+        {
+            await waitForCardReveal(item);
+
+            Schedule(() =>
+            {
+                textContainer.FadeOut(50);
+
+                CardFacade facade;
+
+                if (opponentHand.RemoveCard(item, out var card, out var drawQuad))
+                {
+                    facade = new CardFacade(card)
+                    {
+                        Anchor = Anchor.Centre,
+                        Origin = Anchor.Centre,
+                        ScreenSpaceDrawQuad = drawQuad,
+                    };
+                }
+                else
+                {
+                    Logger.Log($"Played card {item.Card.ID} was not present in hand.", level: LogLevel.Error);
+
+                    facade = new CardFacade(new Cards.RankedPlayCard(item))
+                    {
+                        Anchor = Anchor.Centre,
+                        Origin = Anchor.Centre,
+                    };
+                }
+
+                AddInternal(facade);
+
+                SchedulerAfterChildren.Add(() =>
+                {
+                    facade
+                        .MoveTo(new Vector2(0), 600, Easing.OutExpo)
+                        .RotateTo(0, 400, Easing.OutExpo);
+                });
+
+                opponentHand.Contract();
+                playerHand.Contract();
+            });
+        });
+
+        private async Task waitForCardReveal(RankedPlayCardWithPlaylistItem item)
+        {
+            var revealTask = new TaskCompletionSource<MultiplayerPlaylistItem>();
+            var bindable = item.PlaylistItem.GetBoundCopy();
+
+            bindable.BindValueChanged(e =>
+            {
+                if (e.NewValue != null)
+                    revealTask.SetResult(e.NewValue);
+            }, true);
+
+            var playlistItem = await revealTask.Task.ConfigureAwait(false);
+
+            bindable.UnbindAll();
+
+            // making sure the beatmap is in the cache so the reveal happens at the same time as the reveal
+            await beatmapLookupCache.GetBeatmapAsync(playlistItem.BeatmapID).ConfigureAwait(false);
+        }
+
+        protected override void Dispose(bool isDisposing)
+        {
+            matchInfo.CardPlayed -= cardPlayed;
+
+            base.Dispose(isDisposing);
         }
     }
 }

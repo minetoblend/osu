@@ -11,9 +11,9 @@ using osu.Game.Graphics;
 using osu.Game.Graphics.Sprites;
 using osuTK;
 
-namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
+namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
 {
-    public partial class RankedPlayCard
+    public partial class RankedPlayCardContent
     {
         private partial class UserRatingDisplay : CompositeDrawable
         {

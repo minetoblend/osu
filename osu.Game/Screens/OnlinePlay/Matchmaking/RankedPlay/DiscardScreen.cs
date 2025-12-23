@@ -2,64 +2,52 @@
 // See the LICENCE file in the repository root for full licence text.
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using osu.Framework.Allocation;
 using osu.Framework.Extensions.Color4Extensions;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
+using osu.Framework.Graphics.Primitives;
 using osu.Game.Graphics;
 using osu.Game.Graphics.Containers;
 using osu.Game.Graphics.Sprites;
 using osu.Game.Graphics.UserInterface;
 using osu.Game.Online.Multiplayer;
-using osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Facades;
+using osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards;
 using osuTK;
+using CardFacade = osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards.CardFacade;
 
 namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 {
     public partial class DiscardScreen : RankedPlaySubScreen
     {
-        private PlayerHandFacadeContainer playerHand = null!;
-        private CardFillFlowContainer centerRow = null!;
+        public CardRow CenterRow { get; private set; } = null!;
 
-        public override double CardTransitionStagger => 50;
-
-        private CardFacade insertionFacade = null!;
+        private PlayerCardHand playerHand = null!;
         private ShearedButton discardButton = null!;
         private OsuSpriteText readyToGo = null!;
         private OsuTextFlowContainer explainer = null!;
+
+        [Resolved]
+        private RankedPlayMatchInfo matchInfo { get; set; } = null!;
 
         [BackgroundDependencyLoader]
         private void load()
         {
             Children =
             [
-                centerRow = new CardFillFlowContainer
+                CenterRow = new CardRow
                 {
                     RelativeSizeAxes = Axes.Both,
-                    Direction = FillDirection.Horizontal,
-                    Spacing = new Vector2(20),
-                    CardMovement = { Value = RankedPlayScreen.MovementStyle.Smooth },
-                },
-                insertionFacade = new CardFacade
-                {
-                    Anchor = Anchor.BottomRight,
+                    Anchor = Anchor.Centre,
                     Origin = Anchor.Centre,
-                    Y = -120,
-                    Rotation = -30,
                 },
             ];
 
-            ButtonsContainer.Child = discardButton = new ShearedButton(width: 150)
-            {
-                Action = onDiscardButtonClicked,
-                Enabled = { Value = true },
-                Text = "Discard",
-            };
-
             CenterColumn.Children =
             [
-                playerHand = new PlayerHandFacadeContainer
+                playerHand = new PlayerCardHand
                 {
                     Anchor = Anchor.BottomCentre,
                     Origin = Anchor.BottomCentre,
@@ -109,97 +97,153 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                     d.AddParagraph("When it’s your pick, you can choose one card to go head-to-head with against your opponent!");
                 })
             ];
+
+            ButtonsContainer.Child = discardButton = new ShearedButton(width: 150)
+            {
+                Action = onDiscardButtonClicked,
+                Enabled = { Value = false },
+                Text = "Discard",
+            };
         }
 
-        public override ICardFacadeContainer PlayerCardContainer => playerHand;
+        protected override void LoadComplete()
+        {
+            base.LoadComplete();
 
-        private double lastCardInsertionTime = double.MinValue;
-        private double lastDiscardTime = double.MinValue;
+            matchInfo.PlayerCardAdded += cardAdded;
+            matchInfo.PlayerCardRemoved += cardRemoved;
+
+            playerHand.SelectionChanged += () =>
+            {
+                discardButton.Enabled.Value = playerHand.Selection.Any();
+            };
+        }
 
         private void onDiscardButtonClicked()
         {
             discardButton.Hide();
-            playerHand.SelectionMode = CardSelectionMode.Disabled;
 
             Client.DiscardCards(playerHand.Selection.Select(it => it.Card).ToArray()).FireAndForget();
+            playerHand.SelectionMode = CardSelectionMode.Disabled;
         }
 
-        public override void CardAdded(RankedPlayScreen.Card card, CardOwner owner)
+        private readonly List<RankedPlayCardWithPlaylistItem> discardedCards = new List<RankedPlayCardWithPlaylistItem>();
+
+        private void cardRemoved(RankedPlayCardWithPlaylistItem item) => discardedCards.Add(item);
+
+        private void playDiscardAnimation() => Schedule(() =>
         {
-            if (owner == CardOwner.Opponent)
-                return;
-
-            card.Position = new Vector2(DrawWidth, DrawHeight - 120);
-            card.Rotation = -30;
-
-            card.ChangeFacade(insertionFacade);
-
-            double insertionTime = Math.Max(Time.Current, lastCardInsertionTime + 100);
-            lastCardInsertionTime = insertionTime;
-
-            double delay = insertionTime - Time.Current;
-
-            card.FadeOut()
-                .Delay(delay)
-                .FadeIn();
-
-            Scheduler.AddDelayed(() =>
-            {
-                var facade = playerHand.AddCard(card);
-
-                card.ChangeFacade(facade);
-
-                facade.CardMovementBindable.Value = RankedPlayScreen.MovementStyle.Smooth;
-
-                Scheduler.AddDelayed(() => facade.CardMovementBindable.Value = RankedPlayScreen.MovementStyle.Energetic, 300);
-            }, delay);
-        }
-
-        public override void CardRemoved(RankedPlayScreen.Card card, CardOwner owner)
-        {
-            if (owner == CardOwner.Opponent)
-                return;
-
-            double discardTime = Math.Max(Time.Current, lastDiscardTime + 50);
-            lastDiscardTime = discardTime;
-
-            lastCardInsertionTime = discardTime + 1500;
-
-            double delay = discardTime - Time.Current;
-
-            card.ChangeFacade(centerRow.AddCard(card), delay);
-
-            Scheduler.AddDelayed(() =>
-            {
-                playerHand.RemoveCard(card);
-
-                card.PopOutAndExpire(1000);
-            }, delay);
-        }
-
-        public void PresentRemainingCards(RankedPlayScreen.Card[] cards)
-        {
-            centerRow.Clear();
-
-            const double stagger = 50;
+            const double stagger = 100;
             double delay = 0;
 
-            centerRow.CardMovement.Value = RankedPlayScreen.MovementStyle.Slow;
-
-            foreach (var card in cards)
+            foreach (var item in discardedCards)
             {
-                var facade = centerRow.AddCard(card);
+                if (!playerHand.RemoveCard(item, out var card, out Quad drawQuad))
+                    return;
 
-                card.ChangeFacade(facade, delay);
+                card.Anchor = Anchor.Centre;
+                card.Origin = Anchor.Centre;
+
+                var facade = new CardFacade(card)
+                {
+                    Anchor = Anchor.Centre,
+                    Origin = Anchor.Centre,
+                    ScreenSpaceDrawQuad = drawQuad,
+                };
+
+                CenterRow.Add(facade);
+
+                using (BeginDelayedSequence(1000 + delay))
+                {
+                    facade.PopOutAndExpire();
+                }
+
                 delay += stagger;
             }
 
+            discardedCards.Clear();
+            SchedulerAfterChildren.Add(() => CenterRow.LayoutCards(stagger: stagger));
+        });
+
+        private double nextCardDrawTime;
+
+        private void cardAdded(RankedPlayCardWithPlaylistItem card)
+        {
+            if (discardedCards.Count > 0)
+            {
+                playDiscardAnimation();
+                nextCardDrawTime = Math.Max(nextCardDrawTime, Time.Current + 2000);
+            }
+
+            double delay = Math.Max(0, nextCardDrawTime - Time.Current);
+            nextCardDrawTime = Time.Current + delay + 100;
+
+            Scheduler.AddDelayed(() =>
+            {
+                playerHand.AddCard(card, d =>
+                {
+                    d.Position = ToSpaceOfOtherDrawable(new Vector2(DrawWidth, DrawHeight * 0.5f), playerHand);
+                    d.Rotation = -30;
+                });
+            }, delay);
+        }
+
+        public override void OnEntering(RankedPlaySubScreen? previous)
+        {
+            base.OnEntering(previous);
+
+            foreach (var card in matchInfo.PlayerCards)
+            {
+                playerHand.AddCard(card, c =>
+                {
+                    c.Position = ToSpaceOfOtherDrawable(new Vector2(DrawWidth / 2, DrawHeight), playerHand);
+                });
+            }
+
+            playerHand.UpdateLayout(stagger: 50);
+        }
+
+        public void PresentRemainingCards() => Schedule(() =>
+        {
+            foreach (var item in matchInfo.PlayerCards)
+            {
+                if (playerHand.RemoveCard(item, out var card, out Quad drawQuad))
+                {
+                    CenterRow.Add(new CardFacade(card)
+                    {
+                        ScreenSpaceDrawQuad = drawQuad,
+                        Anchor = Anchor.Centre,
+                        Origin = Anchor.Centre,
+                    });
+                }
+                else
+                {
+                    CenterRow.Add(new CardFacade(new RankedPlayCard(item))
+                    {
+                        Anchor = Anchor.Centre,
+                        Origin = Anchor.Centre,
+                    });
+                }
+            }
+
+            CenterRow.LayoutCards(stagger: 50, duration: 600);
+
+            SchedulerAfterChildren.Add(() => CenterRow.LayoutCards(stagger: 50, duration: 600));
+
             readyToGo.FadeIn(50);
             explainer
-                .Delay(delay / 2)
+                .Delay(100)
                 .MoveToOffset(new Vector2(0, 50))
                 .MoveToOffset(new Vector2(0, -50), 600, Easing.OutExpo)
                 .FadeIn(250);
+        });
+
+        protected override void Dispose(bool isDisposing)
+        {
+            matchInfo.PlayerCardAdded -= cardAdded;
+            matchInfo.PlayerCardRemoved -= cardRemoved;
+
+            base.Dispose(isDisposing);
         }
     }
 }

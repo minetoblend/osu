@@ -8,7 +8,6 @@ using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Game.Online.Multiplayer;
 using osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components;
-using osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Facades;
 using osuTK;
 
 namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
@@ -19,8 +18,6 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
         private MultiplayerClient client { get; set; } = null!;
 
         protected MultiplayerClient Client => client;
-
-        public virtual double CardTransitionStagger => 0;
 
         protected override Container<Drawable> Content { get; }
 
@@ -76,22 +73,6 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
         {
             Hide();
         }
-
-        public virtual void CardAdded(RankedPlayScreen.Card card, CardOwner owner)
-        {
-        }
-
-        public virtual void CardRemoved(RankedPlayScreen.Card card, CardOwner owner)
-        {
-        }
-
-        public virtual void CardPlayed(RankedPlayScreen.Card card)
-        {
-        }
-
-        public virtual ICardFacadeContainer? PlayerCardContainer => null;
-
-        public virtual ICardFacadeContainer? OpponentCardContainer => null;
 
         protected static string FormatRoundIndex(int roundIndex)
         {

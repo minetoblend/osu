@@ -7,7 +7,7 @@ using osu.Framework.Graphics;
 using osu.Game.Beatmaps;
 using osu.Game.Online.API.Requests.Responses;
 using osu.Game.Overlays;
-using osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay;
+using osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards;
 using osu.Game.Tests.Visual.Multiplayer;
 
 namespace osu.Game.Tests.Visual.RankedPlay
@@ -21,7 +21,7 @@ namespace osu.Game.Tests.Visual.RankedPlay
         {
             base.SetUpSteps();
 
-            RankedPlayCard card = null!;
+            RankedPlayCardContent card = null!;
 
             AddStep("add card", () =>
             {
@@ -65,7 +65,7 @@ namespace osu.Game.Tests.Visual.RankedPlay
 
                 beatmap.StarRating = 7.49;
 
-                Child = card = new RankedPlayCard(beatmap)
+                Child = card = new RankedPlayCardContent(beatmap)
                 {
                     Anchor = Anchor.Centre,
                     Origin = Anchor.Centre,
