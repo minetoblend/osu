@@ -2,13 +2,18 @@
 // See the LICENCE file in the repository root for full licence text.
 
 using System.Linq;
+using System.Threading.Tasks;
 using osu.Framework.Allocation;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Shapes;
+using osu.Game.Database;
 using osu.Game.Graphics;
 using osu.Game.Graphics.Sprites;
+using osu.Game.Online.API;
 using osu.Game.Online.API.Requests.Responses;
+using osu.Game.Online.Multiplayer;
+using osu.Game.Online.Multiplayer.MatchTypes.RankedPlay;
 using osu.Game.Overlays.Dashboard;
 using osuTK;
 using osuTK.Graphics;
@@ -22,26 +27,31 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
             CornerPieceVisibility.Value = Visibility.Hidden;
         }
 
+        [Resolved]
+        private UserLookupCache userLookupCache { get; set; } = null!;
+
+        [Resolved]
+        private IAPIProvider api { get; set; } = null!;
+
         protected override void LoadComplete()
         {
             base.LoadComplete();
 
-            waitForUsers();
+            loadUsers().FireAndForget();
         }
 
-        private void waitForUsers()
+        private async Task loadUsers()
         {
-            var player = Client.LocalUser?.User;
+            var roomState = ((RankedPlayRoomState)Client.Room!.MatchState!);
 
-            var opponent = Client.Room?.Users.FirstOrDefault(it => it.UserID != player?.Id)?.User;
+            int[] userIds = roomState.Users.Keys.ToArray();
 
-            if (player == null || opponent == null)
-            {
-                Schedule(waitForUsers);
-                return;
-            }
+            var users = await userLookupCache.GetUsersAsync(userIds).ConfigureAwait(false);
 
-            playIntroSequence(player, opponent);
+            var player = users.OfType<APIUser>().First(it => it.Id == api.LocalUser.Value.Id);
+            var opponent = users.OfType<APIUser>().First(it => it.Id != api.LocalUser.Value.Id);
+
+            Schedule(() => playIntroSequence(player, opponent));
         }
 
         private void playIntroSequence(APIUser player, APIUser opponent)
