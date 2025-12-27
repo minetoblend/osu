@@ -6,12 +6,17 @@ using osu.Framework.Graphics;
 using osu.Framework.Graphics.Colour;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Shapes;
+using osu.Framework.Graphics.Transforms;
 using osuTK;
 
 namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
 {
-    public partial class RankedPlayCornerPiece : Container
+    public partial class RankedPlayCornerPiece : VisibilityContainer
     {
+        private readonly Container background;
+        private readonly Container bottomLayer;
+        private readonly Container topLayer;
+
         protected override Container<Drawable> Content { get; }
 
         public RankedPlayCornerPiece(RankedPlayColourScheme colourScheme, Anchor anchor)
@@ -22,7 +27,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
 
             InternalChildren =
             [
-                new Container
+                background = new Container
                 {
                     RelativeSizeAxes = Axes.Both,
                     Anchor = Anchor.Centre,
@@ -47,11 +52,13 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
                         },
                         Children =
                         [
-                            new Container
+                            bottomLayer = new Container
                             {
                                 RelativeSizeAxes = Axes.Both,
                                 Masking = true,
                                 CornerRadius = 20,
+                                Anchor = Anchor.TopRight,
+                                Origin = Anchor.TopRight,
                                 Child = new Box
                                 {
                                     RelativeSizeAxes = Axes.Both,
@@ -59,10 +66,12 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
                                     Alpha = 0.2f,
                                 },
                             },
-                            new Container
+                            topLayer = new Container
                             {
                                 RelativeSizeAxes = Axes.Both,
                                 Padding = new MarginPadding(10),
+                                Anchor = Anchor.BottomLeft,
+                                Origin = Anchor.BottomLeft,
                                 Child = new Container
                                 {
                                     RelativeSizeAxes = Axes.Both,
@@ -71,20 +80,26 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
                                     Child = new Box
                                     {
                                         RelativeSizeAxes = Axes.Both,
-                                        Colour = ColourInfo.GradientHorizontal(colourScheme.Primary.Opacity(0.75f), colourScheme.PrimaryDarker.Opacity(0.25f)),
+                                        Colour = ColourInfo.GradientHorizontal(colourScheme.Primary, colourScheme.PrimaryDarker.Opacity(0.35f)),
+                                        Alpha = 0.75f
                                     },
                                 },
                             }
                         ]
                     },
                 },
-                Content = new Container
+                new Container
                 {
+                    RelativeSizeAxes = Axes.Both,
                     Anchor = anchor,
                     Origin = anchor,
-                    X = (anchor & Anchor.x0) != 0 ? 18 : -18,
-                    Y = (anchor & Anchor.y0) != 0 ? 18 : -18,
-                    RelativeSizeAxes = Axes.Both,
+                    Margin = new MarginPadding(18),
+                    Child = Content = new Container
+                    {
+                        Anchor = (anchor & Anchor.x0) != 0 ? Anchor.CentreLeft : Anchor.CentreRight,
+                        Origin = (anchor & Anchor.x0) != 0 ? Anchor.CentreLeft : Anchor.CentreRight,
+                        RelativeSizeAxes = Axes.Both,
+                    }
                 }
             ];
         }
@@ -97,5 +112,31 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
         }
 
         public static float WidthFor(float parentWidth) => float.Clamp(parentWidth * 0.25f, 250, 335);
+
+        protected override void PopIn()
+        {
+            this.FadeIn(300);
+
+            Content.MoveToX(0, 400, Easing.OutExpo)
+                   .ScaleTo(1f, 400, Easing.OutExpo)
+                   .FadeIn();
+            background.MoveToY(0, 400, Easing.OutExpo);
+
+            bottomLayer.RotateTo(0, 400, Easing.OutQuart);
+            topLayer.RotateTo(0, 400, Easing.OutQuart);
+        }
+
+        protected override void PopOut()
+        {
+            this.FadeOut(300);
+
+            background.MoveToY((Anchor & Anchor.y0) != 0 ? -60 : 60, 500, new CubicBezierEasingFunction(easeIn: 0.2, easeOut: 0.75));
+            Content.MoveToX((Anchor & Anchor.x0) != 0 ? -200 : 200, 500, new CubicBezierEasingFunction(easeIn: 0.2, easeOut: 0.5))
+                   .ScaleTo(0.5f, 400, Easing.OutCubic)
+                   .FadeOut(200);
+
+            bottomLayer.RotateTo(-25, 500, new CubicBezierEasingFunction(easeIn: 0.2, easeOut: 0.75));
+            topLayer.RotateTo(25, 500, new CubicBezierEasingFunction(easeIn: 0.2, easeOut: 0.75));
+        }
     }
 }

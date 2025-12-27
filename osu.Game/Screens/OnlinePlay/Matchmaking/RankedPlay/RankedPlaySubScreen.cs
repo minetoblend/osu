@@ -4,6 +4,7 @@
 using System.Globalization;
 using Humanizer;
 using osu.Framework.Allocation;
+using osu.Framework.Bindables;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Game.Online.Multiplayer;
@@ -15,6 +16,8 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
     public abstract partial class RankedPlaySubScreen : Container
     {
         public const float CENTERED_CARD_SCALE = 1.2f;
+
+        public readonly Bindable<Visibility> CornerPieceVisibility = new Bindable<Visibility>(Visibility.Visible);
 
         [Resolved]
         private MultiplayerClient client { get; set; } = null!;

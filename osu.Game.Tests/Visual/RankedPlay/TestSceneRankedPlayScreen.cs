@@ -33,6 +33,12 @@ namespace osu.Game.Tests.Visual.RankedPlay
         }
 
         [Test]
+        public void TestIntro()
+        {
+            AddStep("set round warmup phase", () => MultiplayerClient.RankedPlayChangeStage(RankedPlayStage.RoundWarmup).WaitSafely());
+        }
+
+        [Test]
         public void TestAddRemoveCards()
         {
             AddStep("set discard phase", () => MultiplayerClient.RankedPlayChangeStage(RankedPlayStage.CardDiscard).WaitSafely());

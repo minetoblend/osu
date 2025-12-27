@@ -54,7 +54,11 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
         /// </summary>
         public event Action<RankedPlayCardWithPlaylistItem>? CardPlayed;
 
-        public bool IsOwnTurn => (client.Room?.MatchState as RankedPlayRoomState)?.ActiveUserId == client.LocalUser?.UserID;
+        public RankedPlayRoomState RoomState { get; private set; } = null!;
+
+        public bool IsOwnTurn => RoomState.ActiveUserId == client.LocalUser?.UserID;
+
+        public int CurrentRound => RoomState.CurrentRound;
 
         private readonly List<RankedPlayCardWithPlaylistItem> playerCards = new List<RankedPlayCardWithPlaylistItem>();
         private readonly List<RankedPlayCardWithPlaylistItem> opponentCards = new List<RankedPlayCardWithPlaylistItem>();
@@ -93,6 +97,8 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
         {
             if (state is not RankedPlayRoomState roomState)
                 return;
+
+            RoomState = roomState;
 
             stage.Value = roomState.Stage;
         }

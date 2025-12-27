@@ -1,13 +1,19 @@
 // Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
+using System.Linq;
+using System.Threading.Tasks;
 using osu.Framework.Allocation;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Shapes;
+using osu.Game.Database;
 using osu.Game.Graphics;
 using osu.Game.Graphics.Sprites;
+using osu.Game.Online.API;
 using osu.Game.Online.API.Requests.Responses;
+using osu.Game.Online.Multiplayer;
+using osu.Game.Online.Multiplayer.MatchTypes.RankedPlay;
 using osu.Game.Overlays.Dashboard;
 using osuTK;
 using osuTK.Graphics;
@@ -16,8 +22,39 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 {
     public partial class IntroScreen : RankedPlaySubScreen
     {
-        [BackgroundDependencyLoader]
-        private void load()
+        public IntroScreen()
+        {
+            CornerPieceVisibility.Value = Visibility.Hidden;
+        }
+
+        [Resolved]
+        private UserLookupCache userLookupCache { get; set; } = null!;
+
+        [Resolved]
+        private IAPIProvider api { get; set; } = null!;
+
+        protected override void LoadComplete()
+        {
+            base.LoadComplete();
+
+            loadUsers().FireAndForget();
+        }
+
+        private async Task loadUsers()
+        {
+            var roomState = ((RankedPlayRoomState)Client.Room!.MatchState!);
+
+            int[] userIds = roomState.Users.Keys.ToArray();
+
+            var users = await userLookupCache.GetUsersAsync(userIds).ConfigureAwait(false);
+
+            var player = users.OfType<APIUser>().First(it => it.Id == api.LocalUser.Value.Id);
+            var opponent = users.OfType<APIUser>().First(it => it.Id != api.LocalUser.Value.Id);
+
+            Schedule(() => playIntroSequence(player, opponent));
+        }
+
+        private void playIntroSequence(APIUser player, APIUser opponent)
         {
             Box box;
             Drawable user1, user2;
@@ -41,11 +78,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                             Anchor = Anchor.Centre,
                             Origin = Anchor.Centre,
                         },
-                        user1 = new CurrentlyOnlineDisplay.OnlineUserPanel(new APIUser
-                        {
-                            Id = 0,
-                            Username = "Hydrogen Bomb",
-                        })
+                        user1 = new CurrentlyOnlineDisplay.OnlineUserPanel(player)
                         {
                             RelativePositionAxes = Axes.Both,
                             Anchor = Anchor.Centre,
@@ -53,11 +86,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                             Position = new Vector2(-0.25f, -0.75f),
                             Shear = -OsuGame.SHEAR,
                         },
-                        user2 = new CurrentlyOnlineDisplay.OnlineUserPanel(new APIUser
-                        {
-                            Id = 1,
-                            Username = "Coughing Baby",
-                        })
+                        user2 = new CurrentlyOnlineDisplay.OnlineUserPanel(opponent)
                         {
                             RelativePositionAxes = Axes.Both,
                             Anchor = Anchor.Centre,
@@ -88,6 +117,11 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                 user2.MoveToY(-1, 600, Easing.InCubic);
                 box.Delay(100).ResizeHeightTo(0, 400, Easing.InQuad);
             }, 2000);
+
+            Scheduler.AddDelayed(() =>
+            {
+                CornerPieceVisibility.Value = Visibility.Visible;
+            }, 2600);
 
             Scheduler.AddDelayed(rangeDisplay.PlayAnimation, 2700);
         }

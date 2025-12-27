@@ -1,6 +1,7 @@
 // Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
+using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using osu.Framework.Allocation;
@@ -85,6 +86,8 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
         private CancellationTokenSource? downloadCheckCancellation;
         private int? lastDownloadCheckedBeatmapId;
 
+        private readonly Bindable<Visibility> cornerPieceVisibility = new Bindable<Visibility>();
+
         [Cached]
         private readonly RankedPlayMatchInfo matchInfo;
 
@@ -127,6 +130,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
             AddRangeInternal([
                 new RankedPlayCornerPiece(RankedPlayColourScheme.Blue, Anchor.BottomLeft)
                 {
+                    State = { BindTarget = cornerPieceVisibility },
                     Child = new RankedPlayUserDisplay(localUserId, Anchor.BottomLeft, RankedPlayColourScheme.Blue)
                     {
                         RelativeSizeAxes = Axes.Both,
@@ -134,6 +138,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                 },
                 new RankedPlayCornerPiece(RankedPlayColourScheme.Red, Anchor.TopRight)
                 {
+                    State = { BindTarget = cornerPieceVisibility },
                     Child = new RankedPlayUserDisplay(opponentUserId, Anchor.TopRight, RankedPlayColourScheme.Red)
                     {
                         RelativeSizeAxes = Axes.Both,
@@ -141,7 +146,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                 },
             ]);
 
-            stage.BindValueChanged(e => onStageChanged(e.NewValue), true);
+            stage.BindValueChanged(e => onStageChanged(e.NewValue));
         }
 
         private RankedPlaySubScreen? activeSubscreen;
@@ -155,13 +160,17 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 
             var previousScreen = activeSubscreen;
 
-            previousScreen?.OnExiting(screen);
-
             screenContainer.Add(activeSubscreen = screen);
             screen.OnLoadComplete += _ =>
             {
+                previousScreen?.OnExiting(screen);
                 screen.OnEntering(previousScreen);
                 previousScreen?.Expire();
+
+                if (previousScreen != null)
+                    cornerPieceVisibility.UnbindFrom(previousScreen.CornerPieceVisibility);
+
+                cornerPieceVisibility.BindTo(screen.CornerPieceVisibility);
             };
         }
 
@@ -206,6 +215,10 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
         {
             switch (stage)
             {
+                case RankedPlayStage.RoundWarmup when matchInfo.CurrentRound == 1:
+                    ShowScreen(new IntroScreen());
+                    break;
+
                 case RankedPlayStage.CardDiscard:
                     ShowScreen(new DiscardScreen());
                     break;
@@ -216,6 +229,10 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 
                 case RankedPlayStage.CardPlay:
                     ShowScreen(matchInfo.IsOwnTurn ? new PickScreen() : new OpponentPickScreen());
+                    break;
+
+                case RankedPlayStage.FinishCardPlay:
+                    Debug.Assert(activeSubscreen is PickScreen || activeSubscreen is OpponentPickScreen);
                     break;
 
                 default:
