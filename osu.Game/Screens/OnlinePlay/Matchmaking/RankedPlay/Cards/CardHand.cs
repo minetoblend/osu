@@ -5,7 +5,9 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using MessagePack;
 using osu.Framework.Allocation;
+using osu.Framework.Bindables;
 using osu.Framework.Caching;
 using osu.Framework.Extensions.Color4Extensions;
 using osu.Framework.Graphics;
@@ -142,7 +144,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
 
         protected virtual HandCard CreateHandCard(RankedPlayCard card) => new HandCard(card);
 
-        protected virtual void OnCardStateChanged(HandCard handCardFacade, CardState state) => InvalidateLayout();
+        protected virtual void OnCardStateChanged(HandCard card, CardState state) => InvalidateLayout();
 
         #region Layout
 
@@ -168,7 +170,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
             float x = -totalWidth / 2;
 
             if (cardContainer.Any(it => it.CardHovered))
-                x -= 20;
+                x -= 10;
 
             float xOffset = 0;
             double delay = 0;
@@ -219,22 +221,12 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
         {
             public float LayoutWidth => DrawWidth * (State.Hovered ? hover_scale : 1);
 
-            private CardState state;
+            private readonly Bindable<CardState> state = new Bindable<CardState>();
 
             public CardState State
             {
-                get => state;
-                set
-                {
-                    if (state.Equals(value))
-                        return;
-
-                    state = value;
-
-                    selectionOverlay.Alpha = state.Selected ? 1 : 0;
-
-                    cardHand.OnCardStateChanged(this, value);
-                }
+                get => state.Value;
+                set => state.Value = value;
             }
 
             public bool Selected
@@ -249,12 +241,20 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
                 set => State = State with { Hovered = value };
             }
 
+            public bool CardPressed
+            {
+                get => State.Pressed;
+                set => State = State with { Pressed = value };
+            }
+
             private readonly Container selectionOverlay;
 
             [Resolved]
             private CardHand cardHand { get; set; } = null!;
 
             public readonly RankedPlayCard Card;
+
+            public RankedPlayCardWithPlaylistItem Item => Card.Item;
 
             public HandCard(RankedPlayCard card)
             {
@@ -288,6 +288,31 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
                 };
             }
 
+            protected override void LoadComplete()
+            {
+                base.LoadComplete();
+
+                state.BindValueChanged(onStateChanged, true);
+            }
+
+            private void onStateChanged(ValueChangedEvent<CardState> state)
+            {
+                cardHand.OnCardStateChanged(this, state.NewValue);
+
+                selectionOverlay.Alpha = state.NewValue.Selected ? 1 : 0;
+
+                switch (state.NewValue.Pressed, state.OldValue.Pressed)
+                {
+                    case (true, false):
+                        Card.ScaleTo(0.95f, 300, Easing.OutExpo);
+                        break;
+
+                    case (false, true):
+                        Card.ScaleTo(1f, 400, Easing.OutElasticHalf);
+                        break;
+                }
+            }
+
             public RankedPlayCard Detach()
             {
                 Card.OverlayLayer.Clear();
@@ -306,6 +331,18 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
             }
         }
 
-        public readonly record struct CardState(bool Selected, bool Hovered);
+        [Serializable]
+        [MessagePackObject]
+        public readonly record struct CardState
+        {
+            [Key(0)]
+            public required bool Hovered { get; init; }
+
+            [Key(1)]
+            public required bool Pressed { get; init; }
+
+            [Key(2)]
+            public required bool Selected { get; init; }
+        }
     }
 }
