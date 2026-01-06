@@ -13,6 +13,7 @@ using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Shapes;
 using osu.Framework.Graphics.Sprites;
+using osu.Framework.Graphics.Transforms;
 using osu.Framework.IO.Stores;
 using osu.Framework.Testing;
 using osu.Framework.Timing;
@@ -181,6 +182,17 @@ namespace osu.Game.Tests.Visual.Gameplay
 
             AddStep("set clock = 2000", () => manualClock.CurrentTime = 2000);
             AddAssert("sprite flipped at t = 2000", () => this.ChildrenOfType<DrawableStoryboardSprite>().Single().FlipV);
+
+            AddStep("resume clock", () => clockDirection = 1);
+        }
+
+        [Test]
+        public void TestCubicBezierEasing()
+        {
+            AddStep("create storyboard", () => Child = createStoryboard(s =>
+            {
+                s.Commands.AddY(new CubicBezierEasingFunction(0.1, 0.5, 0.5, 1.2), 500, 900, 100, 240);
+            }));
 
             AddStep("resume clock", () => clockDirection = 1);
         }
