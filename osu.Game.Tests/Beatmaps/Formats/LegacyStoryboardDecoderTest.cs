@@ -5,6 +5,7 @@ using System.Linq;
 using NUnit.Framework;
 using osuTK;
 using osu.Framework.Graphics;
+using osu.Framework.Graphics.Transforms;
 using osu.Game.Beatmaps.Formats;
 using osu.Game.IO;
 using osu.Game.Storyboards;
@@ -348,6 +349,32 @@ namespace osu.Game.Tests.Beatmaps.Formats
                 Assert.That(storyboard.EarliestEventTime, Is.Null);
                 Assert.That(storyboard.LatestEventTime, Is.Null);
             });
+        }
+
+        [Test]
+        public void TestCubicBezierEasing()
+        {
+            var decoder = new LegacyStoryboardDecoder();
+
+            using (var resStream = TestResources.OpenResource("cubic-bezier-easing.osb"))
+            using (var stream = new LineBufferedReader(resStream))
+            {
+                var storyboard = decoder.Decode(stream);
+
+                StoryboardLayer background = storyboard.Layers.Single(l => l.Depth == 3);
+                Assert.AreEqual(1, background.Elements.Count);
+
+                var sprite = (StoryboardSprite)background.Elements[0];
+
+                Assert.IsInstanceOf<CubicBezierEasingFunction>(sprite.Commands.X[0].Easing);
+
+                var easing = (CubicBezierEasingFunction)sprite.Commands.X[0].Easing;
+
+                Assert.AreEqual(easing.X1, 0.2, 1e-7);
+                Assert.AreEqual(easing.Y1, 0.85, 1e-7);
+                Assert.AreEqual(easing.X2, 0.6, 1e-7);
+                Assert.AreEqual(easing.Y2, 1.2, 1e-7);
+            }
         }
     }
 }
