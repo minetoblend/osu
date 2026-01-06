@@ -8,7 +8,7 @@ namespace osu.Game.Storyboards.Commands
 {
     public class StoryboardRotationCommand : StoryboardCommand<float>
     {
-        public StoryboardRotationCommand(Easing easing, double startTime, double endTime, float startValue, float endValue)
+        public StoryboardRotationCommand(IEasingFunction easing, double startTime, double endTime, float startValue, float endValue)
             : base(easing, startTime, endTime, startValue, endValue)
         {
         }

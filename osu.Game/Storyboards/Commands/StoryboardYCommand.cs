@@ -8,7 +8,7 @@ namespace osu.Game.Storyboards.Commands
 {
     public class StoryboardYCommand : StoryboardCommand<float>
     {
-        public StoryboardYCommand(Easing easing, double startTime, double endTime, float startValue, float endValue)
+        public StoryboardYCommand(IEasingFunction easing, double startTime, double endTime, float startValue, float endValue)
             : base(easing, startTime, endTime, startValue, endValue)
         {
         }

@@ -10,7 +10,7 @@ namespace osu.Game.Storyboards.Commands
 {
     public class StoryboardVectorScaleCommand : StoryboardCommand<Vector2>
     {
-        public StoryboardVectorScaleCommand(Easing easing, double startTime, double endTime, Vector2 startValue, Vector2 endValue)
+        public StoryboardVectorScaleCommand(IEasingFunction easing, double startTime, double endTime, Vector2 startValue, Vector2 endValue)
             : base(easing, startTime, endTime, startValue, endValue)
         {
         }

@@ -8,7 +8,7 @@ namespace osu.Game.Storyboards.Commands
 {
     public class StoryboardBlendingParametersCommand : StoryboardCommand<BlendingParameters>
     {
-        public StoryboardBlendingParametersCommand(Easing easing, double startTime, double endTime, BlendingParameters startValue, BlendingParameters endValue)
+        public StoryboardBlendingParametersCommand(IEasingFunction easing, double startTime, double endTime, BlendingParameters startValue, BlendingParameters endValue)
             : base(easing, startTime, endTime, startValue, endValue)
         {
         }

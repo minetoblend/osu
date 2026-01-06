@@ -9,7 +9,7 @@ namespace osu.Game.Storyboards.Commands
 {
     public class StoryboardFlipVCommand : StoryboardCommand<bool>
     {
-        public StoryboardFlipVCommand(Easing easing, double startTime, double endTime, bool startValue, bool endValue)
+        public StoryboardFlipVCommand(IEasingFunction easing, double startTime, double endTime, bool startValue, bool endValue)
             : base(easing, startTime, endTime, startValue, endValue)
         {
         }

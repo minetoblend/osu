@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Newtonsoft.Json;
 using osu.Framework.Graphics;
+using osu.Framework.Graphics.Transforms;
 using osu.Framework.Lists;
 using osuTK;
 using osuTK.Graphics;
@@ -80,35 +81,65 @@ namespace osu.Game.Storyboards.Commands
             lists = new IReadOnlyList<IStoryboardCommand>[] { X, Y, Scale, VectorScale, Rotation, Colour, Alpha, BlendingParameters, FlipH, FlipV };
         }
 
-        public void AddX(Easing easing, double startTime, double endTime, float startValue, float endValue)
+        public void AddX(IEasingFunction easing, double startTime, double endTime, float startValue, float endValue)
             => AddCommand(x, new StoryboardXCommand(easing, startTime, endTime, startValue, endValue));
 
-        public void AddY(Easing easing, double startTime, double endTime, float startValue, float endValue)
+        public void AddX(Easing easing, double startTime, double endTime, float startValue, float endValue)
+            => AddX(new DefaultEasingFunction(easing), startTime, endTime, startValue, endValue);
+
+        public void AddY(IEasingFunction easing, double startTime, double endTime, float startValue, float endValue)
             => AddCommand(y, new StoryboardYCommand(easing, startTime, endTime, startValue, endValue));
 
-        public void AddScale(Easing easing, double startTime, double endTime, float startValue, float endValue)
+        public void AddY(Easing easing, double startTime, double endTime, float startValue, float endValue)
+            => AddY(new DefaultEasingFunction(easing), startTime, endTime, startValue, endValue);
+
+        public void AddScale(IEasingFunction easing, double startTime, double endTime, float startValue, float endValue)
             => AddCommand(scale, new StoryboardScaleCommand(easing, startTime, endTime, startValue, endValue));
 
-        public void AddVectorScale(Easing easing, double startTime, double endTime, Vector2 startValue, Vector2 endValue)
+        public void AddScale(Easing easing, double startTime, double endTime, float startValue, float endValue)
+            => AddScale(new DefaultEasingFunction(easing), startTime, endTime, startValue, endValue);
+
+        public void AddVectorScale(IEasingFunction easing, double startTime, double endTime, Vector2 startValue, Vector2 endValue)
             => AddCommand(vectorScale, new StoryboardVectorScaleCommand(easing, startTime, endTime, startValue, endValue));
 
-        public void AddRotation(Easing easing, double startTime, double endTime, float startValue, float endValue)
+        public void AddVectorScale(Easing easing, double startTime, double endTime, Vector2 startValue, Vector2 endValue)
+            => AddVectorScale(new DefaultEasingFunction(easing), startTime, endTime, startValue, endValue);
+
+        public void AddRotation(IEasingFunction easing, double startTime, double endTime, float startValue, float endValue)
             => AddCommand(rotation, new StoryboardRotationCommand(easing, startTime, endTime, startValue, endValue));
 
-        public void AddColour(Easing easing, double startTime, double endTime, Color4 startValue, Color4 endValue)
+        public void AddRotation(Easing easing, double startTime, double endTime, float startValue, float endValue)
+            => AddRotation(new DefaultEasingFunction(easing), startTime, endTime, startValue, endValue);
+
+        public void AddColour(IEasingFunction easing, double startTime, double endTime, Color4 startValue, Color4 endValue)
             => AddCommand(colour, new StoryboardColourCommand(easing, startTime, endTime, startValue, endValue));
 
-        public void AddAlpha(Easing easing, double startTime, double endTime, float startValue, float endValue)
+        public void AddColour(Easing easing, double startTime, double endTime, Color4 startValue, Color4 endValue)
+            => AddColour(new DefaultEasingFunction(easing), startTime, endTime, startValue, endValue);
+
+        public void AddAlpha(IEasingFunction easing, double startTime, double endTime, float startValue, float endValue)
             => AddCommand(alpha, new StoryboardAlphaCommand(easing, startTime, endTime, startValue, endValue));
 
-        public void AddBlendingParameters(Easing easing, double startTime, double endTime, BlendingParameters startValue, BlendingParameters endValue)
+        public void AddAlpha(Easing easing, double startTime, double endTime, float startValue, float endValue)
+            => AddAlpha(new DefaultEasingFunction(easing), startTime, endTime, startValue, endValue);
+
+        public void AddBlendingParameters(IEasingFunction easing, double startTime, double endTime, BlendingParameters startValue, BlendingParameters endValue)
             => AddCommand(blendingParameters, new StoryboardBlendingParametersCommand(easing, startTime, endTime, startValue, endValue));
 
-        public void AddFlipH(Easing easing, double startTime, double endTime, bool startValue, bool endValue)
+        public void AddBlendingParameters(Easing easing, double startTime, double endTime, BlendingParameters startValue, BlendingParameters endValue)
+            => AddBlendingParameters(new DefaultEasingFunction(easing), startTime, endTime, startValue, endValue);
+
+        public void AddFlipH(IEasingFunction easing, double startTime, double endTime, bool startValue, bool endValue)
             => AddCommand(flipH, new StoryboardFlipHCommand(easing, startTime, endTime, startValue, endValue));
 
-        public void AddFlipV(Easing easing, double startTime, double endTime, bool startValue, bool endValue)
+        public void AddFlipH(Easing easing, double startTime, double endTime, bool startValue, bool endValue)
+            => AddFlipH(new DefaultEasingFunction(easing), startTime, endTime, startValue, endValue);
+
+        public void AddFlipV(IEasingFunction easing, double startTime, double endTime, bool startValue, bool endValue)
             => AddCommand(flipV, new StoryboardFlipVCommand(easing, startTime, endTime, startValue, endValue));
+
+        public void AddFlipV(Easing easing, double startTime, double endTime, bool startValue, bool endValue)
+            => AddFlipV(new DefaultEasingFunction(easing), startTime, endTime, startValue, endValue);
 
         /// <summary>
         /// Adds the given storyboard <paramref name="command"/> to the target <paramref name="list"/>.

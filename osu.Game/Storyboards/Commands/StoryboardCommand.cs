@@ -15,11 +15,11 @@ namespace osu.Game.Storyboards.Commands
 
         public T StartValue { get; }
         public T EndValue { get; }
-        public Easing Easing { get; }
+        public IEasingFunction Easing { get; }
 
         public double Duration => EndTime - StartTime;
 
-        protected StoryboardCommand(Easing easing, double startTime, double endTime, T startValue, T endValue)
+        protected StoryboardCommand(IEasingFunction easing, double startTime, double endTime, T startValue, T endValue)
         {
             if (endTime < startTime)
                 endTime = startTime;
