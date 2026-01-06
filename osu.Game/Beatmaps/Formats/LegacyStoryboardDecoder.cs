@@ -3,9 +3,11 @@
 
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using osu.Framework.Graphics;
+using osu.Framework.Graphics.Transforms;
 using osu.Game.Beatmaps.Legacy;
 using osu.Game.IO;
 using osu.Game.Storyboards;
@@ -210,7 +212,7 @@ namespace osu.Game.Beatmaps.Formats
                         if (string.IsNullOrEmpty(split[3]))
                             split[3] = split[2];
 
-                        var easing = (Easing)Parsing.ParseInt(split[1]);
+                        var easing = parseEasingFunction(split[1]);
                         double startTime = Parsing.ParseDouble(split[2]);
                         double endTime = Parsing.ParseDouble(split[3]);
 
@@ -374,6 +376,32 @@ namespace osu.Game.Beatmaps.Formats
         {
             var pair = SplitKeyVal(line, '=', false);
             variables[pair.Key] = pair.Value;
+        }
+
+        private static IEasingFunction parseEasingFunction(string value)
+        {
+            // expected format for cubic-bezier: C|x1:y1:x2:y2
+            if (value.StartsWith("C|", StringComparison.Ordinal))
+            {
+                string[] split = value.Substring(2).Split('|');
+
+                if (split.Length != 4)
+                    throw new FormatException($"Invalid easing function {value}. Cubic-bezier easing expects 4 values, but {split.Length} were given.");
+
+                double[] values = new double[4];
+
+                for (int i = 0; i < split.Length; i++)
+                {
+                    if (!double.TryParse(split[i], CultureInfo.InvariantCulture, out double result))
+                        throw new FormatException($"Invalid value at index {i}: {value}. Expected number.");
+
+                    values[i] = result;
+                }
+
+                return new CubicBezierEasingFunction(values[0], values[1], values[2], values[3]);
+            }
+
+            return new DefaultEasingFunction((Easing)Parsing.ParseInt(value));
         }
 
         /// <summary>
