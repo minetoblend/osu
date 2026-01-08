@@ -17,7 +17,7 @@ using osu.Game.Tests.Visual.Multiplayer;
 
 namespace osu.Game.Tests.Visual.RankedPlay
 {
-    public partial class TestSceneResultsScoreWedge : MultiplayerTestScene
+    public partial class TestSceneResultsScreen : MultiplayerTestScene
     {
         private RankedPlayScreen screen = null!;
 
