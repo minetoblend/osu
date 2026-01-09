@@ -83,7 +83,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                         },
                         new OsuSpriteText
                         {
-                            Text = "Your opponent ist picking a map!",
+                            Text = "Your opponent is picking a map!",
                             Anchor = Anchor.TopCentre,
                             Origin = Anchor.TopCentre,
                             Colour = Color4Extensions.FromHex("FFA5B6"),
