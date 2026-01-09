@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using osu.Framework.Allocation;
+using osu.Framework.Bindables;
 using osu.Framework.Extensions;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
@@ -40,6 +41,9 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 
         [Resolved]
         private RulesetStore rulesets { get; set; } = null!;
+
+        [Resolved]
+        private IBindable<RulesetInfo> globalRuleset { get; set; } = null!;
 
         private Container<Drawable> wedgeContainer = null!;
         private LoadingSpinner loadingSpinner = null!;
@@ -133,12 +137,14 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
         {
             ScoreInfo localUserScore = scores.SingleOrDefault(s => s.UserID == api.LocalUser.Value.OnlineID) ?? new ScoreInfo
             {
-                Rank = ScoreRank.F
+                Rank = ScoreRank.F,
+                Ruleset = globalRuleset.Value
             };
 
             ScoreInfo otherUserScore = scores.SingleOrDefault(s => s.UserID != api.LocalUser.Value.OnlineID) ?? new ScoreInfo
             {
-                Rank = ScoreRank.F
+                Rank = ScoreRank.F,
+                Ruleset = globalRuleset.Value
             };
 
             wedgeContainer.Children =
