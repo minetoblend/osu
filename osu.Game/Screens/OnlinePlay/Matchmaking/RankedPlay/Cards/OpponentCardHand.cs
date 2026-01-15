@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using osu.Game.Online.RankedPlay;
 
 namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
 {
@@ -13,7 +14,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
     {
         protected override bool Flipped => true;
 
-        public void SetState(Dictionary<Guid, CardState> state)
+        public void SetState(Dictionary<Guid, RankedPlayCardState> state)
         {
             foreach (var card in Cards)
             {

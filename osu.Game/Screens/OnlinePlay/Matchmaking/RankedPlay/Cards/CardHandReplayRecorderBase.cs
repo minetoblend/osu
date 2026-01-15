@@ -4,6 +4,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using osu.Framework.Graphics;
+using osu.Game.Online.RankedPlay;
 
 namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
 {
@@ -26,7 +27,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
 
         private readonly PlayerCardHand cardHand;
 
-        private readonly List<CardHandReplayFrame> buffer = new List<CardHandReplayFrame>();
+        private readonly List<RankedPlayCardHandReplayFrame> buffer = new List<RankedPlayCardHandReplayFrame>();
         private bool hasChanges;
         private double? lastFrameTime;
 
@@ -54,7 +55,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
 
             double delay = lastFrameTime != null ? Time.Current - lastFrameTime.Value : 0;
 
-            buffer.Add(new CardHandReplayFrame
+            buffer.Add(new RankedPlayCardHandReplayFrame
             {
                 Delay = delay,
                 Cards = cardHand.State,
@@ -77,9 +78,9 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
         }
 
         /// <summary>
-        /// Compresses a list of <see cref="CardHandReplayFrame"/>s by only keeping values that have changed between each frame
+        /// Compresses a list of <see cref="RankedPlayCardHandReplayFrame"/>s by only keeping values that have changed between each frame
         /// </summary>
-        private IEnumerable<CardHandReplayFrame> compress(IReadOnlyList<CardHandReplayFrame> frames)
+        private IEnumerable<RankedPlayCardHandReplayFrame> compress(IReadOnlyList<RankedPlayCardHandReplayFrame> frames)
         {
             if (frames.Count == 0)
                 yield break;
@@ -97,7 +98,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
             }
         }
 
-        protected abstract void Flush(CardHandReplayFrame[] frames);
+        protected abstract void Flush(RankedPlayCardHandReplayFrame[] frames);
 
         protected override void Dispose(bool isDisposing)
         {

@@ -3,6 +3,7 @@
 
 using System;
 using osu.Framework.Graphics;
+using osu.Game.Online.RankedPlay;
 
 namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
 {
@@ -22,7 +23,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
             this.cardHand = cardHand;
         }
 
-        protected void EnqueueFrames(CardHandReplayFrame[] frames)
+        protected void EnqueueFrames(RankedPlayCardHandReplayFrame[] frames)
         {
             foreach (var frame in frames)
             {

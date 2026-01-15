@@ -5,6 +5,7 @@ using System;
 using MessagePack;
 using osu.Game.Online.Matchmaking.Events;
 using osu.Game.Online.Multiplayer.Countdown;
+using osu.Game.Online.RankedPlay;
 
 namespace osu.Game.Online.Multiplayer
 {

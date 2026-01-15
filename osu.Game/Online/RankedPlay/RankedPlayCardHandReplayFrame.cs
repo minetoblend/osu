@@ -6,11 +6,11 @@ using System.Collections.Generic;
 using System.Linq;
 using MessagePack;
 
-namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
+namespace osu.Game.Online.RankedPlay
 {
     [Serializable]
     [MessagePackObject]
-    public readonly record struct CardHandReplayFrame
+    public readonly record struct RankedPlayCardHandReplayFrame
     {
         /// <summary>
         /// Duration in milliseconds since the previous frame.
@@ -22,12 +22,12 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
         /// Dictionary containing the state of each card.
         /// </summary>
         [Key(1)]
-        public required Dictionary<Guid, CardHand.CardState> Cards { get; init; }
+        public required Dictionary<Guid, RankedPlayCardState> Cards { get; init; }
 
         /// <summary>
         /// Creates a replay frame that only contains state entries that differ from the previous frame
         /// </summary>
-        public CardHandReplayFrame RelativeTo(CardHandReplayFrame other) => this with
+        public RankedPlayCardHandReplayFrame RelativeTo(RankedPlayCardHandReplayFrame other) => this with
         {
             Cards = Cards.Where(entry => !other.Cards.Contains(entry)).ToDictionary(),
         };

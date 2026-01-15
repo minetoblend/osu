@@ -9,6 +9,7 @@ using osu.Framework.Graphics;
 using osu.Framework.Testing;
 using osu.Framework.Utils;
 using osu.Game.Online.Multiplayer.MatchTypes.RankedPlay;
+using osu.Game.Online.RankedPlay;
 using osu.Game.Overlays;
 using osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay;
 using osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards;
@@ -115,7 +116,7 @@ namespace osu.Game.Tests.Visual.RankedPlay
 
             public double RandomLatency;
 
-            protected override void Flush(CardHandReplayFrame[] frames)
+            protected override void Flush(RankedPlayCardHandReplayFrame[] frames)
             {
                 double sendTime = Math.Max(lastSendTime, Time.Current + FixedLatency + RNG.NextDouble(RandomLatency));
 
@@ -127,7 +128,7 @@ namespace osu.Game.Tests.Visual.RankedPlay
 
         private partial class TestCardHandReplayPlayer(OpponentCardHand cardHand) : CardHandReplayPlayerBase(cardHand)
         {
-            public new void EnqueueFrames(CardHandReplayFrame[] frames) => base.EnqueueFrames(frames);
+            public new void EnqueueFrames(RankedPlayCardHandReplayFrame[] frames) => base.EnqueueFrames(frames);
         }
     }
 }

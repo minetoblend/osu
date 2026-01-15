@@ -4,9 +4,8 @@
 using System;
 using MessagePack;
 using osu.Game.Online.Multiplayer;
-using osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards;
 
-namespace osu.Game.Online.Matchmaking.Events
+namespace osu.Game.Online.RankedPlay
 {
     [Serializable]
     [MessagePackObject]
@@ -19,6 +18,6 @@ namespace osu.Game.Online.Matchmaking.Events
         public int UserId { get; set; }
 
         [Key(1)]
-        public required CardHandReplayFrame[] Frames { get; init; }
+        public required RankedPlayCardHandReplayFrame[] Frames { get; init; }
     }
 }

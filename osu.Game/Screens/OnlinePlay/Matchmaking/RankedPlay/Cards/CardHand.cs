@@ -5,7 +5,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using MessagePack;
 using osu.Framework.Allocation;
 using osu.Framework.Bindables;
 using osu.Framework.Caching;
@@ -15,6 +14,7 @@ using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Primitives;
 using osu.Framework.Graphics.Shapes;
 using osu.Game.Online.Multiplayer.MatchTypes.RankedPlay;
+using osu.Game.Online.RankedPlay;
 using osuTK;
 
 namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
@@ -144,7 +144,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
 
         protected virtual HandCard CreateHandCard(RankedPlayCard card) => new HandCard(card);
 
-        protected virtual void OnCardStateChanged(HandCard card, CardState state) => InvalidateLayout();
+        protected virtual void OnCardStateChanged(HandCard card, RankedPlayCardState state) => InvalidateLayout();
 
         #region Layout
 
@@ -221,9 +221,9 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
         {
             public float LayoutWidth => DrawWidth * (State.Hovered ? hover_scale : 1);
 
-            private readonly Bindable<CardState> state = new Bindable<CardState>();
+            private readonly Bindable<RankedPlayCardState> state = new Bindable<RankedPlayCardState>();
 
-            public CardState State
+            public RankedPlayCardState State
             {
                 get => state.Value;
                 set => state.Value = value;
@@ -295,7 +295,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
                 state.BindValueChanged(onStateChanged, true);
             }
 
-            private void onStateChanged(ValueChangedEvent<CardState> state)
+            private void onStateChanged(ValueChangedEvent<RankedPlayCardState> state)
             {
                 cardHand.OnCardStateChanged(this, state.NewValue);
 
@@ -329,20 +329,6 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
 
                 Card.Elevation = float.Lerp(CardHovered ? 1 : 0, Card.Elevation, (float)Math.Exp(-0.03f * Time.Elapsed));
             }
-        }
-
-        [Serializable]
-        [MessagePackObject]
-        public readonly record struct CardState
-        {
-            [Key(0)]
-            public required bool Hovered { get; init; }
-
-            [Key(1)]
-            public required bool Pressed { get; init; }
-
-            [Key(2)]
-            public required bool Selected { get; init; }
         }
     }
 }

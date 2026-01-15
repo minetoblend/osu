@@ -7,6 +7,7 @@ using System.Linq;
 using osu.Framework.Bindables;
 using osu.Framework.Input.Events;
 using osu.Game.Graphics.UserInterface;
+using osu.Game.Online.RankedPlay;
 using osuTK.Input;
 
 namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
@@ -97,14 +98,14 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
             }
         }
 
-        protected override void OnCardStateChanged(HandCard card, CardState state)
+        protected override void OnCardStateChanged(HandCard card, RankedPlayCardState state)
         {
             StateChanged?.Invoke();
 
             base.OnCardStateChanged(card, state);
         }
 
-        public Dictionary<Guid, CardState> State => Cards.Select(static card => new KeyValuePair<Guid, CardState>(card.Item.Card.ID, card.State)).ToDictionary();
+        public Dictionary<Guid, RankedPlayCardState> State => Cards.Select(static card => new KeyValuePair<Guid, RankedPlayCardState>(card.Item.Card.ID, card.State)).ToDictionary();
 
         public partial class PlayerHandCard : HandCard
         {

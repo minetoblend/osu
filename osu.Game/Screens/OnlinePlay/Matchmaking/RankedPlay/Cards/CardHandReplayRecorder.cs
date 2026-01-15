@@ -2,20 +2,22 @@
 // See the LICENCE file in the repository root for full licence text.
 
 using osu.Framework.Allocation;
-using osu.Game.Online.Matchmaking.Events;
 using osu.Game.Online.Multiplayer;
+using osu.Game.Online.RankedPlay;
 
 namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
 {
     public partial class CardHandReplayRecorder : CardHandReplayRecorderBase
     {
         public CardHandReplayRecorder(PlayerCardHand cardHand)
-            : base(cardHand) { }
+            : base(cardHand)
+        {
+        }
 
         [Resolved]
         private MultiplayerClient client { get; set; } = null!;
 
-        protected override void Flush(CardHandReplayFrame[] frames)
+        protected override void Flush(RankedPlayCardHandReplayFrame[] frames)
         {
             if (frames.Length == 0)
                 return;

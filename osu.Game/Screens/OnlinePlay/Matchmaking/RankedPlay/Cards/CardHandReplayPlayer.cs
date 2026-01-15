@@ -2,8 +2,8 @@
 // See the LICENCE file in the repository root for full licence text.
 
 using osu.Framework.Allocation;
-using osu.Game.Online.Matchmaking.Events;
 using osu.Game.Online.Multiplayer;
+using osu.Game.Online.RankedPlay;
 
 namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
 {
