@@ -12,6 +12,8 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
 
         public double RecordInterval { get; init; } = 25;
 
+        public int MaxBufferSize = 20;
+
         private readonly PlayerCardHand cardHand;
 
         private readonly List<CardHandReplayFrame> buffer = new List<CardHandReplayFrame>();
@@ -37,7 +39,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
 
         private void recordFrame()
         {
-            if (!hasChanges)
+            if (!hasChanges || buffer.Count >= MaxBufferSize)
                 return;
 
             double delay = lastFrameTime != null ? Time.Current - lastFrameTime.Value : 0;
