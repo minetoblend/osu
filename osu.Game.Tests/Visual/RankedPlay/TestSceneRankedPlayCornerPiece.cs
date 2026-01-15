@@ -17,15 +17,12 @@ namespace osu.Game.Tests.Visual.RankedPlay
     {
         private readonly Bindable<Visibility> visibility = new Bindable<Visibility>(Visibility.Visible);
 
-        private RankedPlayCornerPiece playerCornerPiece = null!;
-        private RankedPlayCornerPiece opponentCornerPiece = null!;
-
         [BackgroundDependencyLoader]
         private void load()
         {
             Children =
             [
-                playerCornerPiece = new RankedPlayCornerPiece(RankedPlayColourScheme.Blue, Anchor.BottomLeft)
+                new RankedPlayCornerPiece(RankedPlayColourScheme.Blue, Anchor.BottomLeft)
                 {
                     State = { BindTarget = visibility },
                     Child = new RankedPlayUserDisplay(2, Anchor.BottomLeft, RankedPlayColourScheme.Blue)
@@ -33,7 +30,7 @@ namespace osu.Game.Tests.Visual.RankedPlay
                         RelativeSizeAxes = Axes.Both,
                     }
                 },
-                opponentCornerPiece = new RankedPlayCornerPiece(RankedPlayColourScheme.Red, Anchor.TopRight)
+                new RankedPlayCornerPiece(RankedPlayColourScheme.Red, Anchor.TopRight)
                 {
                     State = { BindTarget = visibility },
                     Child = new RankedPlayUserDisplay(2, Anchor.TopRight, RankedPlayColourScheme.Red)
