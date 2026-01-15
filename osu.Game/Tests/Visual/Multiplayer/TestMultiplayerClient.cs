@@ -445,7 +445,7 @@ namespace osu.Game.Tests.Visual.Multiplayer
                     await ((IMultiplayerClient)this).MatchEvent(new RankedPlayCardHandReplayEvent
                     {
                         UserId = userId,
-                        State = cardHandState.State
+                        Frames = cardHandState.Frames,
                     }).ConfigureAwait(false);
                     break;
             }

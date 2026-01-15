@@ -2,6 +2,7 @@
 // See the LICENCE file in the repository root for full licence text.
 
 using System.Linq;
+using NUnit.Framework;
 using osu.Framework.Allocation;
 using osu.Framework.Graphics;
 using osu.Framework.Testing;
@@ -17,6 +18,8 @@ namespace osu.Game.Tests.Visual.RankedPlay
     {
         private PlayerCardHand playerHand = null!;
         private OpponentCardHand opponentHand = null!;
+        private TestCardHandReplayPlayer player = null!;
+        private TestCardHandReplayRecorder recorder = null!;
 
         [Cached]
         private readonly OverlayColourProvider colourProvider = new OverlayColourProvider(OverlayColourScheme.Pink);
@@ -45,6 +48,12 @@ namespace osu.Game.Tests.Visual.RankedPlay
                     Anchor = Anchor.TopCentre,
                     Origin = Anchor.TopCentre,
                 },
+                player = new TestCardHandReplayPlayer(opponentHand),
+                recorder = new TestCardHandReplayRecorder(playerHand, player)
+                {
+                    FlushInterval = flushInterval,
+                    RecordInterval = recordInterval,
+                }
             ];
 
             foreach (var card in cards)
@@ -52,8 +61,44 @@ namespace osu.Game.Tests.Visual.RankedPlay
                 playerHand.AddCard(card);
                 opponentHand.AddCard(card);
             }
+        }
 
-            playerHand.StateChanged += () => opponentHand.SetState(playerHand.State);
+        private double flushInterval = 1000;
+        private double recordInterval = 25;
+
+        [Test]
+        public void TestCardHandReplay()
+        {
+            AddSliderStep("record interval", 0.0, 1000.0, 25.0, value =>
+            {
+                recordInterval = value;
+                recreateRecorder();
+            });
+            AddSliderStep("flush interval", 0.0, 5000.0, 1000.0, value =>
+            {
+                flushInterval = value;
+                recreateRecorder();
+            });
+        }
+
+        private void recreateRecorder()
+        {
+            Remove(recorder, true);
+            Add(recorder = new TestCardHandReplayRecorder(playerHand, player)
+            {
+                FlushInterval = flushInterval,
+                RecordInterval = recordInterval,
+            });
+        }
+
+        private partial class TestCardHandReplayRecorder(PlayerCardHand cardHand, TestCardHandReplayPlayer player) : CardHandReplayRecorderBase(cardHand)
+        {
+            protected override void Flush(CardHandReplayFrame[] frames) => player.EnqueueFrames(frames);
+        }
+
+        private partial class TestCardHandReplayPlayer(OpponentCardHand cardHand) : CardHandReplayPlayerBase(cardHand)
+        {
+            public new void EnqueueFrames(CardHandReplayFrame[] frames) => base.EnqueueFrames(frames);
         }
     }
 }

@@ -2,7 +2,6 @@
 // See the LICENCE file in the repository root for full licence text.
 
 using System;
-using System.Collections.Generic;
 using MessagePack;
 using osu.Game.Online.Multiplayer;
 using osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards;
@@ -19,7 +18,7 @@ namespace osu.Game.Online.Matchmaking.Events
         [Key(0)]
         public int UserId { get; set; }
 
-        [Key(0)]
-        public required Dictionary<Guid, CardHand.CardState> State { get; init; }
+        [Key(1)]
+        public required CardHandReplayFrame[] Frames { get; init; }
     }
 }
