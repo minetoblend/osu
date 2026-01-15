@@ -8,6 +8,9 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
 {
     public abstract partial class CardHandReplayPlayerBase : Component
     {
+        public int MaxQueuedFrames { get; set; } = 20;
+
+        private int queuedFrames;
         private double? lastPlayback;
         private readonly OpponentCardHand cardHand;
 
@@ -20,11 +23,18 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
         {
             foreach (var frame in frames)
             {
+                if (queuedFrames >= MaxQueuedFrames)
+                    return;
+
+                queuedFrames++;
+
                 double delay = Math.Max(lastPlayback != null ? lastPlayback.Value + frame.Delay - Time.Current : 0, 0);
                 lastPlayback = Time.Current + delay;
 
                 Scheduler.AddDelayed(() =>
                 {
+                    queuedFrames--;
+
                     cardHand.SetState(frame.Cards);
                 }, delay);
             }
