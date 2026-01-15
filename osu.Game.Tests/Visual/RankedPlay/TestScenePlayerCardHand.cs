@@ -13,7 +13,7 @@ using osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards;
 
 namespace osu.Game.Tests.Visual.RankedPlay
 {
-    public class TestScenePlayerCardHand : OsuTestScene
+    public partial class TestScenePlayerCardHand : OsuTestScene
     {
         [Cached]
         private readonly OverlayColourProvider colourProvider = new OverlayColourProvider(OverlayColourScheme.Purple);
