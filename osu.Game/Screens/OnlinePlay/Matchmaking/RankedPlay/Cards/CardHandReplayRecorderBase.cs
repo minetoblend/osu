@@ -10,7 +10,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
     public abstract partial class CardHandReplayRecorderBase : Component
     {
         /// <summary>
-        /// Interval at which buffered frames get collected & emitted
+        /// Interval at which buffered frames get collected and emitted
         /// </summary>
         public double FlushInterval { get; init; } = 1000;
 
