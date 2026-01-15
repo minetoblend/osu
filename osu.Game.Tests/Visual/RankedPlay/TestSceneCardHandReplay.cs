@@ -1,11 +1,13 @@
 // Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
+using System;
 using System.Linq;
 using NUnit.Framework;
 using osu.Framework.Allocation;
 using osu.Framework.Graphics;
 using osu.Framework.Testing;
+using osu.Framework.Utils;
 using osu.Game.Online.Multiplayer.MatchTypes.RankedPlay;
 using osu.Game.Overlays;
 using osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay;
@@ -65,6 +67,8 @@ namespace osu.Game.Tests.Visual.RankedPlay
 
         private double flushInterval = 1000;
         private double recordInterval = 25;
+        private double fixedLatency;
+        private double maxLatency;
 
         [Test]
         public void TestCardHandReplay()
@@ -79,6 +83,16 @@ namespace osu.Game.Tests.Visual.RankedPlay
                 flushInterval = value;
                 recreateRecorder();
             });
+            AddSliderStep("latency", 0.0, 5000.0, 0.0, value =>
+            {
+                fixedLatency = value;
+                recreateRecorder();
+            });
+            AddSliderStep("randomize latency", 0.0, 5000.0, 0.0, value =>
+            {
+                maxLatency = value;
+                recreateRecorder();
+            });
         }
 
         private void recreateRecorder()
@@ -88,12 +102,27 @@ namespace osu.Game.Tests.Visual.RankedPlay
             {
                 FlushInterval = flushInterval,
                 RecordInterval = recordInterval,
+                FixedLatency = fixedLatency,
+                RandomLatency = maxLatency,
             });
         }
 
         private partial class TestCardHandReplayRecorder(PlayerCardHand cardHand, TestCardHandReplayPlayer player) : CardHandReplayRecorderBase(cardHand)
         {
-            protected override void Flush(CardHandReplayFrame[] frames) => player.EnqueueFrames(frames);
+            private double lastSendTime;
+
+            public double FixedLatency;
+
+            public double RandomLatency;
+
+            protected override void Flush(CardHandReplayFrame[] frames)
+            {
+                double sendTime = Math.Max(lastSendTime, Time.Current + FixedLatency + RNG.NextDouble(RandomLatency));
+
+                lastSendTime = sendTime;
+
+                Scheduler.AddDelayed(() => player.EnqueueFrames(frames), sendTime - Time.Current);
+            }
         }
 
         private partial class TestCardHandReplayPlayer(OpponentCardHand cardHand) : CardHandReplayPlayerBase(cardHand)
