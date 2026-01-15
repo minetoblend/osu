@@ -45,6 +45,8 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
         private readonly Anchor contentAnchor;
         private readonly RankedPlayColourScheme colourScheme;
 
+        private BufferedContainer grayScaleContainer = null!;
+
         public RankedPlayUserDisplay(int userId, Anchor contentAnchor, RankedPlayColourScheme colourScheme)
         {
             this.userId = userId;
@@ -74,9 +76,13 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
                             Colour = colourScheme.Surface,
                             Alpha = 0.5f,
                         },
-                        new UpdateableAvatar(user)
+                        grayScaleContainer = new BufferedContainer(cachedFrameBuffer: false, pixelSnapping: true)
                         {
                             RelativeSizeAxes = Axes.Both,
+                            Child = new UpdateableAvatar(user)
+                            {
+                                RelativeSizeAxes = Axes.Both,
+                            }
                         }
                     ]
                 },
@@ -115,6 +121,11 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
             base.LoadComplete();
 
             client.MatchRoomStateChanged += onRoomStateChanged;
+
+            Health.BindValueChanged(e =>
+            {
+                grayScaleContainer.GrayscaleTo(e.NewValue <= 0 ? 1 : 0, 300);
+            });
         }
 
         private void onRoomStateChanged(MatchRoomState state) => Scheduler.Add(() =>
