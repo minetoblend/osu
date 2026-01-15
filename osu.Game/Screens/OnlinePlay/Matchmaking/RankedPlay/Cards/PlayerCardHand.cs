@@ -5,7 +5,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using osu.Framework.Bindables;
-using osu.Framework.Graphics;
 using osu.Framework.Input.Events;
 using osu.Game.Graphics.UserInterface;
 using osuTK.Input;
@@ -22,6 +21,11 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
         /// Fired if any card is selected or deselected
         /// </summary>
         public event Action? SelectionChanged;
+
+        /// <summary>
+        /// Fired if a card's <see cref="CardHand.HandCard.State"/> has changed
+        /// </summary>
+        public event Action? StateChanged;
 
         private CardSelectionMode selectionMode;
 
@@ -93,6 +97,15 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
             }
         }
 
+        protected override void OnCardStateChanged(HandCard card, CardState state)
+        {
+            StateChanged?.Invoke();
+
+            base.OnCardStateChanged(card, state);
+        }
+
+        public Dictionary<Guid, CardState> State => Cards.Select(static card => new KeyValuePair<Guid, CardState>(card.Item.Card.ID, card.State)).ToDictionary();
+
         public partial class PlayerHandCard : HandCard
         {
             public required Action<PlayerHandCard> Action;
@@ -130,7 +143,8 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
             {
                 if (e.Button == MouseButton.Left && AllowSelection.Value)
                 {
-                    Card.ScaleTo(0.95f, 300, Easing.OutExpo);
+                    CardPressed = true;
+
                     return true;
                 }
 
@@ -140,7 +154,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
             protected override void OnMouseUp(MouseUpEvent e)
             {
                 if (e.Button == MouseButton.Left)
-                    Card.ScaleTo(1f, 400, Easing.OutElasticHalf);
+                    CardPressed = false;
             }
 
             protected override bool OnClick(ClickEvent e)
