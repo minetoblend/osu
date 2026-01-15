@@ -64,6 +64,8 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                     RelativeSizeAxes = Axes.Both,
                     Height = 0.5f,
                 },
+                new CardHandReplayRecorder(playerHand),
+                new CardHandReplayPlayer(opponentHand),
                 textContainer = new FillFlowContainer
                 {
                     RelativeSizeAxes = Axes.X,
