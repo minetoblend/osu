@@ -74,23 +74,17 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
 
             try
             {
-                if (card.Selected)
-                {
-                    card.Selected = false;
-                    return;
-                }
-
                 if (selectionMode == CardSelectionMode.Single)
                 {
                     foreach (var c in Cards)
                     {
                         ((PlayerHandCard)c).Selected = c == card;
                     }
+
+                    return;
                 }
-                else
-                {
-                    card.Selected = true;
-                }
+
+                card.Selected = !card.Selected;
             }
             finally
             {
