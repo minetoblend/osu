@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using MessagePack;
 
 namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
@@ -22,5 +23,13 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
         /// </summary>
         [Key(1)]
         public required Dictionary<Guid, CardHand.CardState> Cards { get; init; }
+
+        /// <summary>
+        /// Creates a replay frame that only contains state entries that differ from the previous frame
+        /// </summary>
+        public CardHandReplayFrame RelativeTo(CardHandReplayFrame other) => this with
+        {
+            Cards = Cards.Where(entry => !other.Cards.Contains(entry)).ToDictionary(),
+        };
     }
 }
