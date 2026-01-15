@@ -2,9 +2,11 @@
 // See the LICENCE file in the repository root for full licence text.
 
 using NUnit.Framework;
+using osu.Framework.Allocation;
 using osu.Framework.Bindables;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
+using osu.Framework.Testing;
 using osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay;
 using osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components;
 using osu.Game.Tests.Visual.Multiplayer;
@@ -15,20 +17,23 @@ namespace osu.Game.Tests.Visual.RankedPlay
     {
         private readonly Bindable<Visibility> visibility = new Bindable<Visibility>(Visibility.Visible);
 
-        [Test]
-        public void TestCornerPieces()
+        private RankedPlayCornerPiece playerCornerPiece = null!;
+        private RankedPlayCornerPiece opponentCornerPiece = null!;
+
+        [BackgroundDependencyLoader]
+        private void load()
         {
-            AddStep("add children", () => Children =
+            Children =
             [
-                new RankedPlayCornerPiece(RankedPlayColourScheme.Blue, Anchor.BottomLeft)
+                playerCornerPiece = new RankedPlayCornerPiece(RankedPlayColourScheme.Blue, Anchor.BottomLeft)
                 {
                     State = { BindTarget = visibility },
-                    Child = new RankedPlayUserDisplay(1, Anchor.BottomLeft, RankedPlayColourScheme.Blue)
+                    Child = new RankedPlayUserDisplay(2, Anchor.BottomLeft, RankedPlayColourScheme.Blue)
                     {
                         RelativeSizeAxes = Axes.Both,
                     }
                 },
-                new RankedPlayCornerPiece(RankedPlayColourScheme.Red, Anchor.TopRight)
+                opponentCornerPiece = new RankedPlayCornerPiece(RankedPlayColourScheme.Red, Anchor.TopRight)
                 {
                     State = { BindTarget = visibility },
                     Child = new RankedPlayUserDisplay(2, Anchor.TopRight, RankedPlayColourScheme.Red)
@@ -36,10 +41,21 @@ namespace osu.Game.Tests.Visual.RankedPlay
                         RelativeSizeAxes = Axes.Both,
                     }
                 },
-            ]);
+            ];
+        }
 
+        [Test]
+        public void TestCornerPieces()
+        {
             AddStep("hide", () => visibility.Value = Visibility.Hidden);
             AddStep("show", () => visibility.Value = Visibility.Visible);
+            AddSliderStep("health", 0, 1_000_000, 1_000_000, value =>
+            {
+                foreach (var d in this.ChildrenOfType<RankedPlayUserDisplay>())
+                {
+                    d.Health.Value = value;
+                }
+            });
         }
     }
 }

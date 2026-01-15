@@ -47,6 +47,9 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
 
         private BufferedContainer grayScaleContainer = null!;
 
+        [Resolved]
+        private RankedPlayCornerPiece? cornerPiece { get; set; }
+
         public RankedPlayUserDisplay(int userId, Anchor contentAnchor, RankedPlayColourScheme colourScheme)
         {
             this.userId = userId;
@@ -125,6 +128,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
             Health.BindValueChanged(e =>
             {
                 grayScaleContainer.GrayscaleTo(e.NewValue <= 0 ? 1 : 0, 300);
+                cornerPiece?.OnHealthChanged(e.NewValue);
             });
         }
 
