@@ -9,10 +9,19 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
 {
     public abstract partial class CardHandReplayRecorderBase : Component
     {
+        /// <summary>
+        /// Interval at which buffered frames get collected & emitted
+        /// </summary>
         public double FlushInterval { get; init; } = 1000;
 
+        /// <summary>
+        /// Minimum interval between individual replay frames
+        /// </summary>
         public double RecordInterval { get; init; } = 25;
 
+        /// <summary>
+        /// Max amount of frames to collect per <see cref="FlushInterval"/>
+        /// </summary>
         public int MaxBufferSize = 20;
 
         private readonly PlayerCardHand cardHand;
