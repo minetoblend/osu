@@ -24,7 +24,7 @@ namespace osu.Game.Tests.Visual.RankedPlay
         {
             base.SetUpSteps();
 
-            AddStep("add display", () => Child = new RankedPlayUserDisplay(1, Anchor.BottomLeft, RankedPlayColourScheme.Blue)
+            AddStep("add display", () => Child = new RankedPlayUserDisplay(2, Anchor.BottomLeft, RankedPlayColourScheme.Blue)
             {
                 Anchor = Anchor.Centre,
                 Origin = Anchor.Centre,
@@ -36,7 +36,7 @@ namespace osu.Game.Tests.Visual.RankedPlay
         [Test]
         public void TesUserDisplay()
         {
-            AddStep("blue color scheme", () => Child = new RankedPlayUserDisplay(1, Anchor.BottomLeft, RankedPlayColourScheme.Blue)
+            AddStep("blue color scheme", () => Child = new RankedPlayUserDisplay(2, Anchor.BottomLeft, RankedPlayColourScheme.Blue)
             {
                 Anchor = Anchor.Centre,
                 Origin = Anchor.Centre,
@@ -44,7 +44,7 @@ namespace osu.Game.Tests.Visual.RankedPlay
                 Health = { BindTarget = health }
             });
 
-            AddStep("red color scheme", () => Child = new RankedPlayUserDisplay(1, Anchor.BottomLeft, RankedPlayColourScheme.Red)
+            AddStep("red color scheme", () => Child = new RankedPlayUserDisplay(2, Anchor.BottomLeft, RankedPlayColourScheme.Red)
             {
                 Anchor = Anchor.Centre,
                 Origin = Anchor.Centre,

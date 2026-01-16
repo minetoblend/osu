@@ -1,6 +1,7 @@
 // Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
+using osu.Framework.Allocation;
 using osu.Framework.Extensions.Color4Extensions;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Colour;
@@ -11,9 +12,10 @@ using osuTK;
 
 namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
 {
+    [Cached]
     public partial class RankedPlayCornerPiece : VisibilityContainer
     {
-        private readonly Container background;
+        private readonly BufferedContainer background;
         private readonly Container bottomLayer;
         private readonly Container topLayer;
 
@@ -27,7 +29,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
 
             InternalChildren =
             [
-                background = new Container
+                background = new BufferedContainer
                 {
                     RelativeSizeAxes = Axes.Both,
                     Anchor = Anchor.Centre,
@@ -102,6 +104,11 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
                     }
                 }
             ];
+        }
+
+        public void OnHealthChanged(int health)
+        {
+            background.GrayscaleTo(health <= 0f ? 0.75f : 0, 300);
         }
 
         protected override void Update()

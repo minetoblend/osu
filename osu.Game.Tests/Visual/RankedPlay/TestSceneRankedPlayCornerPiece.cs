@@ -5,6 +5,7 @@ using NUnit.Framework;
 using osu.Framework.Bindables;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
+using osu.Framework.Testing;
 using osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay;
 using osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components;
 using osu.Game.Tests.Visual.Multiplayer;
@@ -15,31 +16,46 @@ namespace osu.Game.Tests.Visual.RankedPlay
     {
         private readonly Bindable<Visibility> visibility = new Bindable<Visibility>(Visibility.Visible);
 
+        public override void SetUpSteps()
+        {
+            base.SetUpSteps();
+
+            AddStep("add children", () =>
+            {
+                Children =
+                [
+                    new RankedPlayCornerPiece(RankedPlayColourScheme.Blue, Anchor.BottomLeft)
+                    {
+                        State = { BindTarget = visibility },
+                        Child = new RankedPlayUserDisplay(2, Anchor.BottomLeft, RankedPlayColourScheme.Blue)
+                        {
+                            RelativeSizeAxes = Axes.Both,
+                        }
+                    },
+                    new RankedPlayCornerPiece(RankedPlayColourScheme.Red, Anchor.TopRight)
+                    {
+                        State = { BindTarget = visibility },
+                        Child = new RankedPlayUserDisplay(2, Anchor.TopRight, RankedPlayColourScheme.Red)
+                        {
+                            RelativeSizeAxes = Axes.Both,
+                        }
+                    },
+                ];
+            });
+        }
+
         [Test]
         public void TestCornerPieces()
         {
-            AddStep("add children", () => Children =
-            [
-                new RankedPlayCornerPiece(RankedPlayColourScheme.Blue, Anchor.BottomLeft)
-                {
-                    State = { BindTarget = visibility },
-                    Child = new RankedPlayUserDisplay(1, Anchor.BottomLeft, RankedPlayColourScheme.Blue)
-                    {
-                        RelativeSizeAxes = Axes.Both,
-                    }
-                },
-                new RankedPlayCornerPiece(RankedPlayColourScheme.Red, Anchor.TopRight)
-                {
-                    State = { BindTarget = visibility },
-                    Child = new RankedPlayUserDisplay(2, Anchor.TopRight, RankedPlayColourScheme.Red)
-                    {
-                        RelativeSizeAxes = Axes.Both,
-                    }
-                },
-            ]);
-
-            AddStep("hide", () => visibility.Value = Visibility.Hidden);
             AddStep("show", () => visibility.Value = Visibility.Visible);
+            AddStep("hide", () => visibility.Value = Visibility.Hidden);
+            AddSliderStep("health", 0, 1_000_000, 1_000_000, value =>
+            {
+                foreach (var d in this.ChildrenOfType<RankedPlayUserDisplay>())
+                {
+                    d.Health.Value = value;
+                }
+            });
         }
     }
 }
