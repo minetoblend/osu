@@ -2,7 +2,6 @@
 // See the LICENCE file in the repository root for full licence text.
 
 using NUnit.Framework;
-using osu.Framework.Allocation;
 using osu.Framework.Bindables;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
@@ -17,28 +16,32 @@ namespace osu.Game.Tests.Visual.RankedPlay
     {
         private readonly Bindable<Visibility> visibility = new Bindable<Visibility>(Visibility.Visible);
 
-        [BackgroundDependencyLoader]
-        private void load()
+        public override void SetUpSteps()
         {
-            Children =
-            [
-                new RankedPlayCornerPiece(RankedPlayColourScheme.Blue, Anchor.BottomLeft)
-                {
-                    State = { BindTarget = visibility },
-                    Child = new RankedPlayUserDisplay(2, Anchor.BottomLeft, RankedPlayColourScheme.Blue)
+            base.SetUpSteps();
+
+            AddStep("add children", () =>
+            {
+                Children =
+                [
+                    new RankedPlayCornerPiece(RankedPlayColourScheme.Blue, Anchor.BottomLeft)
                     {
-                        RelativeSizeAxes = Axes.Both,
-                    }
-                },
-                new RankedPlayCornerPiece(RankedPlayColourScheme.Red, Anchor.TopRight)
-                {
-                    State = { BindTarget = visibility },
-                    Child = new RankedPlayUserDisplay(2, Anchor.TopRight, RankedPlayColourScheme.Red)
+                        State = { BindTarget = visibility },
+                        Child = new RankedPlayUserDisplay(2, Anchor.BottomLeft, RankedPlayColourScheme.Blue)
+                        {
+                            RelativeSizeAxes = Axes.Both,
+                        }
+                    },
+                    new RankedPlayCornerPiece(RankedPlayColourScheme.Red, Anchor.TopRight)
                     {
-                        RelativeSizeAxes = Axes.Both,
-                    }
-                },
-            ];
+                        State = { BindTarget = visibility },
+                        Child = new RankedPlayUserDisplay(2, Anchor.TopRight, RankedPlayColourScheme.Red)
+                        {
+                            RelativeSizeAxes = Axes.Both,
+                        }
+                    },
+                ];
+            });
         }
 
         [Test]
