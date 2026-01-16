@@ -47,8 +47,8 @@ namespace osu.Game.Tests.Visual.RankedPlay
         [Test]
         public void TestCornerPieces()
         {
-            AddStep("hide", () => visibility.Value = Visibility.Hidden);
             AddStep("show", () => visibility.Value = Visibility.Visible);
+            AddStep("hide", () => visibility.Value = Visibility.Hidden);
             AddSliderStep("health", 0, 1_000_000, 1_000_000, value =>
             {
                 foreach (var d in this.ChildrenOfType<RankedPlayUserDisplay>())
