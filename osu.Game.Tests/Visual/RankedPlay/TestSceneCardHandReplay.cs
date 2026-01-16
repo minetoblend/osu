@@ -5,19 +5,20 @@ using System;
 using System.Linq;
 using NUnit.Framework;
 using osu.Framework.Allocation;
+using osu.Framework.Extensions.ObjectExtensions;
 using osu.Framework.Graphics;
-using osu.Framework.Testing;
 using osu.Framework.Utils;
 using osu.Game.Online.Multiplayer.MatchTypes.RankedPlay;
 using osu.Game.Online.RankedPlay;
 using osu.Game.Overlays;
 using osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay;
 using osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards;
+using osu.Game.Tests.Visual.Multiplayer;
 using osuTK;
 
 namespace osu.Game.Tests.Visual.RankedPlay
 {
-    public partial class TestSceneCardHandReplay : TestScene
+    public partial class TestSceneCardHandReplay : MultiplayerTestScene
     {
         private PlayerCardHand playerHand = null!;
         private OpponentCardHand opponentHand = null!;
@@ -27,43 +28,47 @@ namespace osu.Game.Tests.Visual.RankedPlay
         [Cached]
         private readonly OverlayColourProvider colourProvider = new OverlayColourProvider(OverlayColourScheme.Pink);
 
-        [BackgroundDependencyLoader]
-        private void load()
+        public override void SetUpSteps()
         {
-            var cards = Enumerable.Range(0, 5)
-                                  .Select(_ => new RankedPlayCardWithPlaylistItem(new RankedPlayCardItem()))
-                                  .ToArray();
+            base.SetUpSteps();
 
-            Children =
-            [
-                playerHand = new PlayerCardHand
-                {
-                    RelativeSizeAxes = Axes.Both,
-                    Size = new Vector2(0.5f),
-                    Anchor = Anchor.BottomCentre,
-                    Origin = Anchor.BottomCentre,
-                    SelectionMode = CardSelectionMode.Multiple
-                },
-                opponentHand = new OpponentCardHand
-                {
-                    RelativeSizeAxes = Axes.Both,
-                    Size = new Vector2(0.5f),
-                    Anchor = Anchor.TopCentre,
-                    Origin = Anchor.TopCentre,
-                },
-                player = new TestCardHandReplayPlayer(opponentHand),
-                recorder = new TestCardHandReplayRecorder(playerHand, player)
-                {
-                    FlushInterval = flushInterval,
-                    RecordInterval = recordInterval,
-                }
-            ];
-
-            foreach (var card in cards)
+            AddStep("setup", () =>
             {
-                playerHand.AddCard(card);
-                opponentHand.AddCard(card);
-            }
+                var cards = Enumerable.Range(0, 5)
+                                      .Select(_ => new RankedPlayCardWithPlaylistItem(new RankedPlayCardItem()))
+                                      .ToArray();
+
+                Children =
+                [
+                    playerHand = new PlayerCardHand
+                    {
+                        RelativeSizeAxes = Axes.Both,
+                        Size = new Vector2(0.5f),
+                        Anchor = Anchor.BottomCentre,
+                        Origin = Anchor.BottomCentre,
+                        SelectionMode = CardSelectionMode.Multiple
+                    },
+                    opponentHand = new OpponentCardHand
+                    {
+                        RelativeSizeAxes = Axes.Both,
+                        Size = new Vector2(0.5f),
+                        Anchor = Anchor.TopCentre,
+                        Origin = Anchor.TopCentre,
+                    },
+                    player = new TestCardHandReplayPlayer(opponentHand),
+                    recorder = new TestCardHandReplayRecorder(playerHand, player)
+                    {
+                        FlushInterval = flushInterval,
+                        RecordInterval = recordInterval,
+                    }
+                ];
+
+                foreach (var card in cards)
+                {
+                    playerHand.AddCard(card);
+                    opponentHand.AddCard(card);
+                }
+            });
         }
 
         private double flushInterval = 1000;
@@ -98,14 +103,17 @@ namespace osu.Game.Tests.Visual.RankedPlay
 
         private void recreateRecorder()
         {
-            Remove(recorder, true);
-            Add(recorder = new TestCardHandReplayRecorder(playerHand, player)
+            if (recorder.IsNotNull())
             {
-                FlushInterval = flushInterval,
-                RecordInterval = recordInterval,
-                FixedLatency = fixedLatency,
-                RandomLatency = maxLatency,
-            });
+                Remove(recorder, true);
+                Add(recorder = new TestCardHandReplayRecorder(playerHand, player)
+                {
+                    FlushInterval = flushInterval,
+                    RecordInterval = recordInterval,
+                    FixedLatency = fixedLatency,
+                    RandomLatency = maxLatency,
+                });
+            }
         }
 
         private partial class TestCardHandReplayRecorder(PlayerCardHand cardHand, TestCardHandReplayPlayer player) : CardHandReplayRecorderBase(cardHand)
