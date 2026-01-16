@@ -169,31 +169,53 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
 
             float x = -totalWidth / 2;
 
-            if (cardContainer.Any(it => it.CardHovered))
-                x -= 10;
+            const int no_card_hovered = -1;
+            int hoverIndex = no_card_hovered;
 
-            float xOffset = 0;
+            for (int i = 0; i < cardContainer.Count; i++)
+            {
+                if (cardContainer[i].CardHovered)
+                {
+                    hoverIndex = i;
+                    break;
+                }
+            }
+
             double delay = 0;
 
-            foreach (var child in cardContainer)
+            for (int i = 0; i < cardContainer.Count; i++)
             {
+                var child = cardContainer[i];
+
                 x += child.LayoutWidth / 2;
 
                 float yOffset = 0;
 
                 var position = new Vector2(x, MathF.Pow(MathF.Abs(x / 250), 2) * 20 + 10);
 
+                if (hoverIndex != no_card_hovered && cardContainer.Children.Count > 1)
+                {
+                    int distance = Math.Abs(i - hoverIndex);
+                    int direction = Math.Sign(i - hoverIndex);
+
+                    position.X += direction switch
+                    {
+                        0 => -10,
+
+                        // special case for the left card when there's only 2 cards
+                        // too much offset looks kinda odd here so it's reduced
+                        < 0 when cardContainer.Count == 2 => -3,
+
+                        < 0 => -10 / MathF.Pow(distance, 3),
+
+                        // cards right to the hovered card have a higher offset because they are partially
+                        // covering the cards to their left
+                        > 0 => 20 / MathF.Pow(distance, 2),
+                    };
+                }
+
                 if (child.CardHovered)
-                {
-                    x += 30;
-                    xOffset = 30;
                     yOffset = -HoverYOffset;
-                }
-                else
-                {
-                    x -= xOffset / 2;
-                    xOffset /= 2;
-                }
 
                 float rotation = x * 0.03f;
 

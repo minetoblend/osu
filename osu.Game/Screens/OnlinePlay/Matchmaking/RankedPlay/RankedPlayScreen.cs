@@ -41,6 +41,8 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
     {
         protected override bool InitialBackButtonVisibility => false;
 
+        public override bool HideOverlaysOnEnter => true;
+
         public bool RetryRequested { get; private set; }
 
         public RankedPlaySubScreen? ActiveSubScreen { get; private set; }
