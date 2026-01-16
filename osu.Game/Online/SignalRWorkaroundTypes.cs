@@ -63,6 +63,8 @@ namespace osu.Game.Online
             // ranked play
             (typeof(RankedPlayRoomState), typeof(MatchRoomState)),
             (typeof(RankedPlayStageCountdown), typeof(MultiplayerCountdown)),
+            (typeof(RankedPlayCardHandReplayRequest), typeof(MatchUserRequest)),
+            (typeof(RankedPlayCardHandReplayEvent), typeof(MatchServerEvent)),
         };
     }
 }

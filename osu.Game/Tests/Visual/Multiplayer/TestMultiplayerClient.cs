@@ -440,6 +440,14 @@ namespace osu.Game.Tests.Visual.Multiplayer
                         Action = avatarAction.Action
                     }).ConfigureAwait(false);
                     break;
+
+                case RankedPlayCardHandReplayRequest cardHandState:
+                    await ((IMultiplayerClient)this).MatchEvent(new RankedPlayCardHandReplayEvent
+                    {
+                        UserId = userId,
+                        Frames = cardHandState.Frames,
+                    }).ConfigureAwait(false);
+                    break;
             }
         }
 

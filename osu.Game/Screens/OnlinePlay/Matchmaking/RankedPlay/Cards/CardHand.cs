@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using osu.Framework.Allocation;
+using osu.Framework.Bindables;
 using osu.Framework.Caching;
 using osu.Framework.Extensions.Color4Extensions;
 using osu.Framework.Graphics;
@@ -13,6 +14,7 @@ using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Primitives;
 using osu.Framework.Graphics.Shapes;
 using osu.Game.Online.Multiplayer.MatchTypes.RankedPlay;
+using osu.Game.Online.RankedPlay;
 using osuTK;
 
 namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
@@ -142,7 +144,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
 
         protected virtual HandCard CreateHandCard(RankedPlayCard card) => new HandCard(card);
 
-        protected virtual void OnCardStateChanged(HandCard handCardFacade, CardState state) => InvalidateLayout();
+        protected virtual void OnCardStateChanged(HandCard card, RankedPlayCardState state) => InvalidateLayout();
 
         #region Layout
 
@@ -241,22 +243,12 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
         {
             public float LayoutWidth => DrawWidth * (State.Hovered ? hover_scale : 1);
 
-            private CardState state;
+            private readonly Bindable<RankedPlayCardState> state = new Bindable<RankedPlayCardState>();
 
-            public CardState State
+            public RankedPlayCardState State
             {
-                get => state;
-                set
-                {
-                    if (state.Equals(value))
-                        return;
-
-                    state = value;
-
-                    selectionOverlay.Alpha = state.Selected ? 1 : 0;
-
-                    cardHand.OnCardStateChanged(this, value);
-                }
+                get => state.Value;
+                set => state.Value = value;
             }
 
             public bool Selected
@@ -271,12 +263,20 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
                 set => State = State with { Hovered = value };
             }
 
+            public bool CardPressed
+            {
+                get => State.Pressed;
+                set => State = State with { Pressed = value };
+            }
+
             private readonly Container selectionOverlay;
 
             [Resolved]
             private CardHand cardHand { get; set; } = null!;
 
             public readonly RankedPlayCard Card;
+
+            public RankedPlayCardWithPlaylistItem Item => Card.Item;
 
             public HandCard(RankedPlayCard card)
             {
@@ -310,6 +310,31 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
                 };
             }
 
+            protected override void LoadComplete()
+            {
+                base.LoadComplete();
+
+                state.BindValueChanged(onStateChanged, true);
+            }
+
+            private void onStateChanged(ValueChangedEvent<RankedPlayCardState> state)
+            {
+                cardHand.OnCardStateChanged(this, state.NewValue);
+
+                selectionOverlay.Alpha = state.NewValue.Selected ? 1 : 0;
+
+                switch (state.NewValue.Pressed, state.OldValue.Pressed)
+                {
+                    case (true, false):
+                        Card.ScaleTo(0.95f, 300, Easing.OutExpo);
+                        break;
+
+                    case (false, true):
+                        Card.ScaleTo(1f, 400, Easing.OutElasticHalf);
+                        break;
+                }
+            }
+
             public RankedPlayCard Detach()
             {
                 Card.OverlayLayer.Clear();
@@ -327,7 +352,5 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
                 Card.Elevation = float.Lerp(CardHovered ? 1 : 0, Card.Elevation, (float)Math.Exp(-0.03f * Time.Elapsed));
             }
         }
-
-        public readonly record struct CardState(bool Selected, bool Hovered);
     }
 }
