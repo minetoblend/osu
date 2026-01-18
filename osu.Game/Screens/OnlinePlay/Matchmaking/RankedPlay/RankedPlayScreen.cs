@@ -464,9 +464,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                 return;
 
             beatmap.NewValue.PrepareTrackForPreview(true);
-#if (!DEBUG)
             music.EnsurePlayingSomething();
-#endif
         }
 
         public void PresentBeatmap(WorkingBeatmap beatmap, RulesetInfo ruleset)
