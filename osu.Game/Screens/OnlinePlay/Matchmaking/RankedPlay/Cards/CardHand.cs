@@ -163,7 +163,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
             if (contracted)
                 return;
 
-            const float spacing = -40;
+            const float spacing = -20;
 
             float totalWidth = cardContainer.Sum(it => it.LayoutWidth + spacing) - spacing;
 
@@ -191,7 +191,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
 
                 float yOffset = 0;
 
-                var position = new Vector2(x, MathF.Pow(MathF.Abs(x / 250), 2) * 20 + 10);
+                var position = new Vector2(x, MathF.Pow(MathF.Abs(x / 250), 2) * 20 - 10);
 
                 if (hoverIndex != no_card_hovered && cardContainer.Children.Count > 1)
                 {
@@ -210,7 +210,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
 
                         // cards right to the hovered card have a higher offset because they are partially
                         // covering the cards to their left
-                        > 0 => 20 / MathF.Pow(distance, 2),
+                        > 0 => 10 / MathF.Pow(distance, 2),
                     };
                 }
 
@@ -296,16 +296,21 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
                 card.OverlayLayer.Child = selectionOverlay = new Container
                 {
                     RelativeSizeAxes = Axes.Both,
-                    Masking = true,
-                    CornerRadius = 10,
-                    BorderThickness = 4,
-                    BorderColour = Color4Extensions.FromHex("72D5FF"),
+                    Padding = new MarginPadding(-3),
                     Alpha = 0,
-                    Child = new Box
+                    Child = new Container
                     {
                         RelativeSizeAxes = Axes.Both,
-                        Alpha = 0,
-                        AlwaysPresent = true
+                        Masking = true,
+                        CornerRadius = 8,
+                        BorderThickness = 4,
+                        BorderColour = Color4Extensions.FromHex("72D5FF"),
+                        Child = new Box
+                        {
+                            RelativeSizeAxes = Axes.Both,
+                            Alpha = 0,
+                            AlwaysPresent = true
+                        }
                     }
                 };
             }

@@ -48,7 +48,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
                 {
                     RelativeSizeAxes = Axes.Both,
                     Masking = true,
-                    CornerRadius = 10,
+                    CornerRadius = 4,
                     Anchor = Anchor.Centre,
                     Origin = Anchor.Centre,
                     EdgeEffect = new EdgeEffectParameters
@@ -66,8 +66,8 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
                 },
                 content = new Container
                 {
-                    Masking = true,
-                    CornerRadius = 10,
+                    //Masking = true,
+                    CornerRadius = 4,
                     RelativeSizeAxes = Axes.Both,
                     Anchor = Anchor.Centre,
                     Origin = Anchor.Centre,
@@ -115,7 +115,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
         {
             if (playlistItem == null)
             {
-                setContent(new RankedPlayCardBackSide(), true);
+                SetContent(new RankedPlayCardBackSide(), true);
                 return;
             }
 
@@ -141,11 +141,11 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
                     Scale = new Vector2(0.4f) // TODO: make both card drawables the same size
                 };
 
-                setContent(drawable, flip);
+                SetContent(drawable, flip);
             });
         });
 
-        private void setContent(Drawable newContent, bool flip)
+        public void SetContent(Drawable newContent, bool flip)
         {
             if (!flip)
             {
