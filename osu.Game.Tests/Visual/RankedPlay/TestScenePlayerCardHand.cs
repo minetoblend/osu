@@ -33,6 +33,48 @@ namespace osu.Game.Tests.Visual.RankedPlay
         }
 
         [Test]
+        public void TestSingleSelectionMode()
+        {
+            AddStep("add cards", () =>
+            {
+                cardHand.Clear();
+                for (int i = 0; i < 5; i++)
+                    cardHand.AddCard(new RankedPlayCardWithPlaylistItem(new RankedPlayCardItem()));
+            });
+            AddStep("single selection mode", () => cardHand.SelectionMode = CardSelectionMode.Single);
+
+            AddStep("click first card", () => cardHand.Cards.First().TriggerClick());
+            AddAssert("first card selected", () => cardHand.Selection.SequenceEqual([cardHand.Cards.First().Item]));
+
+            AddStep("click second card", () => cardHand.Cards.ElementAt(1).TriggerClick());
+            AddAssert("second card selected", () => cardHand.Selection.SequenceEqual([cardHand.Cards.ElementAt(1).Item]));
+
+            AddStep("click second card again", () => cardHand.Cards.ElementAt(1).TriggerClick());
+            AddAssert("second card selected", () => cardHand.Selection.SequenceEqual([cardHand.Cards.ElementAt(1).Item]));
+        }
+
+        [Test]
+        public void TestMultiSelectionMode()
+        {
+            AddStep("add cards", () =>
+            {
+                cardHand.Clear();
+                for (int i = 0; i < 5; i++)
+                    cardHand.AddCard(new RankedPlayCardWithPlaylistItem(new RankedPlayCardItem()));
+            });
+            AddStep("single selection mode", () => cardHand.SelectionMode = CardSelectionMode.Multiple);
+
+            AddStep("click first card", () => cardHand.Cards.First().TriggerClick());
+            AddAssert("first card selected", () => cardHand.Selection.SequenceEqual([cardHand.Cards.First().Item]));
+
+            AddStep("click second card", () => cardHand.Cards.ElementAt(1).TriggerClick());
+            AddAssert("both cards selected", () => cardHand.Selection.SequenceEqual([cardHand.Cards.ElementAt(0).Item, cardHand.Cards.ElementAt(1).Item]));
+
+            AddStep("click second card again", () => cardHand.Cards.ElementAt(1).TriggerClick());
+            AddAssert("first card selected", () => cardHand.Selection.SequenceEqual([cardHand.Cards.ElementAt(0).Item]));
+        }
+
+        [Test]
         public void TestCardCount()
         {
             for (int i = 1; i <= 8; i++)
@@ -41,8 +83,7 @@ namespace osu.Game.Tests.Visual.RankedPlay
 
                 AddStep($"{i} {"cards".Pluralize(i == 1)}", () =>
                 {
-                    foreach (var card in cardHand.Cards.ToArray())
-                        cardHand.RemoveCard(card.Card.Item);
+                    cardHand.Clear();
 
                     for (int j = 0; j < numCards; j++)
                         cardHand.AddCard(new RankedPlayCardWithPlaylistItem(new RankedPlayCardItem()));
