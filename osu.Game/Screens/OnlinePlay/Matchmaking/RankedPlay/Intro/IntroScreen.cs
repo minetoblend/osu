@@ -5,6 +5,8 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using osu.Framework.Allocation;
+using osu.Framework.Audio;
+using osu.Framework.Audio.Sample;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Game.Database;
@@ -31,6 +33,16 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Intro
 
         [Resolved]
         private MusicController? musicController { get; set; }
+
+        private Sample? windupSample;
+        private Sample? impactSample;
+
+        [BackgroundDependencyLoader]
+        private void load(AudioManager audio)
+        {
+            windupSample = audio.Samples.Get("Results/swoosh-up");
+            impactSample = audio.Samples.Get("Results/rank-impact-pass");
+        }
 
         protected override void LoadComplete()
         {
@@ -66,7 +78,8 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Intro
 
         public void PlayIntroSequence(UserWithRating player, UserWithRating opponent, double starRating)
         {
-            double delay = 0;
+            // 1500ms delay added temporarily to account for the windup placeholder sample's duration
+            double delay = 1500;
 
             var vsScreen = new VsSequence(player, opponent);
 
@@ -80,6 +93,12 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Intro
             {
                 DuckDuration = impactDelay
             });
+
+            if (windupSample != null)
+            {
+                Scheduler.AddDelayed(() => windupSample?.Play(), impactDelay - windupSample.Length);
+                Scheduler.AddDelayed(() => impactSample?.Play(), impactDelay);
+            }
 
             Scheduler.AddDelayed(() => CornerPieceVisibility.Value = Visibility.Visible, delay);
 
