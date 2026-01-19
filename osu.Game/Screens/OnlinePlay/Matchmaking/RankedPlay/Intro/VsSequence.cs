@@ -127,7 +127,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Intro
             ];
         }
 
-        public void Play(ref double delay)
+        public void Play(ref double delay, out double impactDelay)
         {
             using (BeginDelayedSequence(delay))
             {
@@ -138,6 +138,8 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Intro
             }
 
             delay += 850;
+
+            impactDelay = delay;
 
             using (BeginDelayedSequence(delay))
             {

@@ -1,9 +1,12 @@
 // Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 using osu.Framework.Allocation;
+using osu.Framework.Audio;
+using osu.Framework.Audio.Sample;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Game.Database;
@@ -11,6 +14,7 @@ using osu.Game.Online.API;
 using osu.Game.Online.API.Requests.Responses;
 using osu.Game.Online.Multiplayer;
 using osu.Game.Online.Multiplayer.MatchTypes.RankedPlay;
+using osu.Game.Overlays;
 
 namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Intro
 {
@@ -26,6 +30,19 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Intro
 
         [Resolved]
         private IAPIProvider api { get; set; } = null!;
+
+        [Resolved]
+        private MusicController? musicController { get; set; }
+
+        private Sample? windupSample;
+        private Sample? impactSample;
+
+        [BackgroundDependencyLoader]
+        private void load(AudioManager audio)
+        {
+            windupSample = audio.Samples.Get("Results/swoosh-up");
+            impactSample = audio.Samples.Get("Results/rank-impact-pass");
+        }
 
         protected override void LoadComplete()
         {
@@ -57,9 +74,12 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Intro
 
         private StarRatingSequence? starRatingAnimation;
 
+        private IDisposable? duckOperation;
+
         public void PlayIntroSequence(UserWithRating player, UserWithRating opponent, double starRating)
         {
-            double delay = 0;
+            // 1500ms delay added temporarily to account for the windup placeholder sample's duration
+            double delay = 1500;
 
             var vsScreen = new VsSequence(player, opponent);
 
@@ -67,7 +87,18 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Intro
 
             AddRangeInternal([vsScreen, starRatingAnimation]);
 
-            vsScreen.Play(ref delay);
+            vsScreen.Play(ref delay, out double impactDelay);
+
+            duckOperation = musicController?.Duck(new DuckParameters
+            {
+                DuckDuration = impactDelay
+            });
+
+            if (windupSample != null)
+            {
+                Scheduler.AddDelayed(() => windupSample?.Play(), impactDelay - windupSample.Length);
+                Scheduler.AddDelayed(() => impactSample?.Play(), impactDelay);
+            }
 
             Scheduler.AddDelayed(() => CornerPieceVisibility.Value = Visibility.Visible, delay);
 
@@ -78,7 +109,16 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Intro
         {
             starRatingAnimation?.PopOut();
 
+            duckOperation?.Dispose();
+
             this.Delay(500).FadeOut();
+        }
+
+        protected override void Dispose(bool isDisposing)
+        {
+            base.Dispose(isDisposing);
+
+            duckOperation?.Dispose();
         }
     }
 }
