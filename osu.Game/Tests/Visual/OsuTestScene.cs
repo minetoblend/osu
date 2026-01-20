@@ -307,7 +307,7 @@ namespace osu.Game.Tests.Visual
                     new APITag
                     {
                         Id = 2,
-                        Name = "song representation/simple",
+                        Name = "expression/simple",
                         Description = "Accessible and straightforward map design."
                     },
                     new APITag
@@ -319,7 +319,7 @@ namespace osu.Game.Tests.Visual
                     new APITag
                     {
                         Id = 23,
-                        Name = "aim/aim control",
+                        Name = "tech/aim control",
                         Description = "Patterns with velocity or direction changes which strongly go against a player's natural movement pattern."
                     }
                 ],

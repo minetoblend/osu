@@ -194,21 +194,58 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
                             AutoSizeAxes = Axes.Y,
                             Children =
                             [
-                                new OsuSpriteText
+                                new FillFlowContainer
                                 {
-                                    Text = $"Length  {beatmap.HitLength.ToFormattedDuration()}",
-                                    Font = OsuFont.GetFont(size: 9, weight: FontWeight.Medium),
+                                    AutoSizeAxes = Axes.Both,
                                     Anchor = Anchor.CentreLeft,
                                     Origin = Anchor.CentreLeft,
-                                    UseFullGlyphHeight = false,
+                                    Spacing = new Vector2(4),
+                                    Children =
+                                    [
+                                        new OsuSpriteText
+                                        {
+                                            Text = "Length",
+                                            Font = OsuFont.GetFont(size: 9, weight: FontWeight.Medium),
+                                            Anchor = Anchor.CentreLeft,
+                                            Origin = Anchor.CentreLeft,
+                                            UseFullGlyphHeight = false,
+                                        },
+                                        new OsuSpriteText
+                                        {
+                                            Text = beatmap.HitLength.ToFormattedDuration(),
+                                            Font = OsuFont.GetFont(size: 9, weight: FontWeight.SemiBold),
+                                            Anchor = Anchor.CentreLeft,
+                                            Origin = Anchor.CentreLeft,
+                                            UseFullGlyphHeight = false,
+                                        },
+                                    ]
                                 },
-                                new OsuSpriteText
+
+                                new FillFlowContainer
                                 {
-                                    Text = $"Bpm  {(int)beatmap.BPM}",
-                                    Font = OsuFont.GetFont(size: 9, weight: FontWeight.Medium),
+                                    AutoSizeAxes = Axes.Both,
                                     Anchor = Anchor.CentreRight,
                                     Origin = Anchor.CentreRight,
-                                    UseFullGlyphHeight = false,
+                                    Spacing = new Vector2(4),
+                                    Children =
+                                    [
+                                        new OsuSpriteText
+                                        {
+                                            Text = "BPM",
+                                            Font = OsuFont.GetFont(size: 9, weight: FontWeight.Medium),
+                                            Anchor = Anchor.CentreLeft,
+                                            Origin = Anchor.CentreLeft,
+                                            UseFullGlyphHeight = false,
+                                        },
+                                        new OsuSpriteText
+                                        {
+                                            Text = ((int)beatmap.BPM).ToString(),
+                                            Font = OsuFont.GetFont(size: 9, weight: FontWeight.SemiBold),
+                                            Anchor = Anchor.CentreLeft,
+                                            Origin = Anchor.CentreLeft,
+                                            UseFullGlyphHeight = false,
+                                        },
+                                    ]
                                 },
                             ]
                         },
@@ -326,7 +363,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
                     {
                         RelativePositionAxes = Axes.X,
                         Text = Value,
-                        Font = OsuFont.GetFont(size: 9, weight: FontWeight.Medium),
+                        Font = OsuFont.GetFont(size: 9, weight: FontWeight.SemiBold),
                         Anchor = Anchor.CentreLeft,
                         Origin = Anchor.CentreRight,
                         UseFullGlyphHeight = false,
@@ -337,7 +374,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
                     {
                         RelativeSizeAxes = Axes.X,
                         Width = 0.35f,
-                        Height = 3,
+                        Height = 2,
                         Anchor = Anchor.CentreRight,
                         Origin = Anchor.CentreRight,
                         Masking = true,

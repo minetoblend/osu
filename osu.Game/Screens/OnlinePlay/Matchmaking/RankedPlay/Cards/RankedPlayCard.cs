@@ -11,6 +11,7 @@ using osu.Framework.Graphics.Effects;
 using osu.Framework.Graphics.Shapes;
 using osu.Framework.Logging;
 using osu.Game.Database;
+using osu.Game.Online.API.Requests.Responses;
 using osu.Game.Online.Rooms;
 using osuTK;
 using osuTK.Graphics;
@@ -122,9 +123,11 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
             loadCardContent(playlistItem, true);
         }
 
+        public APIBeatmap? Beatmap;
+
         private void loadCardContent(MultiplayerPlaylistItem playlistItem, bool flip) => Task.Run(async () =>
         {
-            var beatmap = await beatmapLookupCache.GetBeatmapAsync(playlistItem.BeatmapID).ConfigureAwait(false);
+            var beatmap = Beatmap = await beatmapLookupCache.GetBeatmapAsync(playlistItem.BeatmapID).ConfigureAwait(false);
 
             cardRevealed.TrySetResult();
 
@@ -136,10 +139,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
 
             Schedule(() =>
             {
-                var drawable = new RankedPlayCardContent(beatmap)
-                {
-                    Scale = new Vector2(0.4f) // TODO: make both card drawables the same size
-                };
+                var drawable = new RankedPlayCardFrontSide(beatmap);
 
                 SetContent(drawable, flip);
             });

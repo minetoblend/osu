@@ -9,12 +9,14 @@ using osu.Framework.Extensions.Color4Extensions;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Primitives;
+using osu.Framework.Input;
 using osu.Game.Graphics;
 using osu.Game.Graphics.Containers;
 using osu.Game.Graphics.Sprites;
 using osu.Game.Graphics.UserInterface;
 using osu.Game.Online.Multiplayer;
 using osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards;
+using osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components;
 using osuTK;
 
 namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
@@ -27,6 +29,9 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
         private ShearedButton discardButton = null!;
         private OsuSpriteText readyToGo = null!;
         private OsuTextFlowContainer explainer = null!;
+        private BeatmapDetailOverlay detailOverlay = null!;
+
+        private InputManager? inputManager;
 
         [Resolved]
         private RankedPlayMatchInfo matchInfo { get; set; } = null!;
@@ -41,6 +46,16 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                     RelativeSizeAxes = Axes.Both,
                     Anchor = Anchor.Centre,
                     Origin = Anchor.Centre,
+                },
+                new Container
+                {
+                    RelativeSizeAxes = Axes.Y,
+                    Width = 500,
+                    Padding = new MarginPadding { Top = 70, Bottom = 200 },
+                    Child = detailOverlay = new BeatmapDetailOverlay
+                    {
+                        RelativeSizeAxes = Axes.Both,
+                    }
                 },
             ];
 
@@ -109,10 +124,23 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
         {
             base.LoadComplete();
 
+            inputManager = GetContainingInputManager();
+
             matchInfo.PlayerCardAdded += cardAdded;
             matchInfo.PlayerCardRemoved += cardRemoved;
 
             playerHand.SelectionChanged += onSelectionChanged;
+        }
+
+        protected override void Update()
+        {
+            base.Update();
+
+            var hoveredCard = inputManager?.HoveredDrawables
+                                          .OfType<PlayerCardHand.PlayerHandCard>()
+                                          .FirstOrDefault();
+
+            detailOverlay.Beatmap = hoveredCard?.Card.Beatmap;
         }
 
         private void onSelectionChanged()

@@ -11,6 +11,7 @@ using osu.Framework.Caching;
 using osu.Framework.Extensions.Color4Extensions;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
+using osu.Framework.Graphics.Effects;
 using osu.Framework.Graphics.Primitives;
 using osu.Framework.Graphics.Shapes;
 using osu.Game.Online.Multiplayer.MatchTypes.RankedPlay;
@@ -305,6 +306,15 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
                         CornerRadius = 8,
                         BorderThickness = 4,
                         BorderColour = Color4Extensions.FromHex("72D5FF"),
+                        Blending = BlendingParameters.Additive,
+                        EdgeEffect = new EdgeEffectParameters
+                        {
+                            Type = EdgeEffectType.Glow,
+                            Radius = 30,
+                            Colour = Color4Extensions.FromHex("72D5FF").Opacity(0.2f),
+                            Hollow = true,
+                            Roundness = 10
+                        },
                         Child = new Box
                         {
                             RelativeSizeAxes = Axes.Both,
@@ -326,7 +336,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
             {
                 cardHand.OnCardStateChanged(this, state.NewValue);
 
-                selectionOverlay.Alpha = state.NewValue.Selected ? 1 : 0;
+                selectionOverlay.FadeTo(state.NewValue.Selected ? 1 : 0, 50);
 
                 switch (state.NewValue.Pressed, state.OldValue.Pressed)
                 {
