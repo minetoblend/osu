@@ -19,6 +19,8 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
 {
     public partial class RankedPlayCard : CompositeDrawable
     {
+        public static readonly Vector2 SIZE = new Vector2(120, 200);
+
         public readonly RankedPlayCardWithPlaylistItem Item;
 
         private readonly IBindable<MultiplayerPlaylistItem?> playlistItem;
@@ -38,7 +40,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
         {
             Item = item;
 
-            Size = new Vector2(120, 200);
+            Size = SIZE;
 
             playlistItem = item.PlaylistItem.GetBoundCopy();
 
@@ -136,10 +138,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
 
             Schedule(() =>
             {
-                var drawable = new RankedPlayCardContent(beatmap)
-                {
-                    Scale = new Vector2(0.4f) // TODO: make both card drawables the same size
-                };
+                var drawable = new RankedPlayCardContent(beatmap);
 
                 setContent(drawable, flip);
             });

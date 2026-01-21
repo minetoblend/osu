@@ -71,8 +71,6 @@ namespace osu.Game.Tests.Visual.RankedPlay
                     Origin = Anchor.Centre,
                 };
             });
-
-            AddToggleStep("toggle shine", v => card.Shiny = v);
         }
     }
 }

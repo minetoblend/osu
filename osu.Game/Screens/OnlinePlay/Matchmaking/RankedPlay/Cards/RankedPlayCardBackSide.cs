@@ -13,7 +13,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
     {
         public RankedPlayCardBackSide()
         {
-            Size = RankedPlayCardContent.SIZE;
+            Size = RankedPlayCard.SIZE;
         }
 
         [BackgroundDependencyLoader]
