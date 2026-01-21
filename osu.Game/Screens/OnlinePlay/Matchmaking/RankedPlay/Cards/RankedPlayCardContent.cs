@@ -38,6 +38,28 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
                     RelativeSizeAxes = Axes.Both,
                     Colour = colours.Background,
                 },
+                new Container
+                {
+                    Name = "Top Area",
+                    RelativeSizeAxes = Axes.Both,
+                    FillMode = FillMode.Fit,
+                    Children =
+                    [
+                        new CardCover(Beatmap)
+                        {
+                            RelativeSizeAxes = Axes.Both,
+                        },
+                    ]
+                },
+                new Container
+                {
+                    Name = "Bottom Area",
+                    RelativeSizeAxes = Axes.Both,
+                    Padding = new MarginPadding { Top = RankedPlayCard.SIZE.Y },
+                    Children =
+                    [
+                    ]
+                },
                 new CardBorder()
             ];
         }
