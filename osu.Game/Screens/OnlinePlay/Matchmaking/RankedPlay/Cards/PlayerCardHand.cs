@@ -59,7 +59,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
         /// </summary>
         public IEnumerable<RankedPlayCardWithPlaylistItem> Selection => selection.Select(it => it.Card.Item);
 
-        private readonly BindableBool allowSelection = new BindableBool(true);
+        private readonly BindableBool allowSelection = new BindableBool();
 
         protected override HandCard CreateHandCard(RankedPlayCard card) => new PlayerHandCard(card)
         {
