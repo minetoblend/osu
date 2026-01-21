@@ -49,6 +49,10 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
                         {
                             RelativeSizeAxes = Axes.Both,
                         },
+                        new CardMetadata(Beatmap)
+                        {
+                            RelativeSizeAxes = Axes.Both,
+                        }
                     ]
                 },
                 new Container
