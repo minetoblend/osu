@@ -3,22 +3,23 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using osu.Framework.Allocation;
 using osu.Framework.Audio;
 using osu.Framework.Audio.Sample;
-using osu.Framework.Extensions.Color4Extensions;
 using osu.Framework.Graphics;
-using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Primitives;
 using osu.Game.Audio;
 using osu.Game.Graphics;
 using osu.Game.Graphics.Containers;
-using osu.Game.Graphics.Sprites;
 using osu.Game.Graphics.UserInterface;
 using osu.Game.Online.Multiplayer;
+using osu.Game.Online.Multiplayer.MatchTypes.RankedPlay;
 using osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards;
+using osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components;
 using osuTK;
+using osuTK.Graphics;
 
 namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 {
@@ -28,7 +29,6 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 
         private PlayerCardHand playerHand = null!;
         private ShearedButton discardButton = null!;
-        private OsuSpriteText readyToGo = null!;
         private OsuTextFlowContainer explainer = null!;
 
         [Resolved]
@@ -43,6 +43,10 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
         [BackgroundDependencyLoader]
         private void load(AudioManager audio)
         {
+            var matchState = Client.Room?.MatchState as RankedPlayRoomState;
+
+            Debug.Assert(matchState != null);
+
             Children =
             [
                 CenterRow = new CardRow
@@ -50,6 +54,13 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                     RelativeSizeAxes = Axes.Both,
                     Anchor = Anchor.Centre,
                     Origin = Anchor.Centre,
+                },
+                new RankedPlayStageDisplay(RankedPlayColourScheme.Blue)
+                {
+                    Heading = "Discard Phase",
+                    Caption = "Replace cards from your hand",
+                    CaptionColour = Color4.White,
+                    Margin = new MarginPadding { Top = 60 },
                 },
             ];
 
@@ -63,32 +74,6 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                     Height = 0.5f,
                     SelectionMode = CardSelectionMode.Multiple,
                 },
-                new FillFlowContainer
-                {
-                    RelativeSizeAxes = Axes.X,
-                    AutoSizeAxes = Axes.Y,
-                    Direction = FillDirection.Vertical,
-                    Children =
-                    [
-                        new OsuSpriteText
-                        {
-                            Text = "Discarding Phase",
-                            Anchor = Anchor.TopCentre,
-                            Origin = Anchor.TopCentre,
-                            Font = OsuFont.GetFont(typeface: Typeface.TorusAlternate, size: 42, weight: FontWeight.SemiBold),
-                            Margin = new MarginPadding(20)
-                        },
-                        readyToGo = new OsuSpriteText
-                        {
-                            Text = "You’re ready to go!",
-                            Anchor = Anchor.TopCentre,
-                            Origin = Anchor.TopCentre,
-                            Colour = Color4Extensions.FromHex("87CDFF"),
-                            Font = OsuFont.GetFont(typeface: Typeface.TorusAlternate, size: 28, weight: FontWeight.SemiBold),
-                            Alpha = 0,
-                        },
-                    ],
-                },
                 explainer = new OsuTextFlowContainer(s => s.Font = OsuFont.GetFont(size: 24))
                 {
                     AutoSizeAxes = Axes.Y,
@@ -101,8 +86,8 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                     Alpha = 0,
                 }.With(d =>
                 {
-                    d.AddParagraph("These are your Cards for this match!");
-                    d.AddParagraph("When it’s your pick, you can choose one card to go head-to-head with against your opponent!");
+                    d.AddParagraph("These are your cards for this match!");
+                    d.AddParagraph("When it’s your turn, you can play a card to go head-to-head against your opponent!");
                 })
             ];
 
@@ -276,7 +261,6 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 
             CenterRow.LayoutCards(stagger: 50, duration: 600);
 
-            readyToGo.FadeIn(50);
             explainer
                 .Delay(100)
                 .MoveToOffset(new Vector2(0, 50))

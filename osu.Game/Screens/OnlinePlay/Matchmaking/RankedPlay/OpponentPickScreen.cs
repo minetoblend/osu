@@ -4,19 +4,15 @@
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
-using Humanizer;
 using osu.Framework.Allocation;
 using osu.Framework.Audio;
 using osu.Framework.Audio.Sample;
-using osu.Framework.Extensions.Color4Extensions;
 using osu.Framework.Graphics;
-using osu.Framework.Graphics.Containers;
 using osu.Framework.Logging;
 using osu.Game.Audio;
-using osu.Game.Graphics;
-using osu.Game.Graphics.Sprites;
 using osu.Game.Online.Multiplayer.MatchTypes.RankedPlay;
 using osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards;
+using osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components;
 using osuTK;
 
 namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
@@ -27,7 +23,6 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 
         private PlayerCardHand playerHand = null!;
         private OpponentCardHand opponentHand = null!;
-        private FillFlowContainer textContainer = null!;
 
         [Resolved]
         private RankedPlayMatchInfo matchInfo { get; set; } = null!;
@@ -49,6 +44,12 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                     RelativeSizeAxes = Axes.Both,
                     Anchor = Anchor.Centre,
                     Origin = Anchor.Centre,
+                },
+                new RankedPlayStageDisplay(RankedPlayColourScheme.Red)
+                {
+                    Heading = "Pick Phase",
+                    Caption = "Waiting for your opponent...",
+                    Margin = new MarginPadding { Top = 60 },
                 },
             ];
 
@@ -72,33 +73,6 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                 },
                 new CardHandReplayRecorder(playerHand),
                 new CardHandReplayPlayer(opponentHand),
-                textContainer = new FillFlowContainer
-                {
-                    RelativeSizeAxes = Axes.X,
-                    AutoSizeAxes = Axes.Y,
-                    Direction = FillDirection.Vertical,
-                    Anchor = Anchor.Centre,
-                    Origin = Anchor.Centre,
-                    Spacing = new Vector2(20),
-                    Children =
-                    [
-                        new OsuSpriteText
-                        {
-                            Text = $"{FormatRoundIndex(matchState.CurrentRound).Titleize()} pick!",
-                            Anchor = Anchor.TopCentre,
-                            Origin = Anchor.TopCentre,
-                            Font = OsuFont.GetFont(typeface: Typeface.TorusAlternate, size: 42, weight: FontWeight.Regular),
-                        },
-                        new OsuSpriteText
-                        {
-                            Text = "Your opponent is picking a map!",
-                            Anchor = Anchor.TopCentre,
-                            Origin = Anchor.TopCentre,
-                            Colour = Color4Extensions.FromHex("FFA5B6"),
-                            Font = OsuFont.GetFont(typeface: Typeface.TorusAlternate, size: 28, weight: FontWeight.SemiBold),
-                        },
-                    ]
-                },
             ];
 
             cardPlaySamples = new Sample?[card_play_samples];
@@ -144,8 +118,6 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 
             Schedule(() =>
             {
-                textContainer.FadeOut(50);
-
                 RankedPlayCard? card;
 
                 if (opponentHand.RemoveCard(item, out card, out var drawQuad))
