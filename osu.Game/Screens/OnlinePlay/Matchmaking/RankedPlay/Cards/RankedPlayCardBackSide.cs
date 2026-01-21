@@ -19,6 +19,9 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
         [BackgroundDependencyLoader]
         private void load(OverlayColourProvider colourProvider)
         {
+            Masking = true;
+            CornerRadius = RankedPlayCard.CORNER_RADIUS;
+
             InternalChild = new Box
             {
                 RelativeSizeAxes = Axes.Both,

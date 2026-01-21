@@ -52,7 +52,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
                 {
                     RelativeSizeAxes = Axes.Both,
                     Masking = true,
-                    CornerRadius = 10,
+                    CornerRadius = CORNER_RADIUS,
                     Anchor = Anchor.Centre,
                     Origin = Anchor.Centre,
                     EdgeEffect = new EdgeEffectParameters
@@ -70,8 +70,6 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
                 },
                 content = new Container
                 {
-                    Masking = true,
-                    CornerRadius = 10,
                     RelativeSizeAxes = Axes.Both,
                     Anchor = Anchor.Centre,
                     Origin = Anchor.Centre,
