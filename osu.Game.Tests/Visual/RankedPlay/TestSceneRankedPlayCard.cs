@@ -9,7 +9,6 @@ using osu.Framework.Allocation;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Game.Beatmaps;
-using osu.Game.Database;
 using osu.Game.Online.API.Requests.Responses;
 using osu.Game.Online.Multiplayer.MatchTypes.RankedPlay;
 using osu.Game.Overlays;
@@ -93,9 +92,6 @@ namespace osu.Game.Tests.Visual.RankedPlay
                 }
             });
         }
-
-        [Resolved]
-        private BeatmapLookupCache beatmapLookupCache { get; set; } = null!;
 
         [Test]
         public void TestCardHand()
