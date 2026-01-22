@@ -101,10 +101,10 @@ namespace osu.Game.Tests.Visual.RankedPlay
         [Test]
         public void TestCardHand()
         {
-            PlayerCardHand cardHand = null!;
-
             AddStep("add card", () =>
             {
+                PlayerCardHand cardHand;
+
                 Child = new OsuContextMenuContainer
                 {
                     RelativeSizeAxes = Axes.Both,
