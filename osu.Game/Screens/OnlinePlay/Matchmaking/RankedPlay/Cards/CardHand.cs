@@ -166,7 +166,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
             if (contracted)
                 return;
 
-            const float spacing = -40;
+            const float spacing = -20;
 
             float totalWidth = cardContainer.Sum(it => it.LayoutWidth + spacing) - spacing;
 
@@ -194,7 +194,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
 
                 float yOffset = 0;
 
-                var position = new Vector2(x, MathF.Pow(MathF.Abs(x / 250), 2) * 20 + 10);
+                var position = new Vector2(x, MathF.Pow(MathF.Abs(x / 250), 2) * 20 - 10);
 
                 if (hoverIndex != no_card_hovered && cardContainer.Children.Count > 1)
                 {
@@ -203,7 +203,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
 
                     position.X += direction switch
                     {
-                        0 => -10,
+                        0 => 0,
 
                         // special case for the left card when there's only 2 cards
                         // too much offset looks kinda odd here so it's reduced
