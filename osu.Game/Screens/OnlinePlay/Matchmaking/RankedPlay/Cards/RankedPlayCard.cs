@@ -141,12 +141,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
                 return;
             }
 
-            Schedule(() =>
-            {
-                var drawable = new RankedPlayCardContent(beatmap);
-
-                SetContent(drawable, flip);
-            });
+            Schedule(() => SetContent(new RankedPlayCardContent(beatmap), flip));
         });
 
         public void SetContent(Drawable newContent, bool flip)

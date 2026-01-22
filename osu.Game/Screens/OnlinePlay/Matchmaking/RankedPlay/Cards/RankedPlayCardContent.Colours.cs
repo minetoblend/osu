@@ -73,7 +73,5 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
             b: float.Lerp(lhs.B, rhs.B, alpha),
             a: float.Lerp(lhs.A, rhs.A, alpha)
         );
-
-        private static float perceivedBrightness(Color4 color) => (color.R * 299 + color.G * 587 + color.B * 114) / 1000;
     }
 }
