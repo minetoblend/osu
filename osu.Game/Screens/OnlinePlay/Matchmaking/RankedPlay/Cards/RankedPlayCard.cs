@@ -30,8 +30,12 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
         private readonly Container content;
         private readonly Container cardContent;
         private readonly Container shadow;
+        private readonly SelectionOutline selectionOutline;
 
-        public readonly Container OverlayLayer;
+        public bool ShowSelectionOutline
+        {
+            set => selectionOutline.FadeTo(value ? 1 : 0, 50);
+        }
 
         public float Elevation;
 
@@ -80,9 +84,10 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
                             RelativeSizeAxes = Axes.Both,
                             Child = new RankedPlayCardBackSide()
                         },
-                        OverlayLayer = new Container
+                        selectionOutline = new SelectionOutline
                         {
                             RelativeSizeAxes = Axes.Both,
+                            Alpha = 0,
                         }
                     ]
                 }
@@ -166,6 +171,45 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
 
             this.FadeOut(500)
                 .Expire();
+        }
+
+        private partial class SelectionOutline : CompositeDrawable
+        {
+            [BackgroundDependencyLoader]
+            private void load()
+            {
+                const float border_width = 4;
+
+                InternalChild = new Container
+                {
+                    RelativeSizeAxes = Axes.Both,
+                    // anti-aliasing would create a gap between the border & card here if we used border_width directly
+                    Padding = new MarginPadding(-(border_width - 1)),
+                    Child = new Container
+                    {
+                        RelativeSizeAxes = Axes.Both,
+                        Masking = true,
+                        CornerRadius = CORNER_RADIUS + border_width,
+                        BorderThickness = border_width,
+                        BorderColour = Color4Extensions.FromHex("72D5FF"),
+                        Blending = BlendingParameters.Additive,
+                        EdgeEffect = new EdgeEffectParameters
+                        {
+                            Type = EdgeEffectType.Glow,
+                            Radius = 30,
+                            Colour = Color4Extensions.FromHex("72D5FF").Opacity(0.2f),
+                            Hollow = true,
+                            Roundness = 10
+                        },
+                        Child = new Box
+                        {
+                            RelativeSizeAxes = Axes.Both,
+                            Alpha = 0,
+                            AlwaysPresent = true
+                        }
+                    }
+                };
+            }
         }
     }
 }
