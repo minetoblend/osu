@@ -29,13 +29,25 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
 
             public Colour4 BackgroundLighter => mix(base_background, getColour(0.1f, 0.2f), 0.5f);
 
-            public Color4 OnBackground => getColour(1f, 0.9f);
+            public Colour4 BackgroundLightest => mix(base_background, getColour(0.2f, 0.23f), 0.5f);
 
-            public Color4 Border => beatmap.StarRating > 8.0 ? Color4Extensions.FromHex("99083b") : Primary;
+            public Color4 OnBackground => getColour(1f, 0.9f, isAccent: true);
 
-            private Color4 getColour(float saturation, float lightness)
+            public Color4 Border => beatmap.StarRating > 8.0 ? Color4Extensions.FromHex("34044f") : Primary;
+
+            public Colour4 PrimaryWithContrastToBackground =>
+                beatmap.StarRating >= OsuColour.STAR_DIFFICULTY_DEFINED_COLOUR_CUTOFF ? OnPrimary : Primary;
+
+            private Color4 getColour(float saturation, float lightness, bool isAccent = false)
             {
                 float hue = Primary.ToHSV().h / 360f;
+
+                // at higher star ratings primary colour can become pure black. in that case we want to just use a very desaturated purple as base
+                if (beatmap.StarRating >= OsuColour.STAR_DIFFICULTY_DEFINED_COLOUR_CUTOFF)
+                {
+                    hue = isAccent ? 0.15f : 0.77f;
+                    saturation *= 0.5f;
+                }
 
                 // colours should generally shift slightly towards blue as they get darker
                 float shadowHue = 0.66f;
@@ -62,5 +74,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
             b: float.Lerp(lhs.B, rhs.B, alpha),
             a: float.Lerp(lhs.A, rhs.A, alpha)
         );
+
+        private static float perceivedBrightness(Color4 color) => (color.R * 299 + color.G * 587 + color.B * 114) / 1000;
     }
 }

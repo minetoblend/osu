@@ -116,7 +116,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
             {
                 base.LoadComplete();
 
-                AddInternal(new HoverClickSounds
+                AddInternal(new HoverClickSounds(HoverSampleSet.TabSelect)
                 {
                     Enabled = { BindTarget = AllowSelection }
                 });

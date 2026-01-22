@@ -117,7 +117,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
         {
             if (playlistItem == null)
             {
-                setContent(new RankedPlayCardBackSide(), true);
+                SetContent(new RankedPlayCardBackSide(), true);
                 return;
             }
 
@@ -140,11 +140,11 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
             {
                 var drawable = new RankedPlayCardContent(beatmap);
 
-                setContent(drawable, flip);
+                SetContent(drawable, flip);
             });
         });
 
-        private void setContent(Drawable newContent, bool flip)
+        public void SetContent(Drawable newContent, bool flip)
         {
             if (!flip)
             {
