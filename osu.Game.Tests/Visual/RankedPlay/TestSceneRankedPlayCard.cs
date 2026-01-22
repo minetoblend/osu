@@ -13,15 +13,15 @@ using osu.Game.Graphics.Cursor;
 using osu.Game.Online.API.Requests.Responses;
 using osu.Game.Online.Multiplayer.MatchTypes.RankedPlay;
 using osu.Game.Overlays;
+using osu.Game.Rulesets;
 using osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay;
 using osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards;
 using osu.Game.Tests.Resources;
-using osu.Game.Tests.Visual.Multiplayer;
 using osuTK;
 
 namespace osu.Game.Tests.Visual.RankedPlay
 {
-    public partial class TestSceneRankedPlayCard : MultiplayerTestScene
+    public partial class TestSceneRankedPlayCard : OsuTestScene
     {
         [Cached]
         private readonly OverlayColourProvider colourProvider = new OverlayColourProvider(OverlayColourScheme.Purple);
@@ -29,7 +29,7 @@ namespace osu.Game.Tests.Visual.RankedPlay
         [Test]
         public void TestCards()
         {
-            AddStep("add card", () =>
+            AddStep("add cards", () =>
             {
                 FillFlowContainer flow;
 
@@ -130,6 +130,86 @@ namespace osu.Game.Tests.Visual.RankedPlay
                     }, false));
                 }
             });
+        }
+
+        [Resolved]
+        private RulesetStore rulesetStore { get; set; } = null!;
+
+        [Test]
+        public void TestRulesets()
+        {
+            var rulesets = rulesetStore.AvailableRulesets.Where(it => it.OnlineID >= 0);
+
+            foreach (var ruleset in rulesets)
+            {
+                AddStep(ruleset.ShortName, () =>
+                {
+                    FillFlowContainer flow;
+
+                    Child = new OsuContextMenuContainer
+                    {
+                        RelativeSizeAxes = Axes.Both,
+                        Child = flow = new FillFlowContainer
+                        {
+                            RelativeSizeAxes = Axes.Y,
+                            Width = 800f,
+                            Anchor = Anchor.Centre,
+                            Origin = Anchor.Centre,
+                            Spacing = new Vector2(10),
+                        }
+                    };
+
+                    for (int i = 0; i < 10; i++)
+                    {
+                        var beatmap = CreateAPIBeatmap(ruleset);
+
+                        beatmap.BeatmapSet!.Ratings = Enumerable.Range(0, 11).ToArray();
+                        beatmap.BeatmapSet!.RelatedTags =
+                        [
+                            new APITag
+                            {
+                                Id = 2,
+                                Name = "song representation/simple",
+                                Description = "Accessible and straightforward map design."
+                            },
+                            new APITag
+                            {
+                                Id = 4,
+                                Name = "style/clean",
+                                Description = "Visually uncluttered and organised patterns, often involving few overlaps and equal visual spacing between objects."
+                            },
+                            new APITag
+                            {
+                                Id = 23,
+                                Name = "aim/aim control",
+                                Description = "Patterns with velocity or direction changes which strongly go against a player's natural movement pattern."
+                            }
+                        ];
+
+                        beatmap.TopTags =
+                        [
+                            new APIBeatmapTag { TagId = 4, VoteCount = 1 },
+                            new APIBeatmapTag { TagId = 2, VoteCount = 1 },
+                            new APIBeatmapTag { TagId = 23, VoteCount = 5 },
+                        ];
+
+                        beatmap.FailTimes = new APIFailTimes
+                        {
+                            Fails = Enumerable.Range(1, 100).Select(x => x % 12 - 6).ToArray(),
+                            Retries = Enumerable.Range(-2, 100).Select(x => x % 12 - 6).ToArray(),
+                        };
+
+                        beatmap.StarRating = i + 1;
+
+                        flow.Add(new RankedPlayCardContent(beatmap)
+                        {
+                            Anchor = Anchor.Centre,
+                            Origin = Anchor.Centre,
+                            Scale = new Vector2(1.2f),
+                        });
+                    }
+                });
+            }
         }
 
         private APIBeatmap[] getBeatmaps()
