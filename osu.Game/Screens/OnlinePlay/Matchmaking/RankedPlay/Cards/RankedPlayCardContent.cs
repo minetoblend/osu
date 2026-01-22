@@ -9,7 +9,6 @@ using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Shapes;
 using osu.Game.Graphics;
 using osu.Game.Online.API.Requests.Responses;
-using osu.Game.Overlays;
 using osuTK;
 
 namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
@@ -87,7 +86,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
         {
             var dependencies = new DependencyContainer(base.CreateChildDependencies(parent));
 
-            dependencies.CacheAs(colours = new CardColours(Beatmap, dependencies.Get<OsuColour>(), dependencies.Get<OverlayColourProvider>()));
+            dependencies.CacheAs(colours = new CardColours(Beatmap, dependencies.Get<OsuColour>()));
 
             return dependencies;
         }

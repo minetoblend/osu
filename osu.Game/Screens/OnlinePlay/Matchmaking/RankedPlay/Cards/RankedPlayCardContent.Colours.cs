@@ -6,7 +6,6 @@ using osu.Framework.Extensions.Color4Extensions;
 using osu.Framework.Graphics;
 using osu.Game.Graphics;
 using osu.Game.Online.API.Requests.Responses;
-using osu.Game.Overlays;
 using osuTK;
 using osuTK.Graphics;
 
@@ -14,7 +13,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
 {
     public partial class RankedPlayCardContent
     {
-        private class CardColours(APIBeatmap beatmap, OsuColour colour, OverlayColourProvider colourProvider)
+        private class CardColours(APIBeatmap beatmap, OsuColour colour)
         {
             private static readonly Color4 base_background = Color4Extensions.FromHex("#222228");
 
