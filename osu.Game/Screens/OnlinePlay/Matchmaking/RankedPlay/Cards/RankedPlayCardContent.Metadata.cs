@@ -58,34 +58,6 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
                         d.AddText("mapped by ", static s => s.Font = OsuFont.GetFont(size: 9, weight: FontWeight.SemiBold));
                         d.AddUserLink(beatmap.Metadata.Author, static s => s.Font = OsuFont.GetFont(size: 9, weight: FontWeight.SemiBold));
                     }),
-                    new Container
-                    {
-                        Name = "DifficultyName Badge",
-                        Width = 100,
-                        AutoSizeAxes = Axes.Y,
-                        Anchor = Anchor.BottomCentre,
-                        Origin = Anchor.Centre,
-                        Masking = true,
-                        CornerRadius = 3,
-                        Children =
-                        [
-                            new Box
-                            {
-                                RelativeSizeAxes = Axes.Both,
-                                Colour = colours.BackgroundLighter,
-                            },
-                            new TruncatingSpriteText
-                            {
-                                MaxWidth = 100f,
-                                Anchor = Anchor.TopCentre,
-                                Origin = Anchor.TopCentre,
-                                Text = beatmap.DifficultyName,
-                                Font = OsuFont.GetFont(size: 10, weight: FontWeight.SemiBold),
-                                Colour = colours.OnBackground,
-                                Padding = new MarginPadding { Vertical = 1 }
-                            }
-                        ]
-                    }
                 ];
             }
         }
@@ -218,7 +190,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
                         Text = beatmap.DifficultyName,
                         Font = OsuFont.GetFont(size: 10, weight: FontWeight.SemiBold),
                         Colour = colours.OnBackground,
-                        Padding = new MarginPadding { Vertical = 1 }
+                        Padding = new MarginPadding { Vertical = 1 },
                     }
                 ];
             }
