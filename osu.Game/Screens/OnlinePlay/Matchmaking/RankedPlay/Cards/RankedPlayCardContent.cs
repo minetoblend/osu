@@ -6,14 +6,19 @@ using osu.Framework.Extensions.Color4Extensions;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Colour;
 using osu.Framework.Graphics.Containers;
+using osu.Framework.Graphics.Cursor;
 using osu.Framework.Graphics.Shapes;
+using osu.Framework.Graphics.UserInterface;
 using osu.Game.Graphics;
+using osu.Game.Graphics.UserInterface;
+using osu.Game.Localisation;
 using osu.Game.Online.API.Requests.Responses;
+using osu.Game.Overlays;
 using osuTK;
 
 namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
 {
-    public partial class RankedPlayCardContent : CompositeDrawable
+    public partial class RankedPlayCardContent : CompositeDrawable, IHasContextMenu
     {
         public readonly APIBeatmap Beatmap;
 
@@ -111,5 +116,13 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
                 };
             }
         }
+
+        [Resolved]
+        private BeatmapSetOverlay? beatmapSetOverlay { get; set; }
+
+        public MenuItem[]? ContextMenuItems =>
+        [
+            new OsuMenuItem(ContextMenuStrings.ViewBeatmap, MenuItemType.Highlighted, () => beatmapSetOverlay?.ShowBeatmapSet(Beatmap.BeatmapSet))
+        ];
     }
 }

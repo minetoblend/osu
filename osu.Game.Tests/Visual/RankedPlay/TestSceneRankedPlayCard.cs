@@ -9,6 +9,7 @@ using osu.Framework.Allocation;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Game.Beatmaps;
+using osu.Game.Graphics.Cursor;
 using osu.Game.Online.API.Requests.Responses;
 using osu.Game.Online.Multiplayer.MatchTypes.RankedPlay;
 using osu.Game.Overlays;
@@ -32,13 +33,17 @@ namespace osu.Game.Tests.Visual.RankedPlay
             {
                 FillFlowContainer flow;
 
-                Child = flow = new FillFlowContainer
+                Child = new OsuContextMenuContainer
                 {
-                    RelativeSizeAxes = Axes.Y,
-                    Width = 800f,
-                    Anchor = Anchor.Centre,
-                    Origin = Anchor.Centre,
-                    Spacing = new Vector2(10),
+                    RelativeSizeAxes = Axes.Both,
+                    Child = flow = new FillFlowContainer
+                    {
+                        RelativeSizeAxes = Axes.Y,
+                        Width = 800f,
+                        Anchor = Anchor.Centre,
+                        Origin = Anchor.Centre,
+                        Spacing = new Vector2(10),
+                    }
                 };
 
                 for (int i = 0; i < 10; i++)
@@ -100,12 +105,16 @@ namespace osu.Game.Tests.Visual.RankedPlay
 
             AddStep("add card", () =>
             {
-                Child = cardHand = new PlayerCardHand
+                Child = new OsuContextMenuContainer
                 {
                     RelativeSizeAxes = Axes.Both,
-                    Size = new Vector2(0.5f),
-                    Anchor = Anchor.BottomCentre,
-                    Origin = Anchor.BottomCentre,
+                    Child = cardHand = new PlayerCardHand
+                    {
+                        RelativeSizeAxes = Axes.Both,
+                        Size = new Vector2(0.5f),
+                        Anchor = Anchor.BottomCentre,
+                        Origin = Anchor.BottomCentre,
+                    }
                 };
 
                 foreach (var beatmap in getBeatmaps())
