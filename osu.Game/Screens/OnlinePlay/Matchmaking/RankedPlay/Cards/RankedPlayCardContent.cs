@@ -72,7 +72,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
                     Padding = new MarginPadding { Top = RankedPlayCard.SIZE.X + 6 },
                     Children =
                     [
-                        new CardStats(Beatmap)
+                        new AttributeListing(Beatmap)
                         {
                             RelativeSizeAxes = Axes.Both,
                         }
