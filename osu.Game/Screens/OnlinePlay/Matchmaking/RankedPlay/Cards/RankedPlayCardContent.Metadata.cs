@@ -1,13 +1,15 @@
 // Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
+using System;
 using osu.Framework.Allocation;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Shapes;
 using osu.Framework.Graphics.Sprites;
-using osu.Game.Extensions;
+using osu.Framework.Localisation;
 using osu.Game.Graphics;
+using osu.Game.Graphics.Containers;
 using osu.Game.Graphics.Sprites;
 using osu.Game.Online.API.Requests.Responses;
 using osuTK;
@@ -23,12 +25,67 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
             {
                 InternalChildren =
                 [
-                    new StarRatingBadge(beatmap)
+                    new FillFlowContainer
                     {
-                        Anchor = Anchor.TopCentre,
-                        Origin = Anchor.TopCentre,
-                        Margin = new MarginPadding { Horizontal = 10, Top = 4 },
+                        RelativeSizeAxes = Axes.X,
+                        AutoSizeAxes = Axes.Y,
+                        Direction = FillDirection.Vertical,
+                        Children =
+                        [
+                            new StarRatingBadge(beatmap)
+                            {
+                                Anchor = Anchor.TopCentre,
+                                Origin = Anchor.TopCentre,
+                                Margin = new MarginPadding { Top = 4 },
+                            },
+                        ]
                     },
+                    new LinkFlowContainer(static s => s.ShadowOffset = new Vector2(0, 0.15f))
+                    {
+                        Name = "Beatmap Metadata",
+                        RelativeSizeAxes = Axes.Both,
+                        TextAnchor = Anchor.BottomLeft,
+                        Padding = new MarginPadding(5) { Bottom = 10 },
+                        ParagraphSpacing = 0.2f,
+                    }.With(d =>
+                    {
+                        d.AddText(new RomanisableString(beatmap.Metadata.TitleUnicode, beatmap.Metadata.Title), static s => s.Font = OsuFont.GetFont(size: 12, weight: FontWeight.SemiBold));
+
+                        d.NewLine();
+                        d.AddText(new RomanisableString(beatmap.Metadata.ArtistUnicode, beatmap.Metadata.Artist), static s => s.Font = OsuFont.GetFont(size: 9, weight: FontWeight.SemiBold));
+
+                        d.NewParagraph();
+                        d.AddText("mapped by ", static s => s.Font = OsuFont.GetFont(size: 9, weight: FontWeight.SemiBold));
+                        d.AddUserLink(beatmap.Metadata.Author, static s => s.Font = OsuFont.GetFont(size: 9, weight: FontWeight.SemiBold));
+                    }),
+                    new Container
+                    {
+                        Name = "DifficultyName Badge",
+                        Width = 100,
+                        AutoSizeAxes = Axes.Y,
+                        Anchor = Anchor.BottomCentre,
+                        Origin = Anchor.Centre,
+                        Masking = true,
+                        CornerRadius = 3,
+                        Children =
+                        [
+                            new Box
+                            {
+                                RelativeSizeAxes = Axes.Both,
+                                Colour = colours.BackgroundLighter,
+                            },
+                            new TruncatingSpriteText
+                            {
+                                MaxWidth = 100f,
+                                Anchor = Anchor.TopCentre,
+                                Origin = Anchor.TopCentre,
+                                Text = beatmap.DifficultyName,
+                                Font = OsuFont.GetFont(size: 10, weight: FontWeight.SemiBold),
+                                Colour = colours.OnBackground,
+                                Padding = new MarginPadding { Vertical = 1 }
+                            }
+                        ]
+                    }
                 ];
             }
         }
@@ -42,7 +99,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
                 Width = RankedPlayCard.SIZE.X - 20;
 
                 Masking = true;
-                CornerRadius = 2;
+                CornerRadius = 3;
 
                 InternalChildren =
                 [
@@ -51,29 +108,37 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
                         RelativeSizeAxes = Axes.Both,
                         Colour = colours.Primary,
                     },
-                    new Container
+                    new GridContainer
                     {
                         RelativeSizeAxes = Axes.X,
                         AutoSizeAxes = Axes.Y,
                         Padding = new MarginPadding { Horizontal = 3, Vertical = 1 },
-                        Children =
+                        ColumnDimensions =
                         [
-                            new StarsDisplay(beatmap.StarRating)
-                            {
-                                StarSize = 6,
-                                Anchor = Anchor.CentreLeft,
-                                Origin = Anchor.CentreLeft,
-                                Colour = colours.OnPrimary,
-                            },
-                            new OsuSpriteText
-                            {
-                                Text = beatmap.StarRating.ToStandardFormattedString(maxDecimalDigits: 2),
-                                Anchor = Anchor.CentreRight,
-                                Origin = Anchor.CentreRight,
-                                Font = OsuFont.GetFont(size: 10, weight: FontWeight.Bold),
-                                Colour = colours.OnPrimary,
-                            },
-                        ]
+                            new Dimension(GridSizeMode.AutoSize),
+                            new Dimension(),
+                        ],
+                        RowDimensions = [new Dimension(GridSizeMode.AutoSize)],
+                        Content = new Drawable[][]
+                        {
+                            [
+                                new StarsDisplay(beatmap.StarRating)
+                                {
+                                    StarSize = 6,
+                                    Colour = colours.OnPrimary,
+                                    Anchor = Anchor.CentreLeft,
+                                    Origin = Anchor.CentreLeft,
+                                },
+                                new TruncatingSpriteText
+                                {
+                                    Text = FormattableString.Invariant($"{beatmap.StarRating:F2}"),
+                                    Anchor = Anchor.CentreRight,
+                                    Origin = Anchor.CentreRight,
+                                    Font = OsuFont.GetFont(size: 9, weight: FontWeight.Bold),
+                                    Colour = colours.OnPrimary,
+                                },
+                            ]
+                        }
                     }
                 ];
             }
@@ -93,12 +158,12 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
                 InternalChild = flow = new FillFlowContainer
                 {
                     AutoSizeAxes = Axes.Both,
-                    Spacing = new Vector2(2),
+                    Spacing = new Vector2(1),
                 };
 
                 int numStars = (int)starRating - 1;
 
-                for (int i = 0; i < numStars; i++)
+                for (int i = 0; i <= numStars; i++)
                 {
                     flow.Add(new SpriteIcon
                     {
@@ -122,6 +187,40 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
                         }
                     });
                 }
+            }
+        }
+
+        private partial class DifficultyNameBadge(APIBeatmap beatmap) : CompositeDrawable
+        {
+            public new Axes AutoSizeAxes
+            {
+                get => base.AutoSizeAxes;
+                set => base.AutoSizeAxes = value;
+            }
+
+            [BackgroundDependencyLoader]
+            private void load(CardColours colours)
+            {
+                Masking = true;
+                CornerRadius = 3;
+                InternalChildren =
+                [
+                    new Box
+                    {
+                        RelativeSizeAxes = Axes.Both,
+                        Colour = colours.BackgroundLighter,
+                    },
+                    new TruncatingSpriteText
+                    {
+                        MaxWidth = 100f,
+                        Anchor = Anchor.TopCentre,
+                        Origin = Anchor.TopCentre,
+                        Text = beatmap.DifficultyName,
+                        Font = OsuFont.GetFont(size: 10, weight: FontWeight.SemiBold),
+                        Colour = colours.OnBackground,
+                        Padding = new MarginPadding { Vertical = 1 }
+                    }
+                ];
             }
         }
     }

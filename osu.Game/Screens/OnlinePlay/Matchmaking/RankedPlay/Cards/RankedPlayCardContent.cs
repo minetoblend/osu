@@ -2,7 +2,9 @@
 // See the LICENCE file in the repository root for full licence text.
 
 using osu.Framework.Allocation;
+using osu.Framework.Extensions.Color4Extensions;
 using osu.Framework.Graphics;
+using osu.Framework.Graphics.Colour;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Shapes;
 using osu.Game.Graphics;
@@ -52,14 +54,23 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
                         new CardMetadata(Beatmap)
                         {
                             RelativeSizeAxes = Axes.Both,
+                        },
+                        new DifficultyNameBadge(Beatmap)
+                        {
+                            Width = 100,
+                            AutoSizeAxes = Axes.Y,
+
+                            // this container partially overlaps with the bottom area
+                            Anchor = Anchor.BottomCentre,
+                            Origin = Anchor.Centre,
                         }
-                    ]
+                    ],
                 },
                 new Container
                 {
                     Name = "Bottom Area",
                     RelativeSizeAxes = Axes.Both,
-                    Padding = new MarginPadding { Top = RankedPlayCard.SIZE.Y },
+                    Padding = new MarginPadding { Top = RankedPlayCard.SIZE.X + 6 },
                     Children =
                     [
                     ]
@@ -86,7 +97,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
                 Masking = true;
                 CornerRadius = RankedPlayCard.CORNER_RADIUS;
                 BorderThickness = 1.5f;
-                BorderColour = colours.Border;
+                BorderColour = ColourInfo.GradientVertical(colours.Border.Opacity(0.5f), colours.Border.Opacity(0));
 
                 InternalChild = new Box
                 {
