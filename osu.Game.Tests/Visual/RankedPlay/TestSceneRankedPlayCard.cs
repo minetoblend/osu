@@ -2,13 +2,21 @@
 // See the LICENCE file in the repository root for full licence text.
 
 using System.Linq;
+using Nito.Disposables.Internals;
+using NUnit.Framework;
 using osu.Framework.Allocation;
+using osu.Framework.Extensions;
 using osu.Framework.Graphics;
+using osu.Framework.Graphics.Containers;
 using osu.Game.Beatmaps;
+using osu.Game.Database;
 using osu.Game.Online.API.Requests.Responses;
+using osu.Game.Online.Multiplayer.MatchTypes.RankedPlay;
 using osu.Game.Overlays;
+using osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay;
 using osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards;
 using osu.Game.Tests.Visual.Multiplayer;
+using osuTK;
 
 namespace osu.Game.Tests.Visual.RankedPlay
 {
@@ -17,59 +25,109 @@ namespace osu.Game.Tests.Visual.RankedPlay
         [Cached]
         private readonly OverlayColourProvider colourProvider = new OverlayColourProvider(OverlayColourScheme.Purple);
 
-        public override void SetUpSteps()
+        [Test]
+        public void TestCards()
         {
-            base.SetUpSteps();
+            AddStep("add card", () =>
+            {
+                FillFlowContainer flow;
 
-            RankedPlayCardContent card = null!;
+                Child = flow = new FillFlowContainer
+                {
+                    RelativeSizeAxes = Axes.Y,
+                    Width = 800f,
+                    Anchor = Anchor.Centre,
+                    Origin = Anchor.Centre,
+                    Spacing = new Vector2(10),
+                };
+
+                for (int i = 0; i < 10; i++)
+                {
+                    var beatmap = CreateAPIBeatmap();
+
+                    beatmap.BeatmapSet!.Ratings = Enumerable.Range(0, 11).ToArray();
+                    beatmap.BeatmapSet!.RelatedTags =
+                    [
+                        new APITag
+                        {
+                            Id = 2,
+                            Name = "song representation/simple",
+                            Description = "Accessible and straightforward map design."
+                        },
+                        new APITag
+                        {
+                            Id = 4,
+                            Name = "style/clean",
+                            Description = "Visually uncluttered and organised patterns, often involving few overlaps and equal visual spacing between objects."
+                        },
+                        new APITag
+                        {
+                            Id = 23,
+                            Name = "aim/aim control",
+                            Description = "Patterns with velocity or direction changes which strongly go against a player's natural movement pattern."
+                        }
+                    ];
+
+                    beatmap.TopTags =
+                    [
+                        new APIBeatmapTag { TagId = 4, VoteCount = 1 },
+                        new APIBeatmapTag { TagId = 2, VoteCount = 1 },
+                        new APIBeatmapTag { TagId = 23, VoteCount = 5 },
+                    ];
+
+                    beatmap.FailTimes = new APIFailTimes
+                    {
+                        Fails = Enumerable.Range(1, 100).Select(i => i % 12 - 6).ToArray(),
+                        Retries = Enumerable.Range(-2, 100).Select(i => i % 12 - 6).ToArray(),
+                    };
+
+                    beatmap.StarRating = i + 1;
+
+                    flow.Add(new RankedPlayCardContent(beatmap)
+                    {
+                        Anchor = Anchor.Centre,
+                        Origin = Anchor.Centre,
+                        Scale = new Vector2(1.2f),
+                    });
+                }
+            });
+        }
+
+        [Resolved]
+        private BeatmapLookupCache beatmapLookupCache { get; set; } = null!;
+
+        [Test]
+        public void TestCardHand()
+        {
+            PlayerCardHand cardHand = null!;
 
             AddStep("add card", () =>
             {
-                var beatmap = CreateAPIBeatmap();
-
-                beatmap.BeatmapSet!.Ratings = Enumerable.Range(0, 11).ToArray();
-                beatmap.BeatmapSet!.RelatedTags =
-                [
-                    new APITag
-                    {
-                        Id = 2,
-                        Name = "song representation/simple",
-                        Description = "Accessible and straightforward map design."
-                    },
-                    new APITag
-                    {
-                        Id = 4,
-                        Name = "style/clean",
-                        Description = "Visually uncluttered and organised patterns, often involving few overlaps and equal visual spacing between objects."
-                    },
-                    new APITag
-                    {
-                        Id = 23,
-                        Name = "aim/aim control",
-                        Description = "Patterns with velocity or direction changes which strongly go against a player's natural movement pattern."
-                    }
-                ];
-
-                beatmap.TopTags =
-                [
-                    new APIBeatmapTag { TagId = 4, VoteCount = 1 },
-                    new APIBeatmapTag { TagId = 2, VoteCount = 1 },
-                    new APIBeatmapTag { TagId = 23, VoteCount = 5 },
-                ];
-
-                beatmap.FailTimes = new APIFailTimes
+                Child = cardHand = new PlayerCardHand
                 {
-                    Fails = Enumerable.Range(1, 100).Select(i => i % 12 - 6).ToArray(),
-                    Retries = Enumerable.Range(-2, 100).Select(i => i % 12 - 6).ToArray(),
+                    RelativeSizeAxes = Axes.Both,
+                    Size = new Vector2(0.5f),
+                    Anchor = Anchor.BottomCentre,
+                    Origin = Anchor.BottomCentre,
                 };
 
-                beatmap.StarRating = 7.49;
+                var beatmapsTask = beatmapLookupCache.GetBeatmapsAsync([3631491, 3666654, 3716286, 3658033, 2069833]);
+                beatmapsTask.WaitSafely();
+                var beatmaps = beatmapsTask.GetResultSafely().WhereNotNull()
+                                           .ToArray();
 
-                Child = card = new RankedPlayCardContent(beatmap)
+                foreach (var beatmap in beatmaps)
                 {
-                    Anchor = Anchor.Centre,
-                    Origin = Anchor.Centre,
-                };
+                    var card = new RankedPlayCard(new RankedPlayCardWithPlaylistItem(new RankedPlayCardItem()));
+
+                    cardHand.AddCard(card);
+
+                    Schedule(() => card.SetContent(new RankedPlayCardContent(beatmap)
+                    {
+                        Anchor = Anchor.Centre,
+                        Origin = Anchor.Centre,
+                    }, false));
+                }
             });
         }
     }
