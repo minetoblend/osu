@@ -1,11 +1,11 @@
 // Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
+using System.IO;
 using System.Linq;
-using Nito.Disposables.Internals;
+using Newtonsoft.Json;
 using NUnit.Framework;
 using osu.Framework.Allocation;
-using osu.Framework.Extensions;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Game.Beatmaps;
@@ -15,6 +15,7 @@ using osu.Game.Online.Multiplayer.MatchTypes.RankedPlay;
 using osu.Game.Overlays;
 using osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay;
 using osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards;
+using osu.Game.Tests.Resources;
 using osu.Game.Tests.Visual.Multiplayer;
 using osuTK;
 
@@ -111,12 +112,7 @@ namespace osu.Game.Tests.Visual.RankedPlay
                     Origin = Anchor.BottomCentre,
                 };
 
-                var beatmapsTask = beatmapLookupCache.GetBeatmapsAsync([3631491, 3666654, 3716286, 3658033, 2069833]);
-                beatmapsTask.WaitSafely();
-                var beatmaps = beatmapsTask.GetResultSafely().WhereNotNull()
-                                           .ToArray();
-
-                foreach (var beatmap in beatmaps)
+                foreach (var beatmap in getBeatmaps())
                 {
                     var card = new RankedPlayCard(new RankedPlayCardWithPlaylistItem(new RankedPlayCardItem()));
 
@@ -129,6 +125,14 @@ namespace osu.Game.Tests.Visual.RankedPlay
                     }, false));
                 }
             });
+        }
+
+        private APIBeatmap[] getBeatmaps()
+        {
+            using var resourceStream = TestResources.OpenResource("Requests/api-beatmaps-rankedplay.json");
+            using var reader = new StreamReader(resourceStream);
+
+            return JsonConvert.DeserializeObject<APIBeatmap[]>(reader.ReadToEnd())!;
         }
     }
 }
