@@ -19,11 +19,11 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
             [BackgroundDependencyLoader]
             private void load(CardColours colours)
             {
-                BufferedContainer cardContainer;
+                BufferedContainer coverContainer;
 
                 InternalChildren =
                 [
-                    cardContainer = new BufferedContainer
+                    coverContainer = new BufferedContainer
                     {
                         RelativeSizeAxes = Axes.Both,
                         GrayscaleStrength = 0.25f,
@@ -46,7 +46,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
 
                 LoadComponentAsync(cover, _ =>
                 {
-                    cardContainer.Add(cover);
+                    coverContainer.Add(cover);
                     cover.FadeInFromZero(200);
                 });
             }
