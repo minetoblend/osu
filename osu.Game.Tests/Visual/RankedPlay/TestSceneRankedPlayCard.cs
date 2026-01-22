@@ -78,8 +78,8 @@ namespace osu.Game.Tests.Visual.RankedPlay
 
                     beatmap.FailTimes = new APIFailTimes
                     {
-                        Fails = Enumerable.Range(1, 100).Select(i => i % 12 - 6).ToArray(),
-                        Retries = Enumerable.Range(-2, 100).Select(i => i % 12 - 6).ToArray(),
+                        Fails = Enumerable.Range(1, 100).Select(x => x % 12 - 6).ToArray(),
+                        Retries = Enumerable.Range(-2, 100).Select(x => x % 12 - 6).ToArray(),
                     };
 
                     beatmap.StarRating = i + 1;
