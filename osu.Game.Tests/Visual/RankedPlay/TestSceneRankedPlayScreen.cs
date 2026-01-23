@@ -119,6 +119,7 @@ namespace osu.Game.Tests.Visual.RankedPlay
         public void TestPlayStage()
         {
             AddStep("set play phase", () => MultiplayerClient.RankedPlayChangeStage(RankedPlayStage.CardPlay, state => state.ActiveUserId = API.LocalUser.Value.OnlineID).WaitSafely());
+            AddUntilStep("wait until cards are present", () => this.ChildrenOfType<PlayerCardHand.PlayerHandCard>().Count() == 5);
 
             for (int i = 0; i < 3; i++)
             {
