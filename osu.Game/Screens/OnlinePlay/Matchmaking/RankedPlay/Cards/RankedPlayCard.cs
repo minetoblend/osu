@@ -21,7 +21,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
     {
         public static readonly Vector2 SIZE = new Vector2(120, 200);
 
-        public static readonly float CORNER_RADIUS = 4;
+        public static readonly float CORNER_RADIUS = 6;
 
         public readonly RankedPlayCardWithPlaylistItem Item;
 
