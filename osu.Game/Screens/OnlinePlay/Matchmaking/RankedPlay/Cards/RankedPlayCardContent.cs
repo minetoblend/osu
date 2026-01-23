@@ -120,7 +120,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
         [Resolved]
         private BeatmapSetOverlay? beatmapSetOverlay { get; set; }
 
-        public MenuItem[]? ContextMenuItems =>
+        public MenuItem[] ContextMenuItems =>
         [
             new OsuMenuItem(ContextMenuStrings.ViewBeatmap, MenuItemType.Highlighted, () => beatmapSetOverlay?.ShowBeatmapSet(Beatmap.BeatmapSet))
         ];
