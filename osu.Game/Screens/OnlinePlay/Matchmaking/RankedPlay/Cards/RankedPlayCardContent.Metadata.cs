@@ -36,7 +36,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
                             {
                                 Anchor = Anchor.TopCentre,
                                 Origin = Anchor.TopCentre,
-                                Margin = new MarginPadding { Top = 4 },
+                                Margin = new MarginPadding { Top = 6 },
                             },
                         ]
                     },
@@ -45,7 +45,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
                         Name = "Beatmap Metadata",
                         RelativeSizeAxes = Axes.Both,
                         TextAnchor = Anchor.BottomLeft,
-                        Padding = new MarginPadding(5) { Bottom = 10 },
+                        Padding = new MarginPadding(6) { Bottom = 10 },
                         ParagraphSpacing = 0.2f,
                     }.With(d =>
                     {

@@ -276,6 +276,9 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
 
             public RankedPlayCardWithPlaylistItem Item => Card.Item;
 
+            protected float TiltX { get; set; }
+            protected float TiltY { get; set; }
+
             public HandCard(RankedPlayCard card)
             {
                 Size = card.DrawSize;
@@ -317,10 +320,12 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
                 }
             }
 
-            public RankedPlayCard Detach()
+            public virtual RankedPlayCard Detach()
             {
                 Card.ShowSelectionOutline = false;
                 Card.Elevation = 0;
+                Card.TiltX = 0;
+                Card.TiltY = 0;
 
                 RemoveInternal(Card, false);
 
@@ -332,6 +337,9 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
                 base.Update();
 
                 Card.Elevation = float.Lerp(CardHovered ? 1 : 0, Card.Elevation, (float)Math.Exp(-0.03f * Time.Elapsed));
+
+                Card.TiltX = float.Lerp(TiltX, Card.TiltX, MathF.Exp((float)(-0.01 * Time.Elapsed)));
+                Card.TiltY = float.Lerp(TiltY, Card.TiltY, MathF.Exp((float)(-0.01 * Time.Elapsed)));
             }
         }
     }

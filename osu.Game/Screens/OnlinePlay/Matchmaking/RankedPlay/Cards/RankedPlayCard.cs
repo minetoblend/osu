@@ -1,6 +1,7 @@
 // Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
+using System;
 using System.Threading.Tasks;
 using osu.Framework.Allocation;
 using osu.Framework.Bindables;
@@ -13,7 +14,6 @@ using osu.Framework.Logging;
 using osu.Game.Database;
 using osu.Game.Online.Rooms;
 using osuTK;
-using osuTK.Graphics;
 
 namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
 {
@@ -21,7 +21,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
     {
         public static readonly Vector2 SIZE = new Vector2(120, 200);
 
-        public static readonly float CORNER_RADIUS = 6;
+        public static readonly float CORNER_RADIUS = 8;
 
         public readonly RankedPlayCardWithPlaylistItem Item;
 
@@ -29,7 +29,6 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
 
         private readonly Container content;
         private readonly Container cardContent;
-        private readonly Container shadow;
         private readonly SelectionOutline selectionOutline;
 
         public bool ShowSelectionOutline
@@ -39,8 +38,15 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
 
         public float Elevation;
 
+        public float TiltX;
+        public float TiltY;
+        private float cardRevealTilt = -MathF.PI;
+
         [Resolved]
         private BeatmapLookupCache beatmapLookupCache { get; set; } = null!;
+
+        private readonly RankedPlayCardBackSide backSide;
+        private RankedPlayCardContent? frontSide;
 
         public RankedPlayCard(RankedPlayCardWithPlaylistItem item)
         {
@@ -50,46 +56,38 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
 
             playlistItem = item.PlaylistItem.GetBoundCopy();
 
+            const float padding = 40;
+
             InternalChildren =
             [
-                shadow = new Container
-                {
-                    RelativeSizeAxes = Axes.Both,
-                    Masking = true,
-                    CornerRadius = CORNER_RADIUS,
-                    Anchor = Anchor.Centre,
-                    Origin = Anchor.Centre,
-                    EdgeEffect = new EdgeEffectParameters
-                    {
-                        Type = EdgeEffectType.Shadow,
-                        Radius = 5,
-                        Colour = Color4.Black.Opacity(0.1f),
-                    },
-                    Child = new Box
-                    {
-                        RelativeSizeAxes = Axes.Both,
-                        Alpha = 0,
-                        AlwaysPresent = true,
-                    }
-                },
                 content = new Container
                 {
                     RelativeSizeAxes = Axes.Both,
                     Anchor = Anchor.Centre,
                     Origin = Anchor.Centre,
-                    Children =
-                    [
-                        cardContent = new Container
-                        {
-                            RelativeSizeAxes = Axes.Both,
-                            Child = new RankedPlayCardBackSide()
-                        },
-                        selectionOutline = new SelectionOutline
-                        {
-                            RelativeSizeAxes = Axes.Both,
-                            Alpha = 0,
-                        }
-                    ]
+                    Padding = new MarginPadding(-padding),
+                    Child = tiltContainer = new TiltContainer
+                    {
+                        RelativeSizeAxes = Axes.Both,
+                        Padding = new MarginPadding(padding),
+                        BackgroundColour = Color4Extensions.FromHex("72D5FF").Opacity(0f),
+                        Children =
+                        [
+                            cardContent = new Container
+                            {
+                                RelativeSizeAxes = Axes.Both,
+                                Children =
+                                [
+                                    backSide = new RankedPlayCardBackSide()
+                                ]
+                            },
+                            selectionOutline = new SelectionOutline
+                            {
+                                RelativeSizeAxes = Axes.Both,
+                                Alpha = 0,
+                            }
+                        ]
+                    }
                 }
             ];
         }
@@ -107,26 +105,44 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
         {
             base.UpdateAfterChildren();
 
-            shadow.Scale = content.Scale;
-            shadow.Size = new Vector2(1 - Elevation * 0.25f);
-            shadow.Position = new Vector2(-25, 20) * Elevation;
+            float tilt = TiltX + cardRevealTilt;
+
+            var rotation = Quaternion.FromAxisAngle(new Vector3(0, 1, 0), tilt) *
+                           Quaternion.FromAxisAngle(new Vector3(1, 0, 0), TiltY);
+
+            bool flipped = false;
+
+            if (Vector3.TransformNormal(Vector3.UnitZ, Matrix4.CreateFromQuaternion(rotation)).Z < 0)
+            {
+                flipped = true;
+                rotation = Quaternion.FromAxisAngle(new Vector3(0, 1, 0), MathF.PI) * rotation;
+            }
+
+            tiltContainer.PerspectiveRotation = rotation;
+
+            if (frontSide == null || flipped)
+            {
+                frontSide?.Hide();
+                backSide.Show();
+            }
+            else
+            {
+                frontSide?.Show();
+                backSide.Hide();
+            }
         }
 
         #region beatmap fetching logic & card flip
 
         private readonly TaskCompletionSource cardRevealed = new TaskCompletionSource();
+        private readonly TiltContainer tiltContainer;
 
         public Task CardRevealed => cardRevealed.Task;
 
         private void onPlaylistItemChanged(MultiplayerPlaylistItem? playlistItem)
         {
-            if (playlistItem == null)
-            {
-                SetContent(new RankedPlayCardBackSide(), true);
-                return;
-            }
-
-            loadCardContent(playlistItem, true);
+            if (playlistItem != null)
+                loadCardContent(playlistItem, true);
         }
 
         private void loadCardContent(MultiplayerPlaylistItem playlistItem, bool flip) => Task.Run(async () =>
@@ -144,18 +160,21 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
             Schedule(() => SetContent(new RankedPlayCardContent(beatmap), flip));
         });
 
-        public void SetContent(Drawable newContent, bool flip)
+        public void SetContent(RankedPlayCardContent newContent, bool flip)
         {
+            frontSide?.Expire();
+            cardContent.Add(frontSide = newContent);
+
             if (!flip)
             {
-                cardContent.Child = newContent;
+                cardRevealTilt = 0;
                 return;
             }
 
-            content.ScaleTo(new Vector2(0, 1), 100, Easing.In)
-                   .Then()
-                   .Schedule(() => cardContent.Child = newContent)
-                   .ScaleTo(new Vector2(1), 300, Easing.OutElasticQuarter);
+            this.TransformTo(nameof(cardRevealTilt), -MathF.PI)
+                .TransformTo(nameof(cardRevealTilt), -MathF.PI / 2, 150, Easing.In)
+                .Then()
+                .TransformTo(nameof(cardRevealTilt), 0f, 600, Easing.OutElasticQuarter);
         }
 
         #endregion
@@ -178,21 +197,19 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
                 InternalChild = new Container
                 {
                     RelativeSizeAxes = Axes.Both,
-                    // anti-aliasing would create a gap between the border & card here if we used border_width directly
-                    Padding = new MarginPadding(-(border_width - 1)),
+                    Padding = new MarginPadding(-1),
                     Child = new Container
                     {
                         RelativeSizeAxes = Axes.Both,
                         Masking = true,
-                        CornerRadius = CORNER_RADIUS + border_width,
+                        CornerRadius = CORNER_RADIUS,
                         BorderThickness = border_width,
-                        BorderColour = Color4Extensions.FromHex("72D5FF"),
-                        Blending = BlendingParameters.Additive,
+                        BorderColour = Color4Extensions.FromHex("c4eeff"),
                         EdgeEffect = new EdgeEffectParameters
                         {
                             Type = EdgeEffectType.Glow,
                             Radius = 30,
-                            Colour = Color4Extensions.FromHex("72D5FF").Opacity(0.2f),
+                            Colour = Color4Extensions.FromHex("72D5FF").Opacity(0.5f),
                             Hollow = true,
                             Roundness = 10
                         },

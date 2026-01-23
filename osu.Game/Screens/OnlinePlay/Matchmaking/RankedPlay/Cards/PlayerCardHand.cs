@@ -149,6 +149,18 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
             protected override void OnHoverLost(HoverLostEvent e)
             {
                 CardHovered = false;
+
+                TiltX = TiltY = 0;
+            }
+
+            protected override bool OnMouseMove(MouseMoveEvent e)
+            {
+                var mousePos = ToLocalSpace(e.ScreenSpaceMousePosition) - DrawSize / 2;
+
+                TiltX = mousePos.X * 0.003f;
+                TiltY = -mousePos.Y * 0.001f;
+
+                return true;
             }
 
             protected override bool OnMouseDown(MouseDownEvent e)

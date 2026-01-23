@@ -46,7 +46,7 @@ namespace osu.Game.Tests.Visual.RankedPlay
                     }
                 };
 
-                for (int i = 0; i < 10; i++)
+                for (int i = 0; i < 1; i++)
                 {
                     var beatmap = CreateAPIBeatmap();
 
@@ -88,12 +88,18 @@ namespace osu.Game.Tests.Visual.RankedPlay
 
                     beatmap.StarRating = i + 1;
 
-                    flow.Add(new RankedPlayCardContent(beatmap)
+                    var card = new RankedPlayCard(new RankedPlayCardWithPlaylistItem(new RankedPlayCardItem()))
                     {
                         Anchor = Anchor.Centre,
                         Origin = Anchor.Centre,
-                        Scale = new Vector2(1.2f),
-                    });
+                        Scale = new Vector2(1.5f)
+                    };
+
+                    flow.Add(card);
+
+                    card.SetContent(new RankedPlayCardContent(getBeatmaps()[2])
+                    {
+                    }, false);
                 }
             });
         }
@@ -114,6 +120,7 @@ namespace osu.Game.Tests.Visual.RankedPlay
                         Size = new Vector2(0.5f),
                         Anchor = Anchor.BottomCentre,
                         Origin = Anchor.BottomCentre,
+                        SelectionMode = CardSelectionMode.Single
                     }
                 };
 
