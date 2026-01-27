@@ -24,6 +24,9 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
 
         private CardColours colours = null!;
 
+        [Resolved]
+        private CardDetailsOverlayContainer? cardDetailsOverlay { get; set; }
+
         public RankedPlayCardContent(APIBeatmap beatmap)
         {
             Size = RankedPlayCard.SIZE;
@@ -94,6 +97,16 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
             dependencies.CacheAs(colours = new CardColours(Beatmap, dependencies.Get<OsuColour>()));
 
             return dependencies;
+        }
+
+        public override bool HandlePositionalInput => true;
+
+        protected override void UpdateAfterChildren()
+        {
+            base.UpdateAfterChildren();
+
+            if (IsHovered)
+                cardDetailsOverlay?.ShowCardDetails(this, Beatmap);
         }
 
         private partial class CardBorder : CompositeDrawable

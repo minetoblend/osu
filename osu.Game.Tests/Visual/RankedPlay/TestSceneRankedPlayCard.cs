@@ -36,13 +36,16 @@ namespace osu.Game.Tests.Visual.RankedPlay
                 Child = new OsuContextMenuContainer
                 {
                     RelativeSizeAxes = Axes.Both,
-                    Child = flow = new FillFlowContainer
+                    Child = new CardDetailsOverlayContainer
                     {
-                        RelativeSizeAxes = Axes.Y,
-                        Width = 800f,
-                        Anchor = Anchor.Centre,
-                        Origin = Anchor.Centre,
-                        Spacing = new Vector2(10),
+                        Child = flow = new FillFlowContainer
+                        {
+                            RelativeSizeAxes = Axes.Y,
+                            Width = 800f,
+                            Anchor = Anchor.Centre,
+                            Origin = Anchor.Centre,
+                            Spacing = new Vector2(10),
+                        }
                     }
                 };
 
@@ -108,12 +111,15 @@ namespace osu.Game.Tests.Visual.RankedPlay
                 Child = new OsuContextMenuContainer
                 {
                     RelativeSizeAxes = Axes.Both,
-                    Child = cardHand = new PlayerCardHand
+                    Child = new CardDetailsOverlayContainer
                     {
-                        RelativeSizeAxes = Axes.Both,
-                        Size = new Vector2(0.5f),
-                        Anchor = Anchor.BottomCentre,
-                        Origin = Anchor.BottomCentre,
+                        Child = cardHand = new PlayerCardHand
+                        {
+                            RelativeSizeAxes = Axes.Both,
+                            Size = new Vector2(0.5f),
+                            Anchor = Anchor.BottomCentre,
+                            Origin = Anchor.BottomCentre,
+                        },
                     }
                 };
 
