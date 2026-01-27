@@ -101,7 +101,7 @@ namespace osu.Game.Tests.Visual.RankedPlay
         [Test]
         public void TestCardHand()
         {
-            AddStep("add card", () =>
+            AddStep("add cards", () =>
             {
                 PlayerCardHand cardHand;
 
