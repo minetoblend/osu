@@ -115,9 +115,9 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
 
             private readonly Vector2Spring position = new Vector2Spring
             {
-                NaturalFrequency = 3f,
-                Response = 0.3f,
-                Damping = 1.25f
+                NaturalFrequency = 2f,
+                Response = 0.25f,
+                Damping = 0.85f
             };
 
             protected override void Update()
