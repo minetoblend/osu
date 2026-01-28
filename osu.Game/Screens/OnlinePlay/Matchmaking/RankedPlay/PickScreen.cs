@@ -14,7 +14,6 @@ using osu.Framework.Logging;
 using osu.Game.Audio;
 using osu.Game.Graphics;
 using osu.Game.Graphics.Sprites;
-using osu.Game.Graphics.UserInterface;
 using osu.Game.Online.Multiplayer;
 using osu.Game.Online.Multiplayer.MatchTypes.RankedPlay;
 using osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards;
@@ -28,7 +27,6 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 
         private PlayerCardHand playerHand = null!;
         private OpponentCardHand opponentHand = null!;
-        private ShearedButton playButton = null!;
         private FillFlowContainer textContainer = null!;
 
         [Resolved]
@@ -64,7 +62,8 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                     Origin = Anchor.BottomCentre,
                     RelativeSizeAxes = Axes.Both,
                     Height = 0.5f,
-                    SelectionMode = CardSelectionMode.Single
+                    SelectionMode = CardSelectionMode.Single,
+                    PlayCardAction = onPlayButtonClicked
                 },
                 opponentHand = new OpponentCardHand
                 {
@@ -105,13 +104,6 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                 },
             ];
 
-            ButtonsContainer.Child = playButton = new ShearedButton(width: 150)
-            {
-                Action = onPlayButtonClicked,
-                Enabled = { Value = false },
-                Text = "Play",
-            };
-
             cardAddSample = audio.Samples.Get(@"Multiplayer/Matchmaking/Ranked/card-add-1");
 
             cardPlaySamples = new Sample?[card_play_samples];
@@ -124,12 +116,6 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
             base.LoadComplete();
 
             matchInfo.CardPlayed += cardPlayed;
-            playerHand.SelectionChanged += onSelectionChanged;
-        }
-
-        private void onSelectionChanged()
-        {
-            playButton.Enabled.Value = playerHand.Selection.Any();
         }
 
         private void onPlayButtonClicked()
@@ -140,8 +126,9 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
             {
                 playerHand.SelectionMode = CardSelectionMode.Disabled;
                 Client.PlayCard(selection.Card).FireAndForget();
-                playButton.Hide();
             }
+
+            playerHand.PlayCardAction = null;
         }
 
         public override void OnEntering(RankedPlaySubScreen? previous)
