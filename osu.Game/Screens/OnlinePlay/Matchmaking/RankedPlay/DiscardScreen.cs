@@ -121,7 +121,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
         private void onSelectionChanged()
         {
             if (playerHand.Selection.Any())
-                discardButton.Text = $"Discard {"card".ToQuantity(playerHand.Selection.Count())}";
+                discardButton.Text = $"Replace {"card".ToQuantity(playerHand.Selection.Count())}";
             else
                 discardButton.Text = "Keep cards";
         }
