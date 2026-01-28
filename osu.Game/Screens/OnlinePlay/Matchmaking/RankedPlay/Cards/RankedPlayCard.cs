@@ -22,6 +22,10 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
 {
     public partial class RankedPlayCard : CompositeDrawable
     {
+        public static readonly Vector2 SIZE = new Vector2(120, 200);
+
+        public static readonly float CORNER_RADIUS = 6;
+
         public readonly RankedPlayCardWithPlaylistItem Item;
 
         private readonly IBindable<MultiplayerPlaylistItem?> playlistItem;
@@ -29,8 +33,12 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
         private readonly Container content;
         private readonly Container cardContent;
         private readonly Container shadow;
+        private readonly SelectionOutline selectionOutline;
 
-        public readonly Container OverlayLayer;
+        public bool ShowSelectionOutline
+        {
+            set => selectionOutline.FadeTo(value ? 1 : 0, 50);
+        }
 
         public float Elevation;
 
@@ -43,7 +51,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
         {
             Item = item;
 
-            Size = new Vector2(120, 200);
+            Size = SIZE;
 
             playlistItem = item.PlaylistItem.GetBoundCopy();
 
@@ -53,7 +61,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
                 {
                     RelativeSizeAxes = Axes.Both,
                     Masking = true,
-                    CornerRadius = 10,
+                    CornerRadius = CORNER_RADIUS,
                     Anchor = Anchor.Centre,
                     Origin = Anchor.Centre,
                     EdgeEffect = new EdgeEffectParameters
@@ -71,8 +79,6 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
                 },
                 content = new Container
                 {
-                    Masking = true,
-                    CornerRadius = 10,
                     RelativeSizeAxes = Axes.Both,
                     Anchor = Anchor.Centre,
                     Origin = Anchor.Centre,
@@ -83,9 +89,10 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
                             RelativeSizeAxes = Axes.Both,
                             Child = new RankedPlayCardBackSide()
                         },
-                        OverlayLayer = new Container
+                        selectionOutline = new SelectionOutline
                         {
                             RelativeSizeAxes = Axes.Both,
+                            Alpha = 0,
                         }
                     ]
                 }
@@ -126,7 +133,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
         {
             if (playlistItem == null)
             {
-                setContent(new RankedPlayCardBackSide(), true);
+                SetContent(new RankedPlayCardBackSide(), true);
                 return;
             }
 
@@ -145,18 +152,10 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
                 return;
             }
 
-            Schedule(() =>
-            {
-                var drawable = new RankedPlayCardContent(beatmap)
-                {
-                    Scale = new Vector2(0.4f) // TODO: make both card drawables the same size
-                };
-
-                setContent(drawable, flip);
-            });
+            Schedule(() => SetContent(new RankedPlayCardContent(beatmap), flip));
         });
 
-        private void setContent(Drawable newContent, bool flip)
+        public void SetContent(Drawable newContent, bool flip)
         {
             if (!flip)
             {
@@ -180,6 +179,45 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
 
             this.FadeOut(500)
                 .Expire();
+        }
+
+        private partial class SelectionOutline : CompositeDrawable
+        {
+            [BackgroundDependencyLoader]
+            private void load()
+            {
+                const float border_width = 4;
+
+                InternalChild = new Container
+                {
+                    RelativeSizeAxes = Axes.Both,
+                    // anti-aliasing would create a gap between the border & card here if we used border_width directly
+                    Padding = new MarginPadding(-(border_width - 1)),
+                    Child = new Container
+                    {
+                        RelativeSizeAxes = Axes.Both,
+                        Masking = true,
+                        CornerRadius = CORNER_RADIUS + border_width,
+                        BorderThickness = border_width,
+                        BorderColour = Color4Extensions.FromHex("72D5FF"),
+                        Blending = BlendingParameters.Additive,
+                        EdgeEffect = new EdgeEffectParameters
+                        {
+                            Type = EdgeEffectType.Glow,
+                            Radius = 30,
+                            Colour = Color4Extensions.FromHex("72D5FF").Opacity(0.2f),
+                            Hollow = true,
+                            Roundness = 10
+                        },
+                        Child = new Box
+                        {
+                            RelativeSizeAxes = Axes.Both,
+                            Alpha = 0,
+                            AlwaysPresent = true
+                        }
+                    }
+                };
+            }
         }
     }
 }

@@ -8,10 +8,13 @@ using osu.Framework.Allocation;
 using osu.Framework.Audio;
 using osu.Framework.Audio.Sample;
 using osu.Framework.Bindables;
+using osu.Framework.Graphics;
+using osu.Framework.Graphics.Containers;
 using osu.Framework.Input.Events;
 using osu.Game.Audio;
 using osu.Game.Graphics.UserInterface;
 using osu.Game.Online.RankedPlay;
+using osuTK;
 using osuTK.Input;
 
 namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
@@ -63,7 +66,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
         /// </summary>
         public IEnumerable<RankedPlayCardWithPlaylistItem> Selection => selection.Select(it => it.Card.Item);
 
-        private readonly BindableBool allowSelection = new BindableBool(true);
+        private readonly BindableBool allowSelection = new BindableBool();
 
         private const int select_samples = 1;
         private const int deselect_samples = 2;
@@ -135,10 +138,24 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
 
             public required IBindable<bool> AllowSelection;
 
+            private readonly Drawable positionalInputArea;
+
             public PlayerHandCard(RankedPlayCard card)
                 : base(card)
             {
+                AddInternal(new Container
+                {
+                    RelativeSizeAxes = Axes.Both,
+                    Padding = new MarginPadding(-10),
+                    Child = positionalInputArea = new Container
+                    {
+                        RelativeSizeAxes = Axes.Both,
+                    },
+                });
             }
+
+            // input events are handled for an area that's slightly larger than the actual card so the cursor always hovers a card when moving over a gap between two cards
+            public override bool ReceivePositionalInputAt(Vector2 screenSpacePos) => positionalInputArea.Contains(screenSpacePos);
 
             protected override void LoadComplete()
             {

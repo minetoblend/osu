@@ -29,6 +29,7 @@ using osu.Game.Overlays.Dialog;
 using osu.Game.Rulesets;
 using osu.Game.Screens.OnlinePlay.Matchmaking.Match;
 using osu.Game.Screens.OnlinePlay.Matchmaking.Match.Gameplay;
+using osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards;
 using osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components;
 using osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Intro;
 using osu.Game.Screens.OnlinePlay.Multiplayer;
@@ -100,6 +101,9 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
         [Cached]
         private readonly RankedPlayMatchInfo matchInfo;
 
+        [Cached]
+        private readonly CardDetailsOverlayContainer overlayContainer;
+
         public RankedPlayScreen(MultiplayerRoom room)
         {
             this.room = room;
@@ -134,7 +138,8 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                             Size = new Vector2(56),
                         }
                     }
-                }
+                },
+                overlayContainer = new CardDetailsOverlayContainer()
             };
         }
 

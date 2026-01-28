@@ -13,12 +13,15 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
     {
         public RankedPlayCardBackSide()
         {
-            Size = RankedPlayCardContent.SIZE;
+            Size = RankedPlayCard.SIZE;
         }
 
         [BackgroundDependencyLoader]
         private void load(OverlayColourProvider colourProvider)
         {
+            Masking = true;
+            CornerRadius = RankedPlayCard.CORNER_RADIUS;
+
             InternalChild = new Box
             {
                 RelativeSizeAxes = Axes.Both,

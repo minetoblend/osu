@@ -8,11 +8,9 @@ using System.Linq;
 using osu.Framework.Allocation;
 using osu.Framework.Bindables;
 using osu.Framework.Caching;
-using osu.Framework.Extensions.Color4Extensions;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Primitives;
-using osu.Framework.Graphics.Shapes;
 using osu.Game.Online.Multiplayer.MatchTypes.RankedPlay;
 using osu.Game.Online.RankedPlay;
 using osuTK;
@@ -165,7 +163,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
             if (contracted)
                 return;
 
-            const float spacing = -40;
+            const float spacing = -20;
 
             float totalWidth = cardContainer.Sum(it => it.LayoutWidth + spacing) - spacing;
 
@@ -193,7 +191,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
 
                 float yOffset = 0;
 
-                var position = new Vector2(x, MathF.Pow(MathF.Abs(x / 250), 2) * 20 + 10);
+                var position = new Vector2(x, MathF.Pow(MathF.Abs(x / 250), 2) * 20 - 10);
 
                 if (hoverIndex != no_card_hovered && cardContainer.Children.Count > 1)
                 {
@@ -202,7 +200,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
 
                     position.X += direction switch
                     {
-                        0 => -10,
+                        0 => 0,
 
                         // special case for the left card when there's only 2 cards
                         // too much offset looks kinda odd here so it's reduced
@@ -271,8 +269,6 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
                 set => State = State with { Pressed = value };
             }
 
-            private readonly Container selectionOverlay;
-
             [Resolved]
             private CardHand cardHand { get; set; } = null!;
 
@@ -294,22 +290,6 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
 
                 Anchor = Anchor.BottomCentre;
                 Origin = Anchor.BottomCentre;
-
-                card.OverlayLayer.Child = selectionOverlay = new Container
-                {
-                    RelativeSizeAxes = Axes.Both,
-                    Masking = true,
-                    CornerRadius = 10,
-                    BorderThickness = 4,
-                    BorderColour = Color4Extensions.FromHex("72D5FF"),
-                    Alpha = 0,
-                    Child = new Box
-                    {
-                        RelativeSizeAxes = Axes.Both,
-                        Alpha = 0,
-                        AlwaysPresent = true
-                    }
-                };
             }
 
             protected override void LoadComplete()
@@ -323,7 +303,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
             {
                 cardHand.OnCardStateChanged(this, state.NewValue);
 
-                selectionOverlay.Alpha = state.NewValue.Selected ? 1 : 0;
+                Card.ShowSelectionOutline = state.NewValue.Selected;
 
                 switch (state.NewValue.Pressed, state.OldValue.Pressed)
                 {
@@ -339,7 +319,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
 
             public RankedPlayCard Detach()
             {
-                Card.OverlayLayer.Clear();
+                Card.ShowSelectionOutline = false;
                 Card.Elevation = 0;
 
                 RemoveInternal(Card, false);
