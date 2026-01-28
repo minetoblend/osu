@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using Humanizer;
 using osu.Framework.Allocation;
 using osu.Framework.Audio;
 using osu.Framework.Audio.Sample;
@@ -62,6 +63,13 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                     CaptionColour = Color4.White,
                     Margin = new MarginPadding { Top = 60 },
                 },
+                discardButton = new ShearedButton(width: 150)
+                {
+                    Anchor = Anchor.Centre,
+                    Origin = Anchor.Centre,
+                    Action = onDiscardButtonClicked,
+                    Enabled = { Value = true },
+                }
             ];
 
             CenterColumn.Children =
@@ -91,13 +99,6 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                 })
             ];
 
-            ButtonsContainer.Child = discardButton = new ShearedButton(width: 150)
-            {
-                Action = onDiscardButtonClicked,
-                Enabled = { Value = true },
-                Text = "Discard",
-            };
-
             cardAddSample = audio.Samples.Get(@"Multiplayer/Matchmaking/Ranked/card-add-1");
             cardDiscardSample = audio.Samples.Get(@"Multiplayer/Matchmaking/Ranked/card-discard-1");
 
@@ -114,11 +115,15 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
             matchInfo.PlayerCardRemoved += cardRemoved;
 
             playerHand.SelectionChanged += onSelectionChanged;
+            onSelectionChanged();
         }
 
         private void onSelectionChanged()
         {
-            discardButton.Text = playerHand.Selection.Any() ? "Discard" : "Keep Cards";
+            if (playerHand.Selection.Any())
+                discardButton.Text = $"Discard {"card".ToQuantity(playerHand.Selection.Count())}";
+            else
+                discardButton.Text = "Keep cards";
         }
 
         private void onDiscardButtonClicked()
