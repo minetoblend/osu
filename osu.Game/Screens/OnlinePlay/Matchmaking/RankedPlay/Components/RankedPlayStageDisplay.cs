@@ -65,7 +65,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
                 {
                     AutoSizeAxes = Axes.Both,
                     BackgroundColour = colourScheme.Surface.Opacity(0),
-                    Alpha = 0.8f,
+                    Alpha = 0.7f,
                     Children = new[]
                     {
                         headingTextBackground = new Container
@@ -74,12 +74,11 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
                             Shear = OsuGame.SHEAR,
                             Masking = true,
                             CornerRadius = 3,
-                            BorderThickness = 1f,
-                            BorderColour = ColourInfo.GradientVertical(colourScheme.Surface, colourScheme.SurfaceBorder),
                             Child = new Box
                             {
                                 RelativeSizeAxes = Axes.Both,
-                                Colour = colourScheme.Surface
+                                Colour = colourScheme.Surface.Darken(0.1f),
+                                Alpha = 0.8f
                             }
                         },
                         new Container
@@ -107,7 +106,8 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
                         Left = 20,
                     },
                     Text = Heading,
-                    Font = OsuFont.TorusAlternate.With(size: 34)
+                    Font = OsuFont.TorusAlternate.With(size: 34),
+                    Shadow = false,
                 },
                 new Container
                 {
