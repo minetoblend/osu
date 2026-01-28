@@ -10,7 +10,7 @@ using osu.Game.Tests.Visual.Multiplayer;
 
 namespace osu.Game.Tests.Visual.RankedPlay
 {
-    public class TestSceneDiscardScreen : MultiplayerTestScene
+    public partial class TestSceneDiscardScreen : MultiplayerTestScene
     {
         private RankedPlayScreen screen = null!;
 
