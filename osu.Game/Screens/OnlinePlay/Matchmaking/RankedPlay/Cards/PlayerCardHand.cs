@@ -193,6 +193,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
                             RelativeSizeAxes = Axes.Both,
                             Child = playButton = new ShearedButton(width: 90f, height: 30f)
                             {
+                                Name = "Play Button",
                                 Anchor = Anchor.TopCentre,
                                 Origin = Anchor.TopCentre,
                                 Text = "Play",

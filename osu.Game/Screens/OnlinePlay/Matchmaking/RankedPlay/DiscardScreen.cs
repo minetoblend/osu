@@ -65,6 +65,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                 },
                 discardButton = new ShearedButton(width: 150)
                 {
+                    Name = "Discard Button",
                     Anchor = Anchor.Centre,
                     Origin = Anchor.Centre,
                     Action = onDiscardButtonClicked,
