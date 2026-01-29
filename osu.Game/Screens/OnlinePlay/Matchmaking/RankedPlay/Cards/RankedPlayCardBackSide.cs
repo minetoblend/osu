@@ -2,10 +2,11 @@
 // See the LICENCE file in the repository root for full licence text.
 
 using osu.Framework.Allocation;
+using osu.Framework.Extensions.Color4Extensions;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
-using osu.Framework.Graphics.Shapes;
-using osu.Game.Overlays;
+using osu.Framework.Graphics.Sprites;
+using osu.Framework.Graphics.Textures;
 
 namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
 {
@@ -17,15 +18,17 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
         }
 
         [BackgroundDependencyLoader]
-        private void load(OverlayColourProvider colourProvider)
+        private void load(TextureStore textures)
         {
             Masking = true;
             CornerRadius = RankedPlayCard.CORNER_RADIUS;
+            BorderThickness = 3;
+            BorderColour = Color4Extensions.FromHex("9F2C64");
 
-            InternalChild = new Box
+            InternalChild = new Sprite
             {
                 RelativeSizeAxes = Axes.Both,
-                Colour = colourProvider.Background1,
+                Texture = textures.Get("Online/RankedPlay/cardback"),
             };
         }
     }
