@@ -121,6 +121,12 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
             shadow.Scale = content.Scale;
             shadow.Size = new Vector2(1 - Elevation * 0.25f);
             shadow.Position = new Vector2(-25, 20) * Elevation;
+            shadow.EdgeEffect = new EdgeEffectParameters
+            {
+                Type = EdgeEffectType.Shadow,
+                Radius = Elevation,
+                Colour = Color4.Black.Opacity(0.1f),
+            };
         }
 
         #region beatmap fetching logic & card flip
