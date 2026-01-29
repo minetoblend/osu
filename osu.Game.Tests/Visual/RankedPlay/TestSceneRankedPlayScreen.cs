@@ -300,11 +300,11 @@ namespace osu.Game.Tests.Visual.RankedPlay
                 };
             }
 
-            protected override void LoadComplete()
+            protected override void Update()
             {
-                base.LoadComplete();
+                base.Update();
 
-                current.BindValueChanged(v => ValueChanged?.Invoke(v.NewValue), true);
+                ValueChanged?.Invoke(current.Value);
             }
         }
     }
