@@ -3,21 +3,16 @@
 
 using System.Diagnostics;
 using System.Linq;
-using Humanizer;
 using osu.Framework.Allocation;
 using osu.Framework.Audio;
 using osu.Framework.Audio.Sample;
-using osu.Framework.Extensions.Color4Extensions;
 using osu.Framework.Graphics;
-using osu.Framework.Graphics.Containers;
 using osu.Framework.Logging;
 using osu.Game.Audio;
-using osu.Game.Graphics;
-using osu.Game.Graphics.Sprites;
-using osu.Game.Graphics.UserInterface;
 using osu.Game.Online.Multiplayer;
 using osu.Game.Online.Multiplayer.MatchTypes.RankedPlay;
 using osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards;
+using osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components;
 using osuTK;
 
 namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
@@ -28,8 +23,6 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 
         private PlayerCardHand playerHand = null!;
         private OpponentCardHand opponentHand = null!;
-        private ShearedButton playButton = null!;
-        private FillFlowContainer textContainer = null!;
 
         [Resolved]
         private RankedPlayMatchInfo matchInfo { get; set; } = null!;
@@ -54,6 +47,12 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                     Anchor = Anchor.Centre,
                     Origin = Anchor.Centre,
                 },
+                new RankedPlayStageDisplay(RankedPlayColourScheme.Blue)
+                {
+                    Heading = "Pick Phase",
+                    Caption = "It's your turn to play a card!",
+                    Margin = new MarginPadding { Top = 60 },
+                },
             ];
 
             CenterColumn.Children =
@@ -64,7 +63,8 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                     Origin = Anchor.BottomCentre,
                     RelativeSizeAxes = Axes.Both,
                     Height = 0.5f,
-                    SelectionMode = CardSelectionMode.Single
+                    SelectionMode = CardSelectionMode.Single,
+                    PlayCardAction = onPlayButtonClicked
                 },
                 opponentHand = new OpponentCardHand
                 {
@@ -76,41 +76,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                 },
                 new CardHandReplayRecorder(playerHand),
                 new CardHandReplayPlayer(opponentHand),
-                textContainer = new FillFlowContainer
-                {
-                    RelativeSizeAxes = Axes.X,
-                    AutoSizeAxes = Axes.Y,
-                    Direction = FillDirection.Vertical,
-                    Anchor = Anchor.Centre,
-                    Origin = Anchor.Centre,
-                    Spacing = new Vector2(20),
-                    Children =
-                    [
-                        new OsuSpriteText
-                        {
-                            Text = $"{FormatRoundIndex(matchState.CurrentRound).Titleize()} pick!",
-                            Anchor = Anchor.TopCentre,
-                            Origin = Anchor.TopCentre,
-                            Font = OsuFont.GetFont(typeface: Typeface.TorusAlternate, size: 42, weight: FontWeight.Regular),
-                        },
-                        new OsuSpriteText
-                        {
-                            Text = "It’s your turn!",
-                            Anchor = Anchor.TopCentre,
-                            Origin = Anchor.TopCentre,
-                            Colour = Color4Extensions.FromHex("87CDFF"),
-                            Font = OsuFont.GetFont(typeface: Typeface.TorusAlternate, size: 28, weight: FontWeight.SemiBold),
-                        },
-                    ]
-                },
             ];
-
-            ButtonsContainer.Child = playButton = new ShearedButton(width: 150)
-            {
-                Action = onPlayButtonClicked,
-                Enabled = { Value = false },
-                Text = "Play",
-            };
 
             cardAddSample = audio.Samples.Get(@"Multiplayer/Matchmaking/Ranked/card-add-1");
 
@@ -124,12 +90,6 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
             base.LoadComplete();
 
             matchInfo.CardPlayed += cardPlayed;
-            playerHand.SelectionChanged += onSelectionChanged;
-        }
-
-        private void onSelectionChanged()
-        {
-            playButton.Enabled.Value = playerHand.Selection.Any();
         }
 
         private void onPlayButtonClicked()
@@ -140,8 +100,9 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
             {
                 playerHand.SelectionMode = CardSelectionMode.Disabled;
                 Client.PlayCard(selection.Card).FireAndForget();
-                playButton.Hide();
             }
+
+            playerHand.PlayCardAction = null;
         }
 
         public override void OnEntering(RankedPlaySubScreen? previous)
@@ -187,8 +148,6 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 
         private void cardPlayed(RankedPlayCardWithPlaylistItem item)
         {
-            textContainer.FadeOut(50);
-
             RankedPlayCard? card;
 
             if (playerHand.RemoveCard(item, out card, out var drawQuad))

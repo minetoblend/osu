@@ -296,10 +296,10 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
             {
                 base.LoadComplete();
 
-                state.BindValueChanged(onStateChanged, true);
+                state.BindValueChanged(OnStateChanged, true);
             }
 
-            private void onStateChanged(ValueChangedEvent<RankedPlayCardState> state)
+            protected virtual void OnStateChanged(ValueChangedEvent<RankedPlayCardState> state)
             {
                 cardHand.OnCardStateChanged(this, state.NewValue);
 
