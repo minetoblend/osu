@@ -50,6 +50,8 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 
         protected override BackgroundScreen CreateBackground() => new RankedPlayBackgroundScreen();
 
+        public override float BackgroundParallaxAmount => 0;
+
         [Cached(typeof(OnlinePlayBeatmapAvailabilityTracker))]
         private readonly OnlinePlayBeatmapAvailabilityTracker beatmapAvailabilityTracker = new MultiplayerBeatmapAvailabilityTracker();
 
