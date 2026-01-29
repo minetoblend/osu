@@ -66,6 +66,15 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
                                     RelativeSizeAxes = Axes.Both,
                                     Colour = colourScheme.PrimaryDarkest,
                                     Alpha = 0.2f,
+                                    // This is a hack to work around alpha-blending issues when drawing on top of a transparent background without premultiplied alpha
+                                    // This method requires that this Drawable is not drawn on top of anything else
+                                    Blending = BlendingParameters.Mixture with
+                                    {
+                                        Destination = BlendingType.Zero,
+                                        DestinationAlpha = BlendingType.Zero,
+                                        Source = BlendingType.One,
+                                        SourceAlpha = BlendingType.One,
+                                    }
                                 },
                             },
                             topLayer = new Container
