@@ -1,18 +1,25 @@
 // Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
+using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using Newtonsoft.Json;
 using NUnit.Framework;
 using osu.Framework.Extensions;
 using osu.Framework.Testing;
 using osu.Game.Graphics.UserInterface;
+using osu.Game.Online.API;
+using osu.Game.Online.API.Requests;
 using osu.Game.Online.API.Requests.Responses;
 using osu.Game.Online.Multiplayer.MatchTypes.RankedPlay;
 using osu.Game.Online.Rooms;
 using osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay;
 using osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards;
+using osu.Game.Tests.Resources;
 using osu.Game.Tests.Visual.Multiplayer;
 using osuTK.Input;
+using MatchType = osu.Game.Online.Rooms.MatchType;
 
 namespace osu.Game.Tests.Visual.RankedPlay
 {
@@ -84,15 +91,20 @@ namespace osu.Game.Tests.Visual.RankedPlay
         [Test]
         public void TestRevealCards()
         {
+            var requestHandler = new RankedPlayRequestHandler();
+
+            AddStep("setup api handler", () => ((DummyAPIAccess)API).HandleRequest = request => requestHandler.HandleRequest(request));
+
             AddStep("set discard phase", () => MultiplayerClient.RankedPlayChangeStage(RankedPlayStage.CardDiscard).WaitSafely());
 
-            for (int i = 0; i < 3; i++)
+            var beatmapIdsWithIndex = requestHandler.Beatmaps.Values.Select((beatmap, index) => (beatmap.OnlineID, index));
+
+            foreach (var (beatmapId, index) in beatmapIdsWithIndex)
             {
-                int i2 = i;
-                AddStep("reveal card", () => MultiplayerClient.RankedPlayRevealCard(hand => hand[i2], new MultiplayerPlaylistItem
+                AddStep("reveal card", () => MultiplayerClient.RankedPlayRevealCard(hand => hand[index], new MultiplayerPlaylistItem
                 {
-                    ID = i2,
-                    BeatmapID = i2
+                    ID = index,
+                    BeatmapID = beatmapId
                 }).WaitSafely());
             }
         }
@@ -160,6 +172,46 @@ namespace osu.Game.Tests.Visual.RankedPlay
         {
             AddStep("change player 1 health", () => MultiplayerClient.RankedPlayChangeUserState(MultiplayerClient.LocalUser!.UserID, state => state.Life = 250_000).WaitSafely());
             AddStep("change player 2 health", () => MultiplayerClient.RankedPlayChangeUserState(2, state => state.Life = 250_000).WaitSafely());
+        }
+
+        public class RankedPlayRequestHandler
+        {
+            public IReadOnlyDictionary<int, APIBeatmap> Beatmaps { get; }
+
+            public RankedPlayRequestHandler()
+            {
+                using var resourceStream = TestResources.OpenResource("Requests/api-beatmaps-rankedplay.json");
+                using var reader = new StreamReader(resourceStream);
+
+                var deserialized = JsonConvert.DeserializeObject<APIBeatmap[]>(reader.ReadToEnd())!;
+
+                Beatmaps = deserialized.ToDictionary(beatmap => beatmap.OnlineID);
+            }
+
+            public bool HandleRequest(APIRequest request)
+            {
+                switch (request)
+                {
+                    case GetBeatmapsRequest getBeatmapsRequest:
+                        getBeatmapsRequest.TriggerSuccess(
+                            new GetBeatmapsResponse
+                            {
+                                Beatmaps = getBeatmapsRequest.BeatmapIds.Select(id => Beatmaps[id]).ToList()
+                            }
+                        );
+                        return true;
+
+                    case GetBeatmapRequest getBeatmapRequest:
+                        if (!Beatmaps.TryGetValue(getBeatmapRequest.OnlineID, out var beatmap))
+                            return false;
+
+                        getBeatmapRequest.TriggerSuccess(beatmap);
+                        return true;
+
+                    default:
+                        return false;
+                }
+            }
         }
     }
 }
