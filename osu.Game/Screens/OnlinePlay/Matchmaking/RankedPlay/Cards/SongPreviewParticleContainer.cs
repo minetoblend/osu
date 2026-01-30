@@ -2,10 +2,13 @@
 // See the LICENCE file in the repository root for full licence text.
 
 using System;
+using System.Diagnostics;
+using osu.Framework.Allocation;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Primitives;
 using osu.Framework.Graphics.Sprites;
+using osu.Framework.Graphics.Textures;
 using osu.Framework.Utils;
 using osuTK;
 using osuTK.Graphics;
@@ -20,6 +23,22 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
         }
 
         private Vector2 lastPosition;
+
+        private Texture[] particleTextures = null!;
+
+        [BackgroundDependencyLoader]
+        private void load(TextureStore textures)
+        {
+            const int texture_count = 3;
+
+            particleTextures = new Texture[texture_count];
+
+            for (int i = 0; i < texture_count; i++)
+            {
+                particleTextures[i] = textures.Get($"Online/RankedPlay/note-particle-{i}");
+                Debug.Assert(particleTextures[i] != null);
+            }
+        }
 
         public void AddParticles(Drawable source, Color4 seedColour)
         {
@@ -37,7 +56,9 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
 
             lastPosition = position;
 
-            var particle = new Particle
+            var texture = particleTextures[RNG.Next(particleTextures.Length)];
+
+            var particle = new Particle(texture)
             {
                 Position = position,
                 Rotation = RNG.NextSingle(-3, 3),
@@ -77,12 +98,12 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
             return Vector2.Lerp(top, bottom, randomValue());
         }
 
-        private partial class Particle : SpriteIcon
+        private partial class Particle : Sprite
         {
-            public Particle()
+            public Particle(Texture texture)
             {
-                Size = new Vector2(30);
-                Icon = FontAwesome.Solid.Music;
+                Size = new Vector2(40);
+                Texture = texture;
                 Origin = Anchor.Centre;
             }
 
