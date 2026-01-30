@@ -106,6 +106,9 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
         [Cached]
         private readonly CardDetailsOverlayContainer overlayContainer;
 
+        [Cached]
+        private readonly CardDeck cardDeck;
+
         public RankedPlayScreen(MultiplayerRoom room)
         {
             this.room = room;
@@ -119,6 +122,12 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                     RelativeSizeAxes = Axes.Both,
                     Children = new Drawable[]
                     {
+                        cardDeck = new CardDeck
+                        {
+                            Anchor = Anchor.BottomRight,
+                            Origin = Anchor.BottomRight,
+                            Margin = new MarginPadding(10),
+                        },
                         screenContainer = new Container<RankedPlaySubScreen>
                         {
                             RelativeSizeAxes = Axes.Both,
@@ -138,7 +147,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                         new HamburgerMenu
                         {
                             Size = new Vector2(56),
-                        }
+                        },
                     }
                 },
                 overlayContainer = new CardDetailsOverlayContainer()
@@ -187,10 +196,10 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 
             cornerPieceVisibility.BindValueChanged(e =>
             {
-                if (e.NewValue == Visibility.Visible)
-                    chat.Appear();
-                else
-                    chat.Disappear();
+                // if (e.NewValue == Visibility.Visible)
+                //     chat.Appear();
+                // else
+                //     chat.Disappear();
             });
 
             stage.BindValueChanged(e => onStageChanged(e.NewValue));
