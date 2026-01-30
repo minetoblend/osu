@@ -11,6 +11,7 @@ using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Effects;
 using osu.Framework.Graphics.Shapes;
+using osu.Framework.Graphics.Transforms;
 using osu.Framework.Logging;
 using osu.Game.Audio;
 using osu.Game.Database;
@@ -20,6 +21,7 @@ using osuTK.Graphics;
 
 namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
 {
+    [Cached]
     public partial class RankedPlayCard : CompositeDrawable
     {
         public static readonly Vector2 SIZE = new Vector2(120, 200);
@@ -34,6 +36,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
         private readonly Container cardContent;
         private readonly Container shadow;
         private readonly SelectionOutline selectionOutline;
+        private readonly Container pulseContainer;
 
         public bool ShowSelectionOutline
         {
@@ -55,48 +58,54 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
 
             playlistItem = item.PlaylistItem.GetBoundCopy();
 
-            InternalChildren =
-            [
-                shadow = new Container
-                {
-                    RelativeSizeAxes = Axes.Both,
-                    Masking = true,
-                    CornerRadius = CORNER_RADIUS,
-                    Anchor = Anchor.Centre,
-                    Origin = Anchor.Centre,
-                    EdgeEffect = new EdgeEffectParameters
-                    {
-                        Type = EdgeEffectType.Shadow,
-                        Radius = 5,
-                        Colour = Color4.Black.Opacity(0.1f),
-                    },
-                    Child = new Box
+            InternalChild = pulseContainer = new Container
+            {
+                RelativeSizeAxes = Axes.Both,
+                Anchor = Anchor.Centre,
+                Origin = Anchor.Centre,
+                Children =
+                [
+                    shadow = new Container
                     {
                         RelativeSizeAxes = Axes.Both,
-                        Alpha = 0,
-                        AlwaysPresent = true,
-                    }
-                },
-                content = new Container
-                {
-                    RelativeSizeAxes = Axes.Both,
-                    Anchor = Anchor.Centre,
-                    Origin = Anchor.Centre,
-                    Children =
-                    [
-                        cardContent = new Container
+                        Masking = true,
+                        CornerRadius = CORNER_RADIUS,
+                        Anchor = Anchor.Centre,
+                        Origin = Anchor.Centre,
+                        EdgeEffect = new EdgeEffectParameters
                         {
-                            RelativeSizeAxes = Axes.Both,
-                            Child = new RankedPlayCardBackSide()
+                            Type = EdgeEffectType.Shadow,
+                            Radius = 5,
+                            Colour = Color4.Black.Opacity(0.1f),
                         },
-                        selectionOutline = new SelectionOutline
+                        Child = new Box
                         {
                             RelativeSizeAxes = Axes.Both,
                             Alpha = 0,
+                            AlwaysPresent = true,
                         }
-                    ]
-                }
-            ];
+                    },
+                    content = new Container
+                    {
+                        RelativeSizeAxes = Axes.Both,
+                        Anchor = Anchor.Centre,
+                        Origin = Anchor.Centre,
+                        Children =
+                        [
+                            cardContent = new Container
+                            {
+                                RelativeSizeAxes = Axes.Both,
+                                Child = new RankedPlayCardBackSide()
+                            },
+                            selectionOutline = new SelectionOutline
+                            {
+                                RelativeSizeAxes = Axes.Both,
+                                Alpha = 0,
+                            }
+                        ]
+                    }
+                ]
+            };
         }
 
         [BackgroundDependencyLoader]
@@ -179,6 +188,13 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
 
             this.FadeOut(500)
                 .Expire();
+        }
+
+        public void Pulse()
+        {
+            pulseContainer.ScaleTo(1.02f, 200)
+                          .Then()
+                          .ScaleTo(1f, 1000, new CubicBezierEasingFunction(easeIn: 0.1f, easeOut: 1f));
         }
 
         private partial class SelectionOutline : CompositeDrawable
