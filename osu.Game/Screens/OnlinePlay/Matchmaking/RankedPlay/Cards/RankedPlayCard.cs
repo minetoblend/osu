@@ -38,9 +38,16 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
         private readonly SelectionOutline selectionOutline;
         private readonly Container pulseContainer;
 
+        private bool showSelectionOutline;
+
         public bool ShowSelectionOutline
         {
-            set => selectionOutline.FadeTo(value ? 1 : 0, 50);
+            get => showSelectionOutline;
+            set
+            {
+                showSelectionOutline = value;
+                selectionOutline.FadeTo(value ? 1 : 0, 50);
+            }
         }
 
         public float Elevation;

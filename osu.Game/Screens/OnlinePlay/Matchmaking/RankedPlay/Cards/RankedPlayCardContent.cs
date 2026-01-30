@@ -168,6 +168,8 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
         {
             private ScheduledDelegate? pulseDelegate;
 
+            private Drawable border = null!;
+
             [Resolved]
             private CardColours colours { get; set; } = null!;
 
@@ -178,7 +180,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
                 AlwaysPresent = true;
                 Alpha = 0;
 
-                AddInternal(new Container
+                AddInternal(border = new Container
                 {
                     RelativeSizeAxes = Axes.Both,
                     Padding = new MarginPadding(-1.5f),
@@ -188,7 +190,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
                         Masking = true,
                         CornerRadius = RankedPlayCard.CORNER_RADIUS + 1.5f,
                         Blending = BlendingParameters.Additive,
-                        BorderThickness = 1.5f,
+                        BorderThickness = 2f,
                         BorderColour = colours.Border.Opacity(0.5f),
                         EdgeEffect = new EdgeEffectParameters
                         {
@@ -205,6 +207,16 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
                         },
                     }
                 });
+            }
+
+            protected override void Update()
+            {
+                base.Update();
+
+                if (card?.ShowSelectionOutline == true)
+                    border.Alpha = 0;
+                else
+                    border.Alpha = 1;
             }
 
             private void pulse()
@@ -260,10 +272,10 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
                 {
                     interval = (60_000 / beatmap.BPM) * 4;
 
-                    while (interval < 1000)
+                    while (interval < 800)
                         interval *= 2;
 
-                    while (interval > 2000)
+                    while (interval > 1600)
                         interval /= 2;
                 }
 
