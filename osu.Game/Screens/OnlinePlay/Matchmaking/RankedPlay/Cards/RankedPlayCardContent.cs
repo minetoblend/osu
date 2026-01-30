@@ -9,6 +9,8 @@ using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Cursor;
 using osu.Framework.Graphics.Shapes;
 using osu.Framework.Graphics.UserInterface;
+using osu.Framework.Input.Events;
+using osu.Game.Audio;
 using osu.Game.Graphics;
 using osu.Game.Graphics.UserInterface;
 using osu.Game.Localisation;
@@ -23,9 +25,13 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
         public readonly APIBeatmap Beatmap;
 
         private CardColours colours = null!;
+        private PreviewTrack? preview;
 
         [Resolved]
         private CardDetailsOverlayContainer? cardDetailsOverlay { get; set; }
+
+        [Resolved]
+        private PreviewTrackManager previewTrackManager { get; set; } = null!;
 
         public RankedPlayCardContent(APIBeatmap beatmap)
         {
@@ -88,6 +94,14 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
                 },
                 new CardBorder()
             ];
+
+            LoadComponentAsync(preview = previewTrackManager.Get(Beatmap.BeatmapSet!), preview =>
+            {
+                AddInternal(preview);
+
+                if (IsHovered)
+                    preview.Start();
+            });
         }
 
         protected override IReadOnlyDependencyContainer CreateChildDependencies(IReadOnlyDependencyContainer parent)
@@ -107,6 +121,13 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
 
             if (IsHovered)
                 cardDetailsOverlay?.ShowCardDetails(this, Beatmap);
+        }
+
+        protected override bool OnHover(HoverEvent e)
+        {
+            preview?.Start();
+
+            return base.OnHover(e);
         }
 
         private partial class CardBorder : CompositeDrawable
