@@ -23,8 +23,33 @@ namespace osu.Game.Tests.Visual.RankedPlay
 {
     public partial class TestSceneRankedPlayCard : OsuTestScene
     {
+        protected override Container<Drawable> Content { get; }
+
         [Cached]
         private readonly OverlayColourProvider colourProvider = new OverlayColourProvider(OverlayColourScheme.Purple);
+
+        [Cached]
+        private readonly CardDetailsOverlayContainer overlayContainer;
+
+        [Cached]
+        private readonly SongPreviewParticleContainer particleContainer;
+
+        public TestSceneRankedPlayCard()
+        {
+            base.Content.AddRange(new Drawable[]
+            {
+                new OsuContextMenuContainer
+                {
+                    RelativeSizeAxes = Axes.Both,
+                    Child = Content = new Container
+                    {
+                        RelativeSizeAxes = Axes.Both,
+                    }
+                },
+                overlayContainer = new CardDetailsOverlayContainer(),
+                particleContainer = new SongPreviewParticleContainer(),
+            });
+        }
 
         [Test]
         public void TestCards()
@@ -33,20 +58,13 @@ namespace osu.Game.Tests.Visual.RankedPlay
             {
                 FillFlowContainer flow;
 
-                Child = new OsuContextMenuContainer
+                Child = flow = new FillFlowContainer
                 {
-                    RelativeSizeAxes = Axes.Both,
-                    Child = new CardDetailsOverlayContainer
-                    {
-                        Child = flow = new FillFlowContainer
-                        {
-                            RelativeSizeAxes = Axes.Y,
-                            Width = 800f,
-                            Anchor = Anchor.Centre,
-                            Origin = Anchor.Centre,
-                            Spacing = new Vector2(10),
-                        }
-                    }
+                    RelativeSizeAxes = Axes.Y,
+                    Width = 800f,
+                    Anchor = Anchor.Centre,
+                    Origin = Anchor.Centre,
+                    Spacing = new Vector2(10),
                 };
 
                 for (int i = 0; i < 10; i++)
@@ -108,20 +126,13 @@ namespace osu.Game.Tests.Visual.RankedPlay
             {
                 PlayerCardHand cardHand;
 
-                Child = new OsuContextMenuContainer
+                Child = cardHand = new PlayerCardHand
                 {
                     RelativeSizeAxes = Axes.Both,
-                    Child = new CardDetailsOverlayContainer
-                    {
-                        Child = cardHand = new PlayerCardHand
-                        {
-                            RelativeSizeAxes = Axes.Both,
-                            Size = new Vector2(0.5f),
-                            Anchor = Anchor.BottomCentre,
-                            Origin = Anchor.BottomCentre,
-                            SelectionMode = CardSelectionMode.Single
-                        },
-                    }
+                    Size = new Vector2(0.5f),
+                    Anchor = Anchor.BottomCentre,
+                    Origin = Anchor.BottomCentre,
+                    SelectionMode = CardSelectionMode.Single
                 };
 
                 foreach (var beatmap in getBeatmaps())
@@ -153,17 +164,13 @@ namespace osu.Game.Tests.Visual.RankedPlay
                 {
                     FillFlowContainer flow;
 
-                    Child = new OsuContextMenuContainer
+                    Child = flow = new FillFlowContainer
                     {
-                        RelativeSizeAxes = Axes.Both,
-                        Child = flow = new FillFlowContainer
-                        {
-                            RelativeSizeAxes = Axes.Y,
-                            Width = 800f,
-                            Anchor = Anchor.Centre,
-                            Origin = Anchor.Centre,
-                            Spacing = new Vector2(10),
-                        }
+                        RelativeSizeAxes = Axes.Y,
+                        Width = 800f,
+                        Anchor = Anchor.Centre,
+                        Origin = Anchor.Centre,
+                        Spacing = new Vector2(10),
                     };
 
                     for (int i = 0; i < 10; i++)

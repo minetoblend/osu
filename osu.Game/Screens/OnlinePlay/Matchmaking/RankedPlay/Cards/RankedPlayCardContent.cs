@@ -173,6 +173,12 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
             [Resolved]
             private CardColours colours { get; set; } = null!;
 
+            [Resolved]
+            private RankedPlayCard? card { get; set; }
+
+            [Resolved]
+            private SongPreviewParticleContainer? particleContainer { get; set; }
+
             [BackgroundDependencyLoader]
             private void load()
             {
@@ -256,11 +262,10 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
                                    .Expire();
                 }
 
+                Scheduler.AddDelayed(() => particleContainer?.AddParticles(this, colours.Border), 100);
+
                 card?.Pulse();
             }
-
-            [Resolved]
-            private RankedPlayCard? card { get; set; }
 
             public void PreviewStarted() => Schedule(() =>
             {

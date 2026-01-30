@@ -104,6 +104,9 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
         [Cached]
         private readonly CardDetailsOverlayContainer overlayContainer;
 
+        [Cached]
+        private readonly SongPreviewParticleContainer particleContainer;
+
         public RankedPlayScreen(MultiplayerRoom room)
         {
             this.room = room;
@@ -139,7 +142,8 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                         }
                     }
                 },
-                overlayContainer = new CardDetailsOverlayContainer()
+                overlayContainer = new CardDetailsOverlayContainer(),
+                particleContainer = new SongPreviewParticleContainer(),
             };
         }
 
