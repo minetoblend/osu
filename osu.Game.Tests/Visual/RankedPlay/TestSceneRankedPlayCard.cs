@@ -119,6 +119,7 @@ namespace osu.Game.Tests.Visual.RankedPlay
                             Size = new Vector2(0.5f),
                             Anchor = Anchor.BottomCentre,
                             Origin = Anchor.BottomCentre,
+                            SelectionMode = CardSelectionMode.Single
                         },
                     }
                 };
