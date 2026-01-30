@@ -40,7 +40,11 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
             set => selectionOutline.FadeTo(value ? 1 : 0, 50);
         }
 
+        public bool ForceCardFlip;
+
         public float Elevation;
+
+        public double FlipDuration = 400;
 
         private Sample? cardFlipSample;
 
@@ -163,16 +167,16 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
 
         public void SetContent(Drawable newContent, bool flip)
         {
-            if (!flip)
+            if (!flip && !ForceCardFlip)
             {
                 cardContent.Child = newContent;
                 return;
             }
 
-            content.ScaleTo(new Vector2(0, 1), 100, Easing.In)
+            content.ScaleTo(new Vector2(0, 1), FlipDuration * 0.25f, Easing.In)
                    .Then()
                    .Schedule(() => cardContent.Child = newContent)
-                   .ScaleTo(new Vector2(1), 300, Easing.OutElasticQuarter);
+                   .ScaleTo(new Vector2(1), FlipDuration * 0.75f, Easing.OutElasticQuarter);
 
             SamplePlaybackHelper.PlayWithRandomPitch(cardFlipSample);
         }
@@ -203,7 +207,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
                     {
                         RelativeSizeAxes = Axes.Both,
                         Masking = true,
-                        CornerRadius = CORNER_RADIUS + border_width,
+                        CornerRadius = CORNER_RADIUS + border_width - 1,
                         BorderThickness = border_width,
                         BorderColour = Color4Extensions.FromHex("72D5FF"),
                         Blending = BlendingParameters.Additive,

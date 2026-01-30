@@ -11,6 +11,7 @@ using osu.Framework.Caching;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Primitives;
+using osu.Framework.Graphics.Transforms;
 using osu.Game.Online.Multiplayer.MatchTypes.RankedPlay;
 using osu.Game.Online.RankedPlay;
 using osuTK;
@@ -225,11 +226,22 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
 
                 position *= Flipped ? -1 : 1;
 
-                child
-                    .Delay(delay)
-                    .MoveTo(position, 300, Easing.OutExpo)
-                    .RotateTo(rotation, 300, Easing.OutExpo)
-                    .ScaleTo(child.CardHovered ? hover_scale : 1f, 400, Easing.OutElasticQuarter);
+                if (child.NewlyDrawn)
+                {
+                    child
+                        .Delay(delay)
+                        .MoveTo(position, 300, new CubicBezierEasingFunction(easeIn: 0.2, easeOut: 1))
+                        .RotateTo(rotation, 300, new CubicBezierEasingFunction(easeIn: 0.2, easeOut: 1))
+                        .ScaleTo(child.CardHovered ? hover_scale : 1f, 400, Easing.OutElasticQuarter);
+                }
+                else
+                {
+                    child
+                        .Delay(delay)
+                        .MoveTo(position, 300, Easing.OutExpo)
+                        .RotateTo(rotation, 300, Easing.OutExpo)
+                        .ScaleTo(child.CardHovered ? hover_scale : 1f, 400, Easing.OutElasticQuarter);
+                }
 
                 x += child.LayoutWidth / 2 + spacing;
 
@@ -268,6 +280,9 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
                 get => State.Pressed;
                 set => State = State with { Pressed = value };
             }
+
+            // tells the cardHand to animate this card differently when it gets drawn from the card deck
+            public bool NewlyDrawn { get; set; } = false;
 
             [Resolved]
             private CardHand cardHand { get; set; } = null!;

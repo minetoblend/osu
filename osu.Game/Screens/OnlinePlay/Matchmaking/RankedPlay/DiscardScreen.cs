@@ -35,6 +35,9 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
         [Resolved]
         private RankedPlayMatchInfo matchInfo { get; set; } = null!;
 
+        [Resolved]
+        private CardDeck cardDeck { get; set; } = null!;
+
         private Sample? cardAddSample;
         private Sample? cardDiscardSample;
 
@@ -221,8 +224,12 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
             {
                 playerHand.AddCard(card, d =>
                 {
-                    d.Position = ToSpaceOfOtherDrawable(new Vector2(DrawWidth, DrawHeight * 0.5f), playerHand);
-                    d.Rotation = -30;
+                    d.Card.ForceCardFlip = true;
+                    d.Card.FlipDuration = 550;
+                    d.NewlyDrawn = true;
+                    Scheduler.AddDelayed(() => d.NewlyDrawn = false, 500);
+
+                    d.MatchScreenSpaceDrawQuad(cardDeck.TopLayer.ScreenSpaceDrawQuad, playerHand);
                 });
 
                 SamplePlaybackHelper.PlayWithRandomPitch(cardAddSample);
