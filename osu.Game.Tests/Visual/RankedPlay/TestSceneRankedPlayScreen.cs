@@ -59,7 +59,7 @@ namespace osu.Game.Tests.Visual.RankedPlay
 
             AddStep("click discard button", () =>
             {
-                var button = screen.ChildrenOfType<ShearedButton>().Single(it => it.Text == "Discard");
+                var button = screen.ChildrenOfType<ShearedButton>().Single(it => it.Name == "Discard Button");
 
                 InputManager.MoveMouseTo(button);
                 InputManager.Click(MouseButton.Left);
@@ -135,7 +135,11 @@ namespace osu.Game.Tests.Visual.RankedPlay
 
             AddStep("click play button", () =>
             {
-                var button = screen.ChildrenOfType<ShearedButton>().Single(it => it.Text == "Play");
+                var button = screen
+                             .ChildrenOfType<PlayerCardHand.PlayerHandCard>()
+                             .First(it => it.Selected)
+                             .ChildrenOfType<ShearedButton>()
+                             .First();
 
                 InputManager.MoveMouseTo(button);
                 InputManager.Click(MouseButton.Left);

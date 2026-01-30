@@ -59,6 +59,23 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
             }
         }
 
+        private Action? playCardAction;
+
+        /// <summary>
+        /// When set to non-null, displays a "Play" button on the selected card that invokes this action.
+        /// </summary>
+        public Action? PlayCardAction
+        {
+            get => playCardAction;
+            set
+            {
+                playCardAction = value;
+
+                foreach (var card in Cards.OfType<PlayerHandCard>())
+                    card.PlayAction = value;
+            }
+        }
+
         private IEnumerable<PlayerHandCard> selection => Cards.OfType<PlayerHandCard>().Where(it => it.Selected);
 
         /// <summary>
@@ -88,8 +105,9 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
 
         protected override HandCard CreateHandCard(RankedPlayCard card) => new PlayerHandCard(card)
         {
-            Action = cardClicked,
+            Clicked = cardClicked,
             AllowSelection = allowSelection.GetBoundCopy(),
+            PlayAction = PlayCardAction,
         };
 
         private void cardClicked(PlayerHandCard card)
@@ -134,34 +152,85 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
 
         public partial class PlayerHandCard : HandCard
         {
-            public required Action<PlayerHandCard> Action;
+            public Action? PlayAction
+            {
+                set
+                {
+                    playButton.Action = value;
+                    updatePlayButtonVisibility();
+                }
+            }
+
+            public required Action<PlayerHandCard> Clicked;
 
             public required IBindable<bool> AllowSelection;
 
-            private readonly Drawable positionalInputArea;
+            private readonly Drawable cardInputArea;
+            private readonly Drawable fullInputArea;
+
+            private readonly ShearedButton playButton;
 
             public PlayerHandCard(RankedPlayCard card)
                 : base(card)
             {
-                AddInternal(new Container
+                AddRangeInternal(new Drawable[]
                 {
-                    RelativeSizeAxes = Axes.Both,
-                    Padding = new MarginPadding(-10),
-                    Child = positionalInputArea = new Container
+                    new Container
                     {
                         RelativeSizeAxes = Axes.Both,
+                        Padding = new MarginPadding(-10),
+                        Child = cardInputArea = new Container
+                        {
+                            RelativeSizeAxes = Axes.Both,
+                        },
                     },
+                    new Container
+                    {
+                        RelativeSizeAxes = Axes.Both,
+                        Padding = new MarginPadding { Top = -40 },
+                        Child = fullInputArea = new Container
+                        {
+                            RelativeSizeAxes = Axes.Both,
+                            Child = playButton = new ShearedButton(width: 90f, height: 30f)
+                            {
+                                Name = "Play Button",
+                                Anchor = Anchor.TopCentre,
+                                Origin = Anchor.TopCentre,
+                                Text = "Play",
+                                TextSize = 14,
+                                LighterColour = Colour4.FromHex("87D8FA"),
+                                DarkerColour = Colour4.FromHex("72D5FF")
+                            }
+                        }
+                    }
                 });
             }
-
-            // input events are handled for an area that's slightly larger than the actual card so the cursor always hovers a card when moving over a gap between two cards
-            public override bool ReceivePositionalInputAt(Vector2 screenSpacePos) => positionalInputArea.Contains(screenSpacePos);
 
             protected override void LoadComplete()
             {
                 base.LoadComplete();
 
                 AddInternal(new HoverSounds());
+            }
+
+            protected override void OnStateChanged(ValueChangedEvent<RankedPlayCardState> state)
+            {
+                base.OnStateChanged(state);
+                updatePlayButtonVisibility();
+            }
+
+            private void updatePlayButtonVisibility()
+            {
+                playButton.Alpha = playButton.Action != null && Selected ? 1 : 0;
+            }
+
+            public override bool ReceivePositionalInputAt(Vector2 screenSpacePos)
+            {
+                if (playButton.Alpha > 0)
+                    return fullInputArea.ReceivePositionalInputAt(screenSpacePos);
+
+                // input events are handled for an area that's slightly larger than the actual card so the cursor always hovers a card when moving over a gap between two cards
+                return cardInputArea.ReceivePositionalInputAt(screenSpacePos);
             }
 
             protected override bool OnHover(HoverEvent e)
@@ -199,7 +268,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
                 if (!AllowSelection.Value)
                     return false;
 
-                Action(this);
+                Clicked(this);
 
                 return true;
             }
