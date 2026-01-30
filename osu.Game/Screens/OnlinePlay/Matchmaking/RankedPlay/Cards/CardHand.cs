@@ -163,7 +163,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
             if (contracted)
                 return;
 
-            const float spacing = -20;
+            const float spacing = -35;
 
             float totalWidth = cardContainer.Sum(it => it.LayoutWidth + spacing) - spacing;
 
