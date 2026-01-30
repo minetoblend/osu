@@ -126,23 +126,23 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                         {
                             Anchor = Anchor.BottomRight,
                             Origin = Anchor.BottomRight,
-                            Margin = new MarginPadding(10),
+                            Margin = new MarginPadding(20),
+                        },
+                        chat = new MatchmakingChatDisplay(new Room(room))
+                        {
+                            Anchor = Anchor.BottomLeft,
+                            Origin = Anchor.BottomLeft,
+                            Size = new Vector2(260, 160),
+                            Margin = new MarginPadding
+                            {
+                                Bottom = 100,
+                                Left = 20
+                            },
+                            Alpha = 0,
                         },
                         screenContainer = new Container<RankedPlaySubScreen>
                         {
                             RelativeSizeAxes = Axes.Both,
-                        },
-                        chat = new MatchmakingChatDisplay(new Room(room))
-                        {
-                            Anchor = Anchor.BottomRight,
-                            Origin = Anchor.BottomRight,
-                            Size = new Vector2(320, 160),
-                            Margin = new MarginPadding
-                            {
-                                Bottom = 10,
-                                Right = 10
-                            },
-                            Alpha = 0,
                         },
                         new HamburgerMenu
                         {
@@ -196,10 +196,10 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 
             cornerPieceVisibility.BindValueChanged(e =>
             {
-                // if (e.NewValue == Visibility.Visible)
-                //     chat.Appear();
-                // else
-                //     chat.Disappear();
+                if (e.NewValue == Visibility.Visible)
+                    chat.Appear();
+                else
+                    chat.Disappear();
             });
 
             stage.BindValueChanged(e => onStageChanged(e.NewValue));
