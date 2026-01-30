@@ -155,9 +155,24 @@ namespace osu.Game.Tests.Visual.RankedPlay
         [Test]
         public void TestDiscardCardsDirect()
         {
+            var requestHandler = new RankedPlayRequestHandler();
+            AddStep("setup api handler", () => ((DummyAPIAccess)API).HandleRequest = request => requestHandler.HandleRequest(request));
+
+            var beatmapIdsWithIndex = requestHandler.Beatmaps.Values.Select((beatmap, index) => (beatmap.OnlineID, index));
+
+            foreach (var (beatmapId, index) in beatmapIdsWithIndex)
+            {
+                AddStep("reveal card", () => MultiplayerClient.RankedPlayRevealCard(hand => hand[index], new MultiplayerPlaylistItem
+                {
+                    ID = index,
+                    BeatmapID = beatmapId
+                }).WaitSafely());
+            }
+
             AddStep("set discard phase", () => MultiplayerClient.RankedPlayChangeStage(RankedPlayStage.CardDiscard).WaitSafely());
             AddWaitStep("wait", 3);
-            AddStep("discard cards", () => MultiplayerClient.DiscardCards(hand => hand.Take(3)).WaitSafely());
+            AddStep("discard cards", () => MultiplayerClient.DiscardCards(hand => hand.Take(3), requestHandler.Beatmaps.Values).WaitSafely());
+
             AddWaitStep("wait", 13);
             AddStep("set finish discard phase", () => MultiplayerClient.RankedPlayChangeStage(RankedPlayStage.FinishCardDiscard).WaitSafely());
         }

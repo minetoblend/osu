@@ -827,16 +827,16 @@ namespace osu.Game.Tests.Visual.Multiplayer
         public override Task DiscardCards(RankedPlayCardItem[] cards)
             => DiscardCards(_ => cards);
 
-        public Task DiscardCards(Func<RankedPlayCardItem[], IEnumerable<RankedPlayCardItem>> selector)
-            => DiscardUserCards(api.LocalUser.Value.OnlineID, selector);
+        public Task DiscardCards(Func<RankedPlayCardItem[], IEnumerable<RankedPlayCardItem>> selector, IEnumerable<APIBeatmap>? beatmaps = null)
+            => DiscardUserCards(api.LocalUser.Value.OnlineID, selector, beatmaps);
 
-        public async Task DiscardUserCards(int userId, Func<RankedPlayCardItem[], IEnumerable<RankedPlayCardItem>> selector)
+        public async Task DiscardUserCards(int userId, Func<RankedPlayCardItem[], IEnumerable<RankedPlayCardItem>> selector, IEnumerable<APIBeatmap>? beatmaps = null)
         {
             RankedPlayUserInfo info = ((RankedPlayRoomState)ServerRoom!.MatchState!).Users[userId];
             RankedPlayCardItem[] cards = selector(info.Hand.ToArray()).ToArray();
 
             await RankedPlayRemoveUserCards(userId, _ => cards).ConfigureAwait(false);
-            await RankedPlayAddUserCards(userId, Enumerable.Range(0, cards.Length).Select(_ => new RankedPlayCardItem()).ToArray()).ConfigureAwait(false);
+            await RankedPlayAddUserCards(userId, Enumerable.Range(0, cards.Length).Select(_ => new RankedPlayCardItem()).ToArray(), beatmaps).ConfigureAwait(false);
         }
 
         public override Task PlayCard(RankedPlayCardItem card)
@@ -943,12 +943,22 @@ namespace osu.Game.Tests.Visual.Multiplayer
         /// <summary>
         /// Adds a card to the given user's hand.
         /// </summary>
-        public async Task RankedPlayAddUserCards(int userId, RankedPlayCardItem[] cards)
+        public async Task RankedPlayAddUserCards(int userId, RankedPlayCardItem[] cards, IEnumerable<APIBeatmap>? beatmaps = null)
         {
+            var beatmapList = beatmaps?.ToList() ?? new List<APIBeatmap>();
+
             foreach (var card in cards)
             {
                 ((RankedPlayRoomState)ServerRoom!.MatchState!).Users[userId].Hand.Add(card);
                 await ((IRankedPlayClient)this).RankedPlayCardAdded(userId, clone(card)).ConfigureAwait(false);
+
+                if (beatmapList.Count > 0)
+                {
+                    var beatmap = beatmapList[0];
+                    beatmapList.RemoveAt(0);
+
+                    await ((IRankedPlayClient)this).RankedPlayCardRevealed(card, new MultiplayerPlaylistItem { BeatmapID = beatmap.OnlineID });
+                }
             }
 
             await ((IMultiplayerClient)this).MatchRoomStateChanged(clone(ServerRoom!.MatchState)).ConfigureAwait(false);
