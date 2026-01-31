@@ -9,9 +9,14 @@ using osu.Framework.Audio;
 using osu.Framework.Audio.Sample;
 using osu.Framework.Bindables;
 using osu.Framework.Graphics;
+using osu.Framework.Graphics.Colour;
 using osu.Framework.Graphics.Containers;
+using osu.Framework.Graphics.Shapes;
+using osu.Framework.Graphics.Sprites;
 using osu.Framework.Input.Events;
 using osu.Game.Audio;
+using osu.Game.Graphics;
+using osu.Game.Graphics.Sprites;
 using osu.Game.Graphics.UserInterface;
 using osu.Game.Online.RankedPlay;
 using osuTK;
@@ -23,6 +28,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
     /// Card hand representing the player's current hand, intended to be placed at the bottom edge of the screen.
     /// This version of the card hand reacts to player inputs like hovering a card.
     /// </summary>
+    [Cached]
     public partial class PlayerCardHand : CardHand
     {
         /// <summary>
@@ -152,10 +158,13 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
 
         public partial class PlayerHandCard : HandCard
         {
+            private Action? playAction;
+
             public Action? PlayAction
             {
                 set
                 {
+                    playAction = value;
                     playButton.Action = value;
                     updatePlayButtonVisibility();
                 }
@@ -170,11 +179,85 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
 
             private readonly ShearedButton playButton;
 
+            private readonly Container swipeRevealContainer;
+            private readonly Container swipeArrows;
+            private readonly OsuSpriteText swipeRevealText;
+
             public PlayerHandCard(RankedPlayCard card)
                 : base(card)
             {
                 AddRangeInternal(new Drawable[]
                 {
+                    swipeRevealContainer = new Container
+                    {
+                        RelativeSizeAxes = Axes.Both,
+                        Masking = true,
+                        CornerRadius = RankedPlayCard.CORNER_RADIUS,
+                        Alpha = 0,
+                        Depth = 1,
+                        Anchor = Anchor.Centre,
+                        Origin = Anchor.Centre,
+                        Scale = new Vector2(0.9f),
+                        Children =
+                        [
+                            new Box
+                            {
+                                RelativeSizeAxes = Axes.Both,
+                                Colour = ColourInfo.GradientVertical(
+                                    Colour4.FromHex("87D8FA").Opacity(0.8f),
+                                    Colour4.FromHex("72D5FF").Opacity(0.5f)
+                                )
+                            },
+                            swipeRevealText = new OsuSpriteText
+                            {
+                                Text = "Release to play",
+                                Anchor = Anchor.BottomCentre,
+                                Origin = Anchor.BottomCentre,
+                                Font = OsuFont.GetFont(weight: FontWeight.SemiBold),
+                                Shadow = false,
+                                Colour = Colour4.FromHex("BFECFF"),
+                                Blending = BlendingParameters.Additive,
+                            },
+                            swipeArrows = new Container
+                            {
+                                Anchor = Anchor.BottomCentre,
+                                Origin = Anchor.BottomCentre,
+                                Colour = Colour4.FromHex("BFECFF"),
+                                Blending = BlendingParameters.Additive,
+                                Children =
+                                [
+                                    new SpriteIcon
+                                    {
+                                        Anchor = Anchor.BottomCentre,
+                                        Origin = Anchor.BottomCentre,
+                                        Icon = FontAwesome.Solid.ChevronUp,
+                                        Size = new Vector2(20),
+                                    },
+                                    new SpriteIcon
+                                    {
+                                        Anchor = Anchor.TopCentre,
+                                        Origin = Anchor.Centre,
+                                        Icon = FontAwesome.Solid.ChevronUp,
+                                        Size = new Vector2(20),
+                                    }
+                                ]
+                            },
+                            new Container
+                            {
+                                RelativeSizeAxes = Axes.Both,
+                                Masking = true,
+                                CornerRadius = RankedPlayCard.CORNER_RADIUS,
+                                BorderThickness = 3,
+                                BorderColour = Colour4.FromHex("87D8FA"),
+                                Child = new Box
+                                {
+                                    RelativeSizeAxes = Axes.Both,
+                                    Alpha = 0,
+                                    AlwaysPresent = true,
+                                }
+                            }
+                        ]
+                    },
                     new Container
                     {
                         RelativeSizeAxes = Axes.Both,
@@ -221,7 +304,9 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
 
             private void updatePlayButtonVisibility()
             {
-                playButton.Alpha = playButton.Action != null && Selected ? 1 : 0;
+                bool visible = playButton.Action != null && Selected && !IsDragged;
+
+                playButton.Alpha = visible ? 1 : 0;
             }
 
             public override bool ReceivePositionalInputAt(Vector2 screenSpacePos)
@@ -242,6 +327,9 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
 
             protected override void OnHoverLost(HoverLostEvent e)
             {
+                if (IsDragged)
+                    return;
+
                 CardHovered = false;
             }
 
@@ -271,6 +359,67 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
                 Clicked(this);
 
                 return true;
+            }
+
+            private const float swipe_threshold = 0.5f;
+
+            private Vector2 dragStartPosition;
+            private float swipeProgress;
+
+            [Resolved]
+            private PlayerCardHand cardHand { get; set; } = null!;
+
+            protected override bool OnDragStart(DragStartEvent e)
+            {
+                if (!AllowSelection.Value || cardHand.selectionMode != CardSelectionMode.Single)
+                    return false;
+
+                dragStartPosition = ToLocalSpace(e.ScreenSpaceMouseDownPosition);
+
+                Schedule(updatePlayButtonVisibility);
+
+                return true;
+            }
+
+            protected override void OnDrag(DragEvent e)
+            {
+                base.OnDrag(e);
+
+                float dragY = ToLocalSpace(e.ScreenSpaceMousePosition).Y - dragStartPosition.Y;
+
+                swipeProgress = MathF.Sqrt(float.Clamp(-dragY / 600f, 0, 1));
+
+                Card.Y = swipeProgress * -90;
+                swipeRevealContainer.Y = swipeProgress * -20;
+                swipeArrows.Y = -5 + swipeProgress * -20;
+                swipeArrows.Alpha = swipeProgress;
+                swipeArrows.Height = 5 + swipeProgress * 18;
+                swipeRevealText.Y = swipeProgress * -10;
+
+                swipeRevealContainer.Alpha = float.Clamp((swipeProgress - 0.25f) * 4f, 0, 1);
+                swipeRevealText.Alpha = float.Clamp((swipeProgress - 0.5f) * 6f, 0, 1);
+                swipeArrows.Alpha = float.Clamp((swipeProgress - 0.5f) * 6f, 0, 1);
+            }
+
+            protected override void OnDragEnd(DragEndEvent e)
+            {
+                base.OnDragEnd(e);
+
+                updatePlayButtonVisibility();
+
+                if (swipeProgress > swipe_threshold && playAction is { } action)
+                {
+                    Clicked(this);
+                    action();
+                    return;
+                }
+
+                Card.MoveToY(0, 400, Easing.OutElasticHalf);
+                swipeRevealContainer.MoveToY(0, 400, Easing.OutElasticHalf)
+                                    .FadeOut(200);
+
+                if (!IsHovered)
+                    CardHovered = false;
             }
         }
     }
