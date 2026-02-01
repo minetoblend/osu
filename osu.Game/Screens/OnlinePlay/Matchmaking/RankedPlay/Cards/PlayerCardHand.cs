@@ -204,8 +204,8 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
                             {
                                 RelativeSizeAxes = Axes.Both,
                                 Colour = ColourInfo.GradientVertical(
-                                    Colour4.FromHex("87D8FA").Opacity(0.8f),
-                                    Colour4.FromHex("72D5FF").Opacity(0.5f)
+                                    Colour4.FromHex("87D8FA").Opacity(0.6f),
+                                    Colour4.FromHex("72D5FF").Opacity(0.4f)
                                 )
                             },
                             swipeRevealText = new OsuSpriteText
@@ -213,7 +213,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
                                 Text = "Release to play",
                                 Anchor = Anchor.BottomCentre,
                                 Origin = Anchor.BottomCentre,
-                                Font = OsuFont.GetFont(weight: FontWeight.SemiBold),
+                                Font = OsuFont.GetFont(weight: FontWeight.Medium),
                                 Shadow = false,
                                 Colour = Colour4.FromHex("BFECFF"),
                                 Blending = BlendingParameters.Additive,
@@ -386,15 +386,15 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
 
                 swipeProgress = MathF.Pow(float.Max(-change.Y / 600f, 0), 0.8f);
 
-                Card.Y = swipeProgress * -90;
-                swipeRevealContainer.Y = swipeProgress * -20;
+                Card.Y = swipeProgress * -160;
+                swipeRevealContainer.Y = swipeProgress * -90;
                 swipeArrows.Y = -5 + swipeProgress * -28;
                 swipeArrows.Height = 5 + swipeProgress * 18;
                 swipeRevealText.Y = swipeProgress * -15;
 
                 swipeRevealContainer.Alpha = float.Clamp((swipeProgress - 0.25f) * 4f, 0, 1);
-                swipeRevealText.Alpha = float.Clamp((swipeProgress - 0.5f) * 6f, 0, 1);
-                swipeArrows.Alpha = float.Clamp((swipeProgress - 0.5f) * 6f, 0, 1);
+                swipeRevealText.Alpha = float.Clamp((swipeProgress - 0.5f) * 6f, 0, 1) * 0.6f;
+                swipeArrows.Alpha = float.Clamp((swipeProgress - 0.5f) * 6f, 0, 1) * 0.6f;
             }
 
             protected override void OnDragEnd(DragEndEvent e)
