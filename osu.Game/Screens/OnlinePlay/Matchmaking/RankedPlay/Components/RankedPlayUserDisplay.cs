@@ -46,6 +46,8 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
         private readonly RankedPlayColourScheme colourScheme;
 
         private BufferedContainer grayScaleContainer = null!;
+        private Box avatarFlash = null!;
+        private Container avatarScaleContainer = null!;
 
         [Resolved]
         private RankedPlayCornerPiece? cornerPiece { get; set; }
@@ -57,6 +59,8 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
             this.colourScheme = colourScheme;
         }
 
+        public Drawable HealthDisplay { get; private set; } = null!;
+
         [BackgroundDependencyLoader]
         private void load()
         {
@@ -64,28 +68,43 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
 
             InternalChildren =
             [
-                new CircularContainer
+                new Container
                 {
                     Name = "Avatar",
                     Size = new Vector2(72),
-                    Masking = true,
                     Anchor = contentAnchor,
                     Origin = contentAnchor,
                     Children =
                     [
-                        new Box
+                        avatarScaleContainer = new CircularContainer
                         {
                             RelativeSizeAxes = Axes.Both,
-                            Colour = colourScheme.Surface,
-                            Alpha = 0.5f,
-                        },
-                        grayScaleContainer = new BufferedContainer(cachedFrameBuffer: false, pixelSnapping: true)
-                        {
-                            RelativeSizeAxes = Axes.Both,
-                            Child = new UpdateableAvatar(user)
-                            {
-                                RelativeSizeAxes = Axes.Both,
-                            }
+                            Anchor = Anchor.Centre,
+                            Origin = Anchor.Centre,
+                            Masking = true,
+                            Children =
+                            [
+                                new Box
+                                {
+                                    RelativeSizeAxes = Axes.Both,
+                                    Colour = colourScheme.Surface,
+                                    Alpha = 0.5f,
+                                },
+                                grayScaleContainer = new BufferedContainer(cachedFrameBuffer: false, pixelSnapping: true)
+                                {
+                                    RelativeSizeAxes = Axes.Both,
+                                    Child = new UpdateableAvatar(user)
+                                    {
+                                        RelativeSizeAxes = Axes.Both,
+                                    },
+                                },
+                                avatarFlash = new Box
+                                {
+                                    RelativeSizeAxes = Axes.Both,
+                                    Blending = BlendingParameters.Additive,
+                                    Alpha = 0,
+                                }
+                            ]
                         }
                     ]
                 },
@@ -96,7 +115,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
                     Direction = FillDirection.Vertical,
                     Children =
                     [
-                        new HealthBar(colourScheme, (contentAnchor & Anchor.x0) != 0)
+                        HealthDisplay = new HealthBar(colourScheme, (contentAnchor & Anchor.x0) != 0)
                         {
                             Health = { BindTarget = Health },
                             RelativeSizeAxes = Axes.X,
@@ -130,6 +149,17 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
                 grayScaleContainer.GrayscaleTo(e.NewValue <= 0 ? 1 : 0, 300);
                 cornerPiece?.OnHealthChanged(e.NewValue);
             });
+        }
+
+        public void TakeDamage(int damage)
+        {
+            Health.Value -= damage;
+
+            avatarFlash.FadeIn()
+                       .FadeOut(1500);
+
+            avatarScaleContainer.ScaleTo(0.8f)
+                                .ScaleTo(1f, 600, Easing.OutElasticHalf);
         }
 
         private void onRoomStateChanged(MatchRoomState state) => Scheduler.Add(() =>
