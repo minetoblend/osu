@@ -385,16 +385,16 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
             {
                 base.OnDrag(e);
 
-                float dragY = ToLocalSpace(e.ScreenSpaceMousePosition).Y - dragStartPosition.Y;
+                var change = e.MousePosition - e.MouseDownPosition;
 
-                swipeProgress = MathF.Sqrt(float.Clamp(-dragY / 600f, 0, 1));
+                swipeProgress = MathF.Pow(float.Max(-change.Y / 600f, 0), 0.8f);
 
                 Card.Y = swipeProgress * -90;
                 swipeRevealContainer.Y = swipeProgress * -20;
-                swipeArrows.Y = -5 + swipeProgress * -20;
-                swipeArrows.Alpha = swipeProgress;
+                swipeArrows.Y = -5 + swipeProgress * -28;
                 swipeArrows.Height = 5 + swipeProgress * 18;
-                swipeRevealText.Y = swipeProgress * -10;
+                swipeArrows.Alpha = swipeProgress;
+                swipeRevealText.Y = swipeProgress * -15;
 
                 swipeRevealContainer.Alpha = float.Clamp((swipeProgress - 0.25f) * 4f, 0, 1);
                 swipeRevealText.Alpha = float.Clamp((swipeProgress - 0.5f) * 6f, 0, 1);
