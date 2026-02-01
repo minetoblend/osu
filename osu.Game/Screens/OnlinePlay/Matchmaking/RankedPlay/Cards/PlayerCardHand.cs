@@ -150,12 +150,76 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
 
         public Dictionary<Guid, RankedPlayCardState> State => Cards.Select(static card => new KeyValuePair<Guid, RankedPlayCardState>(card.Item.Card.ID, card.State)).ToDictionary();
 
+        protected override bool OnKeyDown(KeyDownEvent e)
+        {
+            if (e.Repeat)
+                return false;
+
+            switch (e.Key)
+            {
+                case >= Key.Number1 and <= Key.Number9:
+                    focusCard(e.Key - Key.Number1);
+                    return true;
+
+                case Key.Space:
+                    if (Cards.FirstOrDefault(it => it.HasFocus) is not PlayerHandCard card)
+                        return false;
+
+                    if (card.PlayAction == null)
+                        card.TriggerClick();
+                    else
+                        card.PlayAction();
+                    return true;
+
+                case Key.Left:
+                    moveCardFocus(-1);
+                    return true;
+
+                case Key.Right:
+                    moveCardFocus(1);
+                    return true;
+            }
+
+            return base.OnKeyDown(e);
+        }
+
+        private void moveCardFocus(int direction)
+        {
+            int currentIndex = Cards.ToList().FindIndex(c => c.HasFocus);
+
+            int newIndex = currentIndex + direction;
+
+            if (newIndex < 0)
+                newIndex = Cards.Count() - 1;
+            else if (newIndex >= Cards.Count())
+                newIndex = 0;
+
+            focusCard(newIndex);
+        }
+
+        private void focusCard(int index)
+        {
+            var card = Cards.ElementAtOrDefault(index);
+
+            if (card == null)
+                return;
+
+            GetContainingFocusManager()?.ChangeFocus(card);
+
+            if (SelectionMode == CardSelectionMode.Single && !card.Selected)
+                card.TriggerClick();
+        }
+
         public partial class PlayerHandCard : HandCard
         {
+            private Action? playAction;
+
             public Action? PlayAction
             {
+                get => playAction;
                 set
                 {
+                    playAction = value;
                     playButton.Action = value;
                     updatePlayButtonVisibility();
                 }
@@ -271,6 +335,24 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
                 Clicked(this);
 
                 return true;
+            }
+
+            public override bool AcceptsFocus => true;
+
+            public override bool ChangeFocusOnClick => false;
+
+            protected override void OnFocus(FocusEvent e)
+            {
+                base.OnFocus(e);
+
+                CardHovered = true;
+            }
+
+            protected override void OnFocusLost(FocusLostEvent e)
+            {
+                base.OnFocusLost(e);
+
+                CardHovered = false;
             }
         }
     }
