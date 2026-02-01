@@ -363,7 +363,6 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
 
             private const float swipe_threshold = 0.5f;
 
-            private Vector2 dragStartPosition;
             private float swipeProgress;
 
             [Resolved]
@@ -373,8 +372,6 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
             {
                 if (!AllowSelection.Value || cardHand.selectionMode != CardSelectionMode.Single)
                     return false;
-
-                dragStartPosition = ToLocalSpace(e.ScreenSpaceMouseDownPosition);
 
                 Schedule(updatePlayButtonVisibility);
 
