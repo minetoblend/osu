@@ -62,7 +62,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
             }
         }
 
-        private bool contracted;
+        protected bool Contracted { get; private set; }
 
         /// <summary>
         /// Contracts all cards towards the bottom (or top when <see cref="Flipped"/>).
@@ -70,7 +70,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
         /// </summary>
         public void Contract()
         {
-            contracted = true;
+            Contracted = true;
 
             double delay = 0;
 
@@ -173,7 +173,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
 
         private void updateLayout(double stagger = 0)
         {
-            if (contracted)
+            if (Contracted)
                 return;
 
             const float spacing = -20;

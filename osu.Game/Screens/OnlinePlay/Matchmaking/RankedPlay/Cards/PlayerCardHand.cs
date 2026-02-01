@@ -152,7 +152,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
 
         protected override bool OnKeyDown(KeyDownEvent e)
         {
-            if (e.Repeat)
+            if (e.Repeat || Contracted)
                 return false;
 
             switch (e.Key)
@@ -162,6 +162,9 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
                     return true;
 
                 case Key.Space:
+                    if (selectionMode == CardSelectionMode.Disabled)
+                        return false;
+
                     if (Cards.FirstOrDefault(it => it.HasFocus) is not PlayerHandCard card)
                         return false;
 
