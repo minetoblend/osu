@@ -187,6 +187,11 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
         {
             int currentIndex = Cards.ToList().FindIndex(c => c.HasFocus);
 
+            // default behaviour is to start from either end of the cards if no card is focused currently
+            // in single-selection mode we can however use the current selection as a fallback index if there's no focus
+            if (selectionMode == CardSelectionMode.Single && currentIndex == -1)
+                currentIndex = Cards.ToList().FindIndex(c => c.Selected);
+
             int newIndex = currentIndex + direction;
 
             if (newIndex < 0)
