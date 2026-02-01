@@ -390,7 +390,6 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
                 swipeRevealContainer.Y = swipeProgress * -20;
                 swipeArrows.Y = -5 + swipeProgress * -28;
                 swipeArrows.Height = 5 + swipeProgress * 18;
-                swipeArrows.Alpha = swipeProgress;
                 swipeRevealText.Y = swipeProgress * -15;
 
                 swipeRevealContainer.Alpha = float.Clamp((swipeProgress - 0.25f) * 4f, 0, 1);
