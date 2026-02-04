@@ -47,6 +47,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 
         private Container<Drawable> wedgeContainer = null!;
         private LoadingSpinner loadingSpinner = null!;
+        private ScoreCard scoreCard = null!;
 
         [BackgroundDependencyLoader]
         private void load()
@@ -61,12 +62,19 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                     Direction = FillDirection.Vertical,
                     Spacing = new Vector2(20),
                     Rotation = -2f,
+                    Alpha = 0,
                 },
                 loadingSpinner = new LoadingSpinner
                 {
                     Anchor = Anchor.Centre,
                     Origin = Anchor.Centre
-                }
+                },
+                scoreCard = new ScoreCard
+                {
+                    Size = new Vector2(800, 500),
+                    Anchor = Anchor.Centre,
+                    Origin = Anchor.Centre,
+                },
             };
         }
 
@@ -146,6 +154,8 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                 Rank = ScoreRank.F,
                 Ruleset = globalRuleset.Value
             };
+
+            scoreCard.Play(localUserScore, otherUserScore);
 
             wedgeContainer.Children =
             [

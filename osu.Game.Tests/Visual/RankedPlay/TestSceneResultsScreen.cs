@@ -41,6 +41,7 @@ namespace osu.Game.Tests.Visual.RankedPlay
         public void TestBasic()
         {
             AddStep("set results state", () => MultiplayerClient.RankedPlayChangeStage(RankedPlayStage.Results).WaitSafely());
+            AddStep("set player health", () => MultiplayerClient.RankedPlayChangeUserState(2, state => state.Life /= 2).WaitSafely());
         }
 
         [Test]
@@ -65,6 +66,7 @@ namespace osu.Game.Tests.Visual.RankedPlay
             });
 
             AddStep("set results state", () => MultiplayerClient.RankedPlayChangeStage(RankedPlayStage.Results).WaitSafely());
+            AddStep("set player health", () => MultiplayerClient.RankedPlayChangeUserState(2, state => state.Life /= 2).WaitSafely());
         }
 
         private void setupRequestHandler()

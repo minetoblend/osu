@@ -137,7 +137,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
             if (state is not RankedPlayRoomState rankedPlayState)
                 return;
 
-            Health.Value = rankedPlayState.Users[userId].Life;
+            // TODO: fix this properly Health.Value = rankedPlayState.Users[userId].Life;
         });
 
         protected override void Dispose(bool isDisposing)

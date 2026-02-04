@@ -150,6 +150,9 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
             sampleStart = audio.Samples.Get(@"SongSelect/confirm-selection");
         }
 
+        public RankedPlayUserDisplay PlayerUserDisplay { get; private set; } = null!;
+        public RankedPlayUserDisplay OpponentUserDisplay { get; private set; } = null!;
+
         protected override void LoadComplete()
         {
             base.LoadComplete();
@@ -168,7 +171,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                 new RankedPlayCornerPiece(RankedPlayColourScheme.Blue, Anchor.BottomLeft)
                 {
                     State = { BindTarget = cornerPieceVisibility },
-                    Child = new RankedPlayUserDisplay(localUserId, Anchor.BottomLeft, RankedPlayColourScheme.Blue)
+                    Child = PlayerUserDisplay = new RankedPlayUserDisplay(localUserId, Anchor.BottomLeft, RankedPlayColourScheme.Blue)
                     {
                         RelativeSizeAxes = Axes.Both,
                     }
@@ -176,7 +179,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                 new RankedPlayCornerPiece(RankedPlayColourScheme.Red, Anchor.TopRight)
                 {
                     State = { BindTarget = cornerPieceVisibility },
-                    Child = new RankedPlayUserDisplay(opponentUserId, Anchor.TopRight, RankedPlayColourScheme.Red)
+                    Child = OpponentUserDisplay = new RankedPlayUserDisplay(opponentUserId, Anchor.TopRight, RankedPlayColourScheme.Red)
                     {
                         RelativeSizeAxes = Axes.Both,
                     }
