@@ -62,6 +62,12 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
         {
             APIUser user = users.GetUserAsync(userId).GetResultSafely()!;
 
+            var shear = contentAnchor switch
+            {
+                Anchor.TopLeft or Anchor.BottomRight => -OsuGame.SHEAR,
+                _ => OsuGame.SHEAR
+            };
+
             InternalChildren =
             [
                 new CircularContainer
@@ -96,7 +102,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
                     Direction = FillDirection.Vertical,
                     Children =
                     [
-                        new HealthBar(colourScheme, (contentAnchor & Anchor.x0) != 0)
+                        new HealthBar(colourScheme, (contentAnchor & Anchor.x0) != 0, shear)
                         {
                             Health = { BindTarget = Health },
                             RelativeSizeAxes = Axes.X,
@@ -174,11 +180,11 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
             private readonly SpriteIcon heartIcon;
             private readonly OsuSpriteText healthText;
 
-            public HealthBar(RankedPlayColourScheme colourScheme, bool leftToRight)
+            public HealthBar(RankedPlayColourScheme colourScheme, bool leftToRight, Vector2 shear)
             {
                 this.leftToRight = leftToRight;
 
-                Shear = OsuGame.SHEAR;
+                Shear = shear;
 
                 Anchor contentAnchor = leftToRight ? Anchor.CentreLeft : Anchor.CentreRight;
 
@@ -243,7 +249,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
                     content = new BufferedContainer(pixelSnapping: true)
                     {
                         RelativeSizeAxes = Axes.Both,
-                        Shear = -OsuGame.SHEAR,
+                        Shear = -shear,
                         Child = new FillFlowContainer
                         {
                             RelativeSizeAxes = Axes.Both,

@@ -60,12 +60,6 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                     Anchor = Anchor.Centre,
                     Origin = Anchor.Centre
                 },
-                scoreCard = new ScoreCard
-                {
-                    Size = new Vector2(800, 500),
-                    Anchor = Anchor.Centre,
-                    Origin = Anchor.Centre,
-                },
             };
         }
 
@@ -146,7 +140,22 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                 Ruleset = globalRuleset.Value
             };
 
-            scoreCard.Play(localUserScore, otherUserScore);
+            AddInternal(scoreCard = new ScoreCard(localUserScore, otherUserScore)
+            {
+                Size = new Vector2(950, 600),
+                Anchor = Anchor.TopCentre,
+                Origin = Anchor.TopCentre,
+                Y = 50,
+            });
+
+            scoreCard.Play();
         });
+
+        public override void OnExiting(RankedPlaySubScreen? next)
+        {
+            scoreCard.Hide();
+
+            this.Delay(400).FadeOut(200);
+        }
     }
 }

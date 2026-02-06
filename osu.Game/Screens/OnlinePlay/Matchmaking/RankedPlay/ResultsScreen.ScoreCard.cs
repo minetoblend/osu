@@ -13,13 +13,14 @@ using osu.Game.Graphics;
 using osu.Game.Graphics.Sprites;
 using osu.Game.Online.Multiplayer;
 using osu.Game.Scoring;
+using osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components;
 using osuTK;
 
 namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 {
     public partial class ResultsScreen
     {
-        public partial class ScoreCard : CompositeDrawable
+        public partial class ScoreCard(ScoreInfo playerScore, ScoreInfo opponentScore) : CompositeDrawable
         {
             private Container content = null!;
             private Box flash = null!;
@@ -34,8 +35,10 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
             private readonly BindableLong opponentScoreValue = new BindableLong();
             private readonly BindableFloat scoreBarProgress = new BindableFloat();
 
-            private OsuSpriteText playerScoreText = new OsuSpriteText();
-            private OsuSpriteText opponentScoreText = new OsuSpriteText();
+            private OsuSpriteText playerScoreText = null!;
+            private OsuSpriteText opponentScoreText = null!;
+
+            private readonly Bindable<Visibility> cornerPieceVisibility = new Bindable<Visibility>(Visibility.Hidden);
 
             [BackgroundDependencyLoader]
             private void load()
@@ -52,7 +55,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                         {
                             RelativeSizeAxes = Axes.Both,
                             Masking = true,
-                            CornerRadius = 10,
+                            CornerRadius = 6,
 
                             Children =
                             [
@@ -76,7 +79,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                                         new Dimension()
                                     ],
                                     RowDimensions = [new Dimension()],
-                                    Padding = new MarginPadding(20) { Top = 40 },
+                                    Padding = new MarginPadding(20) { Top = 40, Bottom = 110 },
                                     Content = new Drawable?[][]
                                     {
                                         [
@@ -97,6 +100,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                                                             Font = OsuFont.GetFont(size: 60, fixedWidth: true),
                                                             Anchor = Anchor.Centre,
                                                             Origin = Anchor.Centre,
+                                                            Shadow = false,
                                                             Alpha = 0,
                                                         },
                                                     },
@@ -150,6 +154,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                                                             Font = OsuFont.GetFont(size: 60, fixedWidth: true),
                                                             Anchor = Anchor.Centre,
                                                             Origin = Anchor.Centre,
+                                                            Shadow = false,
                                                             Alpha = 0,
                                                         },
                                                     },
@@ -173,7 +178,53 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                                 flash = new Box
                                 {
                                     RelativeSizeAxes = Axes.Both,
-                                }
+                                },
+                                new RankedPlayCornerPiece(RankedPlayColourScheme.Blue, Anchor.BottomLeft)
+                                {
+                                    Anchor = Anchor.BottomLeft,
+                                    Origin = Anchor.BottomLeft,
+                                    State = { BindTarget = cornerPieceVisibility },
+                                    Child = new RankedPlayUserDisplay(playerScore.UserID, Anchor.BottomLeft, RankedPlayColourScheme.Blue)
+                                    {
+                                        RelativeSizeAxes = Axes.Both,
+                                    }
+                                },
+                                new RankedPlayCornerPiece(RankedPlayColourScheme.Red, Anchor.BottomRight)
+                                {
+                                    Anchor = Anchor.BottomRight,
+                                    Origin = Anchor.BottomRight,
+                                    State = { BindTarget = cornerPieceVisibility },
+                                    Child = new RankedPlayUserDisplay(opponentScore.UserID, Anchor.BottomRight, RankedPlayColourScheme.Red)
+                                    {
+                                        RelativeSizeAxes = Axes.Both,
+                                    }
+                                },
+                            ]
+                        },
+                        new FillFlowContainer
+                        {
+                            AutoSizeAxes = Axes.Both,
+                            Direction = FillDirection.Vertical,
+                            Anchor = Anchor.BottomCentre,
+                            Origin = Anchor.BottomCentre,
+                            Margin = new MarginPadding(30),
+                            Children =
+                            [
+                                new OsuSpriteText
+                                {
+                                    Text = $"Round {matchInfo.CurrentRound}",
+                                    Anchor = Anchor.Centre,
+                                    Origin = Anchor.Centre,
+                                    Font = OsuFont.GetFont(size: 36, weight: FontWeight.Bold, typeface: Typeface.TorusAlternate),
+                                },
+                                new OsuSpriteText
+                                {
+                                    Text = $"Damage {matchInfo.RoomState.DamageMultiplier}x",
+                                    Anchor = Anchor.Centre,
+                                    Origin = Anchor.Centre,
+                                    Font = OsuFont.GetFont(size: 24, weight: FontWeight.SemiBold, typeface: Typeface.Torus),
+                                    Alpha = 0.8f
+                                },
                             ]
                         },
                         victoryText = new OsuSpriteText
@@ -207,7 +258,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
             [Resolved]
             private MultiplayerClient client { get; set; } = null!;
 
-            public void Play(ScoreInfo playerScore, ScoreInfo opponentScore)
+            public void Play()
             {
                 double delay = 0;
 
@@ -219,8 +270,10 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 
                 flash.FadeOut(600, Easing.Out);
 
-                playerScoreText.Delay(300).FadeIn(600);
-                opponentScoreText.Delay(300).FadeIn(600);
+                Scheduler.AddDelayed(() => cornerPieceVisibility.Value = Visibility.Visible, 700);
+
+                playerScoreText.Delay(700).FadeIn(600);
+                opponentScoreText.Delay(700).FadeIn(600);
 
                 delay += 1000;
 
@@ -286,11 +339,6 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                     });
 
                     victoryText.Text = playerScore.TotalScore > opponentScore.TotalScore ? "Victory" : "Defeat";
-
-                    victoryText.FadeIn(100)
-                               .ScaleTo(0.5f)
-                               .ScaleTo(1f, 900, Easing.OutElasticHalf)
-                               .TransformTo(nameof(victoryText.Spacing), new Vector2(0), 1200, Easing.OutExpo);
                 }
 
                 delay += 1000;
@@ -308,6 +356,15 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                         }
                     });
                 }
+            }
+
+            public override void Hide()
+            {
+                cornerPieceVisibility.Value = Visibility.Hidden;
+
+                content.MoveToY(400, 400, Easing.OutExpo)
+                       .ScaleTo(0.8f, 400, Easing.OutExpo)
+                       .FadeOut(200);
             }
         }
     }
