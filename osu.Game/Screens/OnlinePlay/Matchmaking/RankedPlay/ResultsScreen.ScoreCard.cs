@@ -32,6 +32,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 
             private readonly BindableLong playerScoreValue = new BindableLong();
             private readonly BindableLong opponentScoreValue = new BindableLong();
+            private readonly BindableFloat scoreBarProgress = new BindableFloat();
 
             private OsuSpriteText playerScoreText = new OsuSpriteText();
             private OsuSpriteText opponentScoreText = new OsuSpriteText();
@@ -84,13 +85,20 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                                                 RelativeSizeAxes = Axes.Both,
                                                 Children =
                                                 [
-                                                    playerScoreText = new OsuSpriteText
+                                                    new Container
                                                     {
-                                                        Text = "0,000,000",
-                                                        Font = OsuFont.GetFont(size: 60, fixedWidth: true),
-                                                        Anchor = Anchor.BottomRight,
-                                                        Origin = Anchor.BottomRight,
-                                                        Alpha = 0,
+                                                        RelativeSizeAxes = Axes.X,
+                                                        Height = 60,
+                                                        Anchor = Anchor.BottomCentre,
+                                                        Origin = Anchor.BottomCentre,
+                                                        Child = playerScoreText = new OsuSpriteText
+                                                        {
+                                                            Text = "0,000,000",
+                                                            Font = OsuFont.GetFont(size: 60, fixedWidth: true),
+                                                            Anchor = Anchor.Centre,
+                                                            Origin = Anchor.Centre,
+                                                            Alpha = 0,
+                                                        },
                                                     },
                                                     new Container
                                                     {
@@ -130,13 +138,20 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                                                 RelativeSizeAxes = Axes.Both,
                                                 Children =
                                                 [
-                                                    opponentScoreText = new OsuSpriteText
+                                                    new Container
                                                     {
-                                                        Text = "0,000,000",
-                                                        Font = OsuFont.GetFont(size: 60, fixedWidth: true),
-                                                        Anchor = Anchor.BottomLeft,
-                                                        Origin = Anchor.BottomLeft,
-                                                        Alpha = 0,
+                                                        RelativeSizeAxes = Axes.X,
+                                                        Height = 60,
+                                                        Anchor = Anchor.BottomCentre,
+                                                        Origin = Anchor.BottomCentre,
+                                                        Child = opponentScoreText = new OsuSpriteText
+                                                        {
+                                                            Text = "0,000,000",
+                                                            Font = OsuFont.GetFont(size: 60, fixedWidth: true),
+                                                            Anchor = Anchor.Centre,
+                                                            Origin = Anchor.Centre,
+                                                            Alpha = 0,
+                                                        },
                                                     },
                                                     new Container
                                                     {
@@ -211,8 +226,20 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 
                 using (BeginDelayedSequence(delay))
                 {
-                    this.TransformBindableTo(playerScoreValue, playerScore.TotalScore, 1800, new CubicBezierEasingFunction(easeIn: 0.2f, easeOut: 0.5f));
-                    this.TransformBindableTo(opponentScoreValue, opponentScore.TotalScore, 1800, new CubicBezierEasingFunction(easeIn: 0.2f, easeOut: 0.5f));
+                    const double score_text_duration = 2500;
+
+                    this.TransformBindableTo(playerScoreValue, playerScore.TotalScore, score_text_duration, Easing.OutExpo);
+                    this.TransformBindableTo(opponentScoreValue, opponentScore.TotalScore, score_text_duration, Easing.OutExpo);
+
+                    playerScoreText.Delay(score_text_duration)
+                                   .ScaleTo(1.1f, 200, Easing.Out)
+                                   .Then()
+                                   .ScaleTo(1f, 500, Easing.OutElasticHalf);
+
+                    opponentScoreText.Delay(score_text_duration)
+                                     .ScaleTo(1.1f, 200, Easing.Out)
+                                     .Then()
+                                     .ScaleTo(1f, 500, Easing.OutElasticHalf);
 
                     long maxScore = Math.Max(
                         Math.Max(playerScore.TotalScore, opponentScore.TotalScore),
@@ -222,11 +249,16 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                     float playerScorePercent = (float)playerScore.TotalScore / maxScore;
                     float opponentScorePercent = (float)opponentScore.TotalScore / maxScore;
 
-                    playerScoreBar.FadeIn(100)
-                                  .ResizeHeightTo(Math.Max(playerScorePercent, 0.1f), 1800, new CubicBezierEasingFunction(easeIn: 0.2f, easeOut: 0.5f));
+                    playerScoreBar.FadeIn(100);
+                    opponentScoreBar.FadeIn(100);
 
-                    opponentScoreBar.FadeIn(100)
-                                    .ResizeHeightTo(Math.Max(opponentScorePercent, 0.1f), 1800, new CubicBezierEasingFunction(easeIn: 0.2f, easeOut: 0.5f));
+                    this.TransformBindableTo(scoreBarProgress, Math.Max(playerScorePercent, opponentScorePercent), score_text_duration, new CubicBezierEasingFunction(easeIn: 0.4, easeOut: 1));
+
+                    scoreBarProgress.BindValueChanged(e =>
+                    {
+                        playerScoreBar.Height = float.Lerp(0.05f, 1f, Math.Min(e.NewValue, playerScorePercent));
+                        opponentScoreBar.Height = float.Lerp(0.05f, 1f, Math.Min(e.NewValue, opponentScorePercent));
+                    });
                 }
 
                 delay += 2000;
@@ -240,12 +272,6 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                             RelativeSizeAxes = Axes.Both,
                             Children =
                             [
-                                new ScoreStatisticsDisplay(playerScore, RankedPlayColourScheme.Blue),
-                                new ScoreRankDisplay(playerScore)
-                                {
-                                    Anchor = Anchor.BottomCentre,
-                                    Origin = Anchor.BottomCentre,
-                                }
                             ]
                         });
                         opponentScoreContainer.Add(new Container
@@ -253,12 +279,6 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                             RelativeSizeAxes = Axes.Both,
                             Children =
                             [
-                                new ScoreStatisticsDisplay(opponentScore, RankedPlayColourScheme.Red),
-                                new ScoreRankDisplay(opponentScore)
-                                {
-                                    Anchor = Anchor.BottomCentre,
-                                    Origin = Anchor.BottomCentre,
-                                }
                             ]
                         });
                         playerScoreContainer.FadeIn(600);
