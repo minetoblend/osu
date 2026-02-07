@@ -199,4 +199,10 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
             }
         }
     }
+
+    public static class ScoreCounterExtensions
+    {
+        public static TransformSequence<ScoreCounter> TransformValueTo(this TransformSequence<ScoreCounter> t, long count, double duration, Easing easing) =>
+            t.Append(o => o.TransformValueTo(count, duration, easing));
+    }
 }
