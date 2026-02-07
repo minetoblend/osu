@@ -45,35 +45,20 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
         [Resolved]
         private IBindable<RulesetInfo> globalRuleset { get; set; } = null!;
 
-        private Container<Drawable> wedgeContainer = null!;
         private LoadingSpinner loadingSpinner = null!;
         private ScoreCard scoreCard = null!;
 
         [BackgroundDependencyLoader]
         private void load()
         {
+            CornerPieceVisibility.Value = Visibility.Hidden;
+
             InternalChildren = new Drawable[]
             {
-                wedgeContainer = new FillFlowContainer
-                {
-                    Anchor = Anchor.Centre,
-                    Origin = Anchor.Centre,
-                    RelativeSizeAxes = Axes.Both,
-                    Direction = FillDirection.Vertical,
-                    Spacing = new Vector2(20),
-                    Rotation = -2f,
-                    Alpha = 0,
-                },
                 loadingSpinner = new LoadingSpinner
                 {
                     Anchor = Anchor.Centre,
                     Origin = Anchor.Centre
-                },
-                scoreCard = new ScoreCard
-                {
-                    Size = new Vector2(800, 500),
-                    Anchor = Anchor.Centre,
-                    Origin = Anchor.Centre,
                 },
             };
         }
@@ -155,21 +140,22 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                 Ruleset = globalRuleset.Value
             };
 
-            scoreCard.Play(localUserScore, otherUserScore);
+            AddInternal(scoreCard = new ScoreCard(localUserScore, otherUserScore)
+            {
+                Size = new Vector2(950, 600),
+                Anchor = Anchor.TopCentre,
+                Origin = Anchor.TopCentre,
+                Y = 50,
+            });
 
-            wedgeContainer.Children =
-            [
-                new RedScoreWedge(otherUserScore)
-                {
-                    Anchor = Anchor.CentreRight,
-                    Origin = Anchor.CentreRight,
-                },
-                new BlueScoreWedge(localUserScore)
-                {
-                    Anchor = Anchor.CentreLeft,
-                    Origin = Anchor.CentreLeft,
-                },
-            ];
+            scoreCard.Play();
         });
+
+        public override void OnExiting(RankedPlaySubScreen? next)
+        {
+            scoreCard.Hide();
+
+            this.Delay(400).FadeOut(200);
+        }
     }
 }

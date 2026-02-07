@@ -18,7 +18,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
             private void load()
             {
                 Masking = true;
-                CornerRadius = 10;
+                CornerRadius = 6;
                 BorderThickness = 2;
                 BorderColour = colours.PrimaryDarkest.Darken(0.35f);
 
@@ -46,7 +46,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                         {
                             RelativeSizeAxes = Axes.Both,
                             Masking = true,
-                            CornerRadius = 7,
+                            CornerRadius = 3,
                             Colour = ColourInfo.GradientHorizontal(Colour4.White, Colour4.White.Opacity(0)),
                             BorderThickness = 3,
                             BorderColour = ColourInfo.GradientVertical(Colour4.White, Colour4.White.Opacity(0)),

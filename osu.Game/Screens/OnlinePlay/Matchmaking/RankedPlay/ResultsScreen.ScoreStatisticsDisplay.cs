@@ -49,7 +49,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                             {
                                 Width = 80,
                                 Value = new BeatmapTitleWedge.StatisticDifficulty.Data(it.DisplayName, it.Count, it.Count, it.MaxCount ?? it.Count),
-                                AccentColour = colours.PrimaryDarker
+                                AccentColour = colours.PrimaryDarker,
                             }).ToArray(),
                         }
                     }
