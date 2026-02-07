@@ -30,14 +30,10 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
             private ScoreBar playerScoreBar = null!;
             private ScoreBar opponentScoreBar = null!;
             private OsuSpriteText victoryText = null!;
-            private Container playerScoreContainer = null!;
-            private Container opponentScoreContainer = null!;
             private FillFlowContainer roundInfo = null!;
             private RankedPlayUserDisplay playerUserDisplay = null!;
             private RankedPlayUserDisplay opponentUserDisplay = null!;
 
-            private readonly BindableLong playerScoreValue = new BindableLong();
-            private readonly BindableLong opponentScoreValue = new BindableLong();
             private readonly BindableFloat scoreBarProgress = new BindableFloat();
             private readonly BindableLong damageValue = new BindableLong();
 
@@ -46,6 +42,8 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
             private OsuSpriteText damageText = null!;
             private OsuSpriteText damageMultiplierText = null!;
             private Container damageTextContainer = null!;
+            private ScoreDetails playerScoreDetails = null!;
+            private ScoreDetails opponentScoreDetails = null!;
 
             private readonly Bindable<Visibility> cornerPieceVisibility = new Bindable<Visibility>(Visibility.Hidden);
 
@@ -139,11 +137,9 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                                                     {
                                                         RelativeSizeAxes = Axes.Both,
                                                         Padding = new MarginPadding { Bottom = 60 },
-                                                        Child = playerScoreContainer = new Container
+                                                        Child = playerScoreDetails = new ScoreDetails(RankedPlayColourScheme.Blue, playerScore)
                                                         {
                                                             RelativeSizeAxes = Axes.Both,
-                                                            Masking = true,
-                                                            CornerRadius = 6,
                                                             Alpha = 0,
                                                         }
                                                     }
@@ -192,11 +188,9 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                                                     {
                                                         RelativeSizeAxes = Axes.Both,
                                                         Padding = new MarginPadding { Bottom = 60 },
-                                                        Child = opponentScoreContainer = new Container
+                                                        Child = opponentScoreDetails = new ScoreDetails(RankedPlayColourScheme.Red, opponentScore)
                                                         {
                                                             RelativeSizeAxes = Axes.Both,
-                                                            Masking = true,
-                                                            CornerRadius = 6,
                                                             Alpha = 0,
                                                         }
                                                     }
@@ -366,8 +360,14 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                 {
                     const double score_text_duration = 3000;
 
-                    playerScoreText.TransformValueTo(playerScore.TotalScore, score_text_duration, Easing.OutQuint);
-                    opponentScoreText.TransformValueTo(opponentScore.TotalScore, score_text_duration, Easing.OutQuint);
+                    playerScoreText
+                        .TransformValueTo((long)(playerScore.TotalScore * 0.99f), score_text_duration * 0.75, Easing.None)
+                        .Then()
+                        .TransformValueTo(playerScore.TotalScore, score_text_duration * 0.25, Easing.OutQuint);
+                    opponentScoreText
+                        .TransformValueTo((long)(opponentScore.TotalScore * 0.99f), score_text_duration * 0.75, Easing.None)
+                        .Then()
+                        .TransformValueTo(opponentScore.TotalScore, score_text_duration * 0.25, Easing.OutQuint);
 
                     long maxAchievableScore = Math.Max(
                         Math.Max(playerScore.TotalScore, opponentScore.TotalScore),
@@ -399,37 +399,13 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                     });
                 }
 
-                delay += 2000;
+                delay += 3500;
 
                 using (BeginDelayedSequence(delay))
                 {
-                    Schedule(() =>
-                    {
-                        playerScoreContainer.Add(new Container
-                        {
-                            RelativeSizeAxes = Axes.Both,
-                            Children =
-                            [
-                            ]
-                        });
-                        opponentScoreContainer.Add(new Container
-                        {
-                            RelativeSizeAxes = Axes.Both,
-                            Children =
-                            [
-                            ]
-                        });
-                        playerScoreContainer.FadeIn(600);
-                        opponentScoreContainer.FadeIn(600);
-                    });
+                    playerScoreDetails.FadeIn(300);
+                    opponentScoreDetails.FadeIn(300);
 
-                    victoryText.Text = playerScore.TotalScore > opponentScore.TotalScore ? "Victory" : "Defeat";
-                }
-
-                delay += 1400;
-
-                using (BeginDelayedSequence(delay))
-                {
                     long damage = (long)(Math.Abs(playerScore.TotalScore - opponentScore.TotalScore) * matchInfo.RoomState.DamageMultiplier);
 
                     damageText.ScaleTo(0.8f, 60)
