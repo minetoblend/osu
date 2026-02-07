@@ -35,6 +35,8 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
             Value = 1_000_000,
         };
 
+        public bool ManualHealth { get; set; }
+
         [Resolved]
         private MultiplayerClient client { get; set; } = null!;
 
@@ -102,7 +104,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
                     Direction = FillDirection.Vertical,
                     Children =
                     [
-                        new HealthBar(colourScheme, (contentAnchor & Anchor.x0) != 0, shear)
+                        HealthDisplay = new HealthBar(colourScheme, (contentAnchor & Anchor.x0) != 0, shear)
                         {
                             Health = { BindTarget = Health },
                             RelativeSizeAxes = Axes.X,
@@ -125,6 +127,8 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
             ];
         }
 
+        public HealthBar HealthDisplay { get; private set; } = null!;
+
         protected override void LoadComplete()
         {
             base.LoadComplete();
@@ -143,7 +147,8 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
             if (state is not RankedPlayRoomState rankedPlayState)
                 return;
 
-            // TODO: fix this properly Health.Value = rankedPlayState.Users[userId].Life;
+            if (!ManualHealth)
+                Health.Value = rankedPlayState.Users[userId].Life;
         });
 
         protected override void Dispose(bool isDisposing)
@@ -153,7 +158,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
             base.Dispose(isDisposing);
         }
 
-        private partial class HealthBar : CompositeDrawable
+        public partial class HealthBar : CompositeDrawable
         {
             private readonly bool leftToRight;
 
