@@ -35,7 +35,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
             }
         }
 
-        public TransformSequence<ScoreCounter> TransformValueTo(long count, double duration, Easing easing) => this.TransformTo(nameof(Value), count, duration, easing);
+        public TransformSequence<ScoreCounter> TransformValueTo(long value, double duration = 0, Easing easing = Easing.None) => this.TransformTo(nameof(Value), value, duration, easing);
 
         public ScoreCounter(int numDigits = 6)
         {
@@ -49,6 +49,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
                 {
                     AutoSizeAxes = Axes.Both,
                     Direction = FillDirection.Horizontal,
+                    Spacing = new Vector2(-4)
                 }
             ];
         }
@@ -202,7 +203,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
 
     public static class ScoreCounterExtensions
     {
-        public static TransformSequence<ScoreCounter> TransformValueTo(this TransformSequence<ScoreCounter> t, long count, double duration, Easing easing) =>
-            t.Append(o => o.TransformValueTo(count, duration, easing));
+        public static TransformSequence<ScoreCounter> TransformValueTo(this TransformSequence<ScoreCounter> t, long value, double duration = 0, Easing easing = Easing.None) =>
+            t.Append(o => o.TransformValueTo(value, duration, easing));
     }
 }
