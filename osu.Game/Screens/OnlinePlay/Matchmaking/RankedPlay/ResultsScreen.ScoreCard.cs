@@ -387,19 +387,23 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                 {
                     using (BeginDelayedSequence(delay))
                     {
-                        damageDisplay.DamageCounter.TransformValueTo((long)(Math.Abs(playerScore.TotalScore - opponentScore.TotalScore) * matchInfo.RoomState.DamageMultiplier));
+                        damageDisplay.DamageCounter
+                                     .ScaleTo(0.8f, 50, Easing.Out)
+                                     .Then()
+                                     .Schedule(() => damageDisplay.DamageCounter.SetValueInstantly((long)(Math.Abs(playerScore.TotalScore - opponentScore.TotalScore)
+                                                                                                          * matchInfo.RoomState.DamageMultiplier)))
+                                     .ScaleTo(1, 600, Easing.OutElasticHalf);
+
+                        damageDisplay.MultiplierText.Delay(50)
+                                     .FadeIn()
+                                     .ScaleTo(0.8f)
+                                     .ScaleTo(1f, 600, Easing.OutElasticHalf)
+                                     .Delay(300)
+                                     .FadeOut(1000, Easing.Out);
                     }
 
                     delay += 500;
                 }
-
-                using (BeginDelayedSequence(delay))
-                {
-                    playerScoreDetails.FadeIn(300);
-                    opponentScoreDetails.FadeIn(300);
-                }
-
-                delay += 1200;
 
                 using (BeginDelayedSequence(delay))
                 {
@@ -413,6 +417,14 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                                 opponentUserDisplay.Health.Value = userInfo.Life;
                         }
                     });
+                }
+
+                delay += 400;
+
+                using (BeginDelayedSequence(delay))
+                {
+                    playerScoreDetails.FadeIn(300);
+                    opponentScoreDetails.FadeIn(300);
                 }
             }
 

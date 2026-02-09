@@ -89,13 +89,22 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
             updateDigits();
         }
 
-        private void updateDigits()
+        public void SetValueInstantly(long value)
+        {
+            this.value = value;
+            updateDigits(false);
+        }
+
+        private void updateDigits(bool animated = true)
         {
             long current = value;
 
             for (int i = digits.Length - 1; i >= 0; i--)
             {
                 digits[i].Offset = current;
+
+                if (!animated)
+                    digits[i].CompleteAnimations();
 
                 current /= 10;
             }
@@ -176,10 +185,10 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
 
                 spring.Update(Time.Elapsed, Offset);
 
-                updatePositions();
+                updateState();
             }
 
-            private void updatePositions()
+            private void updateState()
             {
                 int digit = (int)spring.Current % 10;
                 if (digit < 0) digit += 10;
@@ -202,6 +211,15 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
                 lower.Scale = new Vector2(float.Lerp(0.5f, 1f, MathF.Sqrt(1 - y * 0.5f)));
 
                 blurContainer.BlurSigma = new Vector2(0, float.Clamp((float)Math.Abs(spring.Velocity * 0.1f) - 5, 0, 10));
+            }
+
+            public void CompleteAnimations()
+            {
+                spring.Current = Offset;
+                spring.PreviousTarget = Offset;
+                spring.Velocity = 0;
+
+                updateState();
             }
         }
     }

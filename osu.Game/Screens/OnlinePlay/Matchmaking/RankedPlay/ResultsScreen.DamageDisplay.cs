@@ -23,6 +23,8 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 
             public ScoreCounter DamageCounter { get; private set; } = null!;
 
+            public OsuSpriteText MultiplierText { get; private set; } = null!;
+
             [BackgroundDependencyLoader]
             private void load(TextureStore textures, RankedPlayMatchInfo matchInfo)
             {
@@ -60,12 +62,13 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                         Alpha = 1,
                         Spacing = new Vector2(-2),
                     },
-                    new OsuSpriteText
+                    MultiplierText = new OsuSpriteText
                     {
                         Text = $"Damage {matchInfo.RoomState.DamageMultiplier.ToStandardFormattedString(maxDecimalDigits: 1)}x",
                         Anchor = Anchor.TopCentre,
                         Origin = Anchor.Centre,
-                        Font = OsuFont.GetFont(weight: FontWeight.SemiBold, size: 18),
+                        Font = OsuFont.GetFont(weight: FontWeight.SemiBold, size: 22),
+                        Alpha = 0
                     }
                 ];
             }
