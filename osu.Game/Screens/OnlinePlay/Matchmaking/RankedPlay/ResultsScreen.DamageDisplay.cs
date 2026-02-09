@@ -1,6 +1,7 @@
 // Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
+using System;
 using osu.Framework.Allocation;
 using osu.Framework.Extensions.Color4Extensions;
 using osu.Framework.Graphics;
@@ -10,6 +11,7 @@ using osu.Framework.Graphics.Textures;
 using osu.Game.Extensions;
 using osu.Game.Graphics;
 using osu.Game.Graphics.Sprites;
+using osu.Game.Online.Multiplayer.MatchTypes.RankedPlay;
 using osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components;
 using osuTK;
 
@@ -17,7 +19,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 {
     public partial class ResultsScreen
     {
-        private partial class DamageDisplay : CompositeDrawable
+        private partial class DamageDisplay(RankedPlayDamageInfo damageInfo) : CompositeDrawable
         {
             public Container Background { get; private set; } = null!;
 
@@ -26,8 +28,10 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
             public OsuSpriteText MultiplierText { get; private set; } = null!;
 
             [BackgroundDependencyLoader]
-            private void load(TextureStore textures, RankedPlayMatchInfo matchInfo)
+            private void load(TextureStore textures, RankedPlayMatchInfo matchInfo, OsuColour colour)
             {
+                int numDigits = (int)Math.Ceiling(Math.Log10(damageInfo.Damage));
+
                 InternalChildren =
                 [
                     Background = new Container
@@ -54,22 +58,42 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                             },
                         ]
                     },
-                    DamageCounter = new ScoreCounter(7)
+                    new Container
                     {
-                        Font = OsuFont.GetFont(size: 36, weight: FontWeight.SemiBold, fixedWidth: true),
+                        AutoSizeAxes = Axes.Both,
                         Anchor = Anchor.Centre,
                         Origin = Anchor.Centre,
-                        Alpha = 1,
-                        Spacing = new Vector2(-2),
+                        Children =
+                        [
+                            DamageCounter = new ScoreCounter(numDigits)
+                            {
+                                Font = OsuFont.GetFont(size: 36, weight: FontWeight.SemiBold, fixedWidth: true),
+                                Anchor = Anchor.Centre,
+                                Origin = Anchor.Centre,
+                                Alpha = 1,
+                                Spacing = new Vector2(-2),
+                            },
+                            MultiplierText = new OsuSpriteText
+                            {
+                                BypassAutoSizeAxes = Axes.Both,
+                                Text = $"{matchInfo.RoomState.DamageMultiplier.ToStandardFormattedString(maxDecimalDigits: 1)}x",
+                                Anchor = Anchor.CentreRight,
+                                Origin = Anchor.Centre,
+                                Font = OsuFont.GetFont(weight: FontWeight.SemiBold, size: 42),
+                                Rotation = 30,
+                                Alpha = 0,
+                                Colour = colour.RedLight
+                            }
+                        ]
                     },
-                    MultiplierText = new OsuSpriteText
+
+                    new OsuSpriteText
                     {
-                        Text = $"Damage {matchInfo.RoomState.DamageMultiplier.ToStandardFormattedString(maxDecimalDigits: 1)}x",
+                        Text = "Damage",
                         Anchor = Anchor.TopCentre,
                         Origin = Anchor.Centre,
                         Font = OsuFont.GetFont(weight: FontWeight.SemiBold, size: 22),
-                        Alpha = 0
-                    }
+                    },
                 ];
             }
         }

@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using NUnit.Framework;
 using osu.Framework.Extensions;
 using osu.Framework.Utils;
@@ -40,7 +41,38 @@ namespace osu.Game.Tests.Visual.RankedPlay
         [Test]
         public void TestBasic()
         {
-            AddStep("set results state", () => MultiplayerClient.RankedPlayChangeStage(RankedPlayStage.Results).WaitSafely());
+            AddStep("set results state", () => MultiplayerClient.RankedPlayChangeStage(RankedPlayStage.Results, state =>
+            {
+                int losingPlayer = state.Users.Keys.First();
+
+                state.DamageMultiplier = 2;
+
+                foreach (var (id, userInfo) in state.Users)
+                {
+                    if (id == losingPlayer)
+                    {
+                        userInfo.DamageInfo = new RankedPlayDamageInfo
+                        {
+                            RawDamage = 123_456,
+                            Damage = 123_456 * 2,
+                            OldLife = 1_000_000,
+                            NewLife = 1_000_000 - 123_456 * 2,
+                        };
+
+                        userInfo.Life = 1_000_000 - 123_456 * 2;
+                    }
+                    else
+                    {
+                        userInfo.DamageInfo = new RankedPlayDamageInfo
+                        {
+                            RawDamage = 0,
+                            Damage = 0,
+                            OldLife = 1_000_000,
+                            NewLife = 1_000_000,
+                        };
+                    }
+                }
+            }).WaitSafely());
             AddStep("set player health", () => MultiplayerClient.RankedPlayChangeUserState(2, state => state.Life /= 2).WaitSafely());
         }
 
@@ -65,8 +97,36 @@ namespace osu.Game.Tests.Visual.RankedPlay
                 };
             });
 
-            AddStep("set results state", () => MultiplayerClient.RankedPlayChangeStage(RankedPlayStage.Results).WaitSafely());
-            AddStep("set player health", () => MultiplayerClient.RankedPlayChangeUserState(2, state => state.Life /= 2).WaitSafely());
+            AddStep("set results state", () => MultiplayerClient.RankedPlayChangeStage(RankedPlayStage.Results, state =>
+            {
+                int losingPlayer = state.Users.Keys.First();
+
+                state.DamageMultiplier = 2;
+
+                foreach (var (id, userInfo) in state.Users)
+                {
+                    if (id == losingPlayer)
+                    {
+                        userInfo.DamageInfo = new RankedPlayDamageInfo
+                        {
+                            RawDamage = 123_456,
+                            Damage = 123_456 * 2,
+                            OldLife = 1_000_000,
+                            NewLife = 1_000_000 - 123_456 * 2,
+                        };
+                    }
+                    else
+                    {
+                        userInfo.DamageInfo = new RankedPlayDamageInfo
+                        {
+                            RawDamage = 0,
+                            Damage = 0,
+                            OldLife = 1_000_000,
+                            NewLife = 1_000_000,
+                        };
+                    }
+                }
+            }).WaitSafely());
         }
 
         private void setupRequestHandler()

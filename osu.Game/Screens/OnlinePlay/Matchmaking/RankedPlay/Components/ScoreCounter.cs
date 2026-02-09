@@ -183,6 +183,8 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
             {
                 base.Update();
 
+                spring.Damping = spring.Velocity > 30 ? 1f : 0.8f;
+
                 spring.Update(Time.Elapsed, Offset);
 
                 updateState();
