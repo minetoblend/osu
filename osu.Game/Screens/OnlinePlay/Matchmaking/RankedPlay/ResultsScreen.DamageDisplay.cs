@@ -38,7 +38,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                             new NineSliceSprite
                             {
                                 RelativeSizeAxes = Axes.Both,
-                                Texture = textures.Get("Online/RankedPlay/hexagon"),
+                                Texture = textures.Get("Online/RankedPlay/damage-display-background"),
                                 TextureInsetRelativeAxes = Axes.None,
                                 TextureInset = new MarginPadding { Horizontal = 30 },
                                 Colour = Color4Extensions.FromHex("222228"),
@@ -46,7 +46,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                             new NineSliceSprite
                             {
                                 RelativeSizeAxes = Axes.Both,
-                                Texture = textures.Get("Online/RankedPlay/hexagon-border"),
+                                Texture = textures.Get("Online/RankedPlay/damage-display-border"),
                                 TextureInsetRelativeAxes = Axes.None,
                                 TextureInset = new MarginPadding { Horizontal = 30 },
                                 Alpha = 0.25f,
