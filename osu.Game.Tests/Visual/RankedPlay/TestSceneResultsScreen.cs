@@ -45,6 +45,41 @@ namespace osu.Game.Tests.Visual.RankedPlay
             {
                 int losingPlayer = state.Users.Keys.First();
 
+                foreach (var (id, userInfo) in state.Users)
+                {
+                    if (id == losingPlayer)
+                    {
+                        userInfo.DamageInfo = new RankedPlayDamageInfo
+                        {
+                            RawDamage = 123_456,
+                            Damage = 123_456,
+                            OldLife = 1_000_000,
+                            NewLife = 1_000_000 - 123_456,
+                        };
+
+                        userInfo.Life = 1_000_000 - 123_456;
+                    }
+                    else
+                    {
+                        userInfo.DamageInfo = new RankedPlayDamageInfo
+                        {
+                            RawDamage = 0,
+                            Damage = 0,
+                            OldLife = 1_000_000,
+                            NewLife = 1_000_000,
+                        };
+                    }
+                }
+            }).WaitSafely());
+        }
+
+        [Test]
+        public void TestMultiplier()
+        {
+            AddStep("set results state", () => MultiplayerClient.RankedPlayChangeStage(RankedPlayStage.Results, state =>
+            {
+                int losingPlayer = state.Users.Keys.First();
+
                 state.DamageMultiplier = 2;
 
                 foreach (var (id, userInfo) in state.Users)
@@ -73,7 +108,6 @@ namespace osu.Game.Tests.Visual.RankedPlay
                     }
                 }
             }).WaitSafely());
-            AddStep("set player health", () => MultiplayerClient.RankedPlayChangeUserState(2, state => state.Life /= 2).WaitSafely());
         }
 
         [Test]
