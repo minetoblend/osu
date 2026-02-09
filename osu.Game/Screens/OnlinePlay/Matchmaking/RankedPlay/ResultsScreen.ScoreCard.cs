@@ -9,8 +9,8 @@ using osu.Framework.Graphics;
 using osu.Framework.Graphics.Colour;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Shapes;
+using osu.Framework.Graphics.Textures;
 using osu.Framework.Graphics.Transforms;
-using osu.Game.Extensions;
 using osu.Game.Graphics;
 using osu.Game.Graphics.Sprites;
 using osu.Game.Online.Multiplayer;
@@ -29,7 +29,6 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 
             private ScoreBar playerScoreBar = null!;
             private ScoreBar opponentScoreBar = null!;
-            private OsuSpriteText victoryText = null!;
             private FillFlowContainer roundInfo = null!;
             private RankedPlayUserDisplay playerUserDisplay = null!;
             private RankedPlayUserDisplay opponentUserDisplay = null!;
@@ -39,20 +38,20 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 
             private ScoreCounter playerScoreText = null!;
             private ScoreCounter opponentScoreText = null!;
-            private OsuSpriteText damageText = null!;
-            private OsuSpriteText damageMultiplierText = null!;
-            private Container damageTextContainer = null!;
             private ScoreDetails playerScoreDetails = null!;
             private ScoreDetails opponentScoreDetails = null!;
+            private DamageDisplay damageDisplay = null!;
 
             private readonly Bindable<Visibility> cornerPieceVisibility = new Bindable<Visibility>(Visibility.Hidden);
 
             [BackgroundDependencyLoader]
-            private void load()
+            private void load(TextureStore textures)
             {
                 matchInfo.RoomState.DamageMultiplier = 2;
 
                 int numScoreDigits = (int)Math.Ceiling(Math.Log10(Math.Max(playerScore.TotalScore, opponentScore.TotalScore)));
+
+                BufferedContainer background;
 
                 InternalChild = content = new Container
                 {
@@ -65,36 +64,55 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                         new Container
                         {
                             RelativeSizeAxes = Axes.Both,
+                            Padding = new MarginPadding { Bottom = -30 },
+                            Child = background = new BufferedContainer()
+                            {
+                                RelativeSizeAxes = Axes.Both,
+                                Alpha = 0.75f,
+                                Padding = new MarginPadding { Bottom = 30 },
+                                Children =
+                                [
+                                    new Container
+                                    {
+                                        RelativeSizeAxes = Axes.Both,
+                                        Masking = true,
+                                        CornerRadius = 6,
+                                        Child = new Box
+                                        {
+                                            RelativeSizeAxes = Axes.Both,
+                                            Colour = Color4Extensions.FromHex("222228"),
+                                        },
+                                    },
+                                    new Container
+                                    {
+                                        RelativeSizeAxes = Axes.Both,
+                                        Masking = true,
+                                        CornerRadius = 6,
+                                        BorderThickness = 2,
+                                        BorderColour = new ColourInfo
+                                        {
+                                            TopLeft = RankedPlayColourScheme.Blue.PrimaryDarkest.Opacity(0.25f),
+                                            BottomLeft = RankedPlayColourScheme.Blue.Primary.Opacity(0.5f),
+                                            TopRight = RankedPlayColourScheme.Red.PrimaryDarkest.Opacity(0.25f),
+                                            BottomRight = RankedPlayColourScheme.Red.Primary.Opacity(0.5f),
+                                        },
+                                        Child = new Box
+                                        {
+                                            RelativeSizeAxes = Axes.Both,
+                                            Alpha = 0,
+                                            AlwaysPresent = true,
+                                        },
+                                    },
+                                ]
+                            }
+                        },
+                        new Container
+                        {
+                            RelativeSizeAxes = Axes.Both,
                             Masking = true,
                             CornerRadius = 6,
                             Children =
                             [
-                                new Box
-                                {
-                                    RelativeSizeAxes = Axes.Both,
-                                    Colour = Color4Extensions.FromHex("222228"),
-                                    Alpha = 0.75f,
-                                },
-                                new Container
-                                {
-                                    RelativeSizeAxes = Axes.Both,
-                                    Masking = true,
-                                    CornerRadius = 6,
-                                    BorderThickness = 2,
-                                    BorderColour = new ColourInfo
-                                    {
-                                        TopLeft = RankedPlayColourScheme.Blue.PrimaryDarkest.Opacity(0.25f),
-                                        BottomLeft = RankedPlayColourScheme.Blue.Primary.Opacity(0.5f),
-                                        TopRight = RankedPlayColourScheme.Red.PrimaryDarkest.Opacity(0.25f),
-                                        BottomRight = RankedPlayColourScheme.Red.Primary.Opacity(0.5f),
-                                    },
-                                    Child = new Box
-                                    {
-                                        RelativeSizeAxes = Axes.Both,
-                                        Alpha = 0,
-                                        AlwaysPresent = true,
-                                    },
-                                },
                                 new GridContainer
                                 {
                                     RelativeSizeAxes = Axes.Both,
@@ -131,6 +149,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                                                             Anchor = Anchor.Centre,
                                                             Origin = Anchor.Centre,
                                                             Alpha = 0,
+                                                            Spacing = new Vector2(-4),
                                                         },
                                                     },
                                                     new Container
@@ -182,6 +201,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                                                             Anchor = Anchor.Centre,
                                                             Origin = Anchor.Centre,
                                                             Alpha = 0,
+                                                            Spacing = new Vector2(-4),
                                                         },
                                                     },
                                                     new Container
@@ -239,7 +259,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                             Direction = FillDirection.Vertical,
                             Anchor = Anchor.BottomCentre,
                             Origin = Anchor.BottomCentre,
-                            Margin = new MarginPadding(30),
+                            Margin = new MarginPadding(50),
                             Alpha = 0,
                             Children =
                             [
@@ -250,68 +270,18 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                                     Origin = Anchor.Centre,
                                     Font = OsuFont.GetFont(size: 36, weight: FontWeight.Bold, typeface: Typeface.TorusAlternate),
                                 },
-                                new OsuSpriteText
-                                {
-                                    Text = $"Damage {matchInfo.RoomState.DamageMultiplier}x",
-                                    Anchor = Anchor.Centre,
-                                    Origin = Anchor.Centre,
-                                    Font = OsuFont.GetFont(size: 24, weight: FontWeight.SemiBold, typeface: Typeface.Torus),
-                                    Alpha = 0.8f
-                                },
                             ]
                         },
-                        victoryText = new OsuSpriteText
+                        damageDisplay = new DamageDisplay
                         {
-                            Text = "Victory",
-                            Font = OsuFont.GetFont(size: 48, weight: FontWeight.SemiBold, typeface: Typeface.TorusAlternate),
-                            Anchor = Anchor.TopCentre,
-                            Origin = Anchor.Centre,
-                            Y = -6,
-                            Spacing = new Vector2(-10),
-                            Alpha = 0,
-                        },
-                        damageTextContainer = new Container
-                        {
-                            Size = new Vector2(300, 60),
                             Anchor = Anchor.BottomCentre,
-                            Origin = Anchor.BottomCentre,
-                            Margin = new MarginPadding(30),
-                            Alpha = 0,
-                            Children =
-                            [
-                                damageText = new OsuSpriteText
-                                {
-                                    Text = "Damage: 000,000",
-                                    Font = OsuFont.GetFont(size: 32, fixedWidth: true),
-                                    Colour = RankedPlayColourScheme.Red.Primary,
-                                    Anchor = Anchor.Centre,
-                                    Origin = Anchor.Centre,
-                                    Shadow = false,
-                                },
-                                damageMultiplierText = new OsuSpriteText
-                                {
-                                    BypassAutoSizeAxes = Axes.Both,
-                                    Text = $"{matchInfo.RoomState.DamageMultiplier.ToStandardFormattedString(maxDecimalDigits: 1)}x",
-                                    Font = OsuFont.GetFont(size: 64, fixedWidth: true, weight: FontWeight.Bold),
-                                    Anchor = Anchor.Centre,
-                                    Origin = Anchor.Centre,
-                                    Y = -20,
-                                    X = 50,
-                                    Rotation = 25,
-                                    Shadow = false,
-                                    Alpha = 0,
-                                }
-                            ]
+                            Origin = Anchor.Centre,
+                            Size = new Vector2(200, 60),
                         },
                     ]
                 };
-            }
 
-            protected override void LoadComplete()
-            {
-                base.LoadComplete();
-
-                damageValue.BindValueChanged(v => damageText.Text = $"Damage: {v.NewValue:000,000}");
+                background.Add(damageDisplay.Background.CreateProxy());
             }
 
             [Resolved]
@@ -352,7 +322,13 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                 playerScoreText.Delay(700).FadeIn(600);
                 opponentScoreText.Delay(700).FadeIn(600);
                 roundInfo.Delay(700).FadeIn(600);
-                // damageTextContainer.Delay(700).FadeIn(600);
+
+                damageDisplay
+                    .FadeOut()
+                    .ResizeWidthTo(200)
+                    .Delay(900)
+                    .FadeIn(300)
+                    .ResizeWidthTo(400, 600, Easing.OutExpo);
 
                 delay += 1000;
 
@@ -361,13 +337,20 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                     const double score_text_duration = 3000;
 
                     playerScoreText
-                        .TransformValueTo((long)(playerScore.TotalScore * 0.99f), score_text_duration * 0.75, Easing.None)
+                        .TransformValueTo((long)(playerScore.TotalScore * 0.95f), score_text_duration * 0.75)
                         .Then()
                         .TransformValueTo(playerScore.TotalScore, score_text_duration * 0.25, Easing.OutQuint);
                     opponentScoreText
-                        .TransformValueTo((long)(opponentScore.TotalScore * 0.99f), score_text_duration * 0.75, Easing.None)
+                        .TransformValueTo((long)(opponentScore.TotalScore * 0.95f), score_text_duration * 0.75)
                         .Then()
                         .TransformValueTo(opponentScore.TotalScore, score_text_duration * 0.25, Easing.OutQuint);
+
+                    long damage = (Math.Abs(playerScore.TotalScore - opponentScore.TotalScore));
+
+                    damageDisplay.DamageCounter
+                                 .TransformValueTo((long)(damage * 0.95f), score_text_duration * 0.75)
+                                 .Then()
+                                 .TransformValueTo(damage, score_text_duration * 0.25, Easing.OutQuint);
 
                     long maxAchievableScore = Math.Max(
                         Math.Max(playerScore.TotalScore, opponentScore.TotalScore),
@@ -393,48 +376,30 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                         {
                             float progress = (e.NewValue - minScorePercent) / (maxScorePercent - minScorePercent);
 
-                            long damage = (long)(Math.Abs(playerScore.TotalScore - opponentScore.TotalScore) * progress);
-                            damageValue.Value = damage;
+                            damageValue.Value = (long)(Math.Abs(playerScore.TotalScore - opponentScore.TotalScore) * progress);
                         }
                     });
                 }
 
                 delay += 3500;
 
+                if (matchInfo.RoomState.DamageMultiplier > 1)
+                {
+                    using (BeginDelayedSequence(delay))
+                    {
+                        damageDisplay.DamageCounter.TransformValueTo((long)(Math.Abs(playerScore.TotalScore - opponentScore.TotalScore) * matchInfo.RoomState.DamageMultiplier));
+                    }
+
+                    delay += 500;
+                }
+
                 using (BeginDelayedSequence(delay))
                 {
                     playerScoreDetails.FadeIn(300);
                     opponentScoreDetails.FadeIn(300);
-
-                    long damage = (long)(Math.Abs(playerScore.TotalScore - opponentScore.TotalScore) * matchInfo.RoomState.DamageMultiplier);
-
-                    damageText.ScaleTo(0.8f, 60)
-                              .Then()
-                              .Schedule(() => damageValue.Value = damage)
-                              .ScaleTo(1f, 500, Easing.OutElasticHalf);
-
-                    damageMultiplierText.Delay(60f)
-                                        .FadeIn()
-                                        .ScaleTo(0.5f)
-                                        .FadeOut(600)
-                                        .ScaleTo(1.2f, 600, Easing.OutExpo);
                 }
 
                 delay += 1200;
-
-                using (BeginDelayedSequence(delay))
-                {
-                    Schedule(() =>
-                    {
-                        damageTextContainer.MoveTo(damageTextContainer.Parent!.ToLocalSpace(loserUserDisplay.HealthDisplay.ScreenSpaceDrawQuad.Centre) - damageTextContainer.AnchorPosition, 400,
-                                               Easing.InCubic)
-                                           .ScaleTo(0.5f, 400, Easing.InCubic)
-                                           .Then()
-                                           .FadeOut();
-                    });
-                }
-
-                delay += 400;
 
                 using (BeginDelayedSequence(delay))
                 {

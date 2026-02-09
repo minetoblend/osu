@@ -49,9 +49,14 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
                 {
                     AutoSizeAxes = Axes.Both,
                     Direction = FillDirection.Horizontal,
-                    Spacing = new Vector2(-4)
                 }
             ];
+        }
+
+        public Vector2 Spacing
+        {
+            get => digitFlow.Spacing;
+            set => digitFlow.Spacing = value;
         }
 
         [BackgroundDependencyLoader]
