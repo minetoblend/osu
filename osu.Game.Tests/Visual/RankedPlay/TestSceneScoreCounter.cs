@@ -9,9 +9,9 @@ using osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components;
 
 namespace osu.Game.Tests.Visual.RankedPlay
 {
-    public class TestSceneScoreCounter : OsuTestScene
+    public partial class TestSceneScoreCounter : OsuTestScene
     {
-        private ScoreCounter scoreCounter;
+        private ScoreCounter scoreCounter = null!;
 
         [BackgroundDependencyLoader]
         private void load()
