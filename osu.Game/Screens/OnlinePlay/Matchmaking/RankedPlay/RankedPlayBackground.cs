@@ -10,6 +10,9 @@ using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Rendering;
 using osu.Framework.Graphics.Shaders;
 using osu.Framework.Graphics.Shaders.Types;
+using osu.Framework.Graphics.Sprites;
+using osu.Framework.Graphics.Textures;
+using osu.Framework.Utils;
 using osuTK;
 using osuTK.Graphics;
 
@@ -35,8 +38,6 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                 new Triangles
                 {
                     RelativeSizeAxes = Axes.Both,
-                    Alpha = 0.5f,
-                    Colour = Color4.Red
                 },
             ];
         }
@@ -131,6 +132,81 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                 public UniformVector4 GradientOutside;
                 public UniformVector4 GradientInside;
                 public UniformVector4 DotsColour;
+            }
+        }
+
+        public partial class Triangles : CompositeDrawable
+        {
+            private Texture triangleTexture = null!;
+
+            [BackgroundDependencyLoader]
+            private void load(TextureStore textures)
+            {
+                triangleTexture = textures.Get("Online/RankedPlay/triangle");
+            }
+
+            protected override void LoadComplete()
+            {
+                base.LoadComplete();
+
+                for (int i = 0; i < 20; i++)
+                {
+                    AddInternal(new Triangle
+                    {
+                        Texture = triangleTexture,
+                        RelativePositionAxes = Axes.Both,
+                        X = RNG.NextSingle(),
+                        Y = -0.2f + RNG.NextSingle() * 1.4f,
+                        Origin = Anchor.Centre,
+                        Rotation = RNG.NextSingle() * 360,
+                        AngularVelocity = RNG.NextSingle() - 0.75f,
+                        Size = new Vector2(100 + RNG.NextSingle() * 1000),
+                        MovementSpeed = 0.25f + RNG.NextSingle() * 0.75f,
+                        Alpha = 0.5f + RNG.NextSingle() * 0.5f,
+                    });
+                }
+            }
+
+            public float ParticleVelocity = 1;
+
+            protected override void Update()
+            {
+                base.Update();
+
+                if (DrawHeight <= 0)
+                    return;
+
+                float baseVelocity = 0.03f * ParticleVelocity / DrawHeight;
+                float elapsed = (float)Time.Elapsed;
+
+                foreach (var c in InternalChildren)
+                {
+                    var triangle = (Triangle)c;
+
+                    triangle.Y -= baseVelocity * elapsed * triangle.MovementSpeed;
+
+                    triangle.Rotation += triangle.AngularVelocity * elapsed * 0.02f;
+
+                    // wrap vertically
+                    if (triangle.Y < -0.2f)
+                    {
+                        triangle.X = RNG.NextSingle();
+                        triangle.Y = 1.2f;
+                        triangle.Alpha = 0.5f + RNG.NextSingle() * 0.5f;
+                    }
+                    else if (triangle.Y > 1.2f)
+                    {
+                        triangle.X = RNG.NextSingle();
+                        triangle.Y = -0.2f;
+                        triangle.Alpha = 0.5f + RNG.NextSingle() * 0.5f;
+                    }
+                }
+            }
+
+            private partial class Triangle : Sprite
+            {
+                public float MovementSpeed = 1;
+                public float AngularVelocity;
             }
         }
     }
