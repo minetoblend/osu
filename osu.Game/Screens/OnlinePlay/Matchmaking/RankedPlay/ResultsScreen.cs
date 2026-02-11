@@ -16,6 +16,7 @@ using osu.Framework.Logging;
 using osu.Game.Beatmaps;
 using osu.Game.Database;
 using osu.Game.Graphics;
+using osu.Game.Graphics.Sprites;
 using osu.Game.Graphics.UserInterface;
 using osu.Game.Models;
 using osu.Game.Online.API;
@@ -167,6 +168,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
             ScoreCounter damageCounter;
             ScoreBar playerScoreBar;
             ScoreBar opponentScoreBar;
+            OsuSpriteText roundNumber;
 
             AddInternal(scaffold = new ScreenScaffold
             {
@@ -193,6 +195,22 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                         {
                             RelativeSizeAxes = Axes.Both,
                         }
+                    },
+                    new Container
+                    {
+                        RelativeSizeAxes = Axes.X,
+                        Height = 110,
+                        Anchor = Anchor.BottomCentre,
+                        Origin = Anchor.BottomCentre,
+                        Padding = new MarginPadding { Bottom = 30 },
+                        Child = roundNumber = new OsuSpriteText
+                        {
+                            Text = $"Round {matchInfo.CurrentRound}",
+                            Anchor = Anchor.Centre,
+                            Origin = Anchor.Centre,
+                            Font = OsuFont.GetFont(size: 36, weight: FontWeight.Bold, typeface: Typeface.TorusAlternate),
+                            Alpha = 0,
+                        },
                     },
                     new GridContainer
                     {
@@ -336,6 +354,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                     .FadeIn(300)
                     .ResizeWidthTo(cardSize.X - 550, 600, Easing.OutExpo);
 
+            roundNumber.Delay(700).FadeIn(600);
             playerScoreCounter.Delay(700).FadeIn(600);
             opponentScoreCounter.Delay(700).FadeIn(600);
 
