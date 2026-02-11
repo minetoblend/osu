@@ -61,7 +61,11 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                             },
                         }
                     },
-                    Content,
+                    Content.With(static d =>
+                    {
+                        d.Masking = true;
+                        d.CornerRadius = corner_radius;
+                    }),
                     BottomOrnament.With(static d =>
                     {
                         d.Anchor = Anchor.BottomCentre;

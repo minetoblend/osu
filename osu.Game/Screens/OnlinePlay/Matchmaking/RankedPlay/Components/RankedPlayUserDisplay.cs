@@ -35,6 +35,8 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
             Value = 1_000_000,
         };
 
+        public bool ManualHealth { get; set; }
+
         [Resolved]
         private MultiplayerClient client { get; set; } = null!;
 
@@ -61,6 +63,12 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
         private void load()
         {
             APIUser user = users.GetUserAsync(userId).GetResultSafely()!;
+
+            var shear = contentAnchor switch
+            {
+                Anchor.TopLeft or Anchor.BottomRight => -OsuGame.SHEAR,
+                _ => OsuGame.SHEAR
+            };
 
             InternalChildren =
             [
@@ -96,7 +104,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
                     Direction = FillDirection.Vertical,
                     Children =
                     [
-                        new HealthBar(colourScheme, (contentAnchor & Anchor.x0) != 0)
+                        HealthDisplay = new HealthBar(colourScheme, (contentAnchor & Anchor.x0) != 0, shear)
                         {
                             Health = { BindTarget = Health },
                             RelativeSizeAxes = Axes.X,
@@ -119,6 +127,8 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
             ];
         }
 
+        public HealthBar HealthDisplay { get; private set; } = null!;
+
         protected override void LoadComplete()
         {
             base.LoadComplete();
@@ -137,7 +147,8 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
             if (state is not RankedPlayRoomState rankedPlayState)
                 return;
 
-            Health.Value = rankedPlayState.Users[userId].Life;
+            if (!ManualHealth)
+                Health.Value = rankedPlayState.Users[userId].Life;
         });
 
         protected override void Dispose(bool isDisposing)
@@ -147,7 +158,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
             base.Dispose(isDisposing);
         }
 
-        private partial class HealthBar : CompositeDrawable
+        public partial class HealthBar : CompositeDrawable
         {
             private readonly bool leftToRight;
 
@@ -174,11 +185,11 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
             private readonly SpriteIcon heartIcon;
             private readonly OsuSpriteText healthText;
 
-            public HealthBar(RankedPlayColourScheme colourScheme, bool leftToRight)
+            public HealthBar(RankedPlayColourScheme colourScheme, bool leftToRight, Vector2 shear)
             {
                 this.leftToRight = leftToRight;
 
-                Shear = OsuGame.SHEAR;
+                Shear = shear;
 
                 Anchor contentAnchor = leftToRight ? Anchor.CentreLeft : Anchor.CentreRight;
 
@@ -243,7 +254,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
                     content = new BufferedContainer(pixelSnapping: true)
                     {
                         RelativeSizeAxes = Axes.Both,
-                        Shear = -OsuGame.SHEAR,
+                        Shear = -shear,
                         BackgroundColour = Color4.White.Opacity(0), // workaround for non-premultiplied alpha blending of white content on transparent background
                         Child = new FillFlowContainer
                         {
