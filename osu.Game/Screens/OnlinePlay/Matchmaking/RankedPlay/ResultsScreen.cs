@@ -195,7 +195,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                         Anchor = Anchor.Centre,
                         Origin = Anchor.Centre,
                         Size = cardSize,
-                        Padding = new MarginPadding { Bottom = 110, Top = 60, Horizontal = 20 },
+                        Padding = new MarginPadding { Bottom = 110, Top = 60, Horizontal = 60 },
                         ColumnDimensions =
                         [
                             new Dimension(),
@@ -223,6 +223,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                                             playerScoreDetails = new ScoreDetails(playerScore, RankedPlayColourScheme.Blue)
                                             {
                                                 RelativeSizeAxes = Axes.Both,
+                                                Alpha = 0,
                                             },
                                         ],
                                         [
@@ -233,6 +234,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                                                 Origin = Anchor.Centre,
                                                 Spacing = new Vector2(-4),
                                                 Alpha = 0,
+                                                AlwaysPresent = true,
                                             }
                                         ]
                                     }
@@ -272,6 +274,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                                             opponentScoreDetails = new ScoreDetails(opponentScore, RankedPlayColourScheme.Red)
                                             {
                                                 RelativeSizeAxes = Axes.Both,
+                                                Alpha = 0,
                                             },
                                         ],
                                         [
@@ -282,6 +285,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                                                 Origin = Anchor.Centre,
                                                 Spacing = new Vector2(-4),
                                                 Alpha = 0,
+                                                AlwaysPresent = true,
                                             }
                                         ]
                                     }
@@ -363,6 +367,14 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                 //     playerScoreBar.Height = float.Lerp(0.05f, 1f, Math.Min(e.NewValue, playerScorePercent));
                 //     opponentScoreBar.Height = float.Lerp(0.05f, 1f, Math.Min(e.NewValue, opponentScorePercent));
                 // });
+            }
+
+            delay += 3500;
+
+            using (BeginDelayedSequence(delay))
+            {
+                playerScoreDetails.FadeIn(300);
+                opponentScoreDetails.FadeIn(300);
             }
         });
     }
