@@ -10,9 +10,11 @@ using osu.Framework.Bindables;
 using osu.Framework.Extensions;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
+using osu.Framework.Graphics.Shapes;
 using osu.Framework.Logging;
 using osu.Game.Beatmaps;
 using osu.Game.Database;
+using osu.Game.Graphics;
 using osu.Game.Graphics.UserInterface;
 using osu.Game.Models;
 using osu.Game.Online.API;
@@ -21,7 +23,9 @@ using osu.Game.Online.Multiplayer;
 using osu.Game.Online.Rooms;
 using osu.Game.Rulesets;
 using osu.Game.Scoring;
+using osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components;
 using osuTK;
+using ScoreCounter = osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components.ScoreCounter;
 
 namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 {
@@ -45,39 +49,20 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
         [Resolved]
         private IBindable<RulesetInfo> globalRuleset { get; set; } = null!;
 
-        private Container<Drawable> wedgeContainer = null!;
         private LoadingSpinner loadingSpinner = null!;
 
         [BackgroundDependencyLoader]
         private void load()
         {
+            CornerPieceVisibility.Value = Visibility.Hidden;
+
             InternalChildren = new Drawable[]
             {
-                wedgeContainer = new FillFlowContainer
-                {
-                    Anchor = Anchor.Centre,
-                    Origin = Anchor.Centre,
-                    RelativeSizeAxes = Axes.Both,
-                    Direction = FillDirection.Vertical,
-                    Spacing = new Vector2(20),
-                    Rotation = -2f,
-                    Alpha = 0,
-                },
                 loadingSpinner = new LoadingSpinner
                 {
                     Anchor = Anchor.Centre,
                     Origin = Anchor.Centre
                 },
-                new ScreenScaffold
-                {
-                    Size = new Vector2(600, 400),
-                    Anchor = Anchor.Centre,
-                    Origin = Anchor.Centre,
-                    BottomOrnament =
-                    {
-                        Size = new Vector2(200, 60),
-                    }
-                }
             };
         }
 
@@ -144,33 +129,158 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
             }
         }
 
+        private ScreenScaffold? scaffold;
+
+        [Resolved]
+        private RankedPlayMatchInfo matchInfo { get; set; } = null!;
+
+        private static Vector2 cardSize => new Vector2(950, 600);
+
+        private readonly Bindable<Visibility> cornerPieceVisibility = new Bindable<Visibility>();
+
         private void setScores(ScoreInfo[] scores) => Scheduler.Add(() =>
         {
-            ScoreInfo localUserScore = scores.SingleOrDefault(s => s.UserID == api.LocalUser.Value.OnlineID) ?? new ScoreInfo
+            int playerId = client.LocalUser!.UserID;
+            int opponentId = matchInfo.RoomState.Users.Keys.Single(u => u != playerId);
+
+            ScoreInfo playerScore = scores.SingleOrDefault(s => s.UserID == api.LocalUser.Value.OnlineID) ?? new ScoreInfo
             {
                 Rank = ScoreRank.F,
                 Ruleset = globalRuleset.Value
             };
 
-            ScoreInfo otherUserScore = scores.SingleOrDefault(s => s.UserID != api.LocalUser.Value.OnlineID) ?? new ScoreInfo
+            ScoreInfo opponentScore = scores.SingleOrDefault(s => s.UserID != api.LocalUser.Value.OnlineID) ?? new ScoreInfo
             {
                 Rank = ScoreRank.F,
                 Ruleset = globalRuleset.Value
             };
 
-            wedgeContainer.Children =
-            [
-                new RedScoreWedge(otherUserScore)
+            Box flash;
+            ScoreDetails playerScoreDetails;
+            ScoreDetails opponentScoreDetails;
+
+            AddInternal(scaffold = new ScreenScaffold
+            {
+                Anchor = Anchor.Centre,
+                Origin = Anchor.Centre,
+                Children =
+                [
+                    new RankedPlayCornerPiece(RankedPlayColourScheme.Blue, Anchor.BottomLeft)
+                    {
+                        Anchor = Anchor.BottomLeft,
+                        Origin = Anchor.BottomLeft,
+                        State = { BindTarget = cornerPieceVisibility },
+                        Child = new RankedPlayUserDisplay(playerId, Anchor.BottomLeft, RankedPlayColourScheme.Blue)
+                        {
+                            RelativeSizeAxes = Axes.Both,
+                        }
+                    },
+                    new RankedPlayCornerPiece(RankedPlayColourScheme.Red, Anchor.BottomRight)
+                    {
+                        Anchor = Anchor.BottomRight,
+                        Origin = Anchor.BottomRight,
+                        State = { BindTarget = cornerPieceVisibility },
+                        Child = new RankedPlayUserDisplay(opponentId, Anchor.BottomRight, RankedPlayColourScheme.Red)
+                        {
+                            RelativeSizeAxes = Axes.Both,
+                        }
+                    },
+                    new GridContainer
+                    {
+                        Anchor = Anchor.Centre,
+                        Origin = Anchor.Centre,
+                        Size = cardSize,
+                        Padding = new MarginPadding { Bottom = 110, Top = 60, Horizontal = 20 },
+                        ColumnDimensions =
+                        [
+                            new Dimension(),
+                            new Dimension(GridSizeMode.Absolute, 20),
+                            new Dimension(GridSizeMode.Absolute, 60),
+                            new Dimension(GridSizeMode.Absolute, 10),
+                            new Dimension(GridSizeMode.Absolute, 60),
+                            new Dimension(GridSizeMode.Absolute, 20),
+                            new Dimension(),
+                        ],
+                        Content = new Drawable?[][]
+                        {
+                            [
+                                playerScoreDetails = new ScoreDetails(playerScore, RankedPlayColourScheme.Blue)
+                                {
+                                    RelativeSizeAxes = Axes.Both,
+                                },
+                                null,
+                                new Container
+                                {
+                                    RelativeSizeAxes = Axes.Both,
+                                    Child = new Box
+                                    {
+                                        RelativeSizeAxes = Axes.Both,
+                                        Alpha = 0.5f,
+                                    },
+                                },
+                                null,
+                                new Container
+                                {
+                                    RelativeSizeAxes = Axes.Both,
+                                    Child = new Box
+                                    {
+                                        RelativeSizeAxes = Axes.Both,
+                                        Alpha = 0.5f,
+                                    },
+                                },
+                                null,
+                                opponentScoreDetails = new ScoreDetails(opponentScore, RankedPlayColourScheme.Red)
+                                {
+                                    RelativeSizeAxes = Axes.Both,
+                                },
+                            ]
+                        }
+                    },
+                    flash = new Box
+                    {
+                        RelativeSizeAxes = Axes.Both,
+                    },
+                ],
+                BottomOrnament =
                 {
-                    Anchor = Anchor.CentreRight,
-                    Origin = Anchor.CentreRight,
-                },
-                new BlueScoreWedge(localUserScore)
-                {
-                    Anchor = Anchor.CentreLeft,
-                    Origin = Anchor.CentreLeft,
-                },
-            ];
+                    Size = new Vector2(200, 60),
+                    Alpha = 0,
+                    Children =
+                    [
+                        new ScoreCounter(7)
+                        {
+                            Anchor = Anchor.Centre,
+                            Origin = Anchor.Centre,
+                            Font = OsuFont.GetFont(size: 36, weight: FontWeight.SemiBold, fixedWidth: true),
+                            Spacing = new Vector2(-2),
+                        }
+                    ]
+                }
+            });
+
+            double delay = 0;
+
+            scaffold.FadeIn(100)
+                    .ResizeTo(0)
+                    .ResizeTo(cardSize with { Y = 30 }, 600, Easing.OutExpo)
+                    // deliberately cutting this delay 300ms short so the vertical resize interrupts the horizontal one
+                    .Delay(300)
+                    .ResizeHeightTo(cardSize.Y, 800, Easing.OutExpo);
+
+            flash.Delay(150)
+                 .FadeOut(600, Easing.Out);
+
+            Scheduler.AddDelayed(() => cornerPieceVisibility.Value = Visibility.Visible, 700);
+
+            scaffold.BottomOrnament
+                    .Delay(900)
+                    .FadeIn(300)
+                    .ResizeWidthTo(cardSize.X - 550, 600, Easing.OutExpo);
+
+            playerScoreDetails.Counter.Delay(700).FadeIn(600);
+            opponentScoreDetails.Counter.Delay(700).FadeIn(600);
+
+            delay += 1000;
         });
     }
 }
