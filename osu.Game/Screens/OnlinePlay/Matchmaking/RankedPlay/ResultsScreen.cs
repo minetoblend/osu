@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using osu.Framework.Allocation;
@@ -146,6 +147,19 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
         private readonly Bindable<Visibility> cornerPieceVisibility = new Bindable<Visibility>();
         private readonly Bindable<float> scoreBarProgress = new Bindable<float>();
 
+        private Box flash = null!;
+        private ScoreDetails playerScoreDetails = null!;
+        private ScoreDetails opponentScoreDetails = null!;
+        private ScoreCounter playerScoreCounter = null!;
+        private ScoreCounter opponentScoreCounter = null!;
+        private ScoreCounter damageCounter = null!;
+        private ScoreBar playerScoreBar = null!;
+        private ScoreBar opponentScoreBar = null!;
+        private OsuSpriteText roundNumber = null!;
+        private OsuSpriteText multiplierText = null!;
+        private RankedPlayUserDisplay playerUserDisplay = null!;
+        private RankedPlayUserDisplay opponentUserDisplay = null!;
+
         private void setScores(ScoreInfo[] scores) => Scheduler.Add(() =>
         {
             int playerId = client.LocalUser!.UserID;
@@ -168,19 +182,6 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                                       .Select(it => it.Value.DamageInfo)
                                       .OfType<RankedPlayDamageInfo>()
                                       .MaxBy(it => it.Damage)!;
-
-            Box flash;
-            ScoreDetails playerScoreDetails;
-            ScoreDetails opponentScoreDetails;
-            ScoreCounter playerScoreCounter;
-            ScoreCounter opponentScoreCounter;
-            ScoreCounter damageCounter;
-            ScoreBar playerScoreBar;
-            ScoreBar opponentScoreBar;
-            OsuSpriteText roundNumber;
-            OsuSpriteText multiplierText;
-            RankedPlayUserDisplay playerUserDisplay;
-            RankedPlayUserDisplay opponentUserDisplay;
 
             AddInternal(scaffold = new ScreenScaffold
             {
@@ -376,29 +377,55 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 
             double delay = 0;
 
-            scaffold.FadeIn(100)
-                    .ResizeTo(0)
-                    .ResizeTo(cardSize with { Y = 30 }, 600, Easing.OutExpo)
-                    // deliberately cutting this delay 300ms short so the vertical resize interrupts the horizontal one
-                    .Delay(300)
-                    .ResizeHeightTo(cardSize.Y, 800, Easing.OutExpo);
+            appear(ref delay);
+
+            animateCountersAndScoreBars(ref delay, playerScore, opponentScore, damageInfo);
+
+            if (matchInfo.RoomState.DamageMultiplier > 1)
+            {
+                flashDamageMultiplier(ref delay, damageInfo);
+            }
+            else
+            {
+                Debug.Assert(
+                    matchInfo.RoomState.Users.Values.All(userInfo => userInfo.DamageInfo!.Damage == userInfo.DamageInfo.RawDamage),
+                    "Damage not equal to RawDamage when damage multiplier is 1"
+                );
+            }
+
+            updateHealthBars(ref delay, getDamageInfo(playerId).NewLife, getDamageInfo(opponentId).NewLife);
+
+            showScoreInfo(ref delay);
+        });
+
+        private void appear(ref double delay)
+        {
+            scaffold!.FadeIn(100)
+                     .ResizeTo(0)
+                     .ResizeTo(cardSize with { Y = 30 }, 600, Easing.OutExpo)
+                     // deliberately cutting this delay 300ms short so the vertical resize interrupts the horizontal one
+                     .Delay(300)
+                     .ResizeHeightTo(cardSize.Y, 800, Easing.OutExpo);
 
             flash.Delay(150)
                  .FadeOut(600, Easing.Out);
 
             Scheduler.AddDelayed(() => cornerPieceVisibility.Value = Visibility.Visible, 700);
 
-            scaffold.BottomOrnament
-                    .Delay(900)
-                    .FadeIn(300)
-                    .ResizeWidthTo(cardSize.X - 550, 600, Easing.OutExpo);
+            scaffold!.BottomOrnament
+                     .Delay(900)
+                     .FadeIn(300)
+                     .ResizeWidthTo(cardSize.X - 550, 600, Easing.OutExpo);
 
             roundNumber.Delay(700).FadeIn(600);
             playerScoreCounter.Delay(700).FadeIn(600);
             opponentScoreCounter.Delay(700).FadeIn(600);
 
             delay += 1000;
+        }
 
+        private void animateCountersAndScoreBars(ref double delay, ScoreInfo playerScore, ScoreInfo opponentScore, RankedPlayDamageInfo damageInfo)
+        {
             using (BeginDelayedSequence(delay))
             {
                 const double score_text_duration = 3000;
@@ -430,45 +457,51 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
             }
 
             delay += 3500;
+        }
 
-            if (matchInfo.RoomState.DamageMultiplier > 1)
+        private void flashDamageMultiplier(ref double delay, RankedPlayDamageInfo damageInfo)
+        {
+            using (BeginDelayedSequence(delay))
             {
-                using (BeginDelayedSequence(delay))
-                {
-                    damageCounter.ScaleTo(0.8f, 50, Easing.Out)
-                                 .Then()
-                                 .Schedule(() => damageCounter.SetValueInstantly(damageInfo.Damage))
-                                 .ScaleTo(1, 600, Easing.OutElasticHalf);
+                damageCounter.ScaleTo(0.8f, 50, Easing.Out)
+                             .Then()
+                             .Schedule(() => damageCounter.SetValueInstantly(damageInfo.Damage))
+                             .ScaleTo(1, 600, Easing.OutElasticHalf);
 
-                    multiplierText.Delay(50)
-                                  .FadeIn()
-                                  .ScaleTo(0.5f)
-                                  .ScaleTo(1f, 600, Easing.OutElasticHalf)
-                                  .MoveToOffset(new Vector2(5, -20), 1000, Easing.Out)
-                                  .Delay(300)
-                                  .FadeOut(1000, Easing.Out);
-                }
-
-                delay += 500;
+                multiplierText.Delay(50)
+                              .FadeIn()
+                              .ScaleTo(0.5f)
+                              .ScaleTo(1f, 600, Easing.OutElasticHalf)
+                              .MoveToOffset(new Vector2(5, -20), 1000, Easing.Out)
+                              .Delay(300)
+                              .FadeOut(1000, Easing.Out);
             }
 
+            delay += 500;
+        }
+
+        private void updateHealthBars(ref double delay, int playerHealth, int opponentHealth)
+        {
             using (BeginDelayedSequence(delay))
             {
                 Schedule(() =>
                 {
-                    playerUserDisplay.Health.Value = getDamageInfo(playerId).NewLife;
-                    opponentUserDisplay.Health.Value = getDamageInfo(opponentId).NewLife;
+                    playerUserDisplay.Health.Value = playerHealth;
+                    opponentUserDisplay.Health.Value = opponentHealth;
                 });
             }
 
             delay += 400;
+        }
 
+        private void showScoreInfo(ref double delay)
+        {
             using (BeginDelayedSequence(delay))
             {
                 playerScoreDetails.FadeIn(300);
                 opponentScoreDetails.FadeIn(300);
             }
-        });
+        }
 
         private RankedPlayDamageInfo getDamageInfo(int userId) => matchInfo.RoomState.Users[userId].DamageInfo!;
     }
