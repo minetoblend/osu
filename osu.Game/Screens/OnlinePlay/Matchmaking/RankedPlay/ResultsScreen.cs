@@ -203,11 +203,11 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                         ColumnDimensions =
                         [
                             new Dimension(),
-                            new Dimension(GridSizeMode.Absolute, 20),
+                            new Dimension(GridSizeMode.Absolute, 40),
                             new Dimension(GridSizeMode.Absolute, 60),
                             new Dimension(GridSizeMode.Absolute, 10),
                             new Dimension(GridSizeMode.Absolute, 60),
-                            new Dimension(GridSizeMode.Absolute, 20),
+                            new Dimension(GridSizeMode.Absolute, 40),
                             new Dimension(),
                         ],
                         Content = new Drawable?[][]
