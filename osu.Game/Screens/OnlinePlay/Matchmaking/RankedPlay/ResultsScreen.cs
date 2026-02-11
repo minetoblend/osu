@@ -63,11 +63,22 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                     Direction = FillDirection.Vertical,
                     Spacing = new Vector2(20),
                     Rotation = -2f,
+                    Alpha = 0,
                 },
                 loadingSpinner = new LoadingSpinner
                 {
                     Anchor = Anchor.Centre,
                     Origin = Anchor.Centre
+                },
+                new ScreenScaffold
+                {
+                    Size = new Vector2(600, 400),
+                    Anchor = Anchor.Centre,
+                    Origin = Anchor.Centre,
+                    BottomOrnament =
+                    {
+                        Size = new Vector2(200, 60),
+                    }
                 }
             };
         }
