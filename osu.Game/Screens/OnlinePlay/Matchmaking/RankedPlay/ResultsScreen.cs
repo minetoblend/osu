@@ -158,6 +158,9 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
             Box flash;
             ScoreDetails playerScoreDetails;
             ScoreDetails opponentScoreDetails;
+            ScoreCounter playerScoreCounter;
+            ScoreCounter opponentScoreCounter;
+            ScoreCounter damageCounter;
 
             AddInternal(scaffold = new ScreenScaffold
             {
@@ -204,9 +207,33 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                         Content = new Drawable?[][]
                         {
                             [
-                                playerScoreDetails = new ScoreDetails(playerScore, RankedPlayColourScheme.Blue)
+                                new GridContainer
                                 {
                                     RelativeSizeAxes = Axes.Both,
+                                    RowDimensions =
+                                    [
+                                        new Dimension(),
+                                        new Dimension(GridSizeMode.AutoSize)
+                                    ],
+                                    Content = new Drawable[][]
+                                    {
+                                        [
+                                            playerScoreDetails = new ScoreDetails(playerScore, RankedPlayColourScheme.Blue)
+                                            {
+                                                RelativeSizeAxes = Axes.Both,
+                                            },
+                                        ],
+                                        [
+                                            playerScoreCounter = new ScoreCounter
+                                            {
+                                                Font = OsuFont.GetFont(size: 60, fixedWidth: true),
+                                                Anchor = Anchor.Centre,
+                                                Origin = Anchor.Centre,
+                                                Spacing = new Vector2(-4),
+                                                Alpha = 0,
+                                            }
+                                        ]
+                                    }
                                 },
                                 null,
                                 new Container
@@ -229,9 +256,33 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                                     },
                                 },
                                 null,
-                                opponentScoreDetails = new ScoreDetails(opponentScore, RankedPlayColourScheme.Red)
+                                new GridContainer
                                 {
                                     RelativeSizeAxes = Axes.Both,
+                                    RowDimensions =
+                                    [
+                                        new Dimension(),
+                                        new Dimension(GridSizeMode.AutoSize)
+                                    ],
+                                    Content = new Drawable[][]
+                                    {
+                                        [
+                                            opponentScoreDetails = new ScoreDetails(opponentScore, RankedPlayColourScheme.Red)
+                                            {
+                                                RelativeSizeAxes = Axes.Both,
+                                            },
+                                        ],
+                                        [
+                                            opponentScoreCounter = new ScoreCounter
+                                            {
+                                                Font = OsuFont.GetFont(size: 60, fixedWidth: true),
+                                                Anchor = Anchor.Centre,
+                                                Origin = Anchor.Centre,
+                                                Spacing = new Vector2(-4),
+                                                Alpha = 0,
+                                            }
+                                        ]
+                                    }
                                 },
                             ]
                         }
@@ -247,7 +298,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                     Alpha = 0,
                     Children =
                     [
-                        new ScoreCounter(7)
+                        damageCounter = new ScoreCounter(7)
                         {
                             Anchor = Anchor.Centre,
                             Origin = Anchor.Centre,
@@ -277,10 +328,40 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                     .FadeIn(300)
                     .ResizeWidthTo(cardSize.X - 550, 600, Easing.OutExpo);
 
-            playerScoreDetails.Counter.Delay(700).FadeIn(600);
-            opponentScoreDetails.Counter.Delay(700).FadeIn(600);
+            playerScoreCounter.Delay(700).FadeIn(600);
+            opponentScoreCounter.Delay(700).FadeIn(600);
 
             delay += 1000;
+
+            using (BeginDelayedSequence(delay))
+            {
+                const double score_text_duration = 3000;
+
+                playerScoreCounter.TransformValueTo(playerScore.TotalScore, score_text_duration - 500);
+                opponentScoreCounter.TransformValueTo(opponentScore.TotalScore, score_text_duration - 500);
+
+                damageCounter.TransformValueTo(123456 /* TODO */, score_text_duration - 500);
+
+                long maxAchievableScore = Math.Max(
+                    Math.Max(playerScore.TotalScore, opponentScore.TotalScore),
+                    1_000_000
+                );
+
+                float playerScorePercent = (float)playerScore.TotalScore / maxAchievableScore;
+                float opponentScorePercent = (float)opponentScore.TotalScore / maxAchievableScore;
+                float maxScorePercent = Math.Max(playerScorePercent, opponentScorePercent);
+
+                // playerScoreBar.FadeIn(100);
+                // opponentScoreBar.FadeIn(100);
+
+                // this.TransformBindableTo(scoreBarProgress, maxScorePercent, score_text_duration, new CubicBezierEasingFunction(easeIn: 0.4, easeOut: 1));
+
+                // scoreBarProgress.BindValueChanged(e =>
+                // {
+                //     playerScoreBar.Height = float.Lerp(0.05f, 1f, Math.Min(e.NewValue, playerScorePercent));
+                //     opponentScoreBar.Height = float.Lerp(0.05f, 1f, Math.Min(e.NewValue, opponentScorePercent));
+                // });
+            }
         });
     }
 }
