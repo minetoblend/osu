@@ -86,7 +86,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
         {
             base.LoadComplete();
 
-            updateDigits();
+            updateDigits(false);
         }
 
         public void SetValueInstantly(long value)
