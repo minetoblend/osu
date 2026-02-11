@@ -11,6 +11,7 @@ using osu.Framework.Extensions;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Shapes;
+using osu.Framework.Graphics.Transforms;
 using osu.Framework.Logging;
 using osu.Game.Beatmaps;
 using osu.Game.Database;
@@ -137,6 +138,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
         private static Vector2 cardSize => new Vector2(950, 600);
 
         private readonly Bindable<Visibility> cornerPieceVisibility = new Bindable<Visibility>();
+        private readonly Bindable<float> scoreBarProgress = new Bindable<float>();
 
         private void setScores(ScoreInfo[] scores) => Scheduler.Add(() =>
         {
@@ -161,6 +163,8 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
             ScoreCounter playerScoreCounter;
             ScoreCounter opponentScoreCounter;
             ScoreCounter damageCounter;
+            ScoreBar playerScoreBar;
+            ScoreBar opponentScoreBar;
 
             AddInternal(scaffold = new ScreenScaffold
             {
@@ -238,24 +242,22 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                                     }
                                 },
                                 null,
-                                new Container
+                                playerScoreBar = new ScoreBar(RankedPlayColourScheme.Blue)
                                 {
                                     RelativeSizeAxes = Axes.Both,
-                                    Child = new Box
-                                    {
-                                        RelativeSizeAxes = Axes.Both,
-                                        Alpha = 0.5f,
-                                    },
+                                    Height = 0,
+                                    Anchor = Anchor.BottomCentre,
+                                    Origin = Anchor.BottomCentre,
+                                    Alpha = 0,
                                 },
                                 null,
-                                new Container
+                                opponentScoreBar = new ScoreBar(RankedPlayColourScheme.Red)
                                 {
                                     RelativeSizeAxes = Axes.Both,
-                                    Child = new Box
-                                    {
-                                        RelativeSizeAxes = Axes.Both,
-                                        Alpha = 0.5f,
-                                    },
+                                    Height = 0,
+                                    Anchor = Anchor.BottomCentre,
+                                    Origin = Anchor.BottomCentre,
+                                    Alpha = 0,
                                 },
                                 null,
                                 new GridContainer
@@ -355,16 +357,16 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                 float opponentScorePercent = (float)opponentScore.TotalScore / maxAchievableScore;
                 float maxScorePercent = Math.Max(playerScorePercent, opponentScorePercent);
 
-                // playerScoreBar.FadeIn(100);
-                // opponentScoreBar.FadeIn(100);
+                playerScoreBar.FadeIn(100);
+                opponentScoreBar.FadeIn(100);
 
-                // this.TransformBindableTo(scoreBarProgress, maxScorePercent, score_text_duration, new CubicBezierEasingFunction(easeIn: 0.4, easeOut: 1));
+                this.TransformBindableTo(scoreBarProgress, maxScorePercent, score_text_duration, new CubicBezierEasingFunction(easeIn: 0.4, easeOut: 1));
 
-                // scoreBarProgress.BindValueChanged(e =>
-                // {
-                //     playerScoreBar.Height = float.Lerp(0.05f, 1f, Math.Min(e.NewValue, playerScorePercent));
-                //     opponentScoreBar.Height = float.Lerp(0.05f, 1f, Math.Min(e.NewValue, opponentScorePercent));
-                // });
+                scoreBarProgress.BindValueChanged(e =>
+                {
+                    playerScoreBar.Height = float.Lerp(0.05f, 1f, Math.Min(e.NewValue, playerScorePercent));
+                    opponentScoreBar.Height = float.Lerp(0.05f, 1f, Math.Min(e.NewValue, opponentScorePercent));
+                });
             }
 
             delay += 3500;
