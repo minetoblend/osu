@@ -18,8 +18,6 @@ using osu.Game.Graphics;
 using osu.Game.Graphics.Backgrounds;
 using osu.Game.Graphics.Sprites;
 using osu.Game.Online.API.Requests.Responses;
-using osu.Game.Online.Multiplayer;
-using osu.Game.Online.Multiplayer.MatchTypes.RankedPlay;
 using osu.Game.Users.Drawables;
 using osuTK;
 using osuTK.Graphics;
@@ -34,11 +32,6 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
             MinValue = 0,
             Value = 1_000_000,
         };
-
-        public bool ManualHealth { get; set; }
-
-        [Resolved]
-        private MultiplayerClient client { get; set; } = null!;
 
         [Resolved]
         private UserLookupCache users { get; set; } = null!;
@@ -133,29 +126,11 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
         {
             base.LoadComplete();
 
-            client.MatchRoomStateChanged += onRoomStateChanged;
-
             Health.BindValueChanged(e =>
             {
                 grayScaleContainer.GrayscaleTo(e.NewValue <= 0 ? 1 : 0, 300);
                 cornerPiece?.OnHealthChanged(e.NewValue);
             });
-        }
-
-        private void onRoomStateChanged(MatchRoomState state) => Scheduler.Add(() =>
-        {
-            if (state is not RankedPlayRoomState rankedPlayState)
-                return;
-
-            if (!ManualHealth)
-                Health.Value = rankedPlayState.Users[userId].Life;
-        });
-
-        protected override void Dispose(bool isDisposing)
-        {
-            client.MatchRoomStateChanged -= onRoomStateChanged;
-
-            base.Dispose(isDisposing);
         }
 
         public partial class HealthBar : CompositeDrawable
