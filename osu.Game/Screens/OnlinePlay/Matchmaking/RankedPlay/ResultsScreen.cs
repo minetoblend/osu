@@ -330,7 +330,14 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                             Origin = Anchor.Centre,
                             Font = OsuFont.GetFont(size: 36, weight: FontWeight.SemiBold, fixedWidth: true),
                             Spacing = new Vector2(-2),
-                        }
+                        },
+                        new OsuSpriteText
+                        {
+                            Text = "Damage",
+                            Anchor = Anchor.TopCentre,
+                            Origin = Anchor.Centre,
+                            Font = OsuFont.GetFont(weight: FontWeight.SemiBold, size: 22),
+                        },
                     ]
                 }
             });
