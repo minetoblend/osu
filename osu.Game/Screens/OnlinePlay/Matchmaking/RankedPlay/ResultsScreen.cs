@@ -179,6 +179,8 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
             ScoreBar opponentScoreBar;
             OsuSpriteText roundNumber;
             OsuSpriteText multiplierText;
+            RankedPlayUserDisplay playerUserDisplay;
+            RankedPlayUserDisplay opponentUserDisplay;
 
             AddInternal(scaffold = new ScreenScaffold
             {
@@ -191,9 +193,10 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                         Anchor = Anchor.BottomLeft,
                         Origin = Anchor.BottomLeft,
                         State = { BindTarget = cornerPieceVisibility },
-                        Child = new RankedPlayUserDisplay(playerId, Anchor.BottomLeft, RankedPlayColourScheme.Blue)
+                        Child = playerUserDisplay = new RankedPlayUserDisplay(playerId, Anchor.BottomLeft, RankedPlayColourScheme.Blue)
                         {
                             RelativeSizeAxes = Axes.Both,
+                            Health = { Value = getDamageInfo(playerId).OldLife }
                         }
                     },
                     new RankedPlayCornerPiece(RankedPlayColourScheme.Red, Anchor.BottomRight)
@@ -201,9 +204,10 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                         Anchor = Anchor.BottomRight,
                         Origin = Anchor.BottomRight,
                         State = { BindTarget = cornerPieceVisibility },
-                        Child = new RankedPlayUserDisplay(opponentId, Anchor.BottomRight, RankedPlayColourScheme.Red)
+                        Child = opponentUserDisplay = new RankedPlayUserDisplay(opponentId, Anchor.BottomRight, RankedPlayColourScheme.Red)
                         {
                             RelativeSizeAxes = Axes.Both,
+                            Health = { Value = getDamageInfo(opponentId).OldLife }
                         }
                     },
                     new Container
@@ -450,9 +454,22 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 
             using (BeginDelayedSequence(delay))
             {
+                Schedule(() =>
+                {
+                    playerUserDisplay.Health.Value = getDamageInfo(playerId).NewLife;
+                    opponentUserDisplay.Health.Value = getDamageInfo(opponentId).NewLife;
+                });
+            }
+
+            delay += 400;
+
+            using (BeginDelayedSequence(delay))
+            {
                 playerScoreDetails.FadeIn(300);
                 opponentScoreDetails.FadeIn(300);
             }
         });
+
+        private RankedPlayDamageInfo getDamageInfo(int userId) => matchInfo.RoomState.Users[userId].DamageInfo!;
     }
 }
