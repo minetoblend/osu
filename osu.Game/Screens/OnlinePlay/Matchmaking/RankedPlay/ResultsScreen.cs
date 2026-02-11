@@ -15,6 +15,7 @@ using osu.Framework.Graphics.Transforms;
 using osu.Framework.Logging;
 using osu.Game.Beatmaps;
 using osu.Game.Database;
+using osu.Game.Extensions;
 using osu.Game.Graphics;
 using osu.Game.Graphics.Sprites;
 using osu.Game.Graphics.UserInterface;
@@ -22,6 +23,7 @@ using osu.Game.Models;
 using osu.Game.Online.API;
 using osu.Game.Online.API.Requests.Responses;
 using osu.Game.Online.Multiplayer;
+using osu.Game.Online.Multiplayer.MatchTypes.RankedPlay;
 using osu.Game.Online.Rooms;
 using osu.Game.Rulesets;
 using osu.Game.Scoring;
@@ -138,6 +140,9 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
         [Resolved]
         private RankedPlayMatchInfo matchInfo { get; set; } = null!;
 
+        [Resolved]
+        private OsuColour colour { get; set; } = null!;
+
         private static Vector2 cardSize => new Vector2(950, 600);
 
         private readonly Bindable<Visibility> cornerPieceVisibility = new Bindable<Visibility>();
@@ -160,6 +165,12 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                 Ruleset = globalRuleset.Value
             };
 
+            // this works under the assumption that only one player can receive damage each round
+            var damageInfo = matchInfo.RoomState.Users
+                                      .Select(it => it.Value.DamageInfo)
+                                      .OfType<RankedPlayDamageInfo>()
+                                      .MaxBy(it => it.Damage)!;
+
             Box flash;
             ScoreDetails playerScoreDetails;
             ScoreDetails opponentScoreDetails;
@@ -169,6 +180,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
             ScoreBar playerScoreBar;
             ScoreBar opponentScoreBar;
             OsuSpriteText roundNumber;
+            OsuSpriteText multiplierText;
 
             AddInternal(scaffold = new ScreenScaffold
             {
@@ -324,12 +336,30 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                     Alpha = 0,
                     Children =
                     [
-                        damageCounter = new ScoreCounter(7)
+                        new Container
                         {
+                            AutoSizeAxes = Axes.Both,
                             Anchor = Anchor.Centre,
                             Origin = Anchor.Centre,
-                            Font = OsuFont.GetFont(size: 36, weight: FontWeight.SemiBold, fixedWidth: true),
-                            Spacing = new Vector2(-2),
+                            Children =
+                            [
+                                damageCounter = new ScoreCounter(7)
+                                {
+                                    Font = OsuFont.GetFont(size: 36, weight: FontWeight.SemiBold, fixedWidth: true),
+                                    Spacing = new Vector2(-2),
+                                },
+                                multiplierText = new OsuSpriteText
+                                {
+                                    BypassAutoSizeAxes = Axes.Both,
+                                    Text = $"{matchInfo.RoomState.DamageMultiplier.ToStandardFormattedString(maxDecimalDigits: 1)}x",
+                                    Anchor = Anchor.CentreRight,
+                                    Origin = Anchor.Centre,
+                                    Font = OsuFont.GetFont(weight: FontWeight.SemiBold, size: 42),
+                                    Rotation = 30,
+                                    Alpha = 0,
+                                    Colour = colour.RedLight
+                                },
+                            ]
                         },
                         new OsuSpriteText
                         {
@@ -374,7 +404,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                 playerScoreCounter.TransformValueTo(playerScore.TotalScore, score_text_duration - 500);
                 opponentScoreCounter.TransformValueTo(opponentScore.TotalScore, score_text_duration - 500);
 
-                damageCounter.TransformValueTo(123456 /* TODO */, score_text_duration - 500);
+                damageCounter.TransformValueTo(damageInfo.RawDamage, score_text_duration - 500);
 
                 long maxAchievableScore = Math.Max(
                     Math.Max(playerScore.TotalScore, opponentScore.TotalScore),
@@ -398,6 +428,27 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
             }
 
             delay += 3500;
+
+            if (matchInfo.RoomState.DamageMultiplier > 1)
+            {
+                using (BeginDelayedSequence(delay))
+                {
+                    damageCounter.ScaleTo(0.8f, 50, Easing.Out)
+                                 .Then()
+                                 .Schedule(() => damageCounter.SetValueInstantly(damageInfo.Damage))
+                                 .ScaleTo(1, 600, Easing.OutElasticHalf);
+
+                    multiplierText.Delay(50)
+                                  .FadeIn()
+                                  .ScaleTo(0.5f)
+                                  .ScaleTo(1f, 600, Easing.OutElasticHalf)
+                                  .MoveToOffset(new Vector2(5, -20), 1000, Easing.Out)
+                                  .Delay(300)
+                                  .FadeOut(1000, Easing.Out);
+                }
+
+                delay += 500;
+            }
 
             using (BeginDelayedSequence(delay))
             {
