@@ -9,9 +9,13 @@ using System.Threading.Tasks;
 using osu.Framework.Allocation;
 using osu.Framework.Bindables;
 using osu.Framework.Extensions;
+using osu.Framework.Extensions.Color4Extensions;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
+using osu.Framework.Graphics.Effects;
 using osu.Framework.Graphics.Shapes;
+using osu.Framework.Graphics.Sprites;
+using osu.Framework.Graphics.Textures;
 using osu.Framework.Graphics.Transforms;
 using osu.Framework.Logging;
 using osu.Game.Beatmaps;
@@ -30,6 +34,7 @@ using osu.Game.Rulesets;
 using osu.Game.Scoring;
 using osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components;
 using osuTK;
+using osuTK.Graphics;
 using ScoreCounter = osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components.ScoreCounter;
 
 namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
@@ -159,6 +164,12 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
         private OsuSpriteText multiplierText = null!;
         private RankedPlayUserDisplay playerUserDisplay = null!;
         private RankedPlayUserDisplay opponentUserDisplay = null!;
+        private Container damageOverlay = null!;
+        private Container damageOverlayContent = null!;
+        private Container damageGlow = null!;
+
+        [Resolved]
+        private TextureStore textures { get; set; } = null!;
 
         private void setScores(ScoreInfo[] scores) => Scheduler.Add(() =>
         {
@@ -264,7 +275,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                                             },
                                         ],
                                         [
-                                            playerScoreCounter = new ScoreCounter
+                                            playerScoreCounter = new ScoreCounter(numDigits(playerScore.TotalScore))
                                             {
                                                 Font = OsuFont.GetFont(size: 60, fixedWidth: true),
                                                 Anchor = Anchor.Centre,
@@ -313,7 +324,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                                             },
                                         ],
                                         [
-                                            opponentScoreCounter = new ScoreCounter
+                                            opponentScoreCounter = new ScoreCounter(numDigits(opponentScore.TotalScore))
                                             {
                                                 Font = OsuFont.GetFont(size: 60, fixedWidth: true),
                                                 Anchor = Anchor.Centre,
@@ -346,7 +357,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                             Origin = Anchor.Centre,
                             Children =
                             [
-                                damageCounter = new ScoreCounter(7)
+                                damageCounter = new ScoreCounter(numDigits(damageInfo.Damage))
                                 {
                                     Font = OsuFont.GetFont(size: 36, weight: FontWeight.SemiBold, fixedWidth: true),
                                     Spacing = new Vector2(-2),
@@ -371,6 +382,71 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                             Origin = Anchor.Centre,
                             Font = OsuFont.GetFont(weight: FontWeight.SemiBold, size: 22),
                         },
+                        damageOverlay = new Container
+                        {
+                            RelativeSizeAxes = Axes.Both,
+                            RelativePositionAxes = Axes.X,
+                            Anchor = Anchor.Centre,
+                            Origin = Anchor.Centre,
+                            Alpha = 0,
+                            Children =
+                            [
+                                damageGlow = new Container
+                                {
+                                    RelativeSizeAxes = Axes.Both,
+                                    CornerRadius = 20,
+                                    Masking = true,
+                                    EdgeEffect = new EdgeEffectParameters
+                                    {
+                                        Type = EdgeEffectType.Glow,
+                                        Radius = 25,
+                                        Colour = Color4Extensions.FromHex("FF171B").Opacity(0.5f),
+                                    }
+                                },
+                                new Container
+                                {
+                                    RelativeSizeAxes = Axes.Both,
+                                    Masking = true,
+                                    Children =
+                                    [
+                                        damageOverlayContent = new Container
+                                        {
+                                            RelativeSizeAxes = Axes.Both,
+                                            RelativePositionAxes = Axes.X,
+                                            Children =
+                                            [
+                                                new NineSliceSprite
+                                                {
+                                                    RelativeSizeAxes = Axes.Both,
+                                                    Texture = textures.Get("Online/RankedPlay/damage-display-background"),
+                                                    TextureInsetRelativeAxes = Axes.None,
+                                                    TextureInset = new MarginPadding { Horizontal = 30 },
+                                                    Anchor = Anchor.Centre,
+                                                    Origin = Anchor.Centre,
+                                                },
+                                                new ScoreCounter(numDigits(damageInfo.Damage))
+                                                {
+                                                    Font = OsuFont.GetFont(size: 36, weight: FontWeight.SemiBold, fixedWidth: true),
+                                                    Spacing = new Vector2(-2),
+                                                    Value = damageInfo.Damage,
+                                                    Anchor = Anchor.Centre,
+                                                    Origin = Anchor.Centre,
+                                                    Colour = Color4.Red,
+                                                },
+                                                new OsuSpriteText
+                                                {
+                                                    Text = "Damage",
+                                                    Anchor = Anchor.TopCentre,
+                                                    Origin = Anchor.Centre,
+                                                    Font = OsuFont.GetFont(weight: FontWeight.SemiBold, size: 22),
+                                                    Colour = Color4.Red,
+                                                },
+                                            ]
+                                        }
+                                    ]
+                                },
+                            ]
+                        },
                     ]
                 }
             });
@@ -393,7 +469,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                 );
             }
 
-            updateHealthBars(ref delay, getDamageInfo(playerId).NewLife, getDamageInfo(opponentId).NewLife);
+            updateHealthBars(ref delay, playerScore, opponentScore, getDamageInfo(playerId).NewLife, getDamageInfo(opponentId).NewLife);
 
             showScoreInfo(ref delay);
         });
@@ -477,11 +553,45 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                               .FadeOut(1000, Easing.Out);
             }
 
-            delay += 500;
+            delay += 800;
         }
 
-        private void updateHealthBars(ref double delay, int playerHealth, int opponentHealth)
+        private void updateHealthBars(
+            ref double delay,
+            ScoreInfo playerScore,
+            ScoreInfo opponentScore,
+            int playerHealth,
+            int opponentHealth
+        )
         {
+            using (BeginDelayedSequence(delay))
+            {
+                int direction = playerScore.TotalScore > opponentScore.TotalScore ? 1 : -1;
+
+                var anchor = playerScore.TotalScore > opponentScore.TotalScore ? Anchor.TopRight : Anchor.TopLeft;
+
+                damageOverlay.Anchor = anchor;
+                damageOverlay.Origin = anchor;
+                damageGlow.Anchor = anchor.Opposite();
+                damageGlow.Origin = anchor.Opposite();
+
+                damageOverlay.FadeIn(40)
+                             .Delay(500)
+                             .MoveToX(direction, 1000, Easing.InCubic);
+
+                damageOverlayContent.Delay(500)
+                                    .MoveToX(-direction, 1000, Easing.InCubic);
+
+                damageGlow.Delay(500)
+                          .ResizeWidthTo(0, 1000, Easing.InCubic);
+
+                damageGlow
+                    .Delay(1300)
+                    .FadeOut(200, Easing.In);
+            }
+
+            delay += 1500;
+
             using (BeginDelayedSequence(delay))
             {
                 Schedule(() =>
@@ -504,5 +614,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
         }
 
         private RankedPlayDamageInfo getDamageInfo(int userId) => matchInfo.RoomState.Users[userId].DamageInfo!;
+
+        private static int numDigits(long value) => (int)Math.Floor(Math.Log10(value) + 1);
     }
 }
