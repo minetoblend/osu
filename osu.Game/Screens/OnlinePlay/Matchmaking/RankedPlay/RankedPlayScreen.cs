@@ -1,12 +1,14 @@
 // Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
+using System;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using osu.Framework.Allocation;
 using osu.Framework.Audio;
 using osu.Framework.Audio.Sample;
+using osu.Framework.Audio.Track;
 using osu.Framework.Bindables;
 using osu.Framework.Extensions;
 using osu.Framework.Graphics;
@@ -475,7 +477,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
         /// </summary>
         private void beginHandlingTrack()
         {
-            Beatmap.BindValueChanged(applyLoopingToTrack, true);
+            Beatmap.BindValueChanged(ensurePlayingActiveTrack, true);
         }
 
         /// <summary>
@@ -483,23 +485,35 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
         /// </summary>
         private void endHandlingTrack()
         {
-            Beatmap.ValueChanged -= applyLoopingToTrack;
+            Beatmap.ValueChanged -= ensurePlayingActiveTrack;
             Beatmap.Value.Track.Looping = false;
 
             previewTrackManager.StopAnyPlaying(this);
         }
 
+        private readonly WeakReference<ITrack?> lastTrack = new WeakReference<ITrack?>(null);
+
         /// <summary>
         /// Invoked on changes to the beatmap to loop the track. See: <see cref="beginHandlingTrack"/>.
         /// </summary>
         /// <param name="beatmap">The beatmap change event.</param>
-        private void applyLoopingToTrack(ValueChangedEvent<WorkingBeatmap> beatmap)
+        private void ensurePlayingActiveTrack(ValueChangedEvent<WorkingBeatmap> beatmap)
         {
             if (!this.IsCurrentScreen())
                 return;
 
             beatmap.NewValue.PrepareTrackForPreview(true);
-            music.EnsurePlayingSomething();
+
+            ITrack track = music.CurrentTrack;
+
+            bool isNewTrack = !lastTrack.TryGetTarget(out var last) || last != track;
+
+            if (!track.IsRunning && (music.UserPauseRequested != true || isNewTrack))
+            {
+                music.Play(isNewTrack);
+            }
+
+            lastTrack.SetTarget(track);
         }
 
         public void PresentBeatmap(WorkingBeatmap beatmap, RulesetInfo ruleset)
