@@ -506,9 +506,9 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 
             ITrack track = music.CurrentTrack;
 
-            bool isNewTrack = !lastTrack.TryGetTarget(out var last) || last != track;
+            bool isNewTrack = lastTrack.TryGetTarget(out var last) && last != track;
 
-            if (!track.IsRunning && (music.UserPauseRequested != true || isNewTrack))
+            if (!track.IsRunning)
             {
                 music.Play(isNewTrack);
             }
