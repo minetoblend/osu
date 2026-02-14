@@ -22,6 +22,8 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 {
     public partial class GameplayWarmupScreen : RankedPlaySubScreen
     {
+        public override bool ShowBeatmapBackground => true;
+
         [Cached(typeof(IBindable<SongSelect.BeatmapSetLookupResult?>))]
         private readonly Bindable<SongSelect.BeatmapSetLookupResult?> lastLookupResult = new Bindable<SongSelect.BeatmapSetLookupResult?>();
 
@@ -38,11 +40,6 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
         private Drawable separator = null!;
         private Drawable detailsColumn = null!;
         private Drawable wedgesContainer = null!;
-
-        public GameplayWarmupScreen()
-        {
-            ShowBeatmapBackground.Value = true;
-        }
 
         [BackgroundDependencyLoader]
         private void load()

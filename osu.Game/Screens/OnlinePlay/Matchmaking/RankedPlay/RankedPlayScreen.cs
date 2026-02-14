@@ -224,13 +224,10 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                 previousScreen?.Expire();
 
                 if (previousScreen != null)
-                {
                     cornerPieceVisibility.UnbindFrom(previousScreen.CornerPieceVisibility);
-                    showBeatmapBackground.UnbindFrom(previousScreen.ShowBeatmapBackground);
-                }
 
                 cornerPieceVisibility.BindTo(screen.CornerPieceVisibility);
-                showBeatmapBackground.BindTo(screen.ShowBeatmapBackground);
+                showBeatmapBackground.Value = screen.ShowBeatmapBackground;
             };
         }
 

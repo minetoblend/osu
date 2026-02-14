@@ -27,6 +27,8 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 {
     public partial class ResultsScreen : RankedPlaySubScreen
     {
+        public override bool ShowBeatmapBackground => true;
+
         [Resolved]
         private IAPIProvider api { get; set; } = null!;
 
@@ -47,11 +49,6 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 
         private Container<Drawable> wedgeContainer = null!;
         private LoadingSpinner loadingSpinner = null!;
-
-        public ResultsScreen()
-        {
-            ShowBeatmapBackground.Value = true;
-        }
 
         [BackgroundDependencyLoader]
         private void load()

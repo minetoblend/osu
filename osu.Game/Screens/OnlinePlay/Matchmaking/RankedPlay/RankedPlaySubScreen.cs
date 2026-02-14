@@ -19,7 +19,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 
         public readonly Bindable<Visibility> CornerPieceVisibility = new Bindable<Visibility>(Visibility.Visible);
 
-        public readonly Bindable<bool> ShowBeatmapBackground = new Bindable<bool>();
+        public virtual bool ShowBeatmapBackground => false;
 
         [Resolved]
         private MultiplayerClient client { get; set; } = null!;
