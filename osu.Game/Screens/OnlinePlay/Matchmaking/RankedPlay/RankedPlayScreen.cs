@@ -29,6 +29,7 @@ using osu.Game.Overlays;
 using osu.Game.Overlays.Dialog;
 using osu.Game.Overlays.Volume;
 using osu.Game.Rulesets;
+using osu.Game.Rulesets.Mods;
 using osu.Game.Screens.OnlinePlay.Matchmaking.Match;
 using osu.Game.Screens.OnlinePlay.Matchmaking.Match.Gameplay;
 using osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards;
@@ -289,6 +290,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 
                 case RankedPlayStage.GameplayWarmup:
                     ShowScreen(new GameplayWarmupScreen());
+                    updateBeatmap();
                     break;
 
                 case RankedPlayStage.Gameplay:
@@ -335,6 +337,8 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
             }
         });
 
+        private (BeatmapInfo beatmap, RulesetInfo ruleset, Mod[] mods)? pendingBeatmapChange;
+
         private void updateGameplayState()
         {
             MultiplayerPlaylistItem item = client.Room!.CurrentPlaylistItem;
@@ -351,9 +355,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 
             if (localBeatmap != null)
             {
-                Beatmap.Value = beatmapManager.GetWorkingBeatmap(localBeatmap);
-                Ruleset.Value = ruleset;
-                Mods.Value = item.RequiredMods.Select(m => m.ToMod(rulesetInstance)).ToArray();
+                pendingBeatmapChange = (localBeatmap, ruleset, item.RequiredMods.Select(m => m.ToMod(rulesetInstance)).ToArray());
 
                 // Notify the server that the beatmap has been set and that we are ready to start gameplay.
                 if (client.LocalUser!.State == MultiplayerUserState.Idle)
@@ -367,6 +369,18 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
             }
 
             client.ChangeBeatmapAvailability(beatmapAvailabilityTracker.Availability.Value).FireAndForget();
+        }
+
+        private void updateBeatmap()
+        {
+            if (pendingBeatmapChange == null)
+                return;
+
+            var (beatmap, ruleset, mods) = pendingBeatmapChange.Value;
+
+            Beatmap.Value = beatmapManager.GetWorkingBeatmap(beatmap);
+            Ruleset.Value = ruleset;
+            Mods.Value = mods;
         }
 
         private void checkForAutomaticDownload()
