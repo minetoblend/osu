@@ -80,7 +80,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                 Anchor = Anchor.Centre;
                 Origin = Anchor.Centre;
 
-                InternalChild = new BufferedContainer
+                InternalChild = new BufferedContainer(cachedFrameBuffer: true)
                 {
                     RelativeSizeAxes = Axes.Both,
                     FrameBufferScale = new Vector2(0.15f),
