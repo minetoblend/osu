@@ -39,6 +39,11 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
         private Drawable detailsColumn = null!;
         private Drawable wedgesContainer = null!;
 
+        public GameplayWarmupScreen()
+        {
+            ShowBeatmapBackground.Value = true;
+        }
+
         [BackgroundDependencyLoader]
         private void load()
         {

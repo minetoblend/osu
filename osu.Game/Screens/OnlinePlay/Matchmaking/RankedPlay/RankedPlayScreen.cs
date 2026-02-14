@@ -50,7 +50,10 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 
         public RankedPlaySubScreen? ActiveSubScreen { get; private set; }
 
-        protected override BackgroundScreen CreateBackground() => new RankedPlayBackgroundScreen();
+        protected override BackgroundScreen CreateBackground() => new RankedPlayBackgroundScreen
+        {
+            ShowBeatmapBackground = { BindTarget = showBeatmapBackground }
+        };
 
         public override float BackgroundParallaxAmount => 0;
 
@@ -101,6 +104,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
         private int? lastDownloadCheckedBeatmapId;
 
         private readonly Bindable<Visibility> cornerPieceVisibility = new Bindable<Visibility>();
+        private readonly Bindable<bool> showBeatmapBackground = new Bindable<bool>();
 
         [Cached]
         private readonly RankedPlayMatchInfo matchInfo;
@@ -220,9 +224,13 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                 previousScreen?.Expire();
 
                 if (previousScreen != null)
+                {
                     cornerPieceVisibility.UnbindFrom(previousScreen.CornerPieceVisibility);
+                    showBeatmapBackground.UnbindFrom(previousScreen.ShowBeatmapBackground);
+                }
 
                 cornerPieceVisibility.BindTo(screen.CornerPieceVisibility);
+                showBeatmapBackground.BindTo(screen.ShowBeatmapBackground);
             };
         }
 
