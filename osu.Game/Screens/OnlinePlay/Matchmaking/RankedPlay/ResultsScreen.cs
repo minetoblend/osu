@@ -3,21 +3,17 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using osu.Framework.Allocation;
 using osu.Framework.Bindables;
 using osu.Framework.Extensions;
-using osu.Framework.Extensions.Color4Extensions;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
-using osu.Framework.Graphics.Effects;
 using osu.Framework.Graphics.Shapes;
-using osu.Framework.Graphics.Sprites;
-using osu.Framework.Graphics.Textures;
 using osu.Framework.Graphics.Transforms;
 using osu.Framework.Logging;
+using osu.Framework.Utils;
 using osu.Game.Beatmaps;
 using osu.Game.Database;
 using osu.Game.Extensions;
@@ -149,7 +145,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
         [Resolved]
         private OsuColour colour { get; set; } = null!;
 
-        private static Vector2 cardSize => new Vector2(950, 600);
+        private static Vector2 cardSize => new Vector2(950, 550);
 
         private readonly Bindable<Visibility> cornerPieceVisibility = new Bindable<Visibility>();
         private readonly Bindable<float> scoreBarProgress = new Bindable<float>();
@@ -160,18 +156,12 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
         private ScoreCounter playerScoreCounter = null!;
         private ScoreCounter opponentScoreCounter = null!;
         private ScoreCounter damageCounter = null!;
+        private OsuSpriteText flyingDamageText = null!;
         private ScoreBar playerScoreBar = null!;
         private ScoreBar opponentScoreBar = null!;
         private OsuSpriteText roundNumber = null!;
-        private OsuSpriteText multiplierText = null!;
         private RankedPlayUserDisplay playerUserDisplay = null!;
         private RankedPlayUserDisplay opponentUserDisplay = null!;
-        private Container damageOverlay = null!;
-        private Container damageOverlayContent = null!;
-        private Container damageGlow = null!;
-
-        [Resolved]
-        private TextureStore textures { get; set; } = null!;
 
         private void setScores(ScoreInfo[] scores) => Scheduler.Add(() =>
         {
@@ -364,7 +354,17 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                                     Font = OsuFont.GetFont(size: 36, weight: FontWeight.SemiBold, fixedWidth: true),
                                     Spacing = new Vector2(-2),
                                 },
-                                multiplierText = new OsuSpriteText
+                                flyingDamageText = new OsuSpriteText
+                                {
+                                    Text = FormattableString.Invariant($"{damageInfo.Damage:N0}"),
+                                    Font = OsuFont.GetFont(size: 36, weight: FontWeight.SemiBold, fixedWidth: true),
+                                    Spacing = new Vector2(-2),
+                                    Anchor = Anchor.Centre,
+                                    Origin = Anchor.Centre,
+                                    BypassAutoSizeAxes = Axes.Both,
+                                    Alpha = 0,
+                                },
+                                new OsuSpriteText
                                 {
                                     BypassAutoSizeAxes = Axes.Both,
                                     Text = $"{matchInfo.RoomState.DamageMultiplier.ToStandardFormattedString(maxDecimalDigits: 1)}x",
@@ -379,75 +379,12 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                         },
                         new OsuSpriteText
                         {
-                            Text = "Damage",
+                            Text = Precision.AlmostEquals(matchInfo.RoomState.DamageMultiplier, 1)
+                                ? "Damage"
+                                : $"Damage {matchInfo.RoomState.DamageMultiplier.ToStandardFormattedString(maxDecimalDigits: 1)}x",
                             Anchor = Anchor.TopCentre,
                             Origin = Anchor.Centre,
                             Font = OsuFont.GetFont(weight: FontWeight.SemiBold, size: 22),
-                        },
-                        damageOverlay = new Container
-                        {
-                            RelativeSizeAxes = Axes.Both,
-                            RelativePositionAxes = Axes.X,
-                            Anchor = Anchor.Centre,
-                            Origin = Anchor.Centre,
-                            Alpha = 0,
-                            Children =
-                            [
-                                damageGlow = new Container
-                                {
-                                    RelativeSizeAxes = Axes.Both,
-                                    CornerRadius = 20,
-                                    Masking = true,
-                                    EdgeEffect = new EdgeEffectParameters
-                                    {
-                                        Type = EdgeEffectType.Glow,
-                                        Radius = 25,
-                                        Colour = Color4Extensions.FromHex("FF171B").Opacity(0.5f),
-                                    }
-                                },
-                                new Container
-                                {
-                                    RelativeSizeAxes = Axes.Both,
-                                    Masking = true,
-                                    Children =
-                                    [
-                                        damageOverlayContent = new Container
-                                        {
-                                            RelativeSizeAxes = Axes.Both,
-                                            RelativePositionAxes = Axes.X,
-                                            Children =
-                                            [
-                                                new NineSliceSprite
-                                                {
-                                                    RelativeSizeAxes = Axes.Both,
-                                                    Texture = textures.Get("Online/RankedPlay/damage-display-background"),
-                                                    TextureInsetRelativeAxes = Axes.None,
-                                                    TextureInset = new MarginPadding { Horizontal = 30 },
-                                                    Anchor = Anchor.Centre,
-                                                    Origin = Anchor.Centre,
-                                                },
-                                                new ScoreCounter(numDigits(damageInfo.Damage))
-                                                {
-                                                    Font = OsuFont.GetFont(size: 36, weight: FontWeight.SemiBold, fixedWidth: true),
-                                                    Spacing = new Vector2(-2),
-                                                    Value = damageInfo.Damage,
-                                                    Anchor = Anchor.Centre,
-                                                    Origin = Anchor.Centre,
-                                                    Colour = Color4.Red,
-                                                },
-                                                new OsuSpriteText
-                                                {
-                                                    Text = "Damage",
-                                                    Anchor = Anchor.TopCentre,
-                                                    Origin = Anchor.Centre,
-                                                    Font = OsuFont.GetFont(weight: FontWeight.SemiBold, size: 22),
-                                                    Colour = Color4.Red,
-                                                },
-                                            ]
-                                        }
-                                    ]
-                                },
-                            ]
                         },
                     ]
                 }
@@ -459,21 +396,9 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 
             animateCountersAndScoreBars(ref delay, playerScore, opponentScore, damageInfo);
 
-            if (matchInfo.RoomState.DamageMultiplier > 1)
-            {
-                flashDamageMultiplier(ref delay, damageInfo);
-            }
-            else
-            {
-                Debug.Assert(
-                    matchInfo.RoomState.Users.Values.All(userInfo => userInfo.DamageInfo!.Damage == userInfo.DamageInfo.RawDamage),
-                    "Damage not equal to RawDamage when damage multiplier is 1"
-                );
-            }
+            showScoreInfo(ref delay);
 
             updateHealthBars(ref delay, playerScore, opponentScore, getDamageInfo(playerId).NewLife, getDamageInfo(opponentId).NewLife);
-
-            showScoreInfo(ref delay);
         });
 
         private void appear(ref double delay)
@@ -506,7 +431,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
         {
             using (BeginDelayedSequence(delay))
             {
-                const double score_text_duration = 3000;
+                const double score_text_duration = 2000;
 
                 playerScoreCounter.TransformValueTo(playerScore.TotalScore, score_text_duration - 500);
                 opponentScoreCounter.TransformValueTo(opponentScore.TotalScore, score_text_duration - 500);
@@ -534,28 +459,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                 });
             }
 
-            delay += 3500;
-        }
-
-        private void flashDamageMultiplier(ref double delay, RankedPlayDamageInfo damageInfo)
-        {
-            using (BeginDelayedSequence(delay))
-            {
-                damageCounter.ScaleTo(0.8f, 50, Easing.Out)
-                             .Then()
-                             .Schedule(() => damageCounter.SetValueInstantly(damageInfo.Damage))
-                             .ScaleTo(1, 600, Easing.OutElasticHalf);
-
-                multiplierText.Delay(50)
-                              .FadeIn()
-                              .ScaleTo(0.5f)
-                              .ScaleTo(1f, 600, Easing.OutElasticHalf)
-                              .MoveToOffset(new Vector2(5, -20), 1000, Easing.Out)
-                              .Delay(300)
-                              .FadeOut(1000, Easing.Out);
-            }
-
-            delay += 800;
+            delay += 2200;
         }
 
         private void updateHealthBars(
@@ -568,31 +472,58 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
         {
             using (BeginDelayedSequence(delay))
             {
-                int direction = playerScore.TotalScore > opponentScore.TotalScore ? 1 : -1;
+                Schedule(() =>
+                {
+                    RankedPlayUserDisplay userDisplay =
+                        playerScore.TotalScore > opponentScore.TotalScore
+                            ? opponentUserDisplay
+                            : playerUserDisplay;
 
-                var anchor = playerScore.TotalScore > opponentScore.TotalScore ? Anchor.TopRight : Anchor.TopLeft;
+                    Vector2 screenSpacePosition = userDisplay.HealthDisplay.ScreenSpaceImpactPosition;
 
-                damageOverlay.Anchor = anchor;
-                damageOverlay.Origin = anchor;
-                damageGlow.Anchor = anchor.Opposite();
-                damageGlow.Origin = anchor.Opposite();
+                    Scheduler.AddDelayed(() => userDisplay.Shake(shakeDuration: 60, shakeMagnitude: 2, maximumLength: 120), 400);
 
-                damageOverlay.FadeIn(40)
-                             .Delay(500)
-                             .MoveToX(direction, 1000, Easing.InCubic);
+                    var position = flyingDamageText.Parent!.ToLocalSpace(screenSpacePosition) - flyingDamageText.AnchorPosition;
 
-                damageOverlayContent.Delay(500)
-                                    .MoveToX(-direction, 1000, Easing.InCubic);
+                    damageCounter.FadeOut()
+                                 .Delay(200)
+                                 .FadeIn(300)
+                                 .ScaleTo(0.9f)
+                                 .ScaleTo(1f, 300, Easing.OutElasticHalf);
 
-                damageGlow.Delay(500)
-                          .ResizeWidthTo(0, 1000, Easing.InCubic);
+                    flyingDamageText.FadeIn()
+                                    .MoveTo(position, 400, Easing.InCubic)
+                                    .ScaleTo(0.75f, 400, new CubicBezierEasingFunction(easeIn: 0.35, easeOut: 0.5))
+                                    .RotateTo(12 * Math.Sign(position.X), 400, new CubicBezierEasingFunction(easeIn: 0.35, easeOut: 0.5))
+                                    .Then()
+                                    .FadeOut();
 
-                damageGlow
-                    .Delay(1300)
-                    .FadeOut(200, Easing.In);
+                    Scheduler.AddDelayed(() =>
+                    {
+                        for (int i = 0; i < 10; i++)
+                        {
+                            var particle = new Particle
+                            {
+                                Size = new Vector2(RNG.NextSingle(5, 15)),
+                                Origin = Anchor.Centre,
+                                Position = ToLocalSpace(screenSpacePosition),
+                                Rotation = RNG.NextSingle(0, 360),
+                                Blending = BlendingParameters.Additive,
+                            };
+
+                            AddInternal(particle);
+
+                            particle.FadeOut(600)
+                                    .ScaleTo(0, 600)
+                                    .RotateTo(particle.Rotation + RNG.NextSingle(-20, 20), 600)
+                                    .FadeColour(Color4.Red, 600)
+                                    .Expire();
+                        }
+                    }, 400);
+                });
             }
 
-            delay += 1500;
+            delay += 400;
 
             using (BeginDelayedSequence(delay))
             {
@@ -613,10 +544,27 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                 playerScoreDetails.FadeIn(300);
                 opponentScoreDetails.FadeIn(300);
             }
+
+            delay += 800;
         }
 
         private RankedPlayDamageInfo getDamageInfo(int userId) => matchInfo.RoomState.Users[userId].DamageInfo!;
 
         private static int numDigits(long value) => (int)Math.Floor(Math.Log10(value) + 1);
+
+        private partial class Particle : Triangle
+        {
+            private Vector2 velocity = new Vector2(RNG.NextSingle(-0.3f, 0.3f), RNG.NextSingle(-0.3f, 0.3f));
+
+            private Vector2 gravity => new Vector2(0, 0.0002f);
+
+            protected override void Update()
+            {
+                base.Update();
+
+                velocity += gravity * (float)Time.Elapsed;
+                Position += velocity * (float)Time.Elapsed;
+            }
+        }
     }
 }

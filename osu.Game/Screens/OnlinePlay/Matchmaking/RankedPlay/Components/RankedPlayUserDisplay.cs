@@ -160,6 +160,19 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
             private readonly SpriteIcon heartIcon;
             private readonly OsuSpriteText healthText;
 
+            /// <summary>
+            /// Impact position for damage animation
+            /// </summary>
+            public Vector2 ScreenSpaceImpactPosition
+            {
+                get
+                {
+                    var rect = healthBar.ScreenSpaceDrawQuad.AABBFloat;
+
+                    return leftToRight ? new Vector2(rect.Right, rect.Centre.Y) : new Vector2(rect.Left, rect.Centre.Y);
+                }
+            }
+
             public HealthBar(RankedPlayColourScheme colourScheme, bool leftToRight, Vector2 shear)
             {
                 this.leftToRight = leftToRight;
