@@ -53,11 +53,11 @@ namespace osu.Game.Tests.Visual.RankedPlay
                         {
                             RawDamage = 123_456,
                             Damage = 123_456,
-                            OldLife = 1_000_000,
-                            NewLife = 1_000_000 - 123_456,
+                            OldLife = 500_000,
+                            NewLife = 500_000 - 123_456,
                         };
 
-                        userInfo.Life = 1_000_000 - 123_456;
+                        userInfo.Life = 500_000 - 123_456;
                     }
                     else
                     {
@@ -186,7 +186,7 @@ namespace osu.Game.Tests.Visual.RankedPlay
                                     Passed = true,
                                     Rank = (ScoreRank)RNG.Next((int)ScoreRank.D, (int)ScoreRank.XH),
                                     MaxCombo = RNG.Next(1000),
-                                    TotalScore = RNG.Next(1_000_000),
+                                    TotalScore = userId == 2 ? 750_000 : 750_000 - 123_456,
                                     Statistics = new Dictionary<HitResult, int>
                                     {
                                         [HitResult.Miss] = 1,
