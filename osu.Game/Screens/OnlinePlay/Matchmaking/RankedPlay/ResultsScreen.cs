@@ -550,7 +550,13 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 
         private RankedPlayDamageInfo getDamageInfo(int userId) => matchInfo.RoomState.Users[userId].DamageInfo!;
 
-        private static int numDigits(long value) => (int)Math.Floor(Math.Log10(value) + 1);
+        private static int numDigits(long value)
+        {
+            if (value <= 0)
+                return 1;
+
+            return (int)Math.Floor(Math.Log10(value) + 1);
+        }
 
         private partial class Particle : Triangle
         {
