@@ -70,6 +70,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
                     {
                         Text = ",",
                         Font = Font,
+                        Shadow = false,
                     });
                 }
 
@@ -91,6 +92,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
 
         public void SetValueInstantly(long value)
         {
+            ClearTransforms(true);
             this.value = value;
             updateDigits(false);
         }
@@ -157,6 +159,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
                                     RelativePositionAxes = Axes.Y,
                                     Anchor = Anchor.Centre,
                                     Origin = Anchor.Centre,
+                                    Shadow = false,
                                 },
                                 lower = new OsuSpriteText
                                 {
@@ -165,6 +168,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
                                     RelativePositionAxes = Axes.Y,
                                     Anchor = Anchor.Centre,
                                     Origin = Anchor.Centre,
+                                    Shadow = false,
                                 }
                             ]
                         }
