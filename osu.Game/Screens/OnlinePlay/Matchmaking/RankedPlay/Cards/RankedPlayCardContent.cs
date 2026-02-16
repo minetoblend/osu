@@ -113,7 +113,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
                 preview.Stopped += previewVisualization.PreviewStopped;
 
                 if (IsHovered)
-                    preview.Start();
+                    startPreviewIfAvailable();
             });
         }
 
@@ -138,10 +138,12 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
 
         protected override bool OnHover(HoverEvent e)
         {
-            preview?.Start();
+            startPreviewIfAvailable();
 
             return base.OnHover(e);
         }
+
+        private void startPreviewIfAvailable() => preview?.Start();
 
         private partial class CardBorder : CompositeDrawable
         {
