@@ -9,9 +9,7 @@ using osu.Framework.Audio;
 using osu.Framework.Audio.Sample;
 using osu.Framework.Bindables;
 using osu.Framework.Graphics;
-using osu.Framework.Graphics.Colour;
 using osu.Framework.Graphics.Containers;
-using osu.Framework.Graphics.Shapes;
 using osu.Framework.Graphics.Sprites;
 using osu.Framework.Input.Events;
 using osu.Game.Audio;
@@ -158,6 +156,13 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
 
         public partial class PlayerHandCard : HandCard
         {
+            private const float swipe_threshold = 0.3f;
+
+            private float swipeProgress;
+
+            [Resolved]
+            private PlayerCardHand cardHand { get; set; } = null!;
+
             private Action? playAction;
 
             public Action? PlayAction
@@ -200,14 +205,6 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
                         Scale = new Vector2(0.9f),
                         Children =
                         [
-                            new Box
-                            {
-                                RelativeSizeAxes = Axes.Both,
-                                Colour = ColourInfo.GradientVertical(
-                                    Colour4.FromHex("87D8FA").Opacity(0.6f),
-                                    Colour4.FromHex("72D5FF").Opacity(0.4f)
-                                )
-                            },
                             swipeRevealText = new OsuSpriteText
                             {
                                 Text = "Release to play",
@@ -242,20 +239,6 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
                                     }
                                 ]
                             },
-                            new Container
-                            {
-                                RelativeSizeAxes = Axes.Both,
-                                Masking = true,
-                                CornerRadius = RankedPlayCard.CORNER_RADIUS,
-                                BorderThickness = 3,
-                                BorderColour = Colour4.FromHex("87D8FA"),
-                                Child = new Box
-                                {
-                                    RelativeSizeAxes = Axes.Both,
-                                    Alpha = 0,
-                                    AlwaysPresent = true,
-                                }
-                            }
                         ]
                     },
                     new Container
@@ -361,13 +344,6 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
                 return true;
             }
 
-            private const float swipe_threshold = 0.5f;
-
-            private float swipeProgress;
-
-            [Resolved]
-            private PlayerCardHand cardHand { get; set; } = null!;
-
             protected override bool OnDragStart(DragStartEvent e)
             {
                 if (!AllowSelection.Value || cardHand.selectionMode != CardSelectionMode.Single)
@@ -387,14 +363,17 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
                 swipeProgress = MathF.Pow(float.Max(-change.Y / 600f, 0), 0.8f);
 
                 Card.Y = swipeProgress * -160;
-                swipeRevealContainer.Y = swipeProgress * -90;
-                swipeArrows.Y = -5 + swipeProgress * -28;
-                swipeArrows.Height = 5 + swipeProgress * 18;
-                swipeRevealText.Y = swipeProgress * -15;
+                Card.X = change.X * 0.1f;
+                Card.Rotation = Card.X * 0.1f;
 
-                swipeRevealContainer.Alpha = float.Clamp((swipeProgress - 0.25f) * 4f, 0, 1);
-                swipeRevealText.Alpha = float.Clamp((swipeProgress - 0.5f) * 6f, 0, 1) * 0.6f;
-                swipeArrows.Alpha = float.Clamp((swipeProgress - 0.5f) * 6f, 0, 1) * 0.6f;
+                swipeRevealContainer.Y = 10 - Math.Min(8, swipeProgress * 10);
+
+                swipeArrows.Y = -(5 + Math.Min(30, (swipeProgress * 50)));
+                swipeRevealText.Y = -Math.Min(9, swipeProgress * 15);
+
+                swipeArrows.Height = Math.Min(20, 10 + swipeProgress * 18);
+
+                swipeRevealContainer.Alpha = float.Clamp((swipeProgress - swipe_threshold / 2) * 10f, 0, 1);
             }
 
             protected override void OnDragEnd(DragEndEvent e)
@@ -411,6 +390,9 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
                 }
 
                 Card.MoveToY(0, 400, Easing.OutElasticHalf);
+                Card.MoveToX(0, 400, Easing.OutElasticHalf);
+                Card.RotateTo(0, 400, Easing.OutElasticHalf);
+
                 swipeRevealContainer.MoveToY(0, 400, Easing.OutElasticHalf)
                                     .FadeOut(200);
 
