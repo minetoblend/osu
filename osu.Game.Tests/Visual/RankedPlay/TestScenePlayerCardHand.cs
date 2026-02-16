@@ -6,6 +6,7 @@ using Humanizer;
 using NUnit.Framework;
 using osu.Framework.Allocation;
 using osu.Framework.Graphics;
+using osu.Framework.Testing;
 using osu.Game.Online.Multiplayer.MatchTypes.RankedPlay;
 using osu.Game.Overlays;
 using osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay;
@@ -32,8 +33,8 @@ namespace osu.Game.Tests.Visual.RankedPlay
             };
         }
 
-        [Test]
-        public void TestSingleSelectionMode()
+        [SetUpSteps]
+        public void SetUpSteps()
         {
             AddStep("add cards", () =>
             {
@@ -41,6 +42,11 @@ namespace osu.Game.Tests.Visual.RankedPlay
                 for (int i = 0; i < 5; i++)
                     cardHand.AddCard(new RankedPlayCardWithPlaylistItem(new RankedPlayCardItem()));
             });
+        }
+
+        [Test]
+        public void TestSingleSelectionMode()
+        {
             AddStep("single selection mode", () => cardHand.SelectionMode = CardSelectionMode.Single);
 
             AddStep("click first card", () => cardHand.Cards.First().TriggerClick());
@@ -56,13 +62,7 @@ namespace osu.Game.Tests.Visual.RankedPlay
         [Test]
         public void TestMultiSelectionMode()
         {
-            AddStep("add cards", () =>
-            {
-                cardHand.Clear();
-                for (int i = 0; i < 5; i++)
-                    cardHand.AddCard(new RankedPlayCardWithPlaylistItem(new RankedPlayCardItem()));
-            });
-            AddStep("single selection mode", () => cardHand.SelectionMode = CardSelectionMode.Multiple);
+            AddStep("multiple selection mode", () => cardHand.SelectionMode = CardSelectionMode.Multiple);
 
             AddStep("click first card", () => cardHand.Cards.First().TriggerClick());
             AddAssert("first card selected", () => cardHand.Selection.SequenceEqual([cardHand.Cards.First().Item]));
