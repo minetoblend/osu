@@ -31,10 +31,18 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
         {
             private const double minimum_beat_length = 800;
 
+            public readonly Bindable<bool> Enabled = new BindableBool(true);
+
+            public bool TrackLoaded => previewTrack?.TrackLoaded ?? false;
+
+            public bool IsRunning => previewTrack?.IsRunning ?? false;
+
             protected override Container<Drawable> Content { get; }
 
             private readonly Bindable<bool> trackRunning = new BindableBool();
             private readonly Container overlayLayer;
+
+            private bool shouldBePlaying => Enabled.Value && IsHovered;
 
             [Resolved]
             private PreviewTrackManager previewTrackManager { get; set; } = null!;
@@ -66,6 +74,25 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
                 ];
             }
 
+            protected override void LoadComplete()
+            {
+                base.LoadComplete();
+
+                Enabled.BindValueChanged(enabled =>
+                {
+                    if (!enabled.NewValue)
+                    {
+                        previewTrack?.Stop();
+                        return;
+                    }
+
+                    if (shouldBePlaying)
+                    {
+                        startPreviewIfAvailable();
+                    }
+                });
+            }
+
             private PreviewTrack? previewTrack;
 
             public void LoadPreview(APIBeatmap beatmap)
@@ -95,7 +122,8 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
 
             protected override bool OnHover(HoverEvent e)
             {
-                startPreviewIfAvailable();
+                if (shouldBePlaying)
+                    startPreviewIfAvailable();
 
                 return base.OnHover(e);
             }
