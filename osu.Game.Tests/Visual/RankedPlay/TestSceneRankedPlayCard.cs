@@ -1,27 +1,25 @@
 // Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
-using System.IO;
 using System.Linq;
-using Newtonsoft.Json;
 using NUnit.Framework;
 using osu.Framework.Allocation;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Game.Beatmaps;
 using osu.Game.Graphics.Cursor;
+using osu.Game.Online.API;
 using osu.Game.Online.API.Requests.Responses;
-using osu.Game.Online.Multiplayer.MatchTypes.RankedPlay;
+using osu.Game.Online.Rooms;
 using osu.Game.Overlays;
 using osu.Game.Rulesets;
 using osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay;
 using osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards;
-using osu.Game.Tests.Resources;
 using osuTK;
 
 namespace osu.Game.Tests.Visual.RankedPlay
 {
-    public partial class TestSceneRankedPlayCard : OsuTestScene
+    public partial class TestSceneRankedPlayCard : RankedPlayTestScene
     {
         protected override Container<Drawable> Content { get; }
 
@@ -33,6 +31,8 @@ namespace osu.Game.Tests.Visual.RankedPlay
 
         [Cached]
         private readonly SongPreviewParticleContainer particleContainer;
+
+        private readonly BeatmapRequestHandler requestHandler = new BeatmapRequestHandler();
 
         public TestSceneRankedPlayCard()
         {
@@ -122,6 +122,8 @@ namespace osu.Game.Tests.Visual.RankedPlay
         [Test]
         public void TestCardHand()
         {
+            AddStep("setup request handler", () => ((DummyAPIAccess)API).HandleRequest = requestHandler.HandleRequest);
+
             AddStep("add cards", () =>
             {
                 PlayerCardHand cardHand;
@@ -135,17 +137,11 @@ namespace osu.Game.Tests.Visual.RankedPlay
                     SelectionMode = CardSelectionMode.Single
                 };
 
-                foreach (var beatmap in getBeatmaps())
+                foreach (var beatmap in requestHandler.Beatmaps)
                 {
-                    var card = new RankedPlayCard(new RankedPlayCardWithPlaylistItem(new RankedPlayCardItem()));
+                    var card = new RankedPlayCard(RankedPlayCardWithPlaylistItem.Revealed(new MultiplayerPlaylistItem(new PlaylistItem(beatmap))));
 
                     cardHand.AddCard(card);
-
-                    Schedule(() => card.SetContent(new RankedPlayCardContent(beatmap)
-                    {
-                        Anchor = Anchor.Centre,
-                        Origin = Anchor.Centre,
-                    }, false));
                 }
             });
         }
@@ -224,14 +220,6 @@ namespace osu.Game.Tests.Visual.RankedPlay
                     }
                 });
             }
-        }
-
-        private APIBeatmap[] getBeatmaps()
-        {
-            using var resourceStream = TestResources.OpenResource("Requests/api-beatmaps-rankedplay.json");
-            using var reader = new StreamReader(resourceStream);
-
-            return JsonConvert.DeserializeObject<APIBeatmap[]>(reader.ReadToEnd())!;
         }
     }
 }
