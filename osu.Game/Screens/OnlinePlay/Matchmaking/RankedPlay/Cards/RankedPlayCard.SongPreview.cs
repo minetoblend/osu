@@ -103,18 +103,18 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
                 {
                     AddInternal(track);
 
+                    track.Looping = true;
+                    track.Started += onTrackStarted;
+                    track.Stopped += onTrackStopped;
+
+                    setupBeatSyncProvider(track, beatmap);
+
                     var cardColours = new RankedPlayCardContent.CardColours(beatmap, osuColour);
 
                     overlayLayer.Add(new RippleVisualization(cardColours.Border)
                     {
                         TrackRunning = trackRunning.GetBoundCopy(),
                     });
-
-                    track.Looping = true;
-                    track.Started += onTrackStarted;
-                    track.Stopped += onTrackStopped;
-
-                    setupBeatSyncProvider(track, beatmap);
 
                     if (IsHovered)
                         startPreviewIfAvailable();
