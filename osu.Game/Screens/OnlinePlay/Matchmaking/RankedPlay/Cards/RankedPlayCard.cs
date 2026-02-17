@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using osu.Framework.Allocation;
 using osu.Framework.Audio;
 using osu.Framework.Audio.Sample;
+using osu.Framework.Bindables;
 using osu.Framework.Extensions.Color4Extensions;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
@@ -28,6 +29,8 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
 
         public readonly RankedPlayCardWithPlaylistItem Item;
 
+        public readonly Bindable<bool> SongPreviewEnabled = new BindableBool(true);
+
         private readonly Container content;
         private readonly Container cardContent;
         private readonly Container shadow;
@@ -48,6 +51,9 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
 
         public float Elevation;
 
+        public bool PreviewTrackLoaded => songPreviewContainer.TrackLoaded;
+        public bool PreviewTrackRunning => songPreviewContainer.IsRunning;
+
         private Sample? cardFlipSample;
 
         [Resolved]
@@ -61,6 +67,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
 
             InternalChild = songPreviewContainer = new SongPreviewContainer
             {
+                Enabled = { BindTarget = SongPreviewEnabled },
                 RelativeSizeAxes = Axes.Both,
                 Anchor = Anchor.Centre,
                 Origin = Anchor.Centre,
