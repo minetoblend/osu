@@ -108,7 +108,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
                         TrackRunning = trackRunning.GetBoundCopy(),
                     });
 
-                    clock.Track = track;
+                    beatSyncClock.Track = track;
 
                     track.Started += onTrackStarted;
                     track.Stopped += onTrackStopped;
@@ -136,12 +136,12 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
 
             #region IBeatSyncProvider implementation
 
-            private readonly PreviewTrackClock clock = new PreviewTrackClock();
+            private readonly PreviewTrackClock beatSyncClock = new PreviewTrackClock();
             private readonly ControlPointInfo controlPoints = new ControlPointInfo();
 
             ChannelAmplitudes IHasAmplitudes.CurrentAmplitudes => ChannelAmplitudes.Empty;
             ControlPointInfo IBeatSyncProvider.ControlPoints => controlPoints;
-            IClock IBeatSyncProvider.Clock => clock;
+            IClock IBeatSyncProvider.Clock => beatSyncClock;
 
             private void populateControlPointInfo(double bpm)
             {
