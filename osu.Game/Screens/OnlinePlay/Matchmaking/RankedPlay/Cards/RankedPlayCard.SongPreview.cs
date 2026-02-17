@@ -29,6 +29,8 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
     {
         public partial class SongPreviewContainer : Container, IBeatSyncProvider
         {
+            private const double minimum_beat_length = 800;
+
             public readonly Bindable<bool> Enabled = new BindableBool(true);
 
             public bool TrackLoaded => previewTrack?.TrackLoaded ?? false;
@@ -110,12 +112,10 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
                         TrackRunning = trackRunning.GetBoundCopy(),
                     });
 
-                    beatSyncClock.Track = track;
-
                     track.Started += onTrackStarted;
                     track.Stopped += onTrackStopped;
 
-                    populateControlPointInfo(beatmap.BPM);
+                    setupBeatSyncProvider(track, beatmap);
 
                     if (IsHovered)
                         startPreviewIfAvailable();
@@ -151,24 +151,13 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
             ControlPointInfo IBeatSyncProvider.ControlPoints => controlPoints;
             IClock IBeatSyncProvider.Clock => beatSyncClock;
 
-            private void populateControlPointInfo(double bpm)
+            private void setupBeatSyncProvider(PreviewTrack track, APIBeatmap beatmap)
             {
-                double beatLength = 1500;
-
-                if (bpm > 50)
-                {
-                    beatLength = (60_000 / bpm) * 4;
-
-                    while (beatLength < 800)
-                        beatLength *= 2;
-
-                    while (beatLength > 1600)
-                        beatLength /= 2;
-                }
+                beatSyncClock.Track = track;
 
                 controlPoints.Add(0, new TimingControlPoint
                 {
-                    BeatLength = beatLength
+                    BeatLength = beatmap.BPM > 0 ? 60_000 / beatmap.BPM : TimingControlPoint.DEFAULT_BEAT_LENGTH
                 });
             }
 
@@ -186,6 +175,11 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
             private partial class PulseContainer : BeatSyncedContainer
             {
                 public const double EXPAND_DURATION = 200;
+
+                public PulseContainer()
+                {
+                    MinimumBeatLength = minimum_beat_length;
+                }
 
                 protected override void OnNewBeat(int beatIndex, TimingControlPoint timingPoint, EffectControlPoint effectPoint, ChannelAmplitudes amplitudes)
                 {
@@ -211,6 +205,8 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
                 public RippleVisualization(Color4 accentColour)
                 {
                     this.accentColour = accentColour;
+
+                    MinimumBeatLength = minimum_beat_length;
 
                     RelativeSizeAxes = Axes.Both;
 
