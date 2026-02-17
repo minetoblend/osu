@@ -3,6 +3,7 @@
 
 using System;
 using System.Threading.Tasks;
+using osu.Game.Online.API.Requests.Responses;
 using osu.Game.Online.Multiplayer.MatchTypes.RankedPlay;
 using osu.Game.Online.Rooms;
 
@@ -37,5 +38,16 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 
         public override int GetHashCode()
             => Card.GetHashCode();
+
+        public static RankedPlayCardWithPlaylistItem Revealed(MultiplayerPlaylistItem item)
+        {
+            var card = new RankedPlayCardWithPlaylistItem(new RankedPlayCardItem());
+
+            card.PlaylistItemRevealed(item);
+
+            return card;
+        }
+
+        public static RankedPlayCardWithPlaylistItem Revealed(APIBeatmap beatmap) => Revealed(new MultiplayerPlaylistItem(new PlaylistItem(beatmap)));
     }
 }

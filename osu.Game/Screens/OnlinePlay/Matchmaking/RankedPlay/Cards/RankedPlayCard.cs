@@ -10,7 +10,6 @@ using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Effects;
 using osu.Framework.Graphics.Shapes;
-using osu.Framework.Graphics.Transforms;
 using osu.Framework.Logging;
 using osu.Game.Audio;
 using osu.Game.Database;
@@ -33,7 +32,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
         private readonly Container cardContent;
         private readonly Container shadow;
         private readonly SelectionOutline selectionOutline;
-        private readonly Container pulseContainer;
+        private readonly SongPreviewContainer songPreviewContainer;
 
         private bool showSelectionOutline;
 
@@ -60,7 +59,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
 
             Size = SIZE;
 
-            InternalChild = pulseContainer = new Container
+            InternalChild = songPreviewContainer = new SongPreviewContainer
             {
                 RelativeSizeAxes = Axes.Both,
                 Anchor = Anchor.Centre,
@@ -125,6 +124,8 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
 
         private async Task loadBeatmap()
         {
+            bool shouldFlip = !Item.PlaylistItem.IsCompleted;
+
             var playlistItem = await Item.PlaylistItem.ConfigureAwait(false);
             var beatmap = await beatmapLookupCache.GetBeatmapAsync(playlistItem.BeatmapID).ConfigureAwait(false);
 
@@ -136,7 +137,12 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
                 return;
             }
 
-            Schedule(() => SetContent(new RankedPlayCardContent(beatmap), true));
+            Schedule(() =>
+            {
+                SetContent(new RankedPlayCardContent(beatmap), flip: shouldFlip);
+
+                songPreviewContainer.LoadPreview(beatmap);
+            });
         }
 
         protected override void UpdateAfterChildren()
@@ -178,13 +184,6 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
 
             this.FadeOut(500)
                 .Expire();
-        }
-
-        public void Pulse()
-        {
-            pulseContainer.ScaleTo(1.02f, 200)
-                          .Then()
-                          .ScaleTo(1f, 1000, new CubicBezierEasingFunction(easeIn: 0.1f, easeOut: 1f));
         }
 
         private partial class SelectionOutline : CompositeDrawable
