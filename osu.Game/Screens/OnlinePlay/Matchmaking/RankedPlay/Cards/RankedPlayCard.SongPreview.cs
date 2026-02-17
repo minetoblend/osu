@@ -110,6 +110,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
                         TrackRunning = trackRunning.GetBoundCopy(),
                     });
 
+                    track.Looping = true;
                     track.Started += onTrackStarted;
                     track.Stopped += onTrackStopped;
 
