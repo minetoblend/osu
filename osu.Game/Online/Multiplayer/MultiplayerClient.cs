@@ -1172,7 +1172,7 @@ namespace osu.Game.Online.Multiplayer
         {
             handleRoomRequest(() =>
             {
-                GetCardWithPlaylistItem(card).PlaylistItem.Value = item;
+                GetCardWithPlaylistItem(card).PlaylistItemRevealed(item);
                 RoomUpdated?.Invoke();
             });
 

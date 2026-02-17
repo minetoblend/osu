@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 using osu.Framework.Allocation;
 using osu.Framework.Audio;
 using osu.Framework.Audio.Sample;
-using osu.Framework.Bindables;
 using osu.Framework.Extensions.Color4Extensions;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
@@ -15,7 +14,7 @@ using osu.Framework.Graphics.Transforms;
 using osu.Framework.Logging;
 using osu.Game.Audio;
 using osu.Game.Database;
-using osu.Game.Online.Rooms;
+using osu.Game.Online.Multiplayer;
 using osuTK;
 using osuTK.Graphics;
 
@@ -29,8 +28,6 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
         public static readonly float CORNER_RADIUS = 6;
 
         public readonly RankedPlayCardWithPlaylistItem Item;
-
-        private readonly IBindable<MultiplayerPlaylistItem?> playlistItem;
 
         private readonly Container content;
         private readonly Container cardContent;
@@ -62,8 +59,6 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
             Item = item;
 
             Size = SIZE;
-
-            playlistItem = item.PlaylistItem.GetBoundCopy();
 
             InternalChild = pulseContainer = new Container
             {
@@ -125,9 +120,23 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
         {
             base.LoadComplete();
 
-            playlistItem.BindValueChanged(e => onPlaylistItemChanged(e.NewValue));
-            if (playlistItem.Value != null)
-                loadCardContent(playlistItem.Value, false);
+            loadBeatmap().FireAndForget();
+        }
+
+        private async Task loadBeatmap()
+        {
+            var playlistItem = await Item.PlaylistItem.ConfigureAwait(false);
+            var beatmap = await beatmapLookupCache.GetBeatmapAsync(playlistItem.BeatmapID).ConfigureAwait(false);
+
+            cardRevealed.TrySetResult();
+
+            if (beatmap == null)
+            {
+                Logger.Log($"Failed to load beatmap {playlistItem.BeatmapID} for playlistItem {playlistItem.ID}.", level: LogLevel.Error);
+                return;
+            }
+
+            Schedule(() => SetContent(new RankedPlayCardContent(beatmap), true));
         }
 
         protected override void UpdateAfterChildren()
@@ -144,32 +153,6 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
         private readonly TaskCompletionSource cardRevealed = new TaskCompletionSource();
 
         public Task CardRevealed => cardRevealed.Task;
-
-        private void onPlaylistItemChanged(MultiplayerPlaylistItem? playlistItem)
-        {
-            if (playlistItem == null)
-            {
-                SetContent(new RankedPlayCardBackSide(), true);
-                return;
-            }
-
-            loadCardContent(playlistItem, true);
-        }
-
-        private void loadCardContent(MultiplayerPlaylistItem playlistItem, bool flip) => Task.Run(async () =>
-        {
-            var beatmap = await beatmapLookupCache.GetBeatmapAsync(playlistItem.BeatmapID).ConfigureAwait(false);
-
-            cardRevealed.TrySetResult();
-
-            if (beatmap == null)
-            {
-                Logger.Log($"Failed to load beatmap {playlistItem.BeatmapID} for playlistItem {playlistItem.ID}.", level: LogLevel.Error);
-                return;
-            }
-
-            Schedule(() => SetContent(new RankedPlayCardContent(beatmap), flip));
-        });
 
         public void SetContent(Drawable newContent, bool flip)
         {

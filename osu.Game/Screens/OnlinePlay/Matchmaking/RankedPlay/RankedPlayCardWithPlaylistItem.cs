@@ -2,7 +2,7 @@
 // See the LICENCE file in the repository root for full licence text.
 
 using System;
-using osu.Framework.Bindables;
+using System.Threading.Tasks;
 using osu.Game.Online.Multiplayer.MatchTypes.RankedPlay;
 using osu.Game.Online.Rooms;
 
@@ -10,12 +10,23 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 {
     public class RankedPlayCardWithPlaylistItem : IEquatable<RankedPlayCardWithPlaylistItem>
     {
-        public readonly Bindable<MultiplayerPlaylistItem?> PlaylistItem = new Bindable<MultiplayerPlaylistItem?>();
         public readonly RankedPlayCardItem Card;
+
+        /// <summary>
+        /// Completes once the playlistItem for the given card is revealed to the local player.
+        /// </summary>
+        public Task<MultiplayerPlaylistItem> PlaylistItem => playlistItemTaskCompletionSource.Task;
+
+        private readonly TaskCompletionSource<MultiplayerPlaylistItem> playlistItemTaskCompletionSource = new TaskCompletionSource<MultiplayerPlaylistItem>();
 
         public RankedPlayCardWithPlaylistItem(RankedPlayCardItem card)
         {
             Card = card;
+        }
+
+        public void PlaylistItemRevealed(MultiplayerPlaylistItem item)
+        {
+            playlistItemTaskCompletionSource.SetResult(item);
         }
 
         public bool Equals(RankedPlayCardWithPlaylistItem? other)
