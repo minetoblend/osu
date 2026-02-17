@@ -101,6 +101,8 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
                 {
                     AddInternal(track);
 
+                    track.Looping = true;
+
                     var cardColours = new RankedPlayCardContent.CardColours(beatmap, osuColour);
 
                     overlayLayer.Add(new RippleVisualization(cardColours.Border)
@@ -130,7 +132,13 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
 
             private void onTrackStarted() => Schedule(() => trackRunning.Value = true);
 
-            private void onTrackStopped() => Schedule(() => trackRunning.Value = false);
+            private void onTrackStopped() => Schedule(() =>
+            {
+                Debug.Assert(previewTrack != null);
+                Debug.Assert(previewTrack.TrackLoaded);
+
+                trackRunning.Value = false;
+            });
 
             private void startPreviewIfAvailable() => previewTrack?.Start();
 
