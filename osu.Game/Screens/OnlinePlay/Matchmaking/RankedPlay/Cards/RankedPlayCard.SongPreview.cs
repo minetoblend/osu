@@ -5,16 +5,23 @@ using System.Diagnostics;
 using osu.Framework.Allocation;
 using osu.Framework.Audio;
 using osu.Framework.Audio.Track;
+using osu.Framework.Bindables;
+using osu.Framework.Extensions.Color4Extensions;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
+using osu.Framework.Graphics.Effects;
+using osu.Framework.Graphics.Shapes;
 using osu.Framework.Graphics.Transforms;
 using osu.Framework.Input.Events;
 using osu.Framework.Timing;
 using osu.Game.Audio;
 using osu.Game.Beatmaps;
 using osu.Game.Beatmaps.ControlPoints;
+using osu.Game.Graphics;
 using osu.Game.Graphics.Containers;
 using osu.Game.Online.API.Requests.Responses;
+using osuTK;
+using osuTK.Graphics;
 
 namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
 {
@@ -22,16 +29,24 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
     {
         public partial class SongPreviewContainer : Container, IBeatSyncProvider
         {
+            private const double minimum_beat_length = 800;
+
+            protected override Container<Drawable> Content { get; }
+
+            private readonly Bindable<bool> trackRunning = new BindableBool();
+            private readonly Container overlayLayer;
+
             [Resolved]
             private PreviewTrackManager previewTrackManager { get; set; } = null!;
 
-            protected override Container<Drawable> Content { get; }
+            [Resolved]
+            private OsuColour osuColour { get; set; } = null!;
 
             public SongPreviewContainer()
             {
                 InternalChildren =
                 [
-                    new PulsingContainer
+                    new PulseContainer
                     {
                         RelativeSizeAxes = Axes.Both,
                         Anchor = Anchor.Centre,
@@ -42,6 +57,10 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
                             {
                                 RelativeSizeAxes = Axes.Both,
                             },
+                            overlayLayer = new Container
+                            {
+                                RelativeSizeAxes = Axes.Both,
+                            }
                         ]
                     },
                 ];
@@ -57,6 +76,16 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
                 {
                     AddInternal(track);
 
+                    var cardColours = new RankedPlayCardContent.CardColours(beatmap, osuColour);
+
+                    overlayLayer.Add(new RippleVisualization(cardColours.Border)
+                    {
+                        TrackRunning = trackRunning.GetBoundCopy(),
+                    });
+
+                    track.Started += onTrackStarted;
+                    track.Stopped += onTrackStopped;
+
                     setupBeatSyncProvider(track, beatmap);
 
                     if (IsHovered)
@@ -71,20 +100,11 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
                 return base.OnHover(e);
             }
 
+            private void onTrackStarted() => Schedule(() => trackRunning.Value = true);
+
+            private void onTrackStopped() => Schedule(() => trackRunning.Value = false);
+
             private void startPreviewIfAvailable() => previewTrack?.Start();
-
-            private partial class PulsingContainer : BeatSyncedContainer
-            {
-                protected override void OnNewBeat(int beatIndex, TimingControlPoint timingPoint, EffectControlPoint effectPoint, ChannelAmplitudes amplitudes)
-                {
-                    if (!IsBeatSyncedWithTrack)
-                        return;
-
-                    this.ScaleTo(1.02f, timingPoint.BeatLength * 0.2f)
-                        .Then()
-                        .ScaleTo(1f, timingPoint.BeatLength, new CubicBezierEasingFunction(easeIn: 0.1f, easeOut: 1f));
-                }
-            }
 
             #region IBeatSyncProvider implementation
 
@@ -115,6 +135,143 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
             }
 
             #endregion
+
+            private partial class PulseContainer : BeatSyncedContainer
+            {
+                public const double EXPAND_DURATION = 200;
+
+                public PulseContainer()
+                {
+                    MinimumBeatLength = minimum_beat_length;
+                }
+
+                protected override void OnNewBeat(int beatIndex, TimingControlPoint timingPoint, EffectControlPoint effectPoint, ChannelAmplitudes amplitudes)
+                {
+                    if (!IsBeatSyncedWithTrack)
+                        return;
+
+                    double beatLength = TimeUntilNextBeat;
+
+                    this.ScaleTo(1.02f, EXPAND_DURATION, Easing.In)
+                        .Then()
+                        .ScaleTo(1f, beatLength - EXPAND_DURATION, new CubicBezierEasingFunction(easeIn: 0.1f, easeOut: 1f));
+                }
+            }
+
+            private partial class RippleVisualization : BeatSyncedContainer
+            {
+                [Resolved]
+                private SongPreviewParticleContainer? particleContainer { get; set; }
+
+                public required IBindable<bool> TrackRunning { get; init; }
+
+                private readonly Color4 accentColour;
+                private readonly Container rippleContainer;
+
+                public RippleVisualization(Color4 accentColour)
+                {
+                    this.accentColour = accentColour;
+
+                    MinimumBeatLength = minimum_beat_length;
+
+                    RelativeSizeAxes = Axes.Both;
+
+                    InternalChildren =
+                    [
+                        new Container
+                        {
+                            RelativeSizeAxes = Axes.Both,
+                            Masking = true,
+                            CornerRadius = CORNER_RADIUS + 1.5f,
+                            Blending = BlendingParameters.Additive,
+                            BorderThickness = 2f,
+                            BorderColour = this.accentColour.Opacity(0.5f),
+                            EdgeEffect = new EdgeEffectParameters
+                            {
+                                Colour = this.accentColour.Opacity(0.1f),
+                                Type = EdgeEffectType.Glow,
+                                Radius = 25f,
+                                Hollow = true,
+                            },
+                            Child = new Box
+                            {
+                                RelativeSizeAxes = Axes.Both,
+                                Alpha = 0,
+                                AlwaysPresent = true,
+                                EdgeSmoothness = new Vector2(3),
+                            },
+                        },
+                        rippleContainer = new Container
+                        {
+                            RelativeSizeAxes = Axes.Both,
+                        }
+                    ];
+                }
+
+                protected override void LoadComplete()
+                {
+                    base.LoadComplete();
+
+                    TrackRunning.BindValueChanged(e =>
+                    {
+                        if (e.NewValue)
+                        {
+                            rippleContainer.Clear();
+                            this.FadeIn(100);
+                        }
+                        else
+                        {
+                            this.FadeOut(200);
+                        }
+                    }, true);
+                }
+
+                protected override void OnNewBeat(int beatIndex, TimingControlPoint timingPoint, EffectControlPoint effectPoint, ChannelAmplitudes amplitudes)
+                {
+                    if (!IsBeatSyncedWithTrack)
+                        return;
+
+                    var ripple = new Container
+                    {
+                        Size = DrawSize,
+                        Anchor = Anchor.Centre,
+                        Origin = Anchor.Centre,
+                        Masking = true,
+                        CornerRadius = CORNER_RADIUS,
+                        BorderThickness = 2,
+                        BorderColour = accentColour,
+                        Blending = BlendingParameters.Additive,
+                        Child = new Box
+                        {
+                            RelativeSizeAxes = Axes.Both,
+                            Alpha = 0,
+                            AlwaysPresent = true,
+                        },
+                        Alpha = 0,
+                    };
+
+                    rippleContainer.Add(ripple);
+
+                    const float expansion = 20;
+
+                    // The animation here is delayed to be in sync with the pulse-container's expansion animation.
+                    // Since the pulse container expands with ease-out, the animation starts a tiny bit
+                    // earlier, so it looks like it's maintaining the momentum of the pulse container's expansion
+                    using (BeginDelayedSequence(PulseContainer.EXPAND_DURATION - 50))
+                    {
+                        ripple.FadeIn(200)
+                              .Then()
+                              .FadeOut(1000);
+
+                        ripple.ResizeTo(DrawSize + new Vector2(expansion), 1000, Easing.OutQuart)
+                              .TransformTo(nameof(CornerRadius), CORNER_RADIUS + expansion / 2, 1000, Easing.OutQuart)
+                              .TransformTo(nameof(BorderThickness), 0.5f, 1000, Easing.In)
+                              .Expire();
+
+                        Schedule(() => particleContainer?.AddParticles(this, accentColour));
+                    }
+                }
+            }
         }
     }
 }
