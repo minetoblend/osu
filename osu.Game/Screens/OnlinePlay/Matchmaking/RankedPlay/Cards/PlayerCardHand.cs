@@ -11,6 +11,7 @@ using osu.Framework.Bindables;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Sprites;
+using osu.Framework.Graphics.Transforms;
 using osu.Framework.Input.Events;
 using osu.Game.Audio;
 using osu.Game.Graphics;
@@ -159,6 +160,15 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
             private const float swipe_threshold = 0.3f;
 
             private float swipeProgress;
+
+            private Vector2 targetDragPosition;
+
+            private readonly Vector2Spring dragPositionSpring = new Vector2Spring
+            {
+                NaturalFrequency = 4f,
+                Damping = 0.7f,
+                Response = 0.5f,
+            };
 
             [Resolved]
             private PlayerCardHand cardHand { get; set; } = null!;
@@ -351,6 +361,9 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
 
                 Schedule(updatePlayButtonVisibility);
 
+                dragPositionSpring.Current = Vector2.Zero;
+                dragPositionSpring.PreviousTarget = Vector2.Zero;
+
                 return true;
             }
 
@@ -358,22 +371,32 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
             {
                 base.OnDrag(e);
 
-                var change = e.MousePosition - e.MouseDownPosition;
+                targetDragPosition = e.MousePosition - e.MouseDownPosition;
+            }
 
-                swipeProgress = MathF.Pow(float.Max(-change.Y / 600f, 0), 0.8f);
+            protected override void Update()
+            {
+                base.Update();
 
-                Card.Y = swipeProgress * -160;
-                Card.X = change.X * 0.1f;
-                Card.Rotation = Card.X * 0.1f;
+                if (IsDragged)
+                {
+                    var dragPosition = dragPositionSpring.Update(Time.Elapsed, targetDragPosition);
 
-                swipeRevealContainer.Y = 10 - Math.Min(8, swipeProgress * 10);
+                    swipeProgress = MathF.Pow(float.Max(-dragPosition.Y / 600f, 0), 0.8f);
 
-                swipeArrows.Y = -(5 + Math.Min(30, (swipeProgress * 50)));
-                swipeRevealText.Y = -Math.Min(9, swipeProgress * 15);
+                    Card.Y = swipeProgress * -160;
+                    Card.X = dragPosition.X * 0.1f;
+                    Card.Rotation = Card.X * 0.1f;
 
-                swipeArrows.Height = Math.Min(20, 10 + swipeProgress * 18);
+                    swipeRevealContainer.Y = 10 - Math.Min(8, swipeProgress * 10);
 
-                swipeRevealContainer.Alpha = float.Clamp((swipeProgress - swipe_threshold / 2) * 10f, 0, 1);
+                    swipeArrows.Y = -(5 + Math.Min(30, (swipeProgress * 50)));
+                    swipeRevealText.Y = -Math.Min(9, swipeProgress * 15);
+
+                    swipeArrows.Height = Math.Min(20, 10 + swipeProgress * 18);
+
+                    swipeRevealContainer.Alpha = float.Clamp((swipeProgress - swipe_threshold / 2) * 10f, 0, 1);
+                }
             }
 
             protected override void OnDragEnd(DragEndEvent e)
