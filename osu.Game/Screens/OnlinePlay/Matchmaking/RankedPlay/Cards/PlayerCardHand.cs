@@ -14,6 +14,7 @@ using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Sprites;
 using osu.Framework.Graphics.Transforms;
 using osu.Framework.Input.Events;
+using osu.Framework.Utils;
 using osu.Game.Audio;
 using osu.Game.Graphics;
 using osu.Game.Graphics.Sprites;
@@ -158,7 +159,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
 
         public partial class PlayerHandCard : HandCard
         {
-            private const float swipe_threshold = 0.3f;
+            private const float swipe_threshold = 0.2f;
 
             private float swipeProgress;
 
@@ -396,7 +397,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
 
                     swipeArrows.Height = remap(swipeProgress, from: (0, 0.55f), to: (10, 20));
 
-                    swipeRevealContainer.Alpha = float.Clamp((swipeProgress - swipe_threshold / 2) * 10f, 0, 1);
+                    swipeRevealContainer.Alpha = (float)Interpolation.DampContinuously(swipeRevealContainer.Alpha, swipeProgress > swipe_threshold ? 1 : 0, 30, Time.Elapsed);
                 }
             }
 
