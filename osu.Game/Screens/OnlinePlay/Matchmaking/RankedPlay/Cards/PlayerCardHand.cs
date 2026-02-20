@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using osu.Framework.Allocation;
 using osu.Framework.Audio;
@@ -388,15 +389,27 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
                     Card.X = dragPosition.X * 0.1f;
                     Card.Rotation = Card.X * 0.1f;
 
-                    swipeRevealContainer.Y = 10 - Math.Min(8, swipeProgress * 10);
+                    swipeRevealContainer.Y = remap(swipeProgress, (0, 0.8f), (10, 2));
 
-                    swipeArrows.Y = -(5 + Math.Min(30, (swipeProgress * 50)));
-                    swipeRevealText.Y = -Math.Min(9, swipeProgress * 15);
+                    swipeArrows.Y = remap(swipeProgress, from: (0, 0.6f), to: (-5, -35));
+                    swipeRevealText.Y = remap(swipeProgress, from: (0, 0.6f), to: (0, -9));
 
-                    swipeArrows.Height = Math.Min(20, 10 + swipeProgress * 18);
+                    swipeArrows.Height = remap(swipeProgress, from: (0, 0.55f), to: (10, 20));
 
                     swipeRevealContainer.Alpha = float.Clamp((swipeProgress - swipe_threshold / 2) * 10f, 0, 1);
                 }
+            }
+
+            /// <summary>
+            /// Remaps a value from one range to another while clamping the input value to the input range.
+            /// </summary>
+            private static float remap(float value, (float lower, float upper) from, (float lower, float upper) to)
+            {
+                Debug.Assert(from.upper != from.lower);
+
+                float progress = float.Clamp((value - from.lower) / (from.upper - from.lower), 0, 1);
+
+                return progress * (to.upper - to.lower) + to.lower;
             }
 
             protected override void OnDragEnd(DragEndEvent e)
