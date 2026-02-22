@@ -390,12 +390,12 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
                     Card.X = dragPosition.X * 0.1f;
                     Card.Rotation = Card.X * 0.1f;
 
-                    swipeRevealContainer.Y = remap(swipeProgress, (0, 0.8f), (10, 2));
+                    swipeRevealContainer.Y = remapClamped(swipeProgress, (0, 0.8f), (10, 2));
 
-                    swipeArrows.Y = remap(swipeProgress, from: (0, 0.6f), to: (-5, -35));
-                    swipeRevealText.Y = remap(swipeProgress, from: (0, 0.6f), to: (0, -9));
+                    swipeArrows.Y = remapClamped(swipeProgress, from: (0, 0.6f), to: (-5, -35));
+                    swipeRevealText.Y = remapClamped(swipeProgress, from: (0, 0.6f), to: (0, -9));
 
-                    swipeArrows.Height = remap(swipeProgress, from: (0, 0.55f), to: (10, 20));
+                    swipeArrows.Height = remapClamped(swipeProgress, from: (0, 0.55f), to: (10, 20));
 
                     swipeRevealContainer.Alpha = (float)Interpolation.DampContinuously(swipeRevealContainer.Alpha, swipeProgress > swipe_threshold ? 1 : 0, 30, Time.Elapsed);
                 }
@@ -404,7 +404,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
             /// <summary>
             /// Remaps a value from one range to another while clamping the input value to the input range.
             /// </summary>
-            private static float remap(float value, (float lower, float upper) from, (float lower, float upper) to)
+            private static float remapClamped(float value, (float lower, float upper) from, (float lower, float upper) to)
             {
                 Debug.Assert(from.upper != from.lower);
 
