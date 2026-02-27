@@ -137,37 +137,11 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
             }
         }
 
-        private ScreenScaffold? scaffold;
-
         [Resolved]
         private RankedPlayMatchInfo matchInfo { get; set; } = null!;
 
-        [Resolved]
-        private OsuColour colour { get; set; } = null!;
-
-        private static Vector2 cardSize => new Vector2(950, 550);
-
-        private readonly Bindable<Visibility> cornerPieceVisibility = new Bindable<Visibility>();
-        private readonly Bindable<float> scoreBarProgress = new Bindable<float>();
-
-        private Box flash = null!;
-        private ScoreDetails playerScoreDetails = null!;
-        private ScoreDetails opponentScoreDetails = null!;
-        private ScoreCounter playerScoreCounter = null!;
-        private ScoreCounter opponentScoreCounter = null!;
-        private ScoreCounter damageCounter = null!;
-        private OsuSpriteText flyingDamageText = null!;
-        private ScoreBar playerScoreBar = null!;
-        private ScoreBar opponentScoreBar = null!;
-        private OsuSpriteText roundNumber = null!;
-        private RankedPlayUserDisplay playerUserDisplay = null!;
-        private RankedPlayUserDisplay opponentUserDisplay = null!;
-
         private void setScores(ScoreInfo[] scores) => Scheduler.Add(() =>
         {
-            int playerId = client.LocalUser!.UserID;
-            int opponentId = matchInfo.RoomState.Users.Keys.Single(u => u != playerId);
-
             ScoreInfo playerScore = scores.SingleOrDefault(s => s.UserID == api.LocalUser.Value.OnlineID) ?? new ScoreInfo
             {
                 Rank = ScoreRank.F,
@@ -186,390 +160,443 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                                       .OfType<RankedPlayDamageInfo>()
                                       .MaxBy(it => it.Damage)!;
 
-            AddInternal(scaffold = new ScreenScaffold
+            AddInternal(new ResultScreenContent(playerScore, opponentScore, damageInfo)
             {
-                Anchor = Anchor.Centre,
-                Origin = Anchor.Centre,
-                Children =
-                [
-                    new RankedPlayCornerPiece(RankedPlayColourScheme.Blue, Anchor.BottomLeft)
-                    {
-                        Anchor = Anchor.BottomLeft,
-                        Origin = Anchor.BottomLeft,
-                        State = { BindTarget = cornerPieceVisibility },
-                        Child = playerUserDisplay = new RankedPlayUserDisplay(playerId, Anchor.BottomLeft, RankedPlayColourScheme.Blue)
-                        {
-                            RelativeSizeAxes = Axes.Both,
-                            Health = { Value = getDamageInfo(playerId).OldLife }
-                        }
-                    },
-                    new RankedPlayCornerPiece(RankedPlayColourScheme.Red, Anchor.BottomRight)
-                    {
-                        Anchor = Anchor.BottomRight,
-                        Origin = Anchor.BottomRight,
-                        State = { BindTarget = cornerPieceVisibility },
-                        Child = opponentUserDisplay = new RankedPlayUserDisplay(opponentId, Anchor.BottomRight, RankedPlayColourScheme.Red)
-                        {
-                            RelativeSizeAxes = Axes.Both,
-                            Health = { Value = getDamageInfo(opponentId).OldLife }
-                        }
-                    },
-                    new Container
-                    {
-                        RelativeSizeAxes = Axes.X,
-                        Height = 110,
-                        Anchor = Anchor.BottomCentre,
-                        Origin = Anchor.BottomCentre,
-                        Padding = new MarginPadding { Bottom = 30 },
-                        Child = roundNumber = new OsuSpriteText
-                        {
-                            Text = $"Round {matchInfo.CurrentRound}",
-                            Anchor = Anchor.Centre,
-                            Origin = Anchor.Centre,
-                            Font = OsuFont.GetFont(size: 36, weight: FontWeight.Bold, typeface: Typeface.TorusAlternate),
-                            Alpha = 0,
-                        },
-                    },
-                    new GridContainer
-                    {
-                        Anchor = Anchor.Centre,
-                        Origin = Anchor.Centre,
-                        Size = cardSize,
-                        Padding = new MarginPadding { Bottom = 110, Top = 60, Horizontal = 60 },
-                        ColumnDimensions =
-                        [
-                            new Dimension(),
-                            new Dimension(GridSizeMode.Absolute, 40),
-                            new Dimension(GridSizeMode.Absolute, 60),
-                            new Dimension(GridSizeMode.Absolute, 10),
-                            new Dimension(GridSizeMode.Absolute, 60),
-                            new Dimension(GridSizeMode.Absolute, 40),
-                            new Dimension(),
-                        ],
-                        Content = new Drawable?[][]
-                        {
-                            [
-                                new GridContainer
-                                {
-                                    RelativeSizeAxes = Axes.Both,
-                                    RowDimensions =
-                                    [
-                                        new Dimension(),
-                                        new Dimension(GridSizeMode.AutoSize)
-                                    ],
-                                    Content = new Drawable[][]
-                                    {
-                                        [
-                                            playerScoreDetails = new ScoreDetails(playerScore, RankedPlayColourScheme.Blue)
-                                            {
-                                                RelativeSizeAxes = Axes.Both,
-                                                Alpha = 0,
-                                            },
-                                        ],
-                                        [
-                                            playerScoreCounter = new ScoreCounter(numDigits(playerScore.TotalScore))
-                                            {
-                                                Font = OsuFont.GetFont(size: 60, fixedWidth: true),
-                                                Anchor = Anchor.Centre,
-                                                Origin = Anchor.Centre,
-                                                Spacing = new Vector2(-4),
-                                                Alpha = 0,
-                                                AlwaysPresent = true,
-                                            }
-                                        ]
-                                    }
-                                },
-                                null,
-                                playerScoreBar = new ScoreBar(RankedPlayColourScheme.Blue)
-                                {
-                                    RelativeSizeAxes = Axes.Both,
-                                    Height = 0,
-                                    Anchor = Anchor.BottomCentre,
-                                    Origin = Anchor.BottomCentre,
-                                    Alpha = 0,
-                                },
-                                null,
-                                opponentScoreBar = new ScoreBar(RankedPlayColourScheme.Red)
-                                {
-                                    RelativeSizeAxes = Axes.Both,
-                                    Height = 0,
-                                    Anchor = Anchor.BottomCentre,
-                                    Origin = Anchor.BottomCentre,
-                                    Alpha = 0,
-                                },
-                                null,
-                                new GridContainer
-                                {
-                                    RelativeSizeAxes = Axes.Both,
-                                    RowDimensions =
-                                    [
-                                        new Dimension(),
-                                        new Dimension(GridSizeMode.AutoSize)
-                                    ],
-                                    Content = new Drawable[][]
-                                    {
-                                        [
-                                            opponentScoreDetails = new ScoreDetails(opponentScore, RankedPlayColourScheme.Red)
-                                            {
-                                                RelativeSizeAxes = Axes.Both,
-                                                Alpha = 0,
-                                            },
-                                        ],
-                                        [
-                                            opponentScoreCounter = new ScoreCounter(numDigits(opponentScore.TotalScore))
-                                            {
-                                                Font = OsuFont.GetFont(size: 60, fixedWidth: true),
-                                                Anchor = Anchor.Centre,
-                                                Origin = Anchor.Centre,
-                                                Spacing = new Vector2(-4),
-                                                Alpha = 0,
-                                                AlwaysPresent = true,
-                                            }
-                                        ]
-                                    }
-                                },
-                            ]
-                        }
-                    },
-                    flash = new Box
-                    {
-                        RelativeSizeAxes = Axes.Both,
-                    },
-                ],
-                BottomOrnament =
-                {
-                    Size = new Vector2(200, 60),
-                    Alpha = 0,
-                    Children =
-                    [
-                        new Container
-                        {
-                            AutoSizeAxes = Axes.Both,
-                            Anchor = Anchor.Centre,
-                            Origin = Anchor.Centre,
-                            Children =
-                            [
-                                damageCounter = new ScoreCounter(numDigits(damageInfo.Damage))
-                                {
-                                    Font = OsuFont.GetFont(size: 36, weight: FontWeight.SemiBold, fixedWidth: true),
-                                    Spacing = new Vector2(-2),
-                                },
-                                flyingDamageText = new OsuSpriteText
-                                {
-                                    Text = FormattableString.Invariant($"{damageInfo.Damage:N0}"),
-                                    Font = OsuFont.GetFont(size: 36, weight: FontWeight.SemiBold, fixedWidth: true),
-                                    Spacing = new Vector2(-2),
-                                    Anchor = Anchor.Centre,
-                                    Origin = Anchor.Centre,
-                                    BypassAutoSizeAxes = Axes.Both,
-                                    Alpha = 0,
-                                },
-                                new OsuSpriteText
-                                {
-                                    BypassAutoSizeAxes = Axes.Both,
-                                    Text = $"{matchInfo.RoomState.DamageMultiplier.ToStandardFormattedString(maxDecimalDigits: 1)}x",
-                                    Anchor = Anchor.CentreRight,
-                                    Origin = Anchor.Centre,
-                                    Font = OsuFont.GetFont(weight: FontWeight.SemiBold, size: 42),
-                                    Rotation = 30,
-                                    Alpha = 0,
-                                    Colour = colour.RedLight
-                                },
-                            ]
-                        },
-                        new OsuSpriteText
-                        {
-                            Text = Precision.AlmostEquals(matchInfo.RoomState.DamageMultiplier, 1)
-                                ? "Damage"
-                                : $"Damage {matchInfo.RoomState.DamageMultiplier.ToStandardFormattedString(maxDecimalDigits: 1)}x",
-                            Anchor = Anchor.TopCentre,
-                            Origin = Anchor.Centre,
-                            Font = OsuFont.GetFont(weight: FontWeight.SemiBold, size: 22),
-                        },
-                    ]
-                }
+                RelativeSizeAxes = Axes.Both,
             });
-
-            double delay = 0;
-
-            appear(ref delay);
-
-            animateCountersAndScoreBars(ref delay, playerScore, opponentScore, damageInfo);
-
-            showScoreInfo(ref delay);
-
-            updateHealthBars(ref delay, playerScore, opponentScore, getDamageInfo(playerId).NewLife, getDamageInfo(opponentId).NewLife);
         });
 
-        private void appear(ref double delay)
+        private partial class ResultScreenContent : CompositeDrawable
         {
-            scaffold!.FadeIn(100)
-                     .ResizeTo(0)
-                     .ResizeTo(cardSize with { Y = 30 }, 600, Easing.OutExpo)
-                     // deliberately cutting this delay 300ms short so the vertical resize interrupts the horizontal one
-                     .Delay(300)
-                     .ResizeHeightTo(cardSize.Y, 800, Easing.OutExpo);
+            private readonly ScoreInfo playerScore;
+            private readonly ScoreInfo opponentScore;
+            private readonly RankedPlayDamageInfo damageInfo;
 
-            flash.Delay(150)
-                 .FadeOut(600, Easing.Out);
+            [Resolved]
+            private RankedPlayMatchInfo matchInfo { get; set; } = null!;
 
-            Scheduler.AddDelayed(() => cornerPieceVisibility.Value = Visibility.Visible, 700);
+            [Resolved]
+            private OsuColour colour { get; set; } = null!;
 
-            scaffold!.BottomOrnament
-                     .Delay(900)
-                     .FadeIn(300)
-                     .ResizeWidthTo(cardSize.X - 550, 600, Easing.OutExpo);
+            private static Vector2 cardSize => new Vector2(950, 550);
 
-            roundNumber.Delay(700).FadeIn(600);
-            playerScoreCounter.Delay(700).FadeIn(600);
-            opponentScoreCounter.Delay(700).FadeIn(600);
+            private readonly Bindable<Visibility> cornerPieceVisibility = new Bindable<Visibility>();
+            private readonly Bindable<float> scoreBarProgress = new Bindable<float>();
 
-            delay += 1000;
-        }
+            private ScreenScaffold scaffold = null!;
+            private Box flash = null!;
+            private ScoreDetails playerScoreDetails = null!;
+            private ScoreDetails opponentScoreDetails = null!;
+            private ScoreCounter playerScoreCounter = null!;
+            private ScoreCounter opponentScoreCounter = null!;
+            private ScoreCounter damageCounter = null!;
+            private OsuSpriteText flyingDamageText = null!;
+            private ScoreBar playerScoreBar = null!;
+            private ScoreBar opponentScoreBar = null!;
+            private OsuSpriteText roundNumber = null!;
+            private RankedPlayUserDisplay playerUserDisplay = null!;
+            private RankedPlayUserDisplay opponentUserDisplay = null!;
 
-        private void animateCountersAndScoreBars(ref double delay, ScoreInfo playerScore, ScoreInfo opponentScore, RankedPlayDamageInfo damageInfo)
-        {
-            using (BeginDelayedSequence(delay))
+            public ResultScreenContent(ScoreInfo playerScore, ScoreInfo opponentScore, RankedPlayDamageInfo damageInfo)
             {
-                const double score_text_duration = 2000;
-
-                playerScoreCounter.TransformValueTo(playerScore.TotalScore, score_text_duration - 500);
-                opponentScoreCounter.TransformValueTo(opponentScore.TotalScore, score_text_duration - 500);
-
-                damageCounter.TransformValueTo(damageInfo.RawDamage, score_text_duration - 500);
-
-                long maxAchievableScore = Math.Max(
-                    Math.Max(playerScore.TotalScore, opponentScore.TotalScore),
-                    1_000_000
-                );
-
-                float playerScorePercent = (float)playerScore.TotalScore / maxAchievableScore;
-                float opponentScorePercent = (float)opponentScore.TotalScore / maxAchievableScore;
-                float maxScorePercent = Math.Max(playerScorePercent, opponentScorePercent);
-
-                playerScoreBar.FadeIn(100);
-                opponentScoreBar.FadeIn(100);
-
-                this.TransformBindableTo(scoreBarProgress, maxScorePercent, score_text_duration, new CubicBezierEasingFunction(easeIn: 0.4, easeOut: 1));
-
-                scoreBarProgress.BindValueChanged(e =>
-                {
-                    playerScoreBar.Height = float.Lerp(0.05f, 1f, Math.Min(e.NewValue, playerScorePercent));
-                    opponentScoreBar.Height = float.Lerp(0.05f, 1f, Math.Min(e.NewValue, opponentScorePercent));
-                });
+                this.playerScore = playerScore;
+                this.opponentScore = opponentScore;
+                this.damageInfo = damageInfo;
             }
 
-            delay += 2200;
-        }
-
-        private void updateHealthBars(
-            ref double delay,
-            ScoreInfo playerScore,
-            ScoreInfo opponentScore,
-            int playerHealth,
-            int opponentHealth
-        )
-        {
-            using (BeginDelayedSequence(delay))
+            [BackgroundDependencyLoader]
+            private void load()
             {
-                Schedule(() =>
+                AddInternal(scaffold = new ScreenScaffold
                 {
-                    RankedPlayUserDisplay userDisplay =
-                        playerScore.TotalScore > opponentScore.TotalScore
-                            ? opponentUserDisplay
-                            : playerUserDisplay;
-
-                    Vector2 screenSpacePosition = userDisplay.HealthDisplay.ScreenSpaceImpactPosition;
-
-                    Scheduler.AddDelayed(() => userDisplay.Shake(shakeDuration: 60, shakeMagnitude: 2, maximumLength: 120), 400);
-
-                    var position = flyingDamageText.Parent!.ToLocalSpace(screenSpacePosition) - flyingDamageText.AnchorPosition;
-
-                    damageCounter.FadeOut()
-                                 .Delay(200)
-                                 .FadeIn(300)
-                                 .ScaleTo(0.9f)
-                                 .ScaleTo(1f, 300, Easing.OutElasticHalf);
-
-                    flyingDamageText.FadeIn()
-                                    .MoveTo(position, 400, Easing.InCubic)
-                                    .ScaleTo(0.75f, 400, new CubicBezierEasingFunction(easeIn: 0.35, easeOut: 0.5))
-                                    .RotateTo(12 * Math.Sign(position.X), 400, new CubicBezierEasingFunction(easeIn: 0.35, easeOut: 0.5))
-                                    .Then()
-                                    .FadeOut();
-
-                    Scheduler.AddDelayed(() =>
-                    {
-                        for (int i = 0; i < 10; i++)
+                    Anchor = Anchor.Centre,
+                    Origin = Anchor.Centre,
+                    Children =
+                    [
+                        new RankedPlayCornerPiece(RankedPlayColourScheme.Blue, Anchor.BottomLeft)
                         {
-                            var particle = new Particle
+                            Anchor = Anchor.BottomLeft,
+                            Origin = Anchor.BottomLeft,
+                            State = { BindTarget = cornerPieceVisibility },
+                            Child = playerUserDisplay = new RankedPlayUserDisplay(playerScore.UserID, Anchor.BottomLeft, RankedPlayColourScheme.Blue)
                             {
-                                Size = new Vector2(RNG.NextSingle(5, 15)),
+                                RelativeSizeAxes = Axes.Both,
+                                Health = { Value = getDamageInfo(opponentScore.UserID).OldLife }
+                            }
+                        },
+                        new RankedPlayCornerPiece(RankedPlayColourScheme.Red, Anchor.BottomRight)
+                        {
+                            Anchor = Anchor.BottomRight,
+                            Origin = Anchor.BottomRight,
+                            State = { BindTarget = cornerPieceVisibility },
+                            Child = opponentUserDisplay = new RankedPlayUserDisplay(opponentScore.UserID, Anchor.BottomRight, RankedPlayColourScheme.Red)
+                            {
+                                RelativeSizeAxes = Axes.Both,
+                                Health = { Value = getDamageInfo(opponentScore.UserID).OldLife }
+                            }
+                        },
+                        new Container
+                        {
+                            RelativeSizeAxes = Axes.X,
+                            Height = 110,
+                            Anchor = Anchor.BottomCentre,
+                            Origin = Anchor.BottomCentre,
+                            Padding = new MarginPadding { Bottom = 30 },
+                            Child = roundNumber = new OsuSpriteText
+                            {
+                                Text = $"Round {matchInfo.CurrentRound}",
+                                Anchor = Anchor.Centre,
                                 Origin = Anchor.Centre,
-                                Position = ToLocalSpace(screenSpacePosition),
-                                Rotation = RNG.NextSingle(0, 360),
-                                Blending = BlendingParameters.Additive,
-                            };
-
-                            AddInternal(particle);
-
-                            particle.FadeOut(600)
-                                    .ScaleTo(0, 600)
-                                    .RotateTo(particle.Rotation + RNG.NextSingle(-20, 20), 600)
-                                    .FadeColour(Color4.Red, 600)
-                                    .Expire();
-                        }
-                    }, 400);
+                                Font = OsuFont.GetFont(size: 36, weight: FontWeight.Bold, typeface: Typeface.TorusAlternate),
+                                Alpha = 0,
+                            },
+                        },
+                        new GridContainer
+                        {
+                            Anchor = Anchor.Centre,
+                            Origin = Anchor.Centre,
+                            Size = cardSize,
+                            Padding = new MarginPadding { Bottom = 110, Top = 60, Horizontal = 60 },
+                            ColumnDimensions =
+                            [
+                                new Dimension(),
+                                new Dimension(GridSizeMode.Absolute, 40),
+                                new Dimension(GridSizeMode.Absolute, 60),
+                                new Dimension(GridSizeMode.Absolute, 10),
+                                new Dimension(GridSizeMode.Absolute, 60),
+                                new Dimension(GridSizeMode.Absolute, 40),
+                                new Dimension(),
+                            ],
+                            Content = new Drawable?[][]
+                            {
+                                [
+                                    new GridContainer
+                                    {
+                                        RelativeSizeAxes = Axes.Both,
+                                        RowDimensions =
+                                        [
+                                            new Dimension(),
+                                            new Dimension(GridSizeMode.AutoSize)
+                                        ],
+                                        Content = new Drawable[][]
+                                        {
+                                            [
+                                                playerScoreDetails = new ScoreDetails(playerScore, RankedPlayColourScheme.Blue)
+                                                {
+                                                    RelativeSizeAxes = Axes.Both,
+                                                    Alpha = 0,
+                                                },
+                                            ],
+                                            [
+                                                playerScoreCounter = new ScoreCounter(numDigits(playerScore.TotalScore))
+                                                {
+                                                    Font = OsuFont.GetFont(size: 60, fixedWidth: true),
+                                                    Anchor = Anchor.Centre,
+                                                    Origin = Anchor.Centre,
+                                                    Spacing = new Vector2(-4),
+                                                    Alpha = 0,
+                                                    AlwaysPresent = true,
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    null,
+                                    playerScoreBar = new ScoreBar(RankedPlayColourScheme.Blue)
+                                    {
+                                        RelativeSizeAxes = Axes.Both,
+                                        Height = 0,
+                                        Anchor = Anchor.BottomCentre,
+                                        Origin = Anchor.BottomCentre,
+                                        Alpha = 0,
+                                    },
+                                    null,
+                                    opponentScoreBar = new ScoreBar(RankedPlayColourScheme.Red)
+                                    {
+                                        RelativeSizeAxes = Axes.Both,
+                                        Height = 0,
+                                        Anchor = Anchor.BottomCentre,
+                                        Origin = Anchor.BottomCentre,
+                                        Alpha = 0,
+                                    },
+                                    null,
+                                    new GridContainer
+                                    {
+                                        RelativeSizeAxes = Axes.Both,
+                                        RowDimensions =
+                                        [
+                                            new Dimension(),
+                                            new Dimension(GridSizeMode.AutoSize)
+                                        ],
+                                        Content = new Drawable[][]
+                                        {
+                                            [
+                                                opponentScoreDetails = new ScoreDetails(opponentScore, RankedPlayColourScheme.Red)
+                                                {
+                                                    RelativeSizeAxes = Axes.Both,
+                                                    Alpha = 0,
+                                                },
+                                            ],
+                                            [
+                                                opponentScoreCounter = new ScoreCounter(numDigits(opponentScore.TotalScore))
+                                                {
+                                                    Font = OsuFont.GetFont(size: 60, fixedWidth: true),
+                                                    Anchor = Anchor.Centre,
+                                                    Origin = Anchor.Centre,
+                                                    Spacing = new Vector2(-4),
+                                                    Alpha = 0,
+                                                    AlwaysPresent = true,
+                                                }
+                                            ]
+                                        }
+                                    },
+                                ]
+                            }
+                        },
+                        flash = new Box
+                        {
+                            RelativeSizeAxes = Axes.Both,
+                        },
+                    ],
+                    BottomOrnament =
+                    {
+                        Size = new Vector2(200, 60),
+                        Alpha = 0,
+                        Children =
+                        [
+                            new Container
+                            {
+                                AutoSizeAxes = Axes.Both,
+                                Anchor = Anchor.Centre,
+                                Origin = Anchor.Centre,
+                                Children =
+                                [
+                                    damageCounter = new ScoreCounter(numDigits(damageInfo.Damage))
+                                    {
+                                        Font = OsuFont.GetFont(size: 36, weight: FontWeight.SemiBold, fixedWidth: true),
+                                        Spacing = new Vector2(-2),
+                                    },
+                                    flyingDamageText = new OsuSpriteText
+                                    {
+                                        Text = FormattableString.Invariant($"{damageInfo.Damage:N0}"),
+                                        Font = OsuFont.GetFont(size: 36, weight: FontWeight.SemiBold, fixedWidth: true),
+                                        Spacing = new Vector2(-2),
+                                        Anchor = Anchor.Centre,
+                                        Origin = Anchor.Centre,
+                                        BypassAutoSizeAxes = Axes.Both,
+                                        Alpha = 0,
+                                    },
+                                    new OsuSpriteText
+                                    {
+                                        BypassAutoSizeAxes = Axes.Both,
+                                        Text = $"{matchInfo.RoomState.DamageMultiplier.ToStandardFormattedString(maxDecimalDigits: 1)}x",
+                                        Anchor = Anchor.CentreRight,
+                                        Origin = Anchor.Centre,
+                                        Font = OsuFont.GetFont(weight: FontWeight.SemiBold, size: 42),
+                                        Rotation = 30,
+                                        Alpha = 0,
+                                        Colour = colour.RedLight
+                                    },
+                                ]
+                            },
+                            new OsuSpriteText
+                            {
+                                Text = Precision.AlmostEquals(matchInfo.RoomState.DamageMultiplier, 1)
+                                    ? "Damage"
+                                    : $"Damage {matchInfo.RoomState.DamageMultiplier.ToStandardFormattedString(maxDecimalDigits: 1)}x",
+                                Anchor = Anchor.TopCentre,
+                                Origin = Anchor.Centre,
+                                Font = OsuFont.GetFont(weight: FontWeight.SemiBold, size: 22),
+                            },
+                        ]
+                    }
                 });
             }
 
-            delay += 400;
-
-            using (BeginDelayedSequence(delay))
+            protected override void LoadComplete()
             {
-                Schedule(() =>
+                base.LoadComplete();
+
+                double delay = 0;
+
+                appear(ref delay);
+
+                animateCountersAndScoreBars(ref delay, playerScore, opponentScore, damageInfo);
+
+                showScoreInfo(ref delay);
+
+                updateHealthBars(ref delay, playerScore, opponentScore, getDamageInfo(playerScore.UserID).NewLife, getDamageInfo(opponentScore.UserID).NewLife);
+            }
+
+            private void appear(ref double delay)
+            {
+                scaffold.FadeIn(100)
+                        .ResizeTo(0)
+                        .ResizeTo(cardSize with { Y = 30 }, 600, Easing.OutExpo)
+                        // deliberately cutting this delay 300ms short so the vertical resize interrupts the horizontal one
+                        .Delay(300)
+                        .ResizeHeightTo(cardSize.Y, 800, Easing.OutExpo);
+
+                flash.Delay(150)
+                     .FadeOut(600, Easing.Out);
+
+                Scheduler.AddDelayed(() => cornerPieceVisibility.Value = Visibility.Visible, 700);
+
+                scaffold.BottomOrnament
+                        .Delay(900)
+                        .FadeIn(300)
+                        .ResizeWidthTo(cardSize.X - 550, 600, Easing.OutExpo);
+
+                roundNumber.Delay(700).FadeIn(600);
+                playerScoreCounter.Delay(700).FadeIn(600);
+                opponentScoreCounter.Delay(700).FadeIn(600);
+
+                delay += 1000;
+            }
+
+            private void animateCountersAndScoreBars(ref double delay, ScoreInfo playerScore, ScoreInfo opponentScore, RankedPlayDamageInfo damageInfo)
+            {
+                using (BeginDelayedSequence(delay))
                 {
-                    playerUserDisplay.Health.Value = playerHealth;
-                    opponentUserDisplay.Health.Value = opponentHealth;
-                });
+                    const double score_text_duration = 2000;
+
+                    playerScoreCounter.TransformValueTo(playerScore.TotalScore, score_text_duration - 500);
+                    opponentScoreCounter.TransformValueTo(opponentScore.TotalScore, score_text_duration - 500);
+
+                    damageCounter.TransformValueTo(damageInfo.RawDamage, score_text_duration - 500);
+
+                    long maxAchievableScore = Math.Max(
+                        Math.Max(playerScore.TotalScore, opponentScore.TotalScore),
+                        1_000_000
+                    );
+
+                    float playerScorePercent = (float)playerScore.TotalScore / maxAchievableScore;
+                    float opponentScorePercent = (float)opponentScore.TotalScore / maxAchievableScore;
+                    float maxScorePercent = Math.Max(playerScorePercent, opponentScorePercent);
+
+                    playerScoreBar.FadeIn(100);
+                    opponentScoreBar.FadeIn(100);
+
+                    this.TransformBindableTo(scoreBarProgress, maxScorePercent, score_text_duration, new CubicBezierEasingFunction(easeIn: 0.4, easeOut: 1));
+
+                    scoreBarProgress.BindValueChanged(e =>
+                    {
+                        playerScoreBar.Height = float.Lerp(0.05f, 1f, Math.Min(e.NewValue, playerScorePercent));
+                        opponentScoreBar.Height = float.Lerp(0.05f, 1f, Math.Min(e.NewValue, opponentScorePercent));
+                    });
+                }
+
+                delay += 2200;
             }
 
-            delay += 400;
-        }
-
-        private void showScoreInfo(ref double delay)
-        {
-            using (BeginDelayedSequence(delay))
+            private void updateHealthBars(
+                ref double delay,
+                ScoreInfo playerScore,
+                ScoreInfo opponentScore,
+                int playerHealth,
+                int opponentHealth
+            )
             {
-                playerScoreDetails.FadeIn(300);
-                opponentScoreDetails.FadeIn(300);
+                using (BeginDelayedSequence(delay))
+                {
+                    Schedule(() =>
+                    {
+                        RankedPlayUserDisplay userDisplay =
+                            playerScore.TotalScore > opponentScore.TotalScore
+                                ? opponentUserDisplay
+                                : playerUserDisplay;
+
+                        Vector2 screenSpacePosition = userDisplay.HealthDisplay.ScreenSpaceImpactPosition;
+
+                        Scheduler.AddDelayed(() => userDisplay.Shake(shakeDuration: 60, shakeMagnitude: 2, maximumLength: 120), 400);
+
+                        var position = flyingDamageText.Parent!.ToLocalSpace(screenSpacePosition) - flyingDamageText.AnchorPosition;
+
+                        damageCounter.FadeOut()
+                                     .Delay(200)
+                                     .FadeIn(300)
+                                     .ScaleTo(0.9f)
+                                     .ScaleTo(1f, 300, Easing.OutElasticHalf);
+
+                        flyingDamageText.FadeIn()
+                                        .MoveTo(position, 400, Easing.InCubic)
+                                        .ScaleTo(0.75f, 400, new CubicBezierEasingFunction(easeIn: 0.35, easeOut: 0.5))
+                                        .RotateTo(12 * Math.Sign(position.X), 400, new CubicBezierEasingFunction(easeIn: 0.35, easeOut: 0.5))
+                                        .Then()
+                                        .FadeOut();
+
+                        Scheduler.AddDelayed(() =>
+                        {
+                            for (int i = 0; i < 10; i++)
+                            {
+                                var particle = new Particle
+                                {
+                                    Size = new Vector2(RNG.NextSingle(5, 15)),
+                                    Origin = Anchor.Centre,
+                                    Position = ToLocalSpace(screenSpacePosition),
+                                    Rotation = RNG.NextSingle(0, 360),
+                                    Blending = BlendingParameters.Additive,
+                                };
+
+                                AddInternal(particle);
+
+                                particle.FadeOut(600)
+                                        .ScaleTo(0, 600)
+                                        .RotateTo(particle.Rotation + RNG.NextSingle(-20, 20), 600)
+                                        .FadeColour(Color4.Red, 600)
+                                        .Expire();
+                            }
+                        }, 400);
+                    });
+                }
+
+                delay += 400;
+
+                using (BeginDelayedSequence(delay))
+                {
+                    Schedule(() =>
+                    {
+                        playerUserDisplay.Health.Value = playerHealth;
+                        opponentUserDisplay.Health.Value = opponentHealth;
+                    });
+                }
+
+                delay += 400;
             }
 
-            delay += 800;
-        }
-
-        private RankedPlayDamageInfo getDamageInfo(int userId) => matchInfo.RoomState.Users[userId].DamageInfo!;
-
-        private static int numDigits(long value)
-        {
-            if (value <= 0)
-                return 1;
-
-            return (int)Math.Floor(Math.Log10(value) + 1);
-        }
-
-        private partial class Particle : Triangle
-        {
-            private Vector2 velocity = new Vector2(RNG.NextSingle(-0.3f, 0.3f), RNG.NextSingle(-0.3f, 0.3f));
-
-            private Vector2 gravity => new Vector2(0, 0.0002f);
-
-            protected override void Update()
+            private void showScoreInfo(ref double delay)
             {
-                base.Update();
+                using (BeginDelayedSequence(delay))
+                {
+                    playerScoreDetails.FadeIn(300);
+                    opponentScoreDetails.FadeIn(300);
+                }
 
-                velocity += gravity * (float)Time.Elapsed;
-                Position += velocity * (float)Time.Elapsed;
+                delay += 800;
+            }
+
+            private RankedPlayDamageInfo getDamageInfo(int userId) => matchInfo.RoomState.Users[userId].DamageInfo!;
+
+            private static int numDigits(long value)
+            {
+                if (value <= 0)
+                    return 1;
+
+                return (int)Math.Floor(Math.Log10(value) + 1);
+            }
+
+            private partial class Particle : Triangle
+            {
+                private Vector2 velocity = new Vector2(RNG.NextSingle(-0.3f, 0.3f), RNG.NextSingle(-0.3f, 0.3f));
+
+                private Vector2 gravity => new Vector2(0, 0.0002f);
+
+                protected override void Update()
+                {
+                    base.Update();
+
+                    velocity += gravity * (float)Time.Elapsed;
+                    Position += velocity * (float)Time.Elapsed;
+                }
             }
         }
     }
