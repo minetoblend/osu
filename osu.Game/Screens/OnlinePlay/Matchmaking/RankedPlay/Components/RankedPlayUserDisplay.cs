@@ -57,11 +57,9 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
         {
             APIUser user = users.GetUserAsync(userId).GetResultSafely()!;
 
-            var shear = contentAnchor switch
-            {
-                Anchor.TopLeft or Anchor.BottomRight => -OsuGame.SHEAR,
-                _ => OsuGame.SHEAR
-            };
+            var shear = contentAnchor == Anchor.TopLeft || contentAnchor == Anchor.BottomRight
+                ? -OsuGame.SHEAR
+                : OsuGame.SHEAR;
 
             InternalChildren =
             [

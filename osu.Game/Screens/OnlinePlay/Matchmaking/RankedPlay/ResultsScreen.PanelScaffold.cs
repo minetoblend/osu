@@ -14,7 +14,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 {
     public partial class ResultsScreen
     {
-        public partial class ScreenScaffold : Container
+        public partial class PanelScaffold : Container
         {
             private const float corner_radius = 6;
             private const float border_thickness = 2;

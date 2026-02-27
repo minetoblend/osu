@@ -13,7 +13,7 @@ using osuTK;
 
 namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
 {
-    public partial class ScoreCounter : CompositeDrawable
+    public partial class RankedPlayScoreCounter : CompositeDrawable
     {
         private readonly FillFlowContainer digitFlow;
         private readonly CounterDigit[] digits;
@@ -35,9 +35,9 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
             }
         }
 
-        public TransformSequence<ScoreCounter> TransformValueTo(long value, double duration = 0, Easing easing = Easing.None) => this.TransformTo(nameof(Value), value, duration, easing);
+        public TransformSequence<RankedPlayScoreCounter> TransformValueTo(long value, double duration = 0, Easing easing = Easing.None) => this.TransformTo(nameof(Value), value, duration, easing);
 
-        public ScoreCounter(int numDigits = 6)
+        public RankedPlayScoreCounter(int numDigits = 6)
         {
             digits = new CounterDigit[numDigits];
 
@@ -116,15 +116,15 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
         {
             private readonly DoubleSpring spring = new DoubleSpring
             {
-                Damping = 0.8f,
                 NaturalFrequency = 2.5f,
+                Damping = 0.8f,
                 Response = 1f
             };
 
             public double Offset { get; set; }
 
-            private OsuSpriteText lower = null!;
-            private OsuSpriteText upper = null!;
+            private OsuSpriteText upperDigit = null!;
+            private OsuSpriteText lowerDigit = null!;
 
             private BufferedContainer blurContainer = null!;
 
@@ -152,7 +152,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
                             Origin = Anchor.Centre,
                             Children =
                             [
-                                upper = new OsuSpriteText
+                                upperDigit = new OsuSpriteText
                                 {
                                     Text = "9",
                                     Font = Font,
@@ -161,7 +161,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
                                     Origin = Anchor.Centre,
                                     Shadow = false,
                                 },
-                                lower = new OsuSpriteText
+                                lowerDigit = new OsuSpriteText
                                 {
                                     Text = "0",
                                     Font = Font,
@@ -180,7 +180,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
             {
                 base.LoadComplete();
 
-                Size = lower.DrawSize;
+                Size = lowerDigit.DrawSize;
             }
 
             protected override void Update()
@@ -199,22 +199,22 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
                 int digit = (int)spring.Current % 10;
                 if (digit < 0) digit += 10;
 
-                lower.Text = digit.ToString();
-                upper.Text = ((digit + 1) % 10).ToString();
+                lowerDigit.Text = digit.ToString();
+                upperDigit.Text = ((digit + 1) % 10).ToString();
 
                 float y = (float)(spring.Current % 1);
 
                 if (y < 0)
                     y = 0;
 
-                upper.Y = (y - 1) * 0.65f;
-                lower.Y = y * 0.65f;
+                upperDigit.Y = (y - 1) * 0.65f;
+                lowerDigit.Y = y * 0.65f;
 
-                lower.Alpha = MathF.Pow(1 - y, 2);
-                upper.Alpha = MathF.Pow(y, 2);
+                lowerDigit.Alpha = MathF.Pow(1 - y, 2);
+                upperDigit.Alpha = MathF.Pow(y, 2);
 
-                upper.Scale = new Vector2(float.Lerp(0.5f, 1f, MathF.Sqrt(0.5f + y * 0.5f)));
-                lower.Scale = new Vector2(float.Lerp(0.5f, 1f, MathF.Sqrt(1 - y * 0.5f)));
+                upperDigit.Scale = new Vector2(float.Lerp(0.5f, 1f, MathF.Sqrt(0.5f + y * 0.5f)));
+                lowerDigit.Scale = new Vector2(float.Lerp(0.5f, 1f, MathF.Sqrt(1 - y * 0.5f)));
 
                 blurContainer.BlurSigma = new Vector2(0, float.Clamp((float)Math.Abs(spring.Velocity * 0.1f) - 5, 0, 10));
             }
@@ -228,11 +228,5 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
                 updateState();
             }
         }
-    }
-
-    public static class ScoreCounterExtensions
-    {
-        public static TransformSequence<ScoreCounter> TransformValueTo(this TransformSequence<ScoreCounter> t, long value, double duration = 0, Easing easing = Easing.None) =>
-            t.Append(o => o.TransformValueTo(value, duration, easing));
     }
 }

@@ -31,7 +31,6 @@ using osu.Game.Scoring;
 using osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components;
 using osuTK;
 using osuTK.Graphics;
-using ScoreCounter = osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components.ScoreCounter;
 
 namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 {
@@ -183,13 +182,13 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
             private readonly Bindable<Visibility> cornerPieceVisibility = new Bindable<Visibility>();
             private readonly Bindable<float> scoreBarProgress = new Bindable<float>();
 
-            private ScreenScaffold scaffold = null!;
+            private PanelScaffold panelScaffold = null!;
             private Box flash = null!;
             private ScoreDetails playerScoreDetails = null!;
             private ScoreDetails opponentScoreDetails = null!;
-            private ScoreCounter playerScoreCounter = null!;
-            private ScoreCounter opponentScoreCounter = null!;
-            private ScoreCounter damageCounter = null!;
+            private RankedPlayScoreCounter playerScoreCounter = null!;
+            private RankedPlayScoreCounter opponentScoreCounter = null!;
+            private RankedPlayScoreCounter damageCounter = null!;
             private OsuSpriteText flyingDamageText = null!;
             private ScoreBar playerScoreBar = null!;
             private ScoreBar opponentScoreBar = null!;
@@ -207,7 +206,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
             [BackgroundDependencyLoader]
             private void load()
             {
-                AddInternal(scaffold = new ScreenScaffold
+                AddInternal(panelScaffold = new PanelScaffold
                 {
                     Anchor = Anchor.Centre,
                     Origin = Anchor.Centre,
@@ -288,7 +287,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                                                 },
                                             ],
                                             [
-                                                playerScoreCounter = new ScoreCounter(numDigits(playerScore.TotalScore))
+                                                playerScoreCounter = new RankedPlayScoreCounter(numDigits(playerScore.TotalScore))
                                                 {
                                                     Font = OsuFont.GetFont(size: 60, fixedWidth: true),
                                                     Anchor = Anchor.Centre,
@@ -337,7 +336,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                                                 },
                                             ],
                                             [
-                                                opponentScoreCounter = new ScoreCounter(numDigits(opponentScore.TotalScore))
+                                                opponentScoreCounter = new RankedPlayScoreCounter(numDigits(opponentScore.TotalScore))
                                                 {
                                                     Font = OsuFont.GetFont(size: 60, fixedWidth: true),
                                                     Anchor = Anchor.Centre,
@@ -370,7 +369,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                                 Origin = Anchor.Centre,
                                 Children =
                                 [
-                                    damageCounter = new ScoreCounter(numDigits(damageInfo.Damage))
+                                    damageCounter = new RankedPlayScoreCounter(numDigits(damageInfo.Damage))
                                     {
                                         Font = OsuFont.GetFont(size: 36, weight: FontWeight.SemiBold, fixedWidth: true),
                                         Spacing = new Vector2(-2),
@@ -429,26 +428,30 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 
             private void appear(ref double delay)
             {
-                scaffold.FadeIn(100)
-                        .ResizeTo(0)
-                        .ResizeTo(cardSize with { Y = 30 }, 600, Easing.OutExpo)
-                        // deliberately cutting this delay 300ms short so the vertical resize interrupts the horizontal one
-                        .Delay(300)
-                        .ResizeHeightTo(cardSize.Y, 800, Easing.OutExpo);
+                panelScaffold.FadeIn(100)
+                             .ResizeTo(0)
+                             .ResizeTo(cardSize with { Y = 30 }, 600, Easing.OutExpo)
+                             // deliberately cutting this delay 300ms short so the vertical resize interrupts the horizontal one
+                             .Delay(300)
+                             .ResizeHeightTo(cardSize.Y, 800, Easing.OutExpo);
 
-                flash.Delay(150)
-                     .FadeOut(600, Easing.Out);
+                flash.Delay(150).FadeOut(600, Easing.Out);
 
-                Scheduler.AddDelayed(() => cornerPieceVisibility.Value = Visibility.Visible, 700);
+                using (BeginDelayedSequence(700))
+                {
+                    roundNumber.FadeIn(600);
+                    playerScoreCounter.FadeIn(600);
+                    opponentScoreCounter.FadeIn(600);
 
-                scaffold.BottomOrnament
-                        .Delay(900)
-                        .FadeIn(300)
-                        .ResizeWidthTo(cardSize.X - 550, 600, Easing.OutExpo);
+                    Schedule(() => cornerPieceVisibility.Value = Visibility.Visible);
+                }
 
-                roundNumber.Delay(700).FadeIn(600);
-                playerScoreCounter.Delay(700).FadeIn(600);
-                opponentScoreCounter.Delay(700).FadeIn(600);
+                using (BeginDelayedSequence(900))
+                {
+                    panelScaffold.BottomOrnament
+                                 .FadeIn(300)
+                                 .ResizeWidthTo(cardSize.X - 550, 600, Easing.OutExpo);
+                }
 
                 delay += 1000;
             }
@@ -496,6 +499,8 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                 int opponentHealth
             )
             {
+                const double text_movement_duration = 400;
+
                 using (BeginDelayedSequence(delay))
                 {
                     Schedule(() =>
@@ -507,8 +512,6 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 
                         Vector2 screenSpacePosition = userDisplay.HealthDisplay.ScreenSpaceImpactPosition;
 
-                        Scheduler.AddDelayed(() => userDisplay.Shake(shakeDuration: 60, shakeMagnitude: 2, maximumLength: 120), 400);
-
                         var position = flyingDamageText.Parent!.ToLocalSpace(screenSpacePosition) - flyingDamageText.AnchorPosition;
 
                         damageCounter.FadeOut()
@@ -518,17 +521,19 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                                      .ScaleTo(1f, 300, Easing.OutElasticHalf);
 
                         flyingDamageText.FadeIn()
-                                        .MoveTo(position, 400, Easing.InCubic)
-                                        .ScaleTo(0.75f, 400, new CubicBezierEasingFunction(easeIn: 0.35, easeOut: 0.5))
-                                        .RotateTo(12 * Math.Sign(position.X), 400, new CubicBezierEasingFunction(easeIn: 0.35, easeOut: 0.5))
+                                        .MoveTo(position, text_movement_duration, Easing.InCubic)
+                                        .ScaleTo(0.75f, text_movement_duration, new CubicBezierEasingFunction(easeIn: 0.35, easeOut: 0.5))
+                                        .RotateTo(12 * Math.Sign(position.X), text_movement_duration, new CubicBezierEasingFunction(easeIn: 0.35, easeOut: 0.5))
                                         .Then()
                                         .FadeOut();
 
                         Scheduler.AddDelayed(() =>
                         {
+                            userDisplay.Shake(shakeDuration: 60, shakeMagnitude: 2, maximumLength: 120);
+
                             for (int i = 0; i < 10; i++)
                             {
-                                var particle = new Particle
+                                var particle = new DamageParticle
                                 {
                                     Size = new Vector2(RNG.NextSingle(5, 15)),
                                     Origin = Anchor.Centre,
@@ -545,11 +550,11 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                                         .FadeColour(Color4.Red, 600)
                                         .Expire();
                             }
-                        }, 400);
+                        }, text_movement_duration);
                     });
                 }
 
-                delay += 400;
+                delay += text_movement_duration;
 
                 using (BeginDelayedSequence(delay))
                 {
@@ -581,10 +586,10 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                 if (value <= 0)
                     return 1;
 
-                return (int)Math.Floor(Math.Log10(value) + 1);
+                return (int)Math.Floor(Math.Log10(value)) + 1;
             }
 
-            private partial class Particle : Triangle
+            private partial class DamageParticle : Triangle
             {
                 private Vector2 velocity = new Vector2(RNG.NextSingle(-0.3f, 0.3f), RNG.NextSingle(-0.3f, 0.3f));
 
