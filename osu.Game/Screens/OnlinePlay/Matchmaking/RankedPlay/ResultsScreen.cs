@@ -309,7 +309,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                                     playerScoreBar = new ScoreBar(RankedPlayColourScheme.Blue)
                                     {
                                         RelativeSizeAxes = Axes.Both,
-                                        Height = 0,
+                                        Height = 0.05f,
                                         Anchor = Anchor.BottomCentre,
                                         Origin = Anchor.BottomCentre,
                                         Alpha = 0,
@@ -318,7 +318,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                                     opponentScoreBar = new ScoreBar(RankedPlayColourScheme.Red)
                                     {
                                         RelativeSizeAxes = Axes.Both,
-                                        Height = 0,
+                                        Height = 0.05f,
                                         Anchor = Anchor.BottomCentre,
                                         Origin = Anchor.BottomCentre,
                                         Alpha = 0,
