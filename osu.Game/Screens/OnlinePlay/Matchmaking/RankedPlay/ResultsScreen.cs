@@ -141,35 +141,38 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 
         private void setScores(ScoreInfo[] scores) => Scheduler.Add(() =>
         {
-            ScoreInfo playerScore = scores.SingleOrDefault(s => s.UserID == api.LocalUser.Value.OnlineID) ?? new ScoreInfo
+            int playerId = api.LocalUser.Value.OnlineID;
+            int opponentId = matchInfo.RoomState.Users.Keys.Single(it => it != playerId);
+
+            ScoreInfo playerScore = scores.SingleOrDefault(s => s.UserID == playerId) ?? new ScoreInfo
             {
                 Rank = ScoreRank.F,
-                Ruleset = globalRuleset.Value
+                Ruleset = globalRuleset.Value,
+                User = new APIUser { Id = playerId }
             };
 
-            ScoreInfo opponentScore = scores.SingleOrDefault(s => s.UserID != api.LocalUser.Value.OnlineID) ?? new ScoreInfo
+            ScoreInfo opponentScore = scores.SingleOrDefault(s => s.UserID == opponentId) ?? new ScoreInfo
             {
                 Rank = ScoreRank.F,
-                Ruleset = globalRuleset.Value
+                Ruleset = globalRuleset.Value,
+                User = new APIUser { Id = opponentId }
             };
 
-            // this works under the assumption that only one player can receive damage each round
-            var damageInfo = matchInfo.RoomState.Users
-                                      .Select(it => it.Value.DamageInfo)
-                                      .OfType<RankedPlayDamageInfo>()
-                                      .MaxBy(it => it.Damage)!;
-
-            AddInternal(new ResultScreenContent(playerScore, opponentScore, damageInfo)
+            AddInternal(new ResultScreenContent
             {
-                RelativeSizeAxes = Axes.Both,
+                PlayerScore = playerScore,
+                OpponentScore = opponentScore,
+                PlayerDamageInfo = matchInfo.RoomState.Users[playerId].DamageInfo!,
+                OpponentDamageInfo = matchInfo.RoomState.Users[opponentId].DamageInfo!,
             });
         });
 
         private partial class ResultScreenContent : CompositeDrawable
         {
-            private readonly ScoreInfo playerScore;
-            private readonly ScoreInfo opponentScore;
-            private readonly RankedPlayDamageInfo damageInfo;
+            public required ScoreInfo PlayerScore { get; init; }
+            public required ScoreInfo OpponentScore { get; init; }
+            public required RankedPlayDamageInfo PlayerDamageInfo { get; init; }
+            public required RankedPlayDamageInfo OpponentDamageInfo { get; init; }
 
             [Resolved]
             private RankedPlayMatchInfo matchInfo { get; set; } = null!;
@@ -196,16 +199,19 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
             private RankedPlayUserDisplay playerUserDisplay = null!;
             private RankedPlayUserDisplay opponentUserDisplay = null!;
 
-            public ResultScreenContent(ScoreInfo playerScore, ScoreInfo opponentScore, RankedPlayDamageInfo damageInfo)
-            {
-                this.playerScore = playerScore;
-                this.opponentScore = opponentScore;
-                this.damageInfo = damageInfo;
-            }
+            private RankedPlayDamageInfo losingDamageInfo = null!;
 
             [BackgroundDependencyLoader]
             private void load()
             {
+                // this works under the assumption that only one player can receive damage each round
+                losingDamageInfo = matchInfo.RoomState.Users
+                                            .Select(it => it.Value.DamageInfo)
+                                            .OfType<RankedPlayDamageInfo>()
+                                            .MaxBy(it => it.Damage)!;
+
+                RelativeSizeAxes = Axes.Both;
+
                 AddInternal(panelScaffold = new PanelScaffold
                 {
                     Anchor = Anchor.Centre,
@@ -217,10 +223,10 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                             Anchor = Anchor.BottomLeft,
                             Origin = Anchor.BottomLeft,
                             State = { BindTarget = cornerPieceVisibility },
-                            Child = playerUserDisplay = new RankedPlayUserDisplay(playerScore.UserID, Anchor.BottomLeft, RankedPlayColourScheme.Blue)
+                            Child = playerUserDisplay = new RankedPlayUserDisplay(PlayerScore.UserID, Anchor.BottomLeft, RankedPlayColourScheme.Blue)
                             {
                                 RelativeSizeAxes = Axes.Both,
-                                Health = { Value = getDamageInfo(opponentScore.UserID).OldLife }
+                                Health = { Value = PlayerDamageInfo.OldLife }
                             }
                         },
                         new RankedPlayCornerPiece(RankedPlayColourScheme.Red, Anchor.BottomRight)
@@ -228,10 +234,10 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                             Anchor = Anchor.BottomRight,
                             Origin = Anchor.BottomRight,
                             State = { BindTarget = cornerPieceVisibility },
-                            Child = opponentUserDisplay = new RankedPlayUserDisplay(opponentScore.UserID, Anchor.BottomRight, RankedPlayColourScheme.Red)
+                            Child = opponentUserDisplay = new RankedPlayUserDisplay(OpponentScore.UserID, Anchor.BottomRight, RankedPlayColourScheme.Red)
                             {
                                 RelativeSizeAxes = Axes.Both,
-                                Health = { Value = getDamageInfo(opponentScore.UserID).OldLife }
+                                Health = { Value = OpponentDamageInfo.OldLife }
                             }
                         },
                         new Container
@@ -280,14 +286,14 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                                         Content = new Drawable[][]
                                         {
                                             [
-                                                playerScoreDetails = new ScoreDetails(playerScore, RankedPlayColourScheme.Blue)
+                                                playerScoreDetails = new ScoreDetails(PlayerScore, RankedPlayColourScheme.Blue)
                                                 {
                                                     RelativeSizeAxes = Axes.Both,
                                                     Alpha = 0,
                                                 },
                                             ],
                                             [
-                                                playerScoreCounter = new RankedPlayScoreCounter(numDigits(playerScore.TotalScore))
+                                                playerScoreCounter = new RankedPlayScoreCounter(numDigits(PlayerScore.TotalScore))
                                                 {
                                                     Font = OsuFont.GetFont(size: 60, fixedWidth: true),
                                                     Anchor = Anchor.Centre,
@@ -329,14 +335,14 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                                         Content = new Drawable[][]
                                         {
                                             [
-                                                opponentScoreDetails = new ScoreDetails(opponentScore, RankedPlayColourScheme.Red)
+                                                opponentScoreDetails = new ScoreDetails(OpponentScore, RankedPlayColourScheme.Red)
                                                 {
                                                     RelativeSizeAxes = Axes.Both,
                                                     Alpha = 0,
                                                 },
                                             ],
                                             [
-                                                opponentScoreCounter = new RankedPlayScoreCounter(numDigits(opponentScore.TotalScore))
+                                                opponentScoreCounter = new RankedPlayScoreCounter(numDigits(OpponentScore.TotalScore))
                                                 {
                                                     Font = OsuFont.GetFont(size: 60, fixedWidth: true),
                                                     Anchor = Anchor.Centre,
@@ -369,14 +375,14 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                                 Origin = Anchor.Centre,
                                 Children =
                                 [
-                                    damageCounter = new RankedPlayScoreCounter(numDigits(damageInfo.Damage))
+                                    damageCounter = new RankedPlayScoreCounter(numDigits(losingDamageInfo.Damage))
                                     {
                                         Font = OsuFont.GetFont(size: 36, weight: FontWeight.SemiBold, fixedWidth: true),
                                         Spacing = new Vector2(-2),
                                     },
                                     flyingDamageText = new OsuSpriteText
                                     {
-                                        Text = FormattableString.Invariant($"{damageInfo.Damage:N0}"),
+                                        Text = FormattableString.Invariant($"{losingDamageInfo.Damage:N0}"),
                                         Font = OsuFont.GetFont(size: 36, weight: FontWeight.SemiBold, fixedWidth: true),
                                         Spacing = new Vector2(-2),
                                         Anchor = Anchor.Centre,
@@ -419,11 +425,11 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 
                 appear(ref delay);
 
-                animateCountersAndScoreBars(ref delay, playerScore, opponentScore, damageInfo);
+                animateCountersAndScoreBars(ref delay);
 
                 showScoreInfo(ref delay);
 
-                updateHealthBars(ref delay, playerScore, opponentScore, getDamageInfo(playerScore.UserID).NewLife, getDamageInfo(opponentScore.UserID).NewLife);
+                updateHealthBars(ref delay);
             }
 
             private void appear(ref double delay)
@@ -456,24 +462,24 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                 delay += 1000;
             }
 
-            private void animateCountersAndScoreBars(ref double delay, ScoreInfo playerScore, ScoreInfo opponentScore, RankedPlayDamageInfo damageInfo)
+            private void animateCountersAndScoreBars(ref double delay)
             {
                 using (BeginDelayedSequence(delay))
                 {
                     const double score_text_duration = 2000;
 
-                    playerScoreCounter.TransformValueTo(playerScore.TotalScore, score_text_duration - 500);
-                    opponentScoreCounter.TransformValueTo(opponentScore.TotalScore, score_text_duration - 500);
+                    playerScoreCounter.TransformValueTo(PlayerScore.TotalScore, score_text_duration - 500);
+                    opponentScoreCounter.TransformValueTo(OpponentScore.TotalScore, score_text_duration - 500);
 
-                    damageCounter.TransformValueTo(damageInfo.RawDamage, score_text_duration - 500);
+                    damageCounter.TransformValueTo(losingDamageInfo.Damage, score_text_duration - 500);
 
                     long maxAchievableScore = Math.Max(
-                        Math.Max(playerScore.TotalScore, opponentScore.TotalScore),
+                        Math.Max(PlayerScore.TotalScore, OpponentScore.TotalScore),
                         1_000_000
                     );
 
-                    float playerScorePercent = (float)playerScore.TotalScore / maxAchievableScore;
-                    float opponentScorePercent = (float)opponentScore.TotalScore / maxAchievableScore;
+                    float playerScorePercent = (float)PlayerScore.TotalScore / maxAchievableScore;
+                    float opponentScorePercent = (float)OpponentScore.TotalScore / maxAchievableScore;
                     float maxScorePercent = Math.Max(playerScorePercent, opponentScorePercent);
 
                     playerScoreBar.FadeIn(100);
@@ -491,13 +497,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                 delay += 2200;
             }
 
-            private void updateHealthBars(
-                ref double delay,
-                ScoreInfo playerScore,
-                ScoreInfo opponentScore,
-                int playerHealth,
-                int opponentHealth
-            )
+            private void updateHealthBars(ref double delay)
             {
                 const double text_movement_duration = 400;
 
@@ -506,7 +506,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                     Schedule(() =>
                     {
                         RankedPlayUserDisplay userDisplay =
-                            playerScore.TotalScore > opponentScore.TotalScore
+                            PlayerScore.TotalScore > OpponentScore.TotalScore
                                 ? opponentUserDisplay
                                 : playerUserDisplay;
 
@@ -560,8 +560,8 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                 {
                     Schedule(() =>
                     {
-                        playerUserDisplay.Health.Value = playerHealth;
-                        opponentUserDisplay.Health.Value = opponentHealth;
+                        playerUserDisplay.Health.Value = PlayerDamageInfo.NewLife;
+                        opponentUserDisplay.Health.Value = OpponentDamageInfo.NewLife;
                     });
                 }
 
@@ -578,8 +578,6 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 
                 delay += 800;
             }
-
-            private RankedPlayDamageInfo getDamageInfo(int userId) => matchInfo.RoomState.Users[userId].DamageInfo!;
 
             private static int numDigits(long value)
             {
