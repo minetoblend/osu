@@ -168,10 +168,11 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
                     if (Cards.FirstOrDefault(it => it.HasFocus) is not PlayerHandCard card)
                         return false;
 
-                    if (card.PlayAction == null)
-                        card.TriggerClick();
+                    if (card.Selected)
+                        card.PlayButton.TriggerClick();
                     else
-                        card.PlayAction();
+                        card.TriggerClick();
+
                     return true;
 
                 case Key.Left:
@@ -228,7 +229,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
                 set
                 {
                     playAction = value;
-                    playButton.Action = value;
+                    PlayButton.Action = value;
                     updatePlayButtonVisibility();
                 }
             }
@@ -240,7 +241,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
             private readonly Drawable cardInputArea;
             private readonly Drawable fullInputArea;
 
-            private readonly ShearedButton playButton;
+            public readonly ShearedButton PlayButton;
 
             public PlayerHandCard(RankedPlayCard card)
                 : base(card)
@@ -263,7 +264,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
                         Child = fullInputArea = new Container
                         {
                             RelativeSizeAxes = Axes.Both,
-                            Child = playButton = new ShearedButton(width: 90f, height: 30f)
+                            Child = PlayButton = new ShearedButton(width: 90f, height: 30f)
                             {
                                 Name = "Play Button",
                                 Anchor = Anchor.TopCentre,
@@ -293,12 +294,12 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards
 
             private void updatePlayButtonVisibility()
             {
-                playButton.Alpha = playButton.Action != null && Selected ? 1 : 0;
+                PlayButton.Alpha = PlayButton.Action != null && Selected ? 1 : 0;
             }
 
             public override bool ReceivePositionalInputAt(Vector2 screenSpacePos)
             {
-                if (playButton.Alpha > 0)
+                if (PlayButton.Alpha > 0)
                     return fullInputArea.ReceivePositionalInputAt(screenSpacePos);
 
                 // input events are handled for an area that's slightly larger than the actual card so the cursor always hovers a card when moving over a gap between two cards
