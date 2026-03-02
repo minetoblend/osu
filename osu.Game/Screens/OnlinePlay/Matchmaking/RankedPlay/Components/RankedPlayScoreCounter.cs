@@ -62,24 +62,26 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
         [BackgroundDependencyLoader]
         private void load()
         {
-            for (int i = 0; i < digits.Length; i++)
+            string templateString = Math.Pow(10, digits.Length - 1).ToString("N0");
+
+            for (int i = 0, digitIndex = 0; i < templateString.Length; i++)
             {
-                if ((digits.Length - i) % 3 == 0 && i != 0)
+                if (char.IsDigit(templateString[i]))
+                {
+                    digitFlow.Add(digits[digitIndex++] = new CounterDigit
+                    {
+                        Font = Font.With(fixedWidth: true),
+                    });
+                }
+                else
                 {
                     digitFlow.Add(new OsuSpriteText
                     {
-                        Text = ",",
+                        Text = templateString[i].ToString(),
                         Font = Font,
                         Shadow = false,
                     });
                 }
-
-                digits[i] = new CounterDigit
-                {
-                    Font = Font.With(fixedWidth: true),
-                };
-
-                digitFlow.Add(digits[i]);
             }
         }
 
