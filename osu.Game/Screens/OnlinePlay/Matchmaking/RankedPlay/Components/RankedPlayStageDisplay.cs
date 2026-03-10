@@ -3,6 +3,7 @@
 
 using System;
 using osu.Framework.Allocation;
+using osu.Framework.Audio;
 using osu.Framework.Extensions.Color4Extensions;
 using osu.Framework.Extensions.ObjectExtensions;
 using osu.Framework.Graphics;
@@ -49,7 +50,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
         }
 
         [BackgroundDependencyLoader]
-        private void load()
+        private void load(AudioManager audio)
         {
             const float phase_text_background_height = 55;
             Vector2 progressBarSize = new Vector2(300, 25);
@@ -210,11 +211,11 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Components
 
         private void onCountdownStarted(MultiplayerCountdown countdown) => Scheduler.Add(() =>
         {
-            if (countdown is RankedPlayStageCountdown)
-            {
-                countdownStartTime = DateTimeOffset.Now;
-                countdownEndTime = DateTimeOffset.Now + countdown.TimeRemaining;
-            }
+            if (countdown is not RankedPlayStageCountdown)
+                return;
+
+            countdownStartTime = DateTimeOffset.Now;
+            countdownEndTime = DateTimeOffset.Now + countdown.TimeRemaining;
         });
 
         private void onCountdownStopped(MultiplayerCountdown countdown) => Scheduler.Add(() =>

@@ -6,17 +6,17 @@ using NUnit.Framework;
 using osu.Framework.Extensions;
 using osu.Framework.Testing;
 using osu.Game.Graphics.UserInterface;
+using osu.Game.Online.API;
 using osu.Game.Online.API.Requests.Responses;
 using osu.Game.Online.Multiplayer.MatchTypes.RankedPlay;
 using osu.Game.Online.Rooms;
 using osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay;
-using osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Cards;
-using osu.Game.Tests.Visual.Multiplayer;
+using osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Hand;
 using osuTK.Input;
 
 namespace osu.Game.Tests.Visual.RankedPlay
 {
-    public partial class TestSceneRankedPlayScreen : MultiplayerTestScene
+    public partial class TestSceneRankedPlayScreen : RankedPlayTestScene
     {
         private RankedPlayScreen screen = null!;
 
@@ -50,7 +50,7 @@ namespace osu.Game.Tests.Visual.RankedPlay
                 int i2 = i;
                 AddStep($"click card {i2}", () =>
                 {
-                    InputManager.MoveMouseTo(this.ChildrenOfType<PlayerCardHand.PlayerHandCard>().ElementAt(i2));
+                    InputManager.MoveMouseTo(this.ChildrenOfType<PlayerHandOfCards.PlayerHandCard>().ElementAt(i2));
                     InputManager.Click(MouseButton.Left);
                 });
             }
@@ -84,6 +84,10 @@ namespace osu.Game.Tests.Visual.RankedPlay
         [Test]
         public void TestRevealCards()
         {
+            var requestHandler = new BeatmapRequestHandler();
+
+            AddStep("setup request handler", () => ((DummyAPIAccess)API).HandleRequest = requestHandler.HandleRequest);
+
             AddStep("set discard phase", () => MultiplayerClient.RankedPlayChangeStage(RankedPlayStage.CardDiscard).WaitSafely());
 
             for (int i = 0; i < 3; i++)
@@ -92,7 +96,7 @@ namespace osu.Game.Tests.Visual.RankedPlay
                 AddStep("reveal card", () => MultiplayerClient.RankedPlayRevealCard(hand => hand[i2], new MultiplayerPlaylistItem
                 {
                     ID = i2,
-                    BeatmapID = i2
+                    BeatmapID = requestHandler.Beatmaps[i2].OnlineID
                 }).WaitSafely());
             }
         }
@@ -119,14 +123,14 @@ namespace osu.Game.Tests.Visual.RankedPlay
         public void TestPlayStage()
         {
             AddStep("set play phase", () => MultiplayerClient.RankedPlayChangeStage(RankedPlayStage.CardPlay, state => state.ActiveUserId = API.LocalUser.Value.OnlineID).WaitSafely());
-            AddUntilStep("wait until cards are present", () => this.ChildrenOfType<PlayerCardHand.PlayerHandCard>().Count() == 5);
+            AddUntilStep("wait until cards are present", () => this.ChildrenOfType<PlayerHandOfCards.PlayerHandCard>().Count() == 5);
 
             for (int i = 0; i < 3; i++)
             {
                 int i2 = i;
                 AddStep($"click card {i2}", () =>
                 {
-                    InputManager.MoveMouseTo(this.ChildrenOfType<PlayerCardHand.PlayerHandCard>().ElementAt(i2));
+                    InputManager.MoveMouseTo(this.ChildrenOfType<PlayerHandOfCards.PlayerHandCard>().ElementAt(i2));
                     InputManager.Click(MouseButton.Left);
                 });
             }
@@ -136,7 +140,7 @@ namespace osu.Game.Tests.Visual.RankedPlay
             AddStep("click play button", () =>
             {
                 var button = screen
-                             .ChildrenOfType<PlayerCardHand.PlayerHandCard>()
+                             .ChildrenOfType<PlayerHandOfCards.PlayerHandCard>()
                              .First(it => it.Selected)
                              .ChildrenOfType<ShearedButton>()
                              .First();
@@ -162,7 +166,10 @@ namespace osu.Game.Tests.Visual.RankedPlay
         [Test]
         public void TestHealthChange()
         {
+            AddStep("set play phase", () => MultiplayerClient.RankedPlayChangeStage(RankedPlayStage.CardPlay, state => state.ActiveUserId = 2).WaitSafely());
+            AddWaitStep("wait", 5);
             AddStep("change player 1 health", () => MultiplayerClient.RankedPlayChangeUserState(MultiplayerClient.LocalUser!.UserID, state => state.Life = 250_000).WaitSafely());
+            AddWaitStep("wait", 5);
             AddStep("change player 2 health", () => MultiplayerClient.RankedPlayChangeUserState(2, state => state.Life = 250_000).WaitSafely());
         }
     }
