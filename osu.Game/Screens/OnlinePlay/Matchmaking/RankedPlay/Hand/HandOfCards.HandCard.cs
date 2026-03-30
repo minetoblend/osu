@@ -63,6 +63,19 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Hand
                 set => State = State with { Order = value };
             }
 
+            public CardLayout LayoutTarget { get; set; } = new CardLayout
+            {
+                Position = new Vector2(0, 0),
+                Rotation = 0,
+                Scale = 1
+            };
+
+            public void TransformLayoutTo(CardLayout value, double duration = 0, Easing easing = Easing.None) =>
+                AddTransform(this.PopulateTransform(new CardLayoutTransform(), value, duration, easing));
+
+            public TransformSequence<HandCard> TransformMovementSpeedTo(float value, double duration = 0, Easing easing = Easing.None) =>
+                this.TransformTo(nameof(MovementSpeed), value, duration, easing);
+
             [Resolved]
             private HandOfCards handOfCards { get; set; } = null!;
 
@@ -99,7 +112,11 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Hand
             {
                 base.LoadComplete();
 
-                state.BindValueChanged(OnStateChanged, true);
+                positionSpring.Current = positionSpring.PreviousTarget = Position;
+                scaleSpring.Current = scaleSpring.PreviousTarget = 1;
+                rotationSpring.Current = rotationSpring.PreviousTarget = Rotation;
+
+                state.BindValueChanged(OnStateChanged, false);
             }
 
             protected virtual void OnStateChanged(ValueChangedEvent<RankedPlayCardState> state)
@@ -121,7 +138,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Hand
 
                 rotationSpring.Parameters = state.NewValue.Dragged
                     ? new SpringParameters(2f, 0.4f, 1.2f)
-                    : new SpringParameters(3f, 0.9f, 0.8f);
+                    : new SpringParameters(3f, 0.75f, 0.8f);
             }
 
             public RankedPlayCard Detach()
@@ -134,24 +151,48 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Hand
                 return Card;
             }
 
+            public float MovementDamping
+            {
+                get => positionSpring.Damping;
+                set => positionSpring.Damping = value;
+            }
+
+            private readonly Vector2Spring positionSpring = new Vector2Spring
+            {
+                NaturalFrequency = 4f,
+                Response = 1.1f,
+                Damping = 0.8f
+            };
+
+            private readonly FloatSpring scaleSpring = new FloatSpring
+            {
+                NaturalFrequency = 4f,
+                Response = 1.3f,
+                Damping = 0.75f,
+                Current = 1,
+                PreviousTarget = 1,
+            };
+
+            public float MovementSpeed = 1;
+
             protected override void Update()
             {
                 base.Update();
 
+                if (MovementSpeed > 0)
+                    Position = positionSpring.Update(Time.Elapsed * MovementSpeed, LayoutTarget.Position);
+                Scale = new Vector2(scaleSpring.Update(Time.Elapsed, LayoutTarget.Scale));
+
+                float targetRotation = LayoutTarget.Rotation;
+
+                if (CardDragged)
+                {
+                    targetRotation += positionSpring.Velocity.X * 0.006f;
+                }
+
+                Rotation = rotationSpring.Update(Time.Elapsed, targetRotation);
+
                 Card.Elevation = float.Lerp(CardHoveredOrDragged ? 1 : 0, Card.Elevation, (float)Math.Exp(-0.03f * Time.Elapsed));
-
-                if (CardDragged && Time.Elapsed > 0)
-                {
-                    float velocityX = (X - previousX) / (float)Time.Elapsed;
-
-                    float targetRotation = velocityX * 5;
-
-                    Card.Rotation = rotationSpring.Update(Time.Elapsed, targetRotation);
-                }
-                else
-                {
-                    Card.Rotation = rotationSpring.Update(Time.Elapsed, 0);
-                }
 
                 previousX = X;
             }
