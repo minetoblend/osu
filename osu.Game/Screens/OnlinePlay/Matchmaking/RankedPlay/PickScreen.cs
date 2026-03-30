@@ -162,28 +162,45 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                 }
                 else
                 {
+                    int currentDelay = delay;
+
                     playerHand.AddCard(item, c =>
                     {
                         c.Position = ToSpaceOfOtherDrawable(new Vector2(DrawWidth / 2, DrawHeight), playerHand);
+                        enterWithDelay(c, currentDelay);
                     });
                     Scheduler.AddDelayed(() =>
                     {
                         SamplePlaybackHelper.PlayWithRandomPitch(cardAddSample);
-                    }, 50 * delay);
-                    delay++;
+                    }, delay);
+                    delay += 50;
                 }
             }
 
+            delay = 0;
+
             foreach (var item in matchInfo.OpponentCards)
             {
+                int currentDelay = delay;
+
                 opponentHand.AddCard(item, c =>
                 {
                     c.Position = ToSpaceOfOtherDrawable(new Vector2(DrawWidth / 2, 0), playerHand);
+                    enterWithDelay(c, currentDelay);
                 });
-            }
 
-            playerHand.UpdateLayout(stagger: 50);
-            opponentHand.UpdateLayout(stagger: 50);
+                delay += 50;
+            }
+        }
+
+        private void enterWithDelay(HandOfCards.HandCard c, double delay)
+        {
+            c.TransformMovementSpeedTo(0)
+             .Delay(delay)
+             .Schedule(() => SamplePlaybackHelper.PlayWithRandomPitch(cardAddSample))
+             .TransformMovementSpeedTo(0.7f)
+             .Delay(200)
+             .TransformMovementSpeedTo(1f);
         }
 
         private void onCountdownStarted(MultiplayerCountdown countdown) => Scheduler.Add(() =>

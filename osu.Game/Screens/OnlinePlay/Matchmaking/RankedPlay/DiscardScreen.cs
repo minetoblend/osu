@@ -12,6 +12,7 @@ using osu.Framework.Audio.Sample;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Primitives;
 using osu.Framework.Localisation;
+using osu.Framework.Logging;
 using osu.Game.Audio;
 using osu.Game.Graphics;
 using osu.Game.Graphics.Containers;
@@ -180,22 +181,27 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
             base.OnEntering(previous);
 
             var screenBottomCenter = new Vector2(DrawWidth / 2, DrawHeight);
-            int cardCount = 0;
+
+            double delay = 0;
+            const double stagger = 50;
 
             foreach (var card in matchInfo.PlayerCards)
             {
+                double currentDelay = delay;
+
                 playerHand.AddCard(card, c =>
                 {
-                    c.Position = ToSpaceOfOtherDrawable(screenBottomCenter, playerHand);
+                    c.Position = ToSpaceOfOtherDrawable(screenBottomCenter, playerHand) + new Vector2(0, playerHand.Height / 2);
+                    c.TransformMovementSpeedTo(0)
+                     .Delay(currentDelay)
+                     .Schedule(() => SamplePlaybackHelper.PlayWithRandomPitch(cardAddSample))
+                     .TransformMovementSpeedTo(0.7f)
+                     .Delay(200)
+                     .TransformMovementSpeedTo(1f);
                 });
-                Scheduler.AddDelayed(() =>
-                {
-                    SamplePlaybackHelper.PlayWithRandomPitch(cardAddSample);
-                }, 50 * cardCount);
-                cardCount++;
-            }
 
-            playerHand.UpdateLayout(stagger: 50);
+                delay += stagger;
+            }
         }
 
         private void onCountdownStarted(MultiplayerCountdown countdown) => Scheduler.Add(() =>
@@ -282,6 +288,8 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
 
         private void cardAdded(RankedPlayCardWithPlaylistItem card)
         {
+            Logger.Log("Card added");
+
             if (discardedCards.Count > 0)
             {
                 playDiscardAnimation();
@@ -299,6 +307,16 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay
                 {
                     d.Position = ToSpaceOfOtherDrawable(new Vector2(DrawWidth, DrawHeight * 0.5f), playerHand);
                     d.Rotation = -30;
+                    d.MovementSpeed = 0.7f;
+                    d.Delay(200).TransformTo(nameof(d.MovementSpeed), 1f, 100);
+
+                    d.TransformTo(nameof(d.MovementDamping), 1f)
+                     .Delay(200)
+                     .TransformTo(nameof(d.MovementDamping), 0.8f, 100);
+
+                    d.TransformMovementSpeedTo(0.5f)
+                     .Delay(100)
+                     .TransformMovementSpeedTo(1f, 100);
                 });
 
                 SamplePlaybackHelper.PlayWithRandomPitch(cardAddSample);
