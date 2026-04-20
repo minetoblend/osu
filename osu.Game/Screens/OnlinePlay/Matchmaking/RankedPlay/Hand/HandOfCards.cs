@@ -131,7 +131,11 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Hand
             setupAction?.Invoke(drawable);
         }
 
-        public void Clear() => cardContainer.Clear();
+        public void Clear()
+        {
+            cardContainer.Clear();
+            cardLookup.Clear();
+        }
 
         public bool RemoveCard(RankedPlayCardWithPlaylistItem item)
         {
