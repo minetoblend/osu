@@ -149,6 +149,8 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Hand
 
             cardContainer.Remove(drawable, true);
             InvalidateLayout();
+            OnCardRemoved(item);
+
             return true;
         }
 
@@ -173,9 +175,15 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Hand
 
             cardContainer.Remove(drawable, true);
             InvalidateLayout();
+            OnCardRemoved(item);
 
             return true;
         }
+
+        /// <summary>
+        /// Called after a card has been removed from this <see cref="HandOfCards"/>
+        /// </summary>
+        protected virtual void OnCardRemoved(RankedPlayCardWithPlaylistItem item) { }
 
         protected virtual HandCard CreateHandCard(RankedPlayCard card) => new HandCard(card);
 
@@ -184,16 +192,6 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Hand
             InvalidateLayout();
             if (affectsDrawOrder(evt))
                 cardContainer.Sort();
-
-            // hovered state can be caused by keyboard focus, in which case we have to clean up after the other cards manually
-            if (evt.NewValue.Hovered)
-            {
-                foreach (var c in cardContainer)
-                {
-                    if (c != card)
-                        c.CardHovered = false;
-                }
-            }
         }
 
         private static bool affectsDrawOrder(ValueChangedEvent<RankedPlayCardState> evt) =>

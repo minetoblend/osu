@@ -31,6 +31,9 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Hand
                 }
             }
 
+            public required Action<PlayerHandCard> Hovered;
+            public required Action<PlayerHandCard> HoverLost;
+
             public required Action<PlayerHandCard> Clicked;
 
             public required Action<PlayerHandCard, Vector2> Dragged;
@@ -112,14 +115,13 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Hand
 
             protected override bool OnHover(HoverEvent e)
             {
-                CardHovered = true;
-
+                Hovered(this);
                 return true;
             }
 
             protected override void OnHoverLost(HoverLostEvent e)
             {
-                CardHovered = false;
+                HoverLost(this);
             }
 
             protected override bool OnMouseDown(MouseDownEvent e)
@@ -148,24 +150,6 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Hand
                 Clicked(this);
 
                 return true;
-            }
-
-            public override bool AcceptsFocus => true;
-
-            public override bool ChangeFocusOnClick => false;
-
-            protected override void OnFocus(FocusEvent e)
-            {
-                base.OnFocus(e);
-
-                CardHovered = true;
-            }
-
-            protected override void OnFocusLost(FocusLostEvent e)
-            {
-                base.OnFocusLost(e);
-
-                CardHovered = false;
             }
 
             #region Drag/Drop

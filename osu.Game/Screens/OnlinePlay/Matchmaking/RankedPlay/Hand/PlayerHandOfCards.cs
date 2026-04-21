@@ -104,6 +104,8 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Hand
 
         protected override HandCard CreateHandCard(RankedPlayCard card) => new PlayerHandCard(card)
         {
+            Hovered = cardHovered,
+            HoverLost = cardHoverLost,
             Clicked = cardClicked,
             Dragged = cardDragged,
             AllowSelection = allowSelection.GetBoundCopy(),
@@ -150,6 +152,18 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Hand
 
         public Dictionary<Guid, RankedPlayCardState> State => Cards.Select(static card => new KeyValuePair<Guid, RankedPlayCardState>(card.Item.Card.ID, card.State)).ToDictionary();
 
+        protected override void OnCardRemoved(RankedPlayCardWithPlaylistItem item)
+        {
+            base.OnCardRemoved(item);
+
+            if (item.Equals(highlightedCard?.Card.Item))
+            {
+                // given that we have just removed this card we do *not* want to trigger any of the
+                // behaviour that would get triggered via setHighlightedCard
+                highlightedCard = null;
+            }
+        }
+
         protected override bool OnKeyDown(KeyDownEvent e)
         {
             if (e.Repeat || Contracted || Cards.Any(static c => c.CardDragged))
@@ -163,8 +177,8 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Hand
                 case >= Key.Number1 and <= Key.Number9:
                 {
                     int index = e.Key - Key.Number1;
-                    if (GetCardsInDisplayOrder().ElementAtOrDefault(index) is HandCard card)
-                        focusCard(card);
+                    if (GetCardsInDisplayOrder().ElementAtOrDefault(index) is PlayerHandCard card)
+                        setHighlightedCard(card, fromKeyboard: true);
                     return true;
                 }
 
@@ -173,8 +187,10 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Hand
                     if (selectionMode == HandSelectionMode.Disabled)
                         return false;
 
-                    if (Cards.FirstOrDefault(it => it.HasFocus) is not PlayerHandCard card)
+                    if (highlightedCard == null || !highlightedCard.Value.FromKeyboard)
                         return false;
+
+                    var card = highlightedCard.Value.Card;
 
                     if (card.Selected && card.PlayAction != null)
                         card.PlayButton.TriggerClick();
@@ -185,25 +201,54 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Hand
                 }
 
                 case Key.Left:
-                    moveCardFocus(-1);
+                    moveHighlightToAdjacentCard(-1);
                     return true;
 
                 case Key.Right:
-                    moveCardFocus(1);
+                    moveHighlightToAdjacentCard(1);
                     return true;
             }
 
             return base.OnKeyDown(e);
         }
 
-        private void moveCardFocus(int direction)
+        /// <summary>
+        /// The card that's currently highlighted, either via mouse hover or keyboard navigation.
+        /// </summary>
+        private HighlightedCard? highlightedCard;
+
+        private void setHighlightedCard(PlayerHandCard? card, bool fromKeyboard = false)
         {
-            var cards = GetCardsInDisplayOrder();
+            if (highlightedCard.HasValue)
+                highlightedCard.Value.Card.CardHovered = false;
 
-            int currentIndex = cards.FindIndex(c => c.HasFocus);
+            if (card == null)
+            {
+                highlightedCard = null;
+                return;
+            }
 
-            // default behaviour is to start from either end of the cards if no card is focused currently
-            // in single-selection mode we can however use the current selection as a fallback index if there's no focus
+            highlightedCard = new HighlightedCard(card, fromKeyboard);
+            card.CardHovered = true;
+
+            if (fromKeyboard && SelectionMode == HandSelectionMode.Single && !card.Selected)
+                card.TriggerClick();
+        }
+
+        private void moveHighlightToAdjacentCard(int direction)
+        {
+            var cards = GetCardsInDisplayOrder().OfType<PlayerHandCard>().ToList();
+
+            if (cards.Count == 0)
+                return;
+
+            int currentIndex = -1;
+
+            if (highlightedCard.HasValue)
+                currentIndex = cards.IndexOf(highlightedCard.Value.Card);
+
+            // default behaviour is to start from either end of the cards if no card is highlighted currently
+            // in single-selection mode we can however use the current selection as a fallback index if there's no highlight
             if (selectionMode == HandSelectionMode.Single && currentIndex == -1)
                 currentIndex = cards.FindIndex(c => c.Selected);
 
@@ -214,15 +259,15 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Hand
             else if (newIndex >= cards.Count)
                 newIndex = 0;
 
-            focusCard(cards[newIndex]);
+            setHighlightedCard(cards[newIndex], fromKeyboard: true);
         }
 
-        private void focusCard(HandCard card)
-        {
-            GetContainingFocusManager()?.ChangeFocus(card);
+        private void cardHovered(PlayerHandCard card) => setHighlightedCard(card);
 
-            if (SelectionMode == HandSelectionMode.Single && !card.Selected)
-                card.TriggerClick();
+        private void cardHoverLost(PlayerHandCard card)
+        {
+            if (highlightedCard?.Card == card)
+                setHighlightedCard(null);
         }
 
         private void cardDragged(PlayerHandCard card, Vector2 screenSpacePosition)
@@ -274,5 +319,7 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Hand
 
             return minIndex;
         }
+
+        private readonly record struct HighlightedCard(PlayerHandCard Card, bool FromKeyboard);
     }
 }
