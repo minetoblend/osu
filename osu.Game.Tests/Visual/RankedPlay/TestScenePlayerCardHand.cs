@@ -1,36 +1,52 @@
 // Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
+using System.Diagnostics;
 using System.Linq;
 using Humanizer;
 using NUnit.Framework;
 using osu.Framework.Allocation;
 using osu.Framework.Graphics;
+using osu.Framework.Graphics.Containers;
+using osu.Framework.Graphics.Primitives;
+using osu.Framework.Graphics.UserInterface;
 using osu.Framework.Testing;
+using osu.Game.Graphics.Cursor;
+using osu.Game.Graphics.UserInterface;
+using osu.Game.Online.API;
 using osu.Game.Online.Multiplayer.MatchTypes.RankedPlay;
 using osu.Game.Overlays;
+using osu.Game.Rulesets.Osu;
 using osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay;
 using osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Hand;
 using osuTK.Input;
 
 namespace osu.Game.Tests.Visual.RankedPlay
 {
-    public partial class TestScenePlayerCardHand : OsuManualInputManagerTestScene
+    public partial class TestScenePlayerCardHand : RankedPlayTestScene
     {
         [Cached]
         private readonly OverlayColourProvider colourProvider = new OverlayColourProvider(OverlayColourScheme.Purple);
 
         private PlayerHandOfCards handOfCards = null!;
 
+        protected override Container<Drawable> Content => content;
+
+        private Container content = null!;
+
         [BackgroundDependencyLoader]
         private void load()
         {
-            Child = handOfCards = new PlayerHandOfCards
+            base.Content.Child = content = new OsuContextMenuContainer
             {
-                Anchor = Anchor.BottomCentre,
-                Origin = Anchor.BottomCentre,
                 RelativeSizeAxes = Axes.Both,
-                Height = 0.5f,
+                Child = handOfCards = new PlayerHandOfCards
+                {
+                    Anchor = Anchor.BottomCentre,
+                    Origin = Anchor.BottomCentre,
+                    RelativeSizeAxes = Axes.Both,
+                    Height = 0.5f,
+                }
             };
         }
 
@@ -218,6 +234,47 @@ namespace osu.Game.Tests.Visual.RankedPlay
             AddAssert("no cards", () => !handOfCards.Cards.Any());
             AddStep("right arrow", () => InputManager.Key(Key.Right));
             AddStep("left arrow", () => InputManager.Key(Key.Left));
+        }
+
+        [Test]
+        public void TestHoverOnContextMenu()
+        {
+            BeatmapRequestHandler requestHandler = null!;
+            AddStep("setup ruleset", () => requestHandler = new BeatmapRequestHandler(new OsuRuleset().RulesetInfo));
+
+            AddStep("setup request handler", () => ((DummyAPIAccess)API).HandleRequest = requestHandler.HandleRequest);
+
+            AddStep("add cards", () =>
+            {
+                foreach (var beatmap in requestHandler.Beatmaps)
+                {
+                    handOfCards.AddCard(new RevealedRankedPlayCardWithPlaylistItem(beatmap));
+                }
+            });
+
+            AddStep("hover card", () => InputManager.MoveMouseTo(handOfCards.GetCardsInDisplayOrder()[1]));
+            AddAssert("card hovered", () => handOfCards.GetCardsInDisplayOrder()[1].CardHovered);
+            AddStep("right click", () => InputManager.Click(MouseButton.Right));
+            AddAssert("menu visible", () => this.ChildrenOfType<OsuContextMenu>().Single().State == MenuState.Open);
+
+            // context menu moves with the card. Repeating the step ensures that the mouse ends up hovering
+            // the context menu in its final position if the card happens to change state
+            AddRepeatStep("hover context menu", () =>
+            {
+                // center of the context menu may be outside the card. There is no way to check the current target of a
+                // ContextMenuContainer currently, so both the card and the menu have to be hovered for this check to make
+                // any sense
+                var rect = RectangleF.Intersect(
+                    this.ChildrenOfType<OsuContextMenu>().First().ScreenSpaceDrawQuad.AABBFloat,
+                    handOfCards.GetCardsInDisplayOrder()[1].ScreenSpaceDrawQuad.AABBFloat
+                );
+
+                Debug.Assert(rect != RectangleF.Empty);
+
+                InputManager.MoveMouseTo(rect.Centre);
+            }, 5);
+
+            AddAssert("card hovered", () => handOfCards.GetCardsInDisplayOrder()[1].CardHovered);
         }
     }
 }
