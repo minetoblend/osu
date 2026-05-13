@@ -9,6 +9,7 @@ using osu.Framework.Allocation;
 using osu.Framework.Audio;
 using osu.Framework.Audio.Sample;
 using osu.Framework.Bindables;
+using osu.Framework.Input;
 using osu.Framework.Input.Events;
 using osu.Game.Audio;
 using osu.Game.Online.RankedPlay;
@@ -84,6 +85,9 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Hand
 
         private readonly BindableBool allowSelection = new BindableBool();
 
+        private InputManager inputManager = null!;
+        private HandCard? hoveredCard;
+
         private const int select_samples = 1;
         private const int deselect_samples = 2;
 
@@ -100,6 +104,20 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Hand
             cardDeselectSamples = new Sample?[deselect_samples];
             for (int i = 0; i < deselect_samples; i++)
                 cardDeselectSamples[i] = audio.Samples.Get(@$"Multiplayer/Matchmaking/Ranked/card-deselect-{i + 1}");
+        }
+
+        protected override void LoadComplete()
+        {
+            base.LoadComplete();
+
+            inputManager = GetContainingInputManager()!;
+        }
+
+        protected override void UpdateAfterChildren()
+        {
+            base.UpdateAfterChildren();
+
+            updateHoveredCard();
         }
 
         protected override HandCard CreateHandCard(RankedPlayCard card) => new PlayerHandCard(card)
@@ -276,6 +294,23 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Hand
             }
 
             return minIndex;
+        }
+
+        private void updateHoveredCard()
+        {
+            var mousePosition = inputManager.CurrentState.Mouse.Position;
+            HandCard? newTarget = GetCardsInDisplayOrder().LastOrDefault(it => it.Contains(mousePosition));
+
+            if (hoveredCard == newTarget)
+                return;
+
+            if (hoveredCard != null)
+                hoveredCard.CardHovered = false;
+
+            if (newTarget != null)
+                newTarget.CardHovered = true;
+
+            hoveredCard = newTarget;
         }
     }
 }

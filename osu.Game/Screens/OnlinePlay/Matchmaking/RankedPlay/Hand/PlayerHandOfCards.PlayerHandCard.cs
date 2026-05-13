@@ -110,18 +110,6 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Hand
                 return cardInputArea.ReceivePositionalInputAt(screenSpacePos);
             }
 
-            protected override bool OnHover(HoverEvent e)
-            {
-                CardHovered = true;
-
-                return true;
-            }
-
-            protected override void OnHoverLost(HoverLostEvent e)
-            {
-                CardHovered = false;
-            }
-
             protected override bool OnMouseDown(MouseDownEvent e)
             {
                 if (e.Button == MouseButton.Left && AllowSelection.Value)
