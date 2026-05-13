@@ -12,6 +12,7 @@ using osu.Framework.Bindables;
 using osu.Framework.Input;
 using osu.Framework.Input.Events;
 using osu.Game.Audio;
+using osu.Game.Graphics.UserInterface;
 using osu.Game.Online.RankedPlay;
 using osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Card;
 using osuTK;
@@ -298,6 +299,13 @@ namespace osu.Game.Screens.OnlinePlay.Matchmaking.RankedPlay.Hand
 
         private void updateHoveredCard()
         {
+            // context menu may be overlapping multiple cards and moving between two cards while hovering the context menu
+            // may change the position of the card the menu is attached to as a result.
+            // therefore the hovered card is not updated in this case to prevent the context menu from suddenly moving while the
+            // player is hovering it
+            if (inputManager.HoveredDrawables.OfType<OsuContextMenu>().Any())
+                return;
+
             var mousePosition = inputManager.CurrentState.Mouse.Position;
             HandCard? newTarget = GetCardsInDisplayOrder().LastOrDefault(it => it.Contains(mousePosition));
 
