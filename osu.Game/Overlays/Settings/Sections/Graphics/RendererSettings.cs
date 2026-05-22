@@ -3,6 +3,7 @@
 
 using System.Linq;
 using osu.Framework.Allocation;
+using osu.Framework.Bindables;
 using osu.Framework.Configuration;
 using osu.Framework.Extensions;
 using osu.Framework.Graphics;
@@ -21,11 +22,17 @@ namespace osu.Game.Overlays.Settings.Sections.Graphics
 
         private bool automaticRendererInUse;
 
+        private readonly Bindable<bool> disableFpsCap = new Bindable<bool>(false);
+        private readonly Bindable<FrameSync> frameSync = new Bindable<FrameSync>();
+
         [BackgroundDependencyLoader]
         private void load(FrameworkConfigManager config, OsuConfigManager osuConfig, IDialogOverlay? dialogOverlay, OsuGame? game, GameHost host)
         {
             var renderer = config.GetBindable<RendererType>(FrameworkSetting.Renderer);
             automaticRendererInUse = renderer.Value == RendererType.Automatic;
+
+            osuConfig.BindWith(OsuSetting.DisableFpsCap, disableFpsCap);
+            config.BindWith(FrameworkSetting.FrameSync, frameSync);
 
             Children = new Drawable[]
             {
@@ -61,6 +68,11 @@ namespace osu.Game.Overlays.Settings.Sections.Graphics
                 {
                     Keywords = new[] { @"framerate", @"counter" },
                 },
+                new SettingsItemV2(new FormCheckBox
+                {
+                    Caption = "Disable FPS Cap",
+                    Current = disableFpsCap
+                })
             };
 
             renderer.BindValueChanged(r =>
@@ -84,6 +96,18 @@ namespace osu.Game.Overlays.Settings.Sections.Graphics
                     }));
                 }
             });
+
+            disableFpsCap.BindValueChanged(e =>
+            {
+                host.AllowBenchmarkUnlimitedFrames = e.NewValue;
+
+                var previous = frameSync.Value;
+                // dumb workaround that basically ensures that the value *actually* changes at least once since bindable.TriggerChange() won't propagate
+                // to other bound bindables
+                frameSync.Value = FrameSync.Limit2x;
+                frameSync.Value = FrameSync.Limit4x;
+                frameSync.Value = previous;
+            }, true);
         }
 
         private partial class RendererDropdown : FormEnumDropdown<RendererType>
