@@ -2,6 +2,7 @@
 // See the LICENCE file in the repository root for full licence text.
 
 using System.Collections.Generic;
+using osu.Framework.Allocation;
 using osu.Game.Beatmaps;
 using osu.Game.Rulesets.Edit;
 using osu.Game.Rulesets.Mods;
@@ -14,6 +15,12 @@ namespace osu.Game.Rulesets.Osu.Edit
     {
         public OsuHitObjectComposer(Ruleset ruleset)
             : base(ruleset) { }
+
+        [BackgroundDependencyLoader]
+        private void load()
+        {
+            LayerBelowRuleset.Add(new OsuEditorGrid());
+        }
 
         protected override DrawableRuleset<OsuHitObject> CreateDrawableRuleset(IBeatmap beatmap, IReadOnlyList<Mod> mods) => new DrawableOsuEditorRuleset(Ruleset, beatmap, mods);
     }

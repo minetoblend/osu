@@ -32,6 +32,8 @@ namespace osu.Game.Rulesets.Edit
 
         private DependencyContainer dependencies = null!;
 
+        protected readonly Container LayerBelowRuleset = new Container { RelativeSizeAxes = Axes.Both, };
+
         protected HitObjectComposer(Ruleset ruleset)
         {
             Ruleset = ruleset;
@@ -43,11 +45,15 @@ namespace osu.Game.Rulesets.Edit
             RelativeSizeAxes = Axes.Both;
 
             DrawableRuleset = CreateDrawableRuleset(editorBeatmap.PlayableBeatmap, [Ruleset.GetAutoplayMod()!]);
-            InternalChild = new DrawableEditorRulesetWrapper<TObject>(DrawableRuleset)
-            {
-                Clock = EditorClock,
-                ProcessCustomClock = false,
-            };
+            InternalChildren =
+            [
+                DrawableRuleset.CreatePlayfieldAdjustmentContainer().WithChild(LayerBelowRuleset),
+                new DrawableEditorRulesetWrapper<TObject>(DrawableRuleset)
+                {
+                    Clock = EditorClock,
+                    ProcessCustomClock = false,
+                },
+            ];
 
             dependencies.CacheAs(DrawableRuleset);
             dependencies.CacheAs(Playfield);
