@@ -9,6 +9,12 @@ namespace osu.Game.Rulesets.Edit
     public abstract partial class HitObjectComposer<TObject> : HitObjectComposer
         where TObject : HitObject
     {
+        public readonly Ruleset Ruleset;
+
+        protected HitObjectComposer(Ruleset ruleset)
+        {
+            Ruleset = ruleset;
+        }
     }
 
     public abstract partial class HitObjectComposer : CompositeDrawable

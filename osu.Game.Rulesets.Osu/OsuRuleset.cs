@@ -406,7 +406,8 @@ namespace osu.Game.Rulesets.Osu
                 Description = "Affects the size of hit circles and sliders.",
                 AdditionalMetrics =
                 [
-                    new RulesetBeatmapAttribute.AdditionalMetric("Hit circle radius", (OsuHitObject.OBJECT_RADIUS * LegacyRulesetExtensions.CalculateScaleFromCircleSize(effectiveDifficulty.CircleSize, applyFudge: true)).ToLocalisableString("0.#"))
+                    new RulesetBeatmapAttribute.AdditionalMetric("Hit circle radius",
+                        (OsuHitObject.OBJECT_RADIUS * LegacyRulesetExtensions.CalculateScaleFromCircleSize(effectiveDifficulty.CircleSize, applyFudge: true)).ToLocalisableString("0.#"))
                 ]
             };
 
@@ -440,8 +441,12 @@ namespace osu.Game.Rulesets.Osu
                                                   LocalisableString.Interpolate($@"±{hitWindows.WindowFor(window.result) / rate:0.##} ms"),
                                                   colours.ForHitResult(window.result)
                                               )).Concat([
-                                                  new RulesetBeatmapAttribute.AdditionalMetric("RPM required to clear spinners", LocalisableString.Interpolate($@"{IBeatmapDifficultyInfo.DifficultyRange(modAdjustedDifficulty.OverallDifficulty, Spinner.CLEAR_RPM_RANGE):N0} RPM")),
-                                                  new RulesetBeatmapAttribute.AdditionalMetric("RPM required to get full spinner bonus", LocalisableString.Interpolate($@"{IBeatmapDifficultyInfo.DifficultyRange(modAdjustedDifficulty.OverallDifficulty, Spinner.COMPLETE_RPM_RANGE):N0} RPM")),
+                                                  new RulesetBeatmapAttribute.AdditionalMetric("RPM required to clear spinners",
+                                                      LocalisableString.Interpolate(
+                                                          $@"{IBeatmapDifficultyInfo.DifficultyRange(modAdjustedDifficulty.OverallDifficulty, Spinner.CLEAR_RPM_RANGE):N0} RPM")),
+                                                  new RulesetBeatmapAttribute.AdditionalMetric("RPM required to get full spinner bonus",
+                                                      LocalisableString.Interpolate(
+                                                          $@"{IBeatmapDifficultyInfo.DifficultyRange(modAdjustedDifficulty.OverallDifficulty, Spinner.COMPLETE_RPM_RANGE):N0} RPM")),
                                               ]).ToArray()
             };
 
@@ -453,5 +458,7 @@ namespace osu.Game.Rulesets.Osu
         }
 
         public override bool EditorShowScrollSpeed => false;
+
+        public override HitObjectComposer CreateHitObjectComposer() => new OsuHitObjectComposer(this);
     }
 }
