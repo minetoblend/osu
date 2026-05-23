@@ -85,10 +85,7 @@ namespace osu.Game.Screens.Edit.Compose
                 RelativeSizeAxes = Axes.Both,
                 Children = new[]
                 {
-                    // We want to display this below hitobjects to better expose placement objects visually.
-                    // It needs to be above the blueprint container to handle drags on breaks though.
                     breakDisplay.CreateProxy(),
-                    new TimelineBlueprintContainer(composer),
                     breakDisplay
                 }
             });
@@ -182,11 +179,7 @@ namespace osu.Game.Screens.Edit.Compose
                 return string.Empty;
 
             double displayTime = EditorBeatmap.SelectedHitObjects.MinBy(h => h.StartTime)?.StartTime ?? clock.CurrentTime;
-            string selectionAsString = composer.ConvertSelectionToString();
-
-            return !string.IsNullOrEmpty(selectionAsString)
-                ? $"{displayTime.ToEditorFormattedString()} ({selectionAsString}) - "
-                : $"{displayTime.ToEditorFormattedString()} - ";
+            return $"{displayTime.ToEditorFormattedString()} - ";
         }
 
         #endregion

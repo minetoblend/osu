@@ -198,8 +198,6 @@ namespace osu.Game.Rulesets.Taiko
 
         public override Drawable CreateIcon() => new SpriteIcon { Icon = OsuIcon.RulesetTaiko };
 
-        public override HitObjectComposer CreateHitObjectComposer() => new TaikoHitObjectComposer(this);
-
         public override IEnumerable<Drawable> CreateEditorSetupSections() =>
         [
             new MetadataSection(),

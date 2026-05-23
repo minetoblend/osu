@@ -64,8 +64,6 @@ namespace osu.Game.Rulesets.Mania
 
         public override string RulesetAPIVersionSupported => CURRENT_RULESET_API_VERSION;
 
-        public override HitObjectComposer CreateHitObjectComposer() => new ManiaHitObjectComposer(this);
-
         public override IBeatmapVerifier CreateBeatmapVerifier() => new ManiaBeatmapVerifier();
 
         public override ISkin? CreateSkinTransformer(ISkin skin, IBeatmap beatmap)

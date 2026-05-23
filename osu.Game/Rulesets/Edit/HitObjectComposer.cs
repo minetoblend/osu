@@ -13,5 +13,7 @@ namespace osu.Game.Rulesets.Edit
 
     public abstract partial class HitObjectComposer : CompositeDrawable
     {
+        public const float TOOLBOX_CONTRACTED_SIZE_LEFT = 60;
+        public const float TOOLBOX_CONTRACTED_SIZE_RIGHT = 120;
     }
 }

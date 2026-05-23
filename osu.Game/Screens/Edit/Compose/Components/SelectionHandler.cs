@@ -19,7 +19,6 @@ using osu.Game.Graphics.UserInterface;
 using osu.Game.Input.Bindings;
 using osu.Game.Resources.Localisation.Web;
 using osu.Game.Rulesets.Edit;
-using osu.Game.Screens.Edit.Compose.Components.Timeline;
 using osuTK;
 using osuTK.Input;
 

@@ -1613,9 +1613,6 @@ namespace osu.Game.Screens.Edit
             clock.SeekSmoothlyTo(position);
 
             Mode.Value = EditorScreenMode.Compose;
-
-            // Delegate handling the selection to the ruleset.
-            currentScreen.Dependencies.Get<HitObjectComposer>().SelectFromTimestamp(position, selection);
             return true;
         }
 
