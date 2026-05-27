@@ -51,7 +51,7 @@ namespace osu.Game.Rulesets.Osu.Edit.Snapping
         private bool isVisible(OsuHitObject hitObject)
         {
             return editorClock.CurrentTime >= hitObject.StartTime - hitObject.TimePreempt &&
-                   editorClock.CurrentTime < hitObject.GetEndTime() + 800;
+                   editorClock.CurrentTime < hitObject.GetEndTime() + OsuHitObjectComposer.FADEOUT_DURATION;
         }
     }
 }

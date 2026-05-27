@@ -16,6 +16,8 @@ namespace osu.Game.Rulesets.Osu.Edit
 {
     public class OsuHitObjectComposer : HitObjectComposer<OsuHitObject>
     {
+        public const double FADEOUT_DURATION = 800;
+
         public OsuHitObjectComposer(Ruleset ruleset)
             : base(ruleset) { }
 
@@ -24,6 +26,7 @@ namespace osu.Game.Rulesets.Osu.Edit
         protected override IEnumerable<ComposeToolInfo> Tools =>
         [
             new HitCircleToolInfo(),
+            new SliderToolInfo(),
         ];
 
         [Cached]

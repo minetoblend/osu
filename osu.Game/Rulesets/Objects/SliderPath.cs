@@ -290,8 +290,11 @@ namespace osu.Game.Rulesets.Objects
             segmentEnds.Clear();
             optimisedLength = 0;
 
-            if (ControlPoints.Count == 0)
+            if (ControlPoints.Count <= 1)
+            {
+                calculatedPath.Add(Vector2.Zero);
                 return;
+            }
 
             Vector2[] vertices = new Vector2[ControlPoints.Count];
             for (int i = 0; i < ControlPoints.Count; i++)

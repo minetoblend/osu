@@ -20,8 +20,12 @@ namespace osu.Game.Rulesets.Edit.Tools
         [Resolved]
         private EditorBeatmap editorBeatmap { get; set; } = null!;
 
+        protected EditorBeatmap EditorBeatmap => editorBeatmap;
+
         [Resolved]
         private EditorClock editorClock { get; set; } = null!;
+
+        protected EditorClock EditorClock => editorClock;
 
         [Resolved]
         private Playfield playfield { get; set; } = null!;
@@ -31,17 +35,37 @@ namespace osu.Game.Rulesets.Edit.Tools
 
         private InputManager inputManager = null!;
 
+        protected virtual bool AddToBeatmapImmediately => false;
+
+        private bool addedToBeatmap;
+
         protected HitObjectPlacementTool(TObject hitObject)
         {
             HitObject = hitObject;
         }
 
+        private int changeCount;
+
         protected override void LoadComplete()
         {
             base.LoadComplete();
 
+            if (changeHandler != null)
+                changeHandler.OnStateChange += onStateChange;
+
             inputManager = GetContainingInputManager()!;
+
+            changeHandler?.BeginChange();
+
+            if (AddToBeatmapImmediately)
+            {
+                updateHitObject();
+                editorBeatmap.Add(HitObject);
+                addedToBeatmap = true;
+            }
         }
+
+        private void onStateChange() => changeCount++;
 
         protected override void Update()
         {
@@ -54,7 +78,7 @@ namespace osu.Game.Rulesets.Edit.Tools
         {
             UpdateTimeAndPosition(playfield.ScreenSpaceToGamefield(inputManager.CurrentState.Mouse.Position), editorClock.CurrentTime);
 
-            if (State == PlacementState.Active)
+            if (addedToBeatmap && State != PlacementState.Finished)
             {
                 editorBeatmap.Update(HitObject);
             }
@@ -71,8 +95,14 @@ namespace osu.Game.Rulesets.Edit.Tools
 
             State = PlacementState.Active;
 
-            updateHitObject();
-            editorBeatmap.Add(HitObject);
+            if (!addedToBeatmap)
+            {
+                updateHitObject();
+                editorBeatmap.Add(HitObject);
+                addedToBeatmap = true;
+            }
+
+            OnBeginPlacement();
         }
 
         protected void EndPlacement(bool commit)
@@ -87,10 +117,16 @@ namespace osu.Game.Rulesets.Edit.Tools
 
             OnEndPlacement(commit);
 
-            if (commit)
-                changeHandler?.SaveState();
+            changeHandler?.EndChange();
+
+            if (!commit)
+                changeHandler?.RestoreState(-changeCount);
 
             RecreateTool();
+        }
+
+        protected virtual void OnBeginPlacement()
+        {
         }
 
         protected virtual void OnEndPlacement(bool didCommit)
@@ -101,12 +137,21 @@ namespace osu.Game.Rulesets.Edit.Tools
         {
             base.OnExit();
 
-            switch (State)
+            if (State != PlacementState.Finished && addedToBeatmap)
             {
-                case PlacementState.Active:
-                    editorBeatmap.Remove(HitObject);
-                    break;
+                editorBeatmap.Remove(HitObject);
+
+                changeHandler?.EndChange();
+                changeHandler?.RestoreState(-changeCount);
             }
+        }
+
+        protected override void Dispose(bool isDisposing)
+        {
+            if (changeHandler != null)
+                changeHandler.OnStateChange -= onStateChange;
+
+            base.Dispose(isDisposing);
         }
 
         public enum PlacementState

@@ -5,8 +5,6 @@ using System.Linq;
 using osu.Framework.Allocation;
 using osu.Framework.Input.Events;
 using osu.Framework.Utils;
-using osu.Game.Rulesets.Edit.Tools;
-using osu.Game.Rulesets.Osu.Edit.Snapping;
 using osu.Game.Rulesets.Osu.Objects;
 using osu.Game.Rulesets.UI;
 using osu.Game.Screens.Edit;
@@ -15,7 +13,7 @@ using osuTK.Input;
 
 namespace osu.Game.Rulesets.Osu.Edit.Tools
 {
-    public class HitCircleTool : HitObjectPlacementTool<HitCircle>
+    public class HitCircleTool : OsuHitObjectPlacementTool<HitCircle>
     {
         public HitCircleTool()
             : base(new HitCircle())
@@ -31,19 +29,22 @@ namespace osu.Game.Rulesets.Osu.Edit.Tools
         [Resolved]
         private Playfield playfield { get; set; } = null!;
 
-        [Resolved]
-        private PositionSnapProvider snapProvider { get; set; } = null!;
-
         protected override void UpdateTimeAndPosition(Vector2 position, double time)
         {
-            HitObject.Position = snapProvider.SnapToHitObjects(position, exclude: [HitObject])?.Position ?? position;
-            HitObject.StartTime = editorClock.CurrentTime;
+            // once mouse-down is pressed the start time should no longer change
+            if (State != PlacementState.Active)
+                HitObject.StartTime = editorClock.CurrentTime;
+
+            HitObject.Position = SnapProvider.SnapToHitObjects(position, exclude: [HitObject])?.Position ?? position;
         }
 
-        protected override void LoadComplete()
+        protected override bool OnMouseDown(MouseDownEvent e)
         {
-            base.LoadComplete();
+            if (e.Button != MouseButton.Left)
+                return false;
+
             BeginPlacement();
+            return true;
         }
 
         protected override void OnMouseUp(MouseUpEvent e)

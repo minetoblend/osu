@@ -4,6 +4,7 @@
 using System.Collections.Generic;
 using osu.Game.Beatmaps;
 using osu.Game.Rulesets.Mods;
+using osu.Game.Rulesets.Objects;
 using osu.Game.Rulesets.Osu.UI;
 using osu.Game.Rulesets.UI;
 using osuTK;
@@ -22,6 +23,17 @@ namespace osu.Game.Rulesets.Osu.Edit
         private partial class OsuEditorPlayfield : OsuPlayfield
         {
             protected override GameplayCursorContainer? CreateCursor() => null;
+
+            protected override HitObjectLifetimeEntry CreateLifetimeEntry(HitObject hitObject) => new OsuEditorHitObjectLifetimeEntry(hitObject);
+
+            public class OsuEditorHitObjectLifetimeEntry : OsuHitObjectLifetimeEntry
+            {
+                public OsuEditorHitObjectLifetimeEntry(HitObject hitObject)
+                    : base(hitObject)
+                {
+                    LifetimeEnd = hitObject.GetEndTime() + OsuHitObjectComposer.FADEOUT_DURATION;
+                }
+            }
         }
     }
 }

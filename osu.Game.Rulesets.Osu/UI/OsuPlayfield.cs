@@ -222,7 +222,7 @@ namespace osu.Game.Rulesets.Osu.UI
             public void Add(Drawable proxy) => AddInternal(proxy);
         }
 
-        private class OsuHitObjectLifetimeEntry : HitObjectLifetimeEntry
+        public class OsuHitObjectLifetimeEntry : HitObjectLifetimeEntry
         {
             public OsuHitObjectLifetimeEntry(HitObject hitObject)
                 : base(hitObject)
