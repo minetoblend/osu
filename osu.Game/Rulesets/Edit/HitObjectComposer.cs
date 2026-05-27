@@ -58,6 +58,7 @@ namespace osu.Game.Rulesets.Edit
         protected Container MainContentArea = null!;
 
         private ComposeToolbar toolbar = null!;
+        private ComposeToolContainer toolContainer = null!;
 
         [BackgroundDependencyLoader]
         private void load()
@@ -77,15 +78,19 @@ namespace osu.Game.Rulesets.Edit
                     Children =
                     [
                         DrawableRuleset.CreatePlayfieldAdjustmentContainer().WithChild(LayerBelowRuleset),
+                        // tool container should run its update look before the drawable ruleset
+                        // so the playfield has a chance to run an update loop after changes have been made
+                        // to the beatmap
+                        toolContainer = new ComposeToolContainer
+                        {
+                            RelativeSizeAxes = Axes.Both,
+                        },
                         new DrawableEditorRulesetWrapper<TObject>(DrawableRuleset)
                         {
                             Clock = EditorClock,
                             ProcessCustomClock = false,
                         },
-                        new ComposeToolContainer
-                        {
-                            RelativeSizeAxes = Axes.Both,
-                        }
+                        toolContainer.CreateProxy(),
                     ]
                 },
                 LeftToolbarArea = new Container

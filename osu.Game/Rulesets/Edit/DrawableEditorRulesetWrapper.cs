@@ -22,6 +22,10 @@ namespace osu.Game.Rulesets.Edit
         [Resolved]
         private EditorBeatmap beatmap { get; set; } = null!;
 
+        public override bool PropagatePositionalInputSubTree => false;
+
+        public override bool PropagateNonPositionalInputSubTree => false;
+
         public DrawableEditorRulesetWrapper(DrawableRuleset<TObject> drawableRuleset)
         {
             this.drawableRuleset = drawableRuleset;
