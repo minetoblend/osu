@@ -30,9 +30,12 @@ namespace osu.Game.Rulesets.Osu.Edit.Tools
         [Resolved]
         private Playfield playfield { get; set; } = null!;
 
+        [Resolved]
+        private PositionSnapProvider snapProvider { get; set; } = null!;
+
         protected override void UpdateTimeAndPosition(Vector2 position, double time)
         {
-            HitObject.Position = position;
+            HitObject.Position = snapProvider.SnapToHitObjects(position, exclude: [HitObject]) ?? position;
             HitObject.StartTime = editorClock.CurrentTime;
         }
 

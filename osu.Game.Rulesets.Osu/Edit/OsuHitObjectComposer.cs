@@ -25,9 +25,14 @@ namespace osu.Game.Rulesets.Osu.Edit
             new HitCircleToolInfo(),
         ];
 
+        [Cached]
+        private readonly PositionSnapProvider snapManager = new PositionSnapProvider();
+
         [BackgroundDependencyLoader]
         private void load()
         {
+            AddInternal(snapManager);
+
             LayerBelowRuleset.Add(new OsuEditorGrid());
         }
 
