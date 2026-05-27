@@ -6,6 +6,7 @@ using osu.Framework.Allocation;
 using osu.Framework.Input.Events;
 using osu.Framework.Utils;
 using osu.Game.Rulesets.Edit.Tools;
+using osu.Game.Rulesets.Osu.Edit.Snapping;
 using osu.Game.Rulesets.Osu.Objects;
 using osu.Game.Rulesets.UI;
 using osu.Game.Screens.Edit;
@@ -35,7 +36,7 @@ namespace osu.Game.Rulesets.Osu.Edit.Tools
 
         protected override void UpdateTimeAndPosition(Vector2 position, double time)
         {
-            HitObject.Position = snapProvider.SnapToHitObjects(position, exclude: [HitObject]) ?? position;
+            HitObject.Position = snapProvider.SnapToHitObjects(position, exclude: [HitObject])?.Position ?? position;
             HitObject.StartTime = editorClock.CurrentTime;
         }
 

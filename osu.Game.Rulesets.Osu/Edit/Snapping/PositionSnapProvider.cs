@@ -10,7 +10,7 @@ using osu.Game.Rulesets.Osu.Objects;
 using osu.Game.Screens.Edit;
 using osuTK;
 
-namespace osu.Game.Rulesets.Osu.Edit
+namespace osu.Game.Rulesets.Osu.Edit.Snapping
 {
     public class PositionSnapProvider : Component
     {
@@ -20,20 +20,29 @@ namespace osu.Game.Rulesets.Osu.Edit
         [Resolved]
         private EditorClock editorClock { get; set; } = null!;
 
-        public Vector2? SnapToHitObjects(Vector2 playfieldPosition, IEnumerable<OsuHitObject>? exclude = null)
+        public SnapResult? SnapToHitObjects(IEnumerable<Vector2> positions, IEnumerable<OsuHitObject>? exclude = null)
         {
-            const float threshold = 3;
-
             var snapPoints = editorBeatmap.HitObjects
                                           .Cast<OsuHitObject>()
                                           .Except(exclude ?? [])
                                           .Where(isVisible)
                                           .SelectMany(static h => h.GetSnapPositions());
 
-            foreach (var p in snapPoints)
+            return snapToPoints(positions, snapPoints);
+        }
+
+        public SnapResult? SnapToHitObjects(Vector2 position, IEnumerable<OsuHitObject>? exclude = null) =>
+            SnapToHitObjects([position], exclude);
+
+        private static SnapResult? snapToPoints(IEnumerable<Vector2> sourcePoints, IEnumerable<Vector2> targetPoints, float threshold = 3)
+        {
+            foreach (var source in sourcePoints)
             {
-                if (Vector2.Distance(playfieldPosition, p) < threshold)
-                    return p;
+                foreach (var target in targetPoints)
+                {
+                    if (Vector2.Distance(source, target) < threshold)
+                        return new SnapResult(target, source);
+                }
             }
 
             return null;

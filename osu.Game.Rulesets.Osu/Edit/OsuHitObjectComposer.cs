@@ -7,6 +7,7 @@ using osu.Game.Beatmaps;
 using osu.Game.Rulesets.Edit;
 using osu.Game.Rulesets.Edit.Tools;
 using osu.Game.Rulesets.Mods;
+using osu.Game.Rulesets.Osu.Edit.Snapping;
 using osu.Game.Rulesets.Osu.Edit.Tools;
 using osu.Game.Rulesets.Osu.Objects;
 using osu.Game.Rulesets.UI;
