@@ -46,20 +46,23 @@ namespace osu.Game.Rulesets.Osu.Objects.Drawables
             };
         }
 
-        public override void ClearTransformsAfter(double time, bool propagateChildren = false, string targetMember = null)
-        {
-            // Consider the case of rewinding - children's transforms are handled internally, so propagating down
-            // any further will cause weirdness with the Tracking bool below. Let's not propagate further at this point.
-            base.ClearTransformsAfter(time, false, targetMember);
-        }
-
-        public override void ApplyTransformsAt(double time, bool propagateChildren = false)
-        {
-            // For the same reasons as above w.r.t rewinding, we shouldn't propagate to children here either.
-
-            // ReSharper disable once RedundantArgumentDefaultValue
-            base.ApplyTransformsAt(time, false);
-        }
+        // this bit of code causes transforms to never get removed from the slider ball and will cause lag when modifying a slider
+        // so it's commented out for now until I can figure out whether removing this causes breakage elsewhere
+        //
+        // public override void ClearTransformsAfter(double time, bool propagateChildren = false, string targetMember = null)
+        // {
+        //     // Consider the case of rewinding - children's transforms are handled internally, so propagating down
+        //     // any further will cause weirdness with the Tracking bool below. Let's not propagate further at this point.
+        //     base.ClearTransformsAfter(time, false, targetMember);
+        // }
+        //
+        // public override void ApplyTransformsAt(double time, bool propagateChildren = false)
+        // {
+        //     // For the same reasons as above w.r.t rewinding, we shouldn't propagate to children here either.
+        //
+        //     // ReSharper disable once RedundantArgumentDefaultValue
+        //     base.ApplyTransformsAt(time, false);
+        // }
 
         public void UpdateProgress(double completionProgress)
         {
