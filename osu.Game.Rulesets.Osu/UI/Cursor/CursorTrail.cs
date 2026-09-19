@@ -79,6 +79,7 @@ namespace osu.Game.Rulesets.Osu.UI.Cursor
         private int currentIndex;
         private IShader shader;
         private double timeOffset;
+        private double? lastFadeDuration;
         private float time;
 
         public CursorTrail()
@@ -138,7 +139,13 @@ namespace osu.Game.Rulesets.Osu.UI.Cursor
 
             const int fade_clock_reset_threshold = 1000000;
 
-            time = (float)((Time.Current - timeOffset) / FadeDuration);
+            double fadeDuration = FadeDuration;
+
+            if (lastFadeDuration != null && fadeDuration != lastFadeDuration)
+                timeOffset = Time.Current - (Time.Current - timeOffset) / lastFadeDuration.Value * fadeDuration;
+            lastFadeDuration = fadeDuration;
+
+            time = (float)((Time.Current - timeOffset) / fadeDuration);
             if (time > fade_clock_reset_threshold)
                 resetTime();
         }
