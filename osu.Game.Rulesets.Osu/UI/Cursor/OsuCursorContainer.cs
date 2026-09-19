@@ -33,15 +33,18 @@ namespace osu.Game.Rulesets.Osu.UI.Cursor
 
         private readonly CursorRippleVisualiser rippleVisualiser;
 
+        private readonly CursorMotionBlur motionBlur;
+
         public OsuCursorContainer()
         {
             InternalChild = fadeContainer = new Container
             {
                 RelativeSizeAxes = Axes.Both,
-                Children = new CompositeDrawable[]
+                Children = new Drawable[]
                 {
                     cursorTrail = new SkinnableDrawable(new OsuSkinComponentLookup(OsuSkinComponents.CursorTrail), _ => new DefaultCursorTrail(), confineMode: ConfineMode.NoScaling),
                     rippleVisualiser = new CursorRippleVisualiser(),
+                    motionBlur = new CursorMotionBlur(),
                     new SkinnableDrawable(new OsuSkinComponentLookup(OsuSkinComponents.CursorParticles), confineMode: ConfineMode.NoScaling),
                 }
             };
@@ -57,7 +60,8 @@ namespace osu.Game.Rulesets.Osu.UI.Cursor
         {
             base.LoadComplete();
 
-            showTrail.BindValueChanged(v => cursorTrail.FadeTo(v.NewValue ? 1 : 0, 200), true);
+            // Temporarily disabled since it looks kinda bad with the motion blur
+            showTrail.BindValueChanged(v => cursorTrail.FadeTo(0, 200), true);
 
             ActiveCursor.CursorScale.BindValueChanged(e =>
             {
@@ -72,6 +76,7 @@ namespace osu.Game.Rulesets.Osu.UI.Cursor
         private void updateTrailScale()
         {
             if (cursorTrail.Drawable is CursorTrail trail) trail.CursorScale = new Vector2(ActiveCursor.CursorScale.Value);
+            motionBlur.CursorScale = new Vector2(ActiveCursor.CursorScale.Value);
         }
 
         private int downCount;
